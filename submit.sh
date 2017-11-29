@@ -21,6 +21,7 @@
 module load intel
 
 # Run the application
-cat compile_flags >&2
-time ./bulk_rhmc
-echo >&2
+mkdir "`cat compile_flags`"
+{ time ./bulk_rhmc; } 2> "`cat compile_flags`/timings"
+
+mv output control fort.11 "`cat compile_flags`"
