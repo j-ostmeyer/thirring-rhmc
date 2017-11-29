@@ -82,7 +82,7 @@ c*******************************************************************
       ibound=-1
       istart=-1
       iread=1
-      iwrite=1
+      iwrite=0
       iprint=5
       iseed=0
       icheck=100
@@ -375,7 +375,9 @@ c     write(6,*) isweep,':  ',pbp,ancgm
 c
       if((isweep/icheck)*icheck.eq.isweep)then
       call rranget(seed)
+      if(iwrite.eq.1) then
       call swrite
+      endif
       flush(100)
       flush(200)
 c     flush(302)
