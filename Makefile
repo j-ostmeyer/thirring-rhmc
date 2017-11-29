@@ -1,5 +1,5 @@
 FC = ifort
-FCFLAGS = -xHost -O3 -heap-arrays
+FCFLAGS = -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -parallel
 
 default: bulk_rhmc compile_flags
 
