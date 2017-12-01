@@ -2,9 +2,9 @@
 
 # Set the name of the job
 # (this gets displayed when you get a list of jobs on the cluster)
-#SBATCH --job-name="sa2c_sjh_test"
-#SBATCH -o sa2c_sjh_test.out
-#SBATCH -e sa2c_sjh_test.err
+#SBATCH --job-name="sa2c_sjh_profile"
+#SBATCH -o sa2c_sjh_profile.out
+#SBATCH -e sa2c_sjh_profile.err
 
 # Specify the maximum wall clock time your job can use
 # (Your job will be killed if it exceeds this)
@@ -15,23 +15,27 @@
 #SBATCH --mem-per-cpu=1024
 
 # Specify the number of cpu cores your job requires
-#SBATCH --ntasks=24
+#SBATCH --ntasks=4
 
 # Set up the environment
 module load intel
+source /opt/intel/vtune_amplifier_xe/amplxe-vars.sh
 
 # Run the application
 export OMP_NUM_THREADS=$SLURM_NTASKS
 
-if [ "$[OMP_NUM_THREADS]" -gt "1" ]
-then
-    FOLDER="`cat compile_flags` ${OMP_NUM_THREADS} threads"
-else
-    FOLDER="`cat compile_flags`"
-fi
+#if [ "$[OMP_NUM_THREADS]" -gt "1" ]
+#then
+#    FOLDER="`cat compile_flags` ${OMP_NUM_THREADS} threads"
+#else
+#    FOLDER="`cat compile_flags`"
+#fi
+
+PROFILE=hotspots
+FOLDER=profiling_${PROFILE}_${SLURM_JOB_ID}
 
 mkdir "$FOLDER"
 cd "$FOLDER"
 cp ../con ../midout ../remez* .
-{ time ../bulk_rhmc; } 2> timings
+amplxe-cl -collect $PROFILE ../bulk_rhmc
 rm con midout remez*
