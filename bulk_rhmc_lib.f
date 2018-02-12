@@ -1,4 +1,4 @@
-       program dwf3d
+      subroutine dwf3d_main
 c*******************************************************************
 c    Rational Hybrid Monte Carlo algorithm for bulk Thirring Model with Domain Wall
 c         fermions
