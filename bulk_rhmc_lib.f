@@ -163,11 +163,11 @@ c    & iter2,beta,am3,am,imass
      1 ,' imass=',i2)
 c     write(6,9004) rescgg,rescga,respbp
       write(7,9004) rescgg,rescga,respbp
-9004  format(' Stopping residuals: guidance: ',e9.4,' acceptance: ',
-     &     e9.4,' estimator: ',e9.4)
+9004  format(' Stopping residuals: guidance: ',e11.4,' acceptance: ',
+     &     e11.4,' estimator: ',e11.4)
 c     write(6,9044) rescgm
       write(7,9044) rescgm
-9044  format(' Stopping residuals: meson: ',e9.4)
+9044  format(' Stopping residuals: meson: ',e11.4)
       call rranget(seed)
 c     write(6,*) 'seed: ', seed
       write(7,*) 'seed: ', seed
