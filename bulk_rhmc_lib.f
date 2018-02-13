@@ -2092,98 +2092,45 @@ c     write(6,*) 'hi from dslashd'
 c
 c     diagonal term (hermitian)
       diag=(3.0-am3)+1.0
-      do idirac=1,4
-      do  i=1,kvol
-      do ithird=1,kthird
-      Phi(ithird,i,idirac)=diag*R(ithird,i,idirac)
-      enddo
-      enddo
-      enddo
+      Phi = diag * R
 c
-c     Wilson term (hermitian)
-      do mu=1,3
-      do idirac=1,4
-      do i=1,kvol
-      do ithird=1,kthird
-      Phi(ithird,i,idirac)=Phi(ithird,i,idirac)
-     &    -akappa*(      u(i,mu)*R(ithird,iu(i,mu),idirac)
-     &         +conjg(u(id(i,mu),mu))*R(ithird,id(i,mu),idirac))
-      enddo
-      enddo
-      enddo
-      enddo
-c
-c     Dirac term (antihermitian)
+c     Wilson term (hermitian) and Dirac term (antihermitian)
       do mu=1,3
       do idirac=1,4
       igork=gamin(mu,idirac)
       do i=1,kvol
-      do ithird=1,kthird
-      Phi(ithird,i,idirac)=Phi(ithird,i,idirac)
+      Phi(:,i,idirac)=Phi(:,i,idirac)
+c Wilson term (hermitian)
+     &    -akappa*(      u(i,mu)*R(:,iu(i,mu),idirac)
+     &         +conjg(u(id(i,mu),mu))*R(:,id(i,mu),idirac))
+c Dirac term (antihermitian)
      &-gamval(mu,idirac)*
-     &    (          u(i,mu)*R(ithird,iu(i,mu),igork)
-     &         -conjg(u(id(i,mu),mu))*R(ithird,id(i,mu),igork))
-      enddo
+     &    (          u(i,mu)*R(:,iu(i,mu),igork)
+     &         -conjg(u(id(i,mu),mu))*R(:,id(i,mu),igork))
       enddo
       enddo
       enddo
 c
 c  s-like term exploiting projection
-      do idirac=1,2
-      do i=1,kvol
-      do ithird=1,kthird-1
-      Phi(ithird,i,idirac)=Phi(ithird,i,idirac)
-     &   -R(ithird+1,i,idirac)
-      enddo
-      enddo
-      enddo
-      do idirac=3,4
-      do ithird=1,kthird-1
-      do i=1,kvol
-      Phi(ithird+1,i,idirac)=Phi(ithird+1,i,idirac)
-     &   -R(ithird,i,idirac)
-      enddo
-      enddo
-      enddo
+      Phi(1:kthird-1,:,1:2)=Phi(1:kthird-1,:,1:2)
+     &   -R(2:kthird,:,1:2)
+      Phi(2:kthird,:,3:4)=Phi(2:kthird,:,3:4)
+     &   -R(1:kthird-1,:,3:4)
 c
 c  Mass term (couples the two walls unless imass=5) 
       if(imass.eq.1)then
          zkappa=cmplx(am,0.0)
-         do idirac=1,2
-         do i=1,kvol
-         Phi(kthird,i,idirac)=Phi(kthird,i,idirac)+zkappa*R(1,i,idirac)
-         enddo
-         enddo
-         do idirac=3,4
-         do i=1,kvol
-         Phi(1,i,idirac)=Phi(1,i,idirac)+zkappa*R(kthird,i,idirac)
-         enddo
-         enddo
+         Phi(kthird,:,1:2)=Phi(kthird,:,1:2)+zkappa*R(1,:,1:2)
+         Phi(1,:,3:4)=Phi(1,:,3:4)+zkappa*R(kthird,:,3:4)
       elseif(imass.eq.3)then
          zkappa=cmplx(0.0,am)
-         do idirac=1,2
-         do i=1,kvol
-         Phi(kthird,i,idirac)=Phi(kthird,i,idirac)+zkappa*R(1,i,idirac)
-         enddo
-         enddo
-         do idirac=3,4
-         do i=1,kvol
+         Phi(kthird,:,1:2)=Phi(kthird,:,1:2)+zkappa*R(1,:,1:2)
          Phi(1,i,idirac)=Phi(1,i,idirac)-zkappa*R(kthird,i,idirac)
-         enddo
-         enddo
       elseif(imass.eq.5)then
          zkappa=cmplx(0.0,am)
-         do idirac=1,2
-         do i=1,kvol
-         Phi(kthird,i,idirac)=Phi(kthird,i,idirac)
-     &                        -zkappa*R(kthird,i,idirac+2)
-         enddo
-         enddo
-         do idirac=3,4
-         do i=1,kvol
-         Phi(1,i,idirac)=Phi(1,i,idirac)-zkappa*R(1,i,idirac-2)
-         enddo
-         enddo
+         Phi(kthird,:,1:2)=Phi(kthird,:,1:2)
+     &                        -zkappa*R(kthird,:,3:4)
+         Phi(1,:,3:4)=Phi(1,:,3:4)-zkappa*R(1,:,1:2)
       endif
 c
       return
@@ -2196,47 +2143,70 @@ c
       parameter(ksize=12,ksizet=12,kvol=ksize*ksize*ksizet)
       parameter(akappa=0.5)
       common/dirac/gamval(6,4),gamin(6,4)
-      common /neighb/id(kvol,3),iu(kvol,3)
-c     complex u(kvol,3)
-c     complex Phi(kvol,4),R(kvol,4)
+c     complex u(ksize,ksize,ksizet,3)
+c     complex Phi(ksize,ksize,ksizet,4),R(ksize,ksize,ksizet,4)
 c     complex gamval
-      complex*16 u(kvol,3)
-      complex*16 Phi(kvol,4),R(kvol,4)
+      complex*16 u(ksize,ksize,ksizet,3)
+      complex*16 Phi(ksize,ksize,ksizet,4),R(ksize,ksize,ksizet,4)
       complex*16 gamval
       integer gamin
 c     write(6,*) 'hi from dslash2d'
 c
 c     diagonal term
       diag=2.0
-      do idirac=1,4
-      do  i=1,kvol
-      Phi(i,idirac)=diag*R(i,idirac)
-      enddo
-      enddo
-c
-c     Wilson term
+      Phi = diag * R
+      
+c     Wilson and Dirac terms
       do mu=1,2
-      do idirac=1,4
-      do i=1,kvol
-      Phi(i,idirac)=Phi(i,idirac)
-     &    -akappa*(      u(i,mu)*R(iu(i,mu),idirac)
-     &         +conjg(u(id(i,mu),mu))*R(id(i,mu),idirac))
-      enddo
-      enddo
-      enddo
+      ixup=kdelta(1,mu)
+      iyup=kdelta(2,mu)
 c
-c     Dirac term
-      do mu=1,2
       do idirac=1,4
       igork=gamin(mu,idirac)
-      do i=1,kvol
-      Phi(i,idirac)=Phi(i,idirac)
-     &+gamval(mu,idirac)*
-     &    (          u(i,mu)*R(iu(i,mu),igork)
-     &         -conjg(u(id(i,mu),mu))*R(id(i,mu),igork))
+      do iy=1,ksize
+      do ix=1,ksize
+      Phi(ix,iy,:,idirac)=
+c Wilson term
+     &    Phi(ix,iy,:,idirac)
+     &    -akappa*(u(ix,iy,:,mu)*R(modulo(ix+ixup-1,ksize)+1,
+     &                              modulo(iy+iyup-1,ksize)+1,
+     &                              :,idirac)
+     &             +conjg(u(modulo(ix-ixup-1,ksize)+1,
+     &                      modulo(iy-iyup-1,ksize)+1,
+     &                      :,mu))
+     &              *R(modulo(ix-ixup-1,ksize)+1,
+     &                 modulo(iy-iyup-1,ksize)+1,
+     &                 :,idirac))
+c Dirac term
+     &     +gamval(mu,idirac)*
+     &      (u(ix,iy,:,mu)*R(modulo(ix+ixup-1,ksize)+1,
+     &                        modulo(iy+iyup-1,ksize)+1,
+     &                        :,igork)
+     &       -conjg(u(modulo(ix-ixup-1,ksize)+1,
+     &                modulo(iy-iyup-1,ksize)+1,
+     &                :,mu))
+     &        *R(modulo(ix-ixup-1,ksize)+1,
+     &           modulo(iy-iyup-1,ksize)+1,
+     &           :,igork))
+      enddo
       enddo
       enddo
       enddo
 c
       return
+      end
+c
+c***********************************************************************
+c   A Kronecker delta function
+c   Useful for calculating coordinate offsets
+c***********************************************************************
+      integer function kdelta(nu, mu)
+        integer, intent(in) :: nu
+        integer, intent(in) :: mu
+
+        if(nu.eq.mu) then
+          kdelta=1
+        else
+          kdelta=0
+        endif
       end
