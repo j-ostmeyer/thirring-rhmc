@@ -7,10 +7,13 @@ program test_dslash
       external :: init
 
 ! general parameters
+      logical :: generate = .false.
       integer :: ksize, ksizet, kthird, kvol
       complex, parameter :: iunit = cmplx(0, 1)
       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
       real*8, parameter :: tau = 8 * atan(1.0_8)
+      complex*16 :: acc_sum = 0.
+      real*8 :: acc_max = 0.
 
 ! common blocks to function
       common/para/beta,am3,ibound
@@ -23,7 +26,7 @@ program test_dslash
       integer :: iu, id
 
 ! initialise function parameters
-      complex*16 Phi(kthird,kvol,4), R(kthird,kvol,4)
+      complex*16 Phi(kthird,kvol,4), R(kthird,kvol,4), Phiref(kthird,kvol,4)
       complex*16 u(kvol, 3)
       real*8 :: am = 0.05
       integer :: imass = 3
@@ -56,11 +59,32 @@ program test_dslash
       
 ! call function
       call dslash(Phi, R, u, am, imass)
-      
+
+! check output
       do i = 1,10
          j = 1 + i * (kthird - 1) / 10
          k = 1 + i * (kvol - 1) / 10
          l = 1 + i * (4 - 1) / 10
          print *,'Phi(', j, ',', k, ',', l, ') = ', Phi(j, k, l)
       enddo
+
+      open(3, file='test_dphi.dat', form="unformatted", access="sequential")
+      if (generate) then
+         write(3) Phi
+      else
+         read(3) Phiref
+         
+         do k = 1,4
+            do j = 1,kvol
+               do i = 1,kthird
+                  acc_sum = acc_sum + abs(Phi(i,j,k) - Phiref(i,j,k))
+                  if (abs(Phi(i,j,k) - Phiref(i,j,k)).gt.acc_max) then
+                     acc_max = Phi(i,j,k) - Phiref(i,j,k)
+                  end if
+               end do
+            end do
+         end do
+         print *, 'sum delta = ', acc_sum
+         print *, 'max delta = ', acc_max
+      end if
 end program
