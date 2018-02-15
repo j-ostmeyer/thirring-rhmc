@@ -1,1619 +1,1647 @@
-      subroutine dwf3d_main
-c*******************************************************************
-c    Rational Hybrid Monte Carlo algorithm for bulk Thirring Model with Domain Wall
-c         fermions
-c
-c    requires operation of QMR on complex vectors to determine
-c    (Mdagger M)**-1  Phi 
-c
-c    requires input partial fraction coefficients from Remez algorithm
-c    of Clarke & Kennedy
-c
-c    the "third" direction is actually indexed 4 in the code - sorry!
-c      (should have used C I know)
-c
-c           { 1 - hermition mass term psibar psi
-c    imass= { 3 - antih.    mass term i psibar gamma_3 psi
-c           { 5 - antih.    mass term i psibar gamma_5 psi
-c     linear combinations of above require code modification
-c
-c    code exploits fact that gamma_3 is diagonal in Dirac basis used - speeds up 
-c    evolution slightly, and measurement by factor of two. 
-c
-c    Fermion expectation values are measured using a noisy estimator.
-c    on the Wilson matrix, which has dimension 4*kvol*kthird
-c    inversions done using congrad, and matrix multiplies with dslash, dslashd
-c
-c    Pauli-Villars determinant defined using a hermitian mass m_h=One
-c
-c    trajectory length is random with mean dt*iterl
-c    The code runs for a fixed number iter2 of trajectories.
-c
-c    Phi: pseudofermion field 
-c    am: bare fermion mass 
-c    actiona: running average of total action
-c
-c                                               SJH February 2017
-c*******************************************************************
-      parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-      parameter(respbp=0.000001,rescgg=0.000001,rescga=0.000000001)
-      parameter(rescgm=0.000000001)
-      parameter(itermax=1000)
-      parameter(One=1.0)
-      parameter(ndiag=25,ndiagg=12,Nf=1)
-      common/gauge/theta(kvol,3),seed
-      common/trial/ut(kvol,3),thetat(kvol,3),pp(kvol,3)
-      common /para/beta,am3,ibound
-      common/remez2/anum2(0:ndiag),aden2(ndiag),
-     &              bnum2(0:ndiag),bden2(ndiag)
-      common/remez4/anum4(0:ndiag),aden4(ndiag),
-     &              bnum4(0:ndiag),bden4(ndiag)
-      common/remez2g/anum2g(0:ndiagg),aden2g(ndiagg),
-     &              bnum2g(0:ndiagg),bden2g(ndiagg)
-      common/remez4g/anum4g(0:ndiagg),aden4g(ndiagg),
-     &              bnum4g(0:ndiagg),bden4g(ndiagg)
-      common/gforce/dSdpi(kvol,3)
-      common /neighb/id(kvol,3),iu(kvol,3)
-      common/param/ancg,ancgh,ancgf,ancgpf
-      common/parampv/ancgpv,ancghpv,ancgfpv,ancgpfpv
-      common/trans/tpi 
-      common/dum1/ R(kthird,kvol,4),ps(kvol,2)
-      common/vector/X1(kthird,kvol,4)
-      common/ranseed/yran,idum
-      common/v/v(97)
-c     complex Phi(kthird,kvol,4,Nf),X0(kthird,kvol,4)
-c     complex R,zi,qq,qbqb
-c     complex u,ut,X1
-c     complex a,b
-      complex*16 Phi(kthird,kvol,4,Nf),X0(kthird,kvol,4)
-      complex*16 R,zi,qq,qbqb
-      complex*16 u,ut,X1
-      complex*16 a,b
-      real rano
-      real*8 H0,H1,S0,S1,dH,dS,hg,hp
-      real*8 seed
-      real*8 anum2,aden2,bnum2,bden2
-      real*8 anum4,aden4,bnum4,bden4
-      real*8 anum2g,aden2g,bnum2g,bden2g
-      real*8 anum4g,aden4g,bnum4g,bden4g
-c*******************************************************************
-c     input
-c*******************************************************************
-      ibound=-1
-      istart=-1
-      iread=1
-      iwrite=0
-      iprint=5
-      iseed=0
-      icheck=100
-      zi=(0.0,1.0)
-      tpi=2.0*acos(-1.0)
-c*******************************************************************
-c     end of input
-c*******************************************************************
-      open(unit=7,file='output',status='unknown')
-      open(unit=25,file='midout',status='unknown')
-      open(unit=98,file='control',status='unknown')
-      open(unit=36,file='remez2',status='unknown')
-      open(unit=37,file='remez4',status='unknown')
-      open(unit=38,file='remez2g',status='unknown')
-      open(unit=39,file='remez4g',status='unknown')
-      if(iread.eq.1) then
-      call sread
-      endif
-      read(25,*) dt,beta,am3,am,imass,iterl,iter2
-      close(25)
-c set a new seed by hand...
-      if(iseed.ne.0)then
-      seed=4139764973254.0
-      endif
-      write(7,*) 'seed: ', seed
-      call rranset(seed)
-      idum=-1
-      y=rano(yran,idum)
-c     write(6,*) 'rano: ', y,yran,idum
-c*******************************************************************
-c     initialization
-c     istart.lt.0 : start from tape
-c     istart=0    : ordered start
-c     istart=1    : random start
-c*******************************************************************
-      call init(istart)
-c  read in Remez coefficients
-      read(36,*) anum2(0)
-      read(37,*) anum4(0)
-      read(38,*) anum2g(0)
-      read(39,*) anum4g(0)
-      do i=1,ndiag
-      read(36,*) anum2(i),aden2(i)
-      read(37,*) anum4(i),aden4(i)
-      enddo
-      do i=1,ndiagg
-      read(38,*) anum2g(i),aden2g(i)
-      read(39,*) anum4g(i),aden4g(i)
-      enddo
-      read(36,*) bnum2(0)
-      read(37,*) bnum4(0)
-      read(38,*) bnum2g(0)
-      read(39,*) bnum4g(0)
-      do i=1,ndiag
-      read(36,*) bnum2(i),bden2(i)
-      read(37,*) bnum4(i),bden4(i)
-      enddo
-      do i=1,ndiagg
-      read(38,*) bnum2g(i),bden2g(i)
-      read(39,*) bnum4g(i),bden4g(i)
-      enddo
-c*******************************************************************
-c     print heading
-c*******************************************************************
-      traj=iterl*dt
-      proby=1.0/float(iterl)
-c     write(6, 9001)ksize,ksizet,kthird,Nf,dt,traj,ndiag,ndiagg,
-c    & iter2,beta,am3,am,imass
-      write(7, 9001)ksize,ksizet,kthird,Nf,dt,traj,ndiag,ndiagg,
-     & iter2,beta,am3,am,imass
-9001  format(' ksize=',i3,' ksizet=',i3,/
-     1 ,' kthird=',i3,/
-     1 ,' Nf =',i3,/
-     1 ,' time step: dt=',f6.4,' trajectory length=',f9.6,/
-     1 ,' Remez ndiag: action =',i3' guidance=',i3,/
-     1 ,' # trajectories=',i6,' beta=',f9.6,/
-     1 ,' am3=',f6.4,' am=',f6.4/
-     1 ,' imass=',i2)
-c     write(6,9004) rescgg,rescga,respbp
-      write(7,9004) rescgg,rescga,respbp
-9004  format(' Stopping residuals: guidance: ',e11.4,' acceptance: ',
-     &     e11.4,' estimator: ',e11.4)
-c     write(6,9044) rescgm
-      write(7,9044) rescgm
-9044  format(' Stopping residuals: meson: ',e11.4)
-      call rranget(seed)
-c     write(6,*) 'seed: ', seed
-      write(7,*) 'seed: ', seed
-c*******************************************************************
-c       initialize for averages
-c*******************************************************************
-      actiona=0.0
-      vel2a=0.0
-      pbpa=0.0
-      ancg=0.0
-      ancgh=0.0
-      ancgf=0.0
-      ancgpf=0.0
-      ancgpv=0.0
-      ancghpv=0.0
-      ancgfpv=0.0
-      ancgpfpv=0.0
-      ancgma=0.0
-      yav=0.0
-      yyav=0.0 
-      naccp=0
-      ipbp=0
-      itot=0
-c*******************************************************************
-c     start of classical evolution
-c*******************************************************************
-      do 601 isweep=1,iter2
-c uncomment line below to go straight to measurement
-c     goto 666
-c*******************************************************************
-c     initialise trial fields
-c*******************************************************************
-      do 2007 mu=1,3
-      do 2007 i=1,kvol
-      thetat(i,mu)=theta(i,mu)
-2007  continue
-c
-      call coef(ut,thetat)
-c*******************************************************************
-c  Pseudofermion fields: Phi = {MdaggerM(1)}^-1/4 * {MdaggerM(m)}^1/4 * R, where
-c   R is gaussian
-c*******************************************************************
-      do ia=1,Nf
-c
-      do idirac=1,4
-      do ithird=1,kthird
-      call gauss0(ps)
-      do i=1,kvol
-      R(ithird,i,idirac)=cmplx(ps(i,1),ps(i,2))
-      enddo
-      enddo
-      enddo
-c
-c  For now Phi = {MdaggerM}^0.25 * R
-c
-      call qmrherm(R,rescga,itercg,am,imass,anum4,aden4,ndiag,
-     &             0,isweep,0)
-      ancgpf=ancgpf+float(itercg)
-      do idirac=1,4
-      do i=1,kvol
-      do ithird=1,kthird
-      R(ithird,i,idirac)=X1(ithird,i,idirac)
-      enddo
-      enddo
-      enddo
-      call qmrherm(R,rescga,itercg,One,1,bnum4,bden4,ndiag,
-     &             0,isweep,0)
-      ancgpfpv=ancgpfpv+float(itercg)
-c
-      do idirac=1,4
-      do i=1,kvol
-      do ithird=1,kthird
-      Phi(ithird,i,idirac,ia)=X1(ithird,i,idirac)
-      enddo
-      enddo
-      enddo
-c
-      enddo
-c*******************************************************************
-c     heatbath for p 
-c*******************************************************************
-c  for some occult reason this write statement is needed to ensure compatibility with earlier versions
-c     write(6,*) yran,idum
-c     write(98,*) yran,idum
-      do mu=1,3
-      call gaussp(ps)
-      do i=1,kvol
-      pp(i,mu)=ps(i,1)
-      enddo
-      enddo
-c     write(6,*) yran,idum
-c*******************************************************************
-c  call to Hamiltonian
+      module purefunctions
+      interface
+        pure function kdelta(nu,mu)
+          integer, intent(in) :: mu
+          integer, intent(in) :: nu
+          integer :: kdelta
+        end function
+      end interface
+      interface
+        pure subroutine update_halo_4(size4, Array)
+          integer, parameter :: ksize=12,ksizet=12
+          integer, intent(in) :: size4
+          complex*16, intent(inout) :: Array(0:ksize+1, 0:ksize+1,
+     &                                       0:ksizet+1, size4)
+        end subroutine
+      end interface
+      interface
+        pure subroutine update_halo_5(size5, Array)
 c     
-      call hamilton(Phi,
-     &      H0,hg,hp,S0,rescga,isweep,0,am,imass)
-      if(isweep.eq.1) then
-      action=S0/kvol
-      gaction=hg/kvol
-      paction=hp/kvol
-      endif 
-c     goto 501
-c*******************************************************************
-c      half-step forward for p
-c*******************************************************************
-      call force(Phi,rescgg,am,imass,isweep,0)
-      d=dt*0.5
-      do 2004 mu=1,3
-      do 2004 i=1,kvol
-      pp(i,mu)=pp(i,mu)-dSdpi(i,mu)*d
-2004  continue
-c*******************************************************************
-c     start of main loop for classical time evolution
-c*******************************************************************
-      do 500 iter=1,itermax
+          integer, parameter :: ksize=12,ksizet=12,kthird=24
 c
-c  step (i) st(t+dt)=st(t)+p(t+dt/2)*dt;
-c
-      d=dt
-      do 2001 mu=1,3
-      do 2001 i=1,kvol
-      thetat(i,mu)=thetat(i,mu)+d*pp(i,mu)
-2001  continue
-c
-c  step (ii)  p(t+3dt/2)=p(t+dt/2)-dSds(t+dt)*dt (1/2 step on last iteration)
-c
-      call coef(ut,thetat)
-      call force(Phi,rescgg,am,imass,isweep,iter)
-c
-c test for end of random trajectory
-c 
-      ytest=rano(yran,idum)
-      if(ytest.lt.proby)then
-      d=dt*0.5
-      do 2005 mu=1,3
-      do 2005 i=1,kvol
-      pp(i,mu)=pp(i,mu)-d*dSdpi(i,mu)
-2005  continue
-      itot=itot+iter 
-      goto 501
-      else
-      d=dt
-      do 3005 mu=1,3
-      do 3005 i=1,kvol
-      pp(i,mu)=pp(i,mu)-d*dSdpi(i,mu)
-3005  continue
-      endif
-c 
-500   continue
-c**********************************************************************
-c  Monte Carlo step: accept new fields with probability=
-c              min(1,exp(H0-H1))
-c**********************************************************************
-501   continue 
-      call hamilton(Phi,
-     &       H1,hg,hp,S1,rescga,isweep,-1,am,imass)
-      dH=H0-H1
-      dS=S0-S1
-      write(98,*) dH,dS
-      y=exp(dH)      
-      yav=yav+y 
-      yyav=yyav+y*y 
-      if(dH.lt.0.0)then
-      x=rano(yran,idum)
-      if(x.gt.y)goto 600
-      endif
-c
-c     step accepted: set s=st
-c
-      do 2006 mu=1,3
-      do 2006 i=1,kvol
-      theta(i,mu)=thetat(i,mu)
-2006  continue      
-      naccp=naccp+1
-      action=S1/kvol
-      gaction=hg/kvol
-      paction=hp/kvol
-600   continue
-      write(11,*) isweep,gaction,paction
-      actiona=actiona+action 
-      vel2=0.0
-      do 457 mu=1,3
-      do 457 i=1,kvol
-      vel2=vel2+pp(i,mu)*pp(i,mu)
-457   continue
-      vel2=vel2/(3*kvol)
-      vel2a=vel2a+vel2
-c
-c     uncomment to disable measurements
-c     goto 601
-666   if((isweep/iprint)*iprint.eq.isweep)then
-      do 2066 mu=1,3
-      do 2066 i=1,kvol
-      thetat(i,mu)=theta(i,mu)
-2066  continue      
-      call coef(ut,thetat)
-      call measure(pbp,respbp,ancgm,am,imass)
-c     call meson(rescgm,itercg,ancgm,am,imass)
-      pbpa=pbpa+pbp
-      ancgma=ancgma+ancgm
-      ipbp=ipbp+1
-c     write(11,*) pbp
-c     write(6,*) isweep,':  ',pbp,ancgm
-      endif
-c
-      if((isweep/icheck)*icheck.eq.isweep)then
-      call rranget(seed)
-      if(iwrite.eq.1) then
-      call swrite
-      endif
-      flush(100)
-      flush(200)
-c     flush(302)
-c     flush(400)
-c     flush(500)
-c     flush(501)
-      if(imass.ne.1)then
-c     flush(401)
-c     flush(402)
-c     flush(403)
-      endif
-c     write(7,9023) seed
-      endif
-c
-601   continue
-c*******************************************************************
-c     end of main loop
-c*******************************************************************
-      actiona=actiona/iter2 
-      vel2a=vel2a/iter2 
-      pbpa=pbpa/ipbp
-      ancg=ancg/(Nf*itot)
-      ancgh=ancgh/(2*Nf*iter2)
-      ancgpf=ancgpf/(Nf*iter2)
-      ancgpv=ancgpv/(Nf*itot)
-      ancgf=ancgf/(Nf*itot)
-      ancgfpv=ancgfpv/(Nf*itot)
-      ancghpv=ancghpv/(2*Nf*iter2)
-      ancgpfpv=ancgpfpv/(iter2*Nf)
-      ancgma=ancgma/ipbp
-      yav=yav/iter2
-      yyav=yyav/iter2-yav*yav 
-      yyav=sqrt(yyav/(iter2-1)) 
-      atraj=dt*itot/iter2 
-c*******************************************************************
-c     print global averages
-c*******************************************************************
-c     write(6, 9022) iter2,naccp,atraj,yav,yyav,ancg,ancgpv,ancgh,ancghpv,ancgf,
-c    & ancgfpv,ancgpf,ancgpfpv,pbpa,vel2a,actiona
-      write(7, 9022) iter2,naccp,atraj,yav,yyav,
-     & ancg,ancgpv,ancgh,ancghpv,ancgf,ancgfpv,ancgpf,ancgpfpv,
-     & pbpa,ancgma,vel2a,actiona
-9022  format(' averages for last ',i6,' trajectories',/ 
-     & 1x,' # of acceptances: ',i6,' average trajectory length= ',f8.3/
-     & 1x,' <exp-dH>=',e11.4,' +/-',e10.3/
-     2 1x,' av. # QMR itr.'/
-     & 1x,'     guidance: DWF  ',f9.3,'; PV  ',f9.3/
-     & 1x,'   acceptance: DWF  ',f9.3,'; PV  ',f9.3/
-     & 1x,'        force: DWF  ',f9.3,'; PV  ',f9.3/
-     & 1x,'pseudofermion: DWF  ',f9.3,'; PV  ',f9.3/
-     1 1x,' psibarpsi=',e11.3/
-     2 1x,' av. # QMR itr.',f9.3//
-     & 1x,' mean square velocity=',e10.3,'; action per site=',e10.3//)
-      write(7, 9024)
-      write(7, 9024)
-9024  format(1x)
-c
-      close(11)
-c
-      if(iwrite.eq.1) then
-      call rranget(seed)
-      call swrite
-      write(7,*) 'seed: ', seed
-      endif
-c
-      stop
-      end
-c******************************************************************
-c   calculate dSds for gauge fields at each intermediate time
-c******************************************************************
-      subroutine force(Phi,res1,am,imass,isweep,iter)
-      parameter(ksize=12,ksizet=12,kthird=24,kvol=ksize*ksize*ksizet)
-      parameter(kvol2=ksize*ksize)
-      parameter(kferm=4*kvol*kthird)
-      parameter(ndiagg=12,ndiag=ndiagg)
-      parameter(One=1.0)
-      parameter(Nf=1)
-      common/remez2g/anum2(0:ndiag),aden2(ndiag),
-     &              bnum2(0:ndiag),bden2(ndiag)
-      common/remez4g/anum4(0:ndiag),aden4(ndiag),
-     &              bnum4(0:ndiag),bden4(ndiag)
-      common/phi0/Phi0(kferm,25)
-      common/trial/u(kvol,3),theta(kvol,3),pp(kvol,3)
-      common/para/beta,am3,ibound
-      common/param/ancg,ancgh,ancgf,ancgpf
-      common/parampv/ancgpv,ancghpv,ancgfpv,ancgpfpv
-      common/gforce/dSdpi(kvol,3)
-      common/vector/X1(kferm)
-c     complex Phi(kferm,Nf),X2(kferm)
-c     complex X1,u,Phi0
-      complex*16 Phi(kferm,Nf),X2(kferm)
-      complex*16 X1,u,Phi0
-      real*8 anum2,aden2,bnum2,bden2
-      real*8 anum4,aden4,bnum4,bden4
-c
-c     write(6,111)
-111   format(' Hi from force')
-c
-      do mu=1,3
-      do i=1,kvol
-         dSdpi(i,mu)=0.0
-      enddo
-      enddo
-c
-c uncomment this line to quench the fermions!
-c     return
-c pseudofermion action is
-c   Phi^dagger {MdaggerM(1)}^1/4 {MdaggerM(m)})^-1/2 {MdaggerM(1)}^1/4 Phi
-c
-      do ia=1,Nf
-c
-      do i=1,kferm
-      X2(i)=Phi(i,ia)
-      enddo
-      call qmrherm(X2,res1,itercg,One,1,anum4,aden4,ndiag,
-     &             1,isweep,iter)
-      ancgpv=ancgpv+float(itercg)
-      do i=1,kferm
-      X2(i)=X1(i)
-      enddo
-c
-      call qmrherm(X2,res1,itercg,am,imass,bnum2,bden2,ndiag,
-     &             0,isweep,iter)
-      ancg=ancg+float(itercg)
-c     write(111,*) itercg
-      do i=1,kferm
-      X2(i)=X1(i)
-      enddo
-c
-c  evaluates -X2dagger * d/dpi[{MdaggerM(m)}^1/2] * X2
-      call qmrherm(X2,res1,itercg,am,imass,anum2,aden2,ndiag,
-     &             2,isweep,iter)
-      ancgf=ancgf+float(itercg)
-c     write(113,*) itercg
-c  evaluates +2Re{Phidagger * d/dpi[{MdaggerM(1)}^1/4] * X2}
-      call qmrherm(X2,res1,itercg,One,1,anum4,aden4,ndiag,
-     &             3,isweep,iter)
-      ancgfpv=ancgfpv+float(itercg)
-c
-      enddo
-c
-      if(ibound.eq.-1)then
-      ioffset=(ksizet-1)*kvol2
-      do i=ioffset+1,kvol
-      dSdpi(i,3)=-dSdpi(i,3)
-      enddo
-      endif
-c
-      b=beta*Nf
-      do mu=1,3
-      do i=1,kvol
-         dSdpi(i,mu)=dSdpi(i,mu)+b*theta(i,mu)
-      enddo
-      enddo
-c
-      return
-      end
-c******************************************************************
-c   Evaluation of Hamiltonian function
-c******************************************************************
-      subroutine hamilton(Phi,
-     &       h,hg,hp,s,res2,isweep,iflag,am,imass)
-      parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-      parameter(kmom=3*kvol,kferm=4*kvol*kthird)
-      parameter(ndiag=25)
-      parameter(One=1.0)
-      parameter(Nf=1)
-      common/trial/u(kvol,3),theta(kmom),pp(kmom)
-      common/remez2/anum2(0:ndiag),aden2(ndiag),
-     &              bnum2(0:ndiag),bden2(ndiag)
-      common/remez4/anum4(0:ndiag),aden4(ndiag),
-     &              bnum4(0:ndiag),bden4(ndiag)
-      common/param/ancg,ancgh,ancgf,ancgpf
-      common/parampv/ancgpv,ancghpv,ancgfpv,ancgpfpv
-      common /para/beta,am3,ibound
-      common/vector/ X1(kferm)      
-      common/dum1/R(kferm),ps(kvol,2)
-c     complex Phi(kferm,Nf)
-c     complex X1,R
-c     complex u
-      complex*16 Phi(kferm,Nf)
-      complex*16 X1,R
-      complex*16 u
-      real*8 hp,hg,hf,h,s
-      real*8 anum2,aden2,bnum2,bden2
-      real*8 anum4,aden4,bnum4,bden4
-c     write(6,111)
-111   format(' Hi from hamilton')
-c
-      hp=0.0
-      hg=0.0
-      hf=0.0
-c
-      do 22 imom=1,kmom
-      hp=hp+pp(imom)*pp(imom)
-22    continue
-c
-      hp=hp*0.5
-c
-      do imom=1,kmom
-      hg=hg+theta(imom)*theta(imom)
-      enddo
-      hg=0.5*Nf*beta*hg
-      h=hg+hp
-c 
-c uncomment these lines to quench the fermions!
-c     write(6,*) isweep,':  hg', hg,'   hp', hp,'   h',h
-c     return
-c         
-c  pseudofermion action is
-c   Phi^dagger {MdaggerM(1)}^1/4 {MdaggerM(m)})^-1/2 {MdaggerM(1)}^1/4 Phi
-c
-      do ia=1,Nf
-c
-      do i=1,kferm
-      R(i)=Phi(i,ia)
-      enddo
-      call qmrherm(R,res2,itercg,One,1,anum4,aden4,ndiag,
-     &             0,isweep,iflag)
-      ancghpv=ancghpv+float(itercg)
-      do i=1,kferm
-      R(i)=X1(i)
-      enddo
-c
-      call qmrherm(R,res2,itercg,am,imass,bnum2,bden2,ndiag,
-     &             0,isweep,iflag)
-      ancgh=ancgh+float(itercg)
-c
-      do 4 iferm=1,kferm
-      hf=hf+conjg(R(iferm))*X1(iferm)
-4     continue
-c
-      enddo
-c
-      h=hg+hp+hf
-c     write(6,*) isweep,':  hg', hg,'   hp', hp,'   hf', hf,
-c    &   '   h',h
-      s=hg+hf
-c
-      return
-      end              
-c******************************************************************
-c    multisolver matrix inversion via Lanczos technique
-c  eg. Golub & van Loan "Matrix Computations" 9.3.1
-c       solves (MdaggerM+diag)*x=Phi for ndiag different values of diag
-c   iflag=0: simply evaluates X = {MdaggerM}^p * Phi
-c   can be interchanged with congrad for p=-1
-c   iflag=1: in addition updates Phi0 register needed for PV force term
-c   iflag=2: evaluates DWF force term
-c   iflag=3: evaluates PV force term
-c*****************************************************************m
-      subroutine qmrherm(Phi,res,itercg,am,imass,anum,aden,ndiag,
-     &                   iflag,isweep,iter)
-      parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-      parameter(kferm=4*kthird*kvol)
-c     parameter(niterc=10*kferm)
-      parameter(niterc=7500)
-      common/trial/u(kvol,3),theta(kvol,3),pp(kvol,3)
-      common/para/bbb,am3,ibound
-      common/vector/x(kferm)
-      common/gforce/dSdpi(kvol,3)
-      common/phi0/Phi0(kferm,25)
-c     complex Phi(kferm)
-c     complex x,u,Phi0
-      complex*16 Phi(kferm)
-      complex*16 x,u,Phi0
-      real*8 anum(0:ndiag),aden(ndiag),coeff
-c     complex vtild(kferm),q(kferm),pm1(kferm,ndiag)
-c     complex qm1(kferm),p(kferm,ndiag),x3(kferm),R(kferm)
-c     complex x1(kferm,ndiag),x2(kferm)
-c     real alpha(ndiag),beta
-c     real amu(ndiag),d(ndiag),dm1(ndiag),rho(ndiag),rhom1(ndiag)
-      complex*16 vtild(kferm),q(kferm),pm1(kferm,ndiag)
-      complex*16 qm1(kferm),p(kferm,ndiag),x3(kferm),R(kferm)
-      complex*16 x1(kferm,ndiag),x2(kferm)
-      real*8 alpha(ndiag),beta
-      real*8 amu(ndiag),d(ndiag),dm1(ndiag),rho(ndiag),rhom1(ndiag)
-c
-c     write(6,111)
-111   format(' Hi from qmrherm')
-c
-      resid=sqrt(kferm*res*res)
-c     write(6,*) iflag, resid
-      itercg=0
-c
-c   initialise r=Phi
-c
-      do i=1,kferm
-         R(i)=Phi(i)
-         qm1(i)=(0.0,0.0)
-         x(i)=anum(0)*Phi(i)
-      enddo
-      beta=0.0
-      do i=1,kferm
-         beta=beta+conjg(r(i))*r(i)
-      enddo
-      beta=sqrt(beta)
-      phimod=beta
-c     write(6,*) '|| Phi || = ', phimod
-c
-      do niter=1,niterc
-      itercg=itercg+1
-c
-c  Lanczos steps
-c
-      do i=1,kferm
-         q(i)=R(i)/beta
-      enddo
-c
-      call dslash(vtild,q,u,am,imass)
-      call dslashd(x3,vtild,u,am,imass)
-c
-      alphatild=0.0
-      do i=1,kferm
-         alphatild=alphatild+conjg(q(i))*x3(i)
-      enddo
-c
-      do i=1,kferm
-         R(i)=x3(i)-alphatild*q(i)-beta*qm1(i)
-         qm1(i)=q(i)
-      enddo
-c
-      beta0=beta
-      beta=0.0
-      do i=1,kferm
-         beta=beta+conjg(R(i))*R(i)
-      enddo
-      beta=sqrt(beta)
-c
-      do idiag=1,ndiag
-      alpha(idiag)=alphatild+aden(idiag)
-      enddo
-c
-      if(niter.eq.1)then
-           do idiag=1,ndiag
-             d(idiag)=alpha(idiag)
-             do i=1,kferm
-              p(i,idiag)=q(i)
-              pm1(i,idiag)=p(i,idiag)
-             enddo
-             rho(idiag)=beta0/alpha(idiag)
-             rhom1(idiag)=rho(idiag)
-             do i=1,kferm
-              x1(i,idiag)=rho(idiag)*q(i)
-             enddo
-           enddo
-      else
-           do idiag=1,ndiag
-             amu(idiag)=beta0/d(idiag)
-             dm1(idiag)=d(idiag)
-             d(idiag)=alpha(idiag)-beta0*amu(idiag)
-             do i=1,kferm
-              p(i,idiag)=q(i)-amu(idiag)*pm1(i,idiag)
-              pm1(i,idiag)=p(i,idiag)
-             enddo
-             rho(idiag)=-amu(idiag)*dm1(idiag)*rhom1(idiag)/d(idiag)
-c  Convergence criterion (a bit ad hoc for now...)
-             if(idiag.eq.1)then
-               rhomax=abs(phimod*rho(idiag))
-             else
-               if(abs(phimod*rho(idiag)).gt.rhomax)
-     &             rhomax=abs(phimod*rho(idiag))
-             endif
-             rhom1(idiag)=rho(idiag)
-             do i=1,kferm
-               x1(i,idiag)=x1(i,idiag)+rho(idiag)*p(i,idiag)
-             enddo
-           enddo
-c  check to see whether the residual is acceptable for all ndiag....
-c  criterion is a bit ad hoc -- relaxing by a factor arelax improves code
-c  stability and leads to quicker convergence
-           arelax=2.0
-           if(rhomax.lt.arelax*resid) then
-c          if(rhomax.lt.resid) then
-c          call testinv(Phi,resmax,itercg,am,imass,x1,aden,ndiag)
-c  convergence based on || residual || not working well in single precision...
-c          if(resmax.lt.resid) goto 8
-             goto 8
-           endif
-      endif
-c
-c   end of loop over iter
-      enddo
-      write(7,*) 'QMRniterc!, isweep,iter,iflag,imass,anum,ndiag = '
-     &        ,isweep,iter,iflag,imass,anum(0),ndiag
-8     continue
-c
-      if(iflag.lt.2)then
-c  Now evaluate solution x=(MdaggerM)^p * Phi
-      do idiag=1,ndiag
-      do i=1,kferm
-      x(i)=x(i)+anum(idiag)*x1(i,idiag)
-      enddo
-      enddo
-c
-c  update phi0 block if required...
-      if(iflag.eq.1) then
-      do idiag=1,ndiag
-      do i=1,kferm
-      Phi0(i,idiag)=x1(i,idiag)
-      enddo
-      enddo
-      endif
-c
-      else
-c
-      do idiag=1,ndiag
-c
-c  X2 = M*X1
-      do i=1,kferm
-      R(i)=x1(i,idiag)
-      enddo
-      call dslash(X2,R,u,am,imass)
-c
-      if(iflag.eq.2)then
-          coeff=anum(idiag)
-          call derivs(R,X2,coeff,0)
-      else
-          coeff=-anum(idiag)
-          do i=1,kferm
-          R(i)=Phi0(i,idiag)
-          enddo
-          call derivs(R,X2,coeff,0)
-c
-          call dslash(X2,R,u,am,imass)
-          do i=1,kferm
-          R(i)=x1(i,idiag)
-          enddo
-          call derivs(X2,R,coeff,1)
-      endif
-c
-      enddo
-      endif
-c
-c
-      return
-      end
-c**********************************************************************
-c  iflag = 0 : evaluates Rdagger*(Mdagger)'*X2
-c  iflag = 1 : evaluates Rdagger*(M)'*X2
-c**********************************************************************
-      subroutine derivs(R,X2,anum,iflag)
-      parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-      parameter(akappa=0.5)
-      common/neighb/id(kvol,3),iu(kvol,3)
-      common/dirac/gamval(6,4),gamin(6,4)
-      common/gforce/dSdpi(kvol,3)
-c     complex R(kthird,kvol,4),X2(kthird,kvol,4)
-      complex*16 R(kthird,kvol,4),X2(kthird,kvol,4)
-c     complex gamval
-      complex*16 gamval
-      real*8 anum
-      complex*16 tzi
-      integer gamin
-c
-c     write(6,111)
-111   format(' Hi from derivs')
+          integer, intent(in) :: size5
+          complex*16, intent(inout) :: Array(kthird,0:ksize+1,0:ksize+1,
+     &                                       0:ksizet+1, size5)
+        end subroutine
+      end interface
+      end module
 
-c     dSdpi=dSdpi-Re(Rdagger *(d(Mdagger)dp)* X2)
-c     Cf. Montvay & Muenster (7.215)
-      tzi=cmplx(0.0,2*anum)
-c     factor of 2 picks up second term in M&M (7.215)
-c
-      do mu=1,3
-      do idirac=1,4
-      do ithird=1,kthird
-c
-      do i=1,kvol
-      dSdpi(i,mu)=dSdpi(i,mu)-akappa*real(tzi*
-     &(conjg(R(ithird,i,idirac))*
-     & X2(ithird,iu(i,mu),idirac)
-     &-conjg(R(ithird,iu(i,mu),idirac))*
-     &  X2(ithird,i,idirac)))
-      enddo
-c
-      igork1=gamin(mu,idirac)
-      if(iflag.eq.0)then
-      do i=1,kvol
-      dSdpi(i,mu)=dSdpi(i,mu)-real(tzi*gamval(mu,idirac)*
-     &(conjg(R(ithird,i,idirac))*
-     &        X2(ithird, iu(i,mu),igork1)
-     &+conjg(R(ithird,iu(i,mu),idirac))*
-     &             X2(ithird,i,igork1)))
-      enddo
-      else
-      do i=1,kvol
-      dSdpi(i,mu)=dSdpi(i,mu)+real(tzi*gamval(mu,idirac)*
-     &(conjg(R(ithird,i,idirac))*
-     &        X2(ithird,iu(i,mu),igork1)
-     &+conjg(R(ithird,iu(i,mu),idirac))*
-     &             X2(ithird,i,igork1)))
-      enddo
-      endif
-c
-      enddo
-      enddo
-      enddo
-c
-      return
-      end
-c******************************************************************
-c   Calculates residual for testing purposes....
-c   needs to run with double precision vectors to be useful.....
-c******************************************************************
-      subroutine testinv(Phi,resmax,itercg,am,imass,x,aden,ndiag)
-      parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-      parameter(kferm=4*kthird*kvol)
-      common/trial/u(kvol,3),theta(kvol,3),pp(kvol,3)
-      common/para/bbb,am3,ibound
-      complex Phi(kferm)
-      complex*16 vtild(kferm)
-      complex*16 x3(kferm)
-      complex*16 x(kferm,ndiag),x1(kferm),x2(kferm)
-      complex*16 u
-c     complex vtild(kferm)
-c     complex x3(kferm)
-c     complex x(kferm,ndiag),x1(kferm),x2(kferm)
-c      complex u
-      real*8 residual
-      real*8 aden(ndiag)
-c
-      write(6,111)
-111   format(' Hi from testinv')
-c
-      resmax=0.0
-c
-      do idiag=1,ndiag
-      residual=0.0
-      do i=1,kferm
-      x3(i)=x(i,idiag)
-      enddo
-      call dslash(x2,x3,u,am,imass)
-      call dslashd(x1,x2,u,am,imass)
-      do i=1,kferm
-      vtild(i)=x1(i)+aden(idiag)*x3(i)-Phi(i)
-      residual=residual+conjg(vtild(i))*vtild(i)
-      enddo
-c     residual=sqrt(residual)
-      if(residual.gt.resmax) resmax=residual
-c
-      write(6,*) idiag, 'itercg = ',itercg, ' residual = ',residual
-      enddo
-c
-      resmax=sqrt(resmax)
-c
-      return
-      end
-c******************************************************************
-c    matrix inversion via conjugate gradient algorithm
-c       solves (Mdagger)Mx=Phi, 
-c           NB. no even/odd partitioning
-c******************************************************************
-      subroutine congrad(Phi,res,itercg,am,imass)
-      parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-      parameter(kferm=4*kthird*kvol)
-      parameter(niterc=kthird*kvol)
-      common/trial/u(kvol,3),thetas(kvol,3),pp(kvol,3)
-      common/para/bbb,am3,ibound
-      common/vector/x(kferm)
-c     complex Phi(kferm)
-c     complex x,u
-c     complex x1(kferm),x2(kferm),p(kferm),r(kferm)
-      complex*16 Phi(kferm)
-      complex*16 x,u
-      complex*16 x1(kferm),x2(kferm),p(kferm),r(kferm)
-c     write(6,111)
-111   format(' Hi from congrad')
-c
-      resid=kferm*res*res
-      itercg=0
-c
-      do 1 nx=1,niterc
-      itercg=itercg+1
-      if(nx.gt.1) goto 51
-c
-c   initialise p=x, r=Phi(na)
-c
-      do 2 i=1,kferm
-      p(i)=x(i)
-      r(i)=Phi(i)
-2     continue
-      betad=1.0
-      alpha=1.0
-51    alphad=0.0
-c
-c  x1=Mp
-c
-      call dslash(x1,p,u,am,imass)
-c
-      if(nx.eq.1) goto 201
-c
-c   alpha=(r,r)/(p,(Mdagger)Mp)
-c 
-      alphad=0.0
-      do 31 i=1,kferm
-      alphad=alphad+conjg(x1(i))*x1(i)
-31    continue
-      alpha=alphan/alphad
-c      
-c   x=x+alpha*p
-c
-      do 4 i=1,kferm
-      x(i)=x(i)+alpha*p(i)
-4     continue
-201   continue
-c     
-c   x2=(Mdagger)x1=(Mdagger)Mp
-c
-      call dslashd(x2,x1,u,am,imass)
-c
-c   r=r-alpha*(Mdagger)Mp
-c
-      do 6 i=1,kferm
-      r(i)=r(i)-alpha*x2(i)
-6     continue
-c
-c   beta=(r_k+1,r_k+1)/(r_k,r_k)
-c
-      betan=0.0 
-      do 61 i=1,kferm
-      betan=betan+conjg(r(i))*r(i) 
-61    continue 
-      beta=betan/betad
-      betad=betan
-      alphan=betan
-c
-      if(nx.eq.1) beta=0.0
-c
-c   p=r+beta*p
-c
-      do 7 i=1,kferm
-      p(i)=r(i)+beta*p(i)
-7     continue
-      if(betan.lt.resid) goto 8
-1     continue
-c     write(6,1000)
-      write(7,1000)
-1000  format(' # iterations of congrad exceeds niterc')
-8     continue
-c     write(6,*) itercg
-      return
-      end      
-c*****************************************************************
-c   Calculate fermion expectation values via a noisy estimator
-c   -matrix inversion via conjugate gradient algorithm
-c       solves Mx=x1
-c     (Numerical Recipes section 2.10 pp.70-73)   
-c*******************************************************************
-      subroutine measure(psibarpsi,res,aviter,am,imass)
-      parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-      parameter(akappa=0.5)
-      parameter(knoise=10)
-      common/trial/u(kvol,3),theta(kvol,3),pp(kvol,3)
-      common/para/beta,am3,ibound
-      common/dirac/gamval(6,4),gamin(6,4)
-      common /neighb/id(kvol,3),iu(kvol,3)
-      common/vector/xi(kthird,kvol,4)
-      common/ranseed/yran,idum
-      common/v/v(97)
-c     complex x(kvol,4), Phi(kthird,kvol,4)
-c     complex xi,gamval
-c     complex psibarpsi1,psibarpsi2
-c     complex u
-      complex*16 x(kvol,4), Phi(kthird,kvol,4)
-      complex*16 xi,gamval
-      complex*16 psibarpsi1,psibarpsi2
-      complex*16 u
-      real*8 cnum(0:1),cden(1)
-      real ps(kvol,2),pt(kvol,2)
-      real*8 pbp(knoise)
-      integer gamin
-c     write(6,*) 'hi from measure'
-c
-      iter=0
-c     pbp=0.0
-      cnum(0)=0.0
-      cnum(1)=1.0
-      cden(1)=0.0
-c
-      do inoise=1,knoise
-c
-c     set up noise
-      call gauss0(ps)
-      psibarpsi1=(0.0,0.0)
-      call gauss0(pt)
-      psibarpsi2=(0.0,0.0)
-c
-      do idsource=1,2
-c
-c  source on domain wall at ithird=1
-c   
-      if(imass.ne.5)then
-         do idirac=1,4
-           if(idirac.eq.idsource)then
-             do i=1,kvol
-               x(i,idirac)=cmplx(ps(i,1),ps(i,2))
-             enddo
-           else
-             do i=1,kvol
-               x(i,idirac)=(0.0,0.0)
-             enddo
-           endif
-         enddo
-      else
-         do idirac=1,4
-           if(idirac.eq.idsource+2)then
-             do i=1,kvol
-               x(i,idirac)=cmplx(ps(i,1),ps(i,2))
-             enddo
-           else
-             do i=1,kvol
-               x(i,idirac)=(0.0,0.0)
-             enddo
-           endif
-         enddo
-      endif
-c
-c
-      if(imass.ne.5)then
-         do ithird=1,kthird
-         if(ithird.eq.1)then
-            do idirac=1,4
-            do i=1,kvol
-               xi(ithird,i,idirac)=x(i,idirac)
-            enddo
-            enddo
-         else
-            do idirac=1,4
-            do i=1,kvol
-               xi(ithird,i,idirac)=(0.0,0.0)
-            enddo
-            enddo
-         endif
-         enddo
-      else
-c   xi = 0.5(1+gamma_4)*gamma_5*eta on DW at ithird=1
-         do ithird=1,kthird
-         if(ithird.eq.1)then
-            do idirac=1,2
-            do i=1,kvol
-               xi(ithird,i,idirac)=-x(i,idirac+2)
-               xi(ithird,i,idirac+2)=(0.0,0.0)
-            enddo
-            enddo
-         else
-c   xi = 0.5(1+gamma_4)*eta on DW at ithird=1
-            do idirac=1,4
-            do i=1,kvol
-               xi(ithird,i,idirac)=(0.0,0.0)
-            enddo
-            enddo
-         endif
-         enddo
-      endif
-c
-c Phi= Mdagger*xi
-c
-      call dslashd(Phi,xi,u,am,imass)
-c     call qmrherm(Phi,res,itercg,am,imass,cnum,cden,1,0)
-      call congrad(Phi,res,itercg,am,imass)
-      iter=iter+itercg
-c
-      if(imass.ne.5)then
-c  pbp1 = x^dagger (0.5(1+gamma_4)) xi(kthird)
-         do i=1,kvol
-         psibarpsi1=psibarpsi1
-     &    +conjg(x(i,idsource))*xi(kthird,i,idsource)
-         enddo
-      else
-c  pbp1 = x^dagger (0.5(1-gamma_4)) xi(1)
-         do i=1,kvol
-         psibarpsi1=psibarpsi1
-     &    +conjg(x(i,idsource+2))*xi(1,i,idsource+2)
-         enddo
-      endif
-c
-c
-c  source on domain wall at ithird=kthird
-      idsource2=idsource+2
-c
-      if(imass.ne.5)then
-         do idirac=1,4
-         do i=1,kvol
-         if(idirac.eq.idsource2)then
-             x(i,idirac)=cmplx(pt(i,1),pt(i,2))
-         else
-             x(i,idirac)=(0.0,0.0)
-         endif
-         enddo
-         enddo
-      else
-         do idirac=1,4
-         do i=1,kvol
-         if(idirac.eq.idsource2-2)then
-             x(i,idirac)=cmplx(pt(i,1),pt(i,2))
-         else
-             x(i,idirac)=(0.0,0.0)
-         endif
-         enddo
-         enddo
-      endif
-c
-      if(imass.ne.5)then
-c   xi = 0.5(1-gamma_4)*eta on DW at ithird=kthird
-         do ithird=1,kthird
-         if(ithird.eq.kthird)then
-            do idirac=1,4
-            do i=1,kvol
-               xi(ithird,i,idirac)=x(i,idirac)
-            enddo
-            enddo
-         else
-            do idirac=1,4
-            do i=1,kvol
-               xi(ithird,i,idirac)=(0.0,0.0)
-            enddo
-            enddo
-         endif
-         enddo
-      else
-c   xi = 0.5(1-gamma_4)*gamma_5*eta on DW at ithird=kthird
-         do ithird=1,kthird
-         if(ithird.eq.kthird)then
-            do idirac=1,2
-            do i=1,kvol
-               xi(ithird,i,idirac+2)=-x(i,idirac)
-               xi(ithird,i,idirac)=(0.0,0.0)
-            enddo
-            enddo
-         else
-            do idirac=1,4
-            do i=1,kvol
-               xi(ithird,i,idirac)=(0.0,0.0)
-            enddo
-            enddo
-         endif
-         enddo
-      endif
-c
-c Phi= Mdagger*xi
-c
-      call dslashd(Phi,xi,u,am,imass)
-c
-c xi= (M)**-1 * Phi
-c
-c     call qmrherm(Phi,res,itercg,am,imass,cnum,cden,1,0)
-      call congrad(Phi,res,itercg,am,imass)
-      iter=iter+itercg
-c
-      if(imass.ne.5)then
-c pbp2= - x^dagger (0.5(1-gamma_4)) xi(1)
-         do i=1,kvol
-         psibarpsi2=psibarpsi2
-     &     +conjg(x(i,idsource2))*xi(1,i,idsource2)
-         enddo
-      else
-c pbp2= - x^dagger (0.5(1-gamma_4)) xi(kthird)
-         do i=1,kvol
-         psibarpsi2=psibarpsi2
-     &     +conjg(x(i,idsource))*xi(kthird,i,idsource)
-         enddo
-      endif
-c
-c  end trace on Dirac indices....
-      enddo
-c
-      if(imass.eq.1)then
-         psibarpsi1=psibarpsi1/kvol
-         psibarpsi2=psibarpsi2/kvol
-         pbp(inoise)=psibarpsi1+psibarpsi2
-      elseif(imass.eq.3)then
-         psibarpsi1=(0.0,-1.0)*psibarpsi1/kvol
-         psibarpsi2=(0.0,+1.0)*psibarpsi2/kvol
-         pbp(inoise)=psibarpsi1+psibarpsi2
-      elseif(imass.eq.5)then
-         psibarpsi1=(0.0,-1.0)*psibarpsi1/kvol
-         psibarpsi2=(0.0,-1.0)*psibarpsi2/kvol
-         pbp(inoise)=psibarpsi1+psibarpsi2
-      endif
-c        write(6,*) real(psibarpsi1),aimag(psibarpsi1),
-c    &       real(psibarpsi2),aimag(psibarpsi2)
-         write(100,*) real(psibarpsi1),aimag(psibarpsi1),
-     &       real(psibarpsi2),aimag(psibarpsi2)
-c
-c end loop on noise
-      enddo
-c
-      psibarpsi=0.0
-      susclsing=0.0
-c
-      do inoise=1,knoise
-      psibarpsi=psibarpsi+pbp(inoise)
-         do jnoise=knoise,inoise+1,-1
-         susclsing=susclsing+pbp(inoise)*pbp(jnoise)
-         enddo
-      enddo
-      psibarpsi=psibarpsi/knoise
-      susclsing=2*kvol*susclsing/(knoise*(knoise-1))
-         write(200,*) psibarpsi,susclsing
-      aviter=float(iter)/(4*knoise)
-      return
-      end
-c******************************************************************
-c   Calculate meson correlators using point sources on domain walls
-c   -matrix inversion via conjugate gradient algorithm
-c       solves Mx=x1
-c     (Numerical Recipes section 2.10 pp.70-73)   
-c*******************************************************************
-      subroutine meson(res,itercg,aviter,am,imass)
-      parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-      parameter(ksize2=ksize*ksize)
-      parameter(akappa=0.5)
-      common/trial/u(kvol,3),theta(kvol,3),pp(kvol,3)
-      common/para/beta,am3,ibound
-      common/dirac/gamval(6,4),gamin(6,4)
-      common /neighb/id(kvol,3),iu(kvol,3)
-      common/vector/xi(kthird,kvol,4)
-      common/ranseed/yran,idum
-      common/v/v(97)
-c     complex x(kvol,4),x0(kvol,4),Phi(kthird,kvol,4)
-c     complex xi,gamval
-c     complex prop00(kvol,3:4,1:2),prop0L(kvol,3:4,3:4)
-      complex*16 x(kvol,4),x0(kvol,4),Phi(kthird,kvol,4)
-      complex*16 xi,gamval
-      complex*16 prop00(kvol,3:4,1:2),prop0L(kvol,3:4,3:4)
-c     complex prop00n(kvol,3:4,1:2),prop0Ln(kvol,3:4,3:4)
-      real cpm(0:ksizet-1),cmm(0:ksizet-1)
-c     complex cpmn(0:ksizet-1),cmmn(0:ksizet-1)
-c     complex cferm1(0:ksizet-1), cferm2(0:ksizet-1)
-c     complex u
-      complex*16 cferm1(0:ksizet-1), cferm2(0:ksizet-1)
-      complex*16 u
-      real ps(kvol,2)
-      real rano
-      integer gamin
-c     write(6,*) 'hi from meson'
-c      
-      nsource=5
-      nsmear=10
-      c=0.25
-      iter=0
-c
-      do it=0,ksizet-1
-      cpm(it)=(0.0,0.0)
-      cmm(it)=(0.0,0.0)
-c     cpmn(it)=(0.0,0.0)
-c     cmmn(it)=(0.0,0.0)
-      cferm1(it)=(0.0,0.0)
-      cferm2(it)=(0.0,0.0)
-      enddo
-c
-c      susceptibility
-      chim=0.0
-      chip=0.0
-c
-      do ksource=1,nsource
-c
-c   random location for +m source
-      ixxx=int(ksize*rano(yran,idum))+1
-      iyyy=int(ksize*rano(yran,idum))+1
-      ittt=int(ksizet*rano(yran,idum))+1
-      isource=ixxx+ksize*((iyyy-1)+ksize*(ittt-1))
-c     write(6,*) ixxx,iyyy,ittt, isource
-c
-c  loop over Dirac index of source...   
-      do idsource=3,4
-c
-c  source on domain wall at ithird=1
-      do 300 ithird=1,kthird
-      if(ithird.eq.1)then
-      do idirac=1,4
-      do i=1,kvol
-      x(i,idirac)=(0.0,0.0)
-      enddo
-c  wall source
-c     ioff=(ittt-1)*ksize2
-c     do i=1,ksize2
-c     x(i+ioff,idirac)=(1.0,0.0)/ksize2
-c     enddo
-c
-      enddo
-c  point source at fixed site, spin...
-      x(isource,idsource)=(1.0,0.0)
-c
-c now smear it.....
-c
-      do ismear=1,nsmear
-      call dslash2d(x0,x,u)
-      do idirac=1,4
-      do i=1,kvol
-      x(i,idirac)=(1.0-c)*x(i,idirac)+c*x0(i,idirac)
-      enddo
-      enddo
-      enddo
-c
-      else
-      do idirac=1,4
-      do i=1,kvol
-      xi(ithird,i,idirac)=(0.0,0.0)
-      enddo
-      enddo
-      endif
-300   continue
-c
-c   xi = x  on DW at ithird=1
-c
-      do idirac=1,4
-      do i=1,kvol
-      xi(1,i,idirac)=x(i,idirac)
-      enddo
-      enddo
-c
-c Phi= Mdagger*xi
-c
-      call dslashd(Phi,xi,u,am,imass)
-c
-c  preconditioning (no,really)
-      call dslashd(xi,Phi,u,am,imass)
-c  
-c xi= (MdaggerM)**-1 * Phi 
-c
-c     call congrad(Phi,res,itercg,am,imass) 
-      iter=iter+itercg
-c
-      do idsink=1,2
-      idsink2=idsink+2
-      do i=1,kvol
-      prop00(i,idsource,idsink)=xi(1,i,idsink)
-      prop0L(i,idsource,idsink2)=xi(kthird,i,idsink2)
-      enddo
-      enddo
-c
-c     if(imass.ne.1)then
-c  now evaluate with sign of mass reversed (not needed for hermitian mass term)
-c     am=-am
-c  source on domain wall at ithird=1
-c     do 400 ithird=1,kthird
-c     if(ithird.eq.1)then
-c     do idirac=1,4
-c     do i=1,kvol
-c     xi(1,i,idirac)=x(i,idirac)
-c     enddo
-c     enddo
-c     else
-c     do idirac=1,4
-c     do i=1,kvol
-c     xi(ithird,i,idirac)=(0.0,0.0)
-c     enddo
-c     enddo
-c     endif
-400   continue
-c
-c Phi= Mdagger*xi
-c
-c     call dslashd(Phi,xi,u,am,imass)
-c
-c     call dslashd(xi,Phi,u,am,imass)
-c  
-c xi= (MdaggerM)**-1 * Phi 
-c
-c     call congrad(Phi,res,itercg,am,imass) 
-c     iter=iter+itercg
-c
-c     do idsink=1,2
-c     idsink2=idsink+2
-c     do i=1,kvol
-c     prop00n(i,idsource,idsink)=xi(1,i,idsink)
-c     prop0Ln(i,idsource,idsink2)=xi(kthird,i,idsink2)
-c     enddo
-c     enddo
-c
-c     am=-am
-c     endif
-c
-c  end loop on source Dirac index....
-      enddo
-c
-c  Now tie up the ends....
-c
-c  First C+-
-c
-c  now evaluate the trace (exploiting projection)
-      do id1=3,4
-      do id2=1,2
-      do it=0,ksizet-1
-      itt=mod((ittt+it-1),ksizet)+1
-      ioff=(itt-1)*ksize2
-      do i=1,ksize2
-      cpm(it)=cpm(it)
-     &        +prop00(i+ioff,id1,id2)*conjg(prop00(i+ioff,id1,id2))
-      enddo
-      enddo
-      enddo
-      enddo
-c
-c     if(imass.ne.1)then
-c     do id1=3,4
-c     do id2=1,2
-c     do it=0,ksizet-1
-c     itt=mod((ittt+it-1),ksizet)+1
-c     ioff=(itt-1)*ksize2
-c     do i=1,ksize2
-c     cpmn(it)=cpmn(it)
-c    &        +prop00(i+ioff,id1,id2)*conjg(prop00n(i+ioff,id1,id2))
-c     enddo
-c     enddo
-c     enddo
-c     enddo
-c     endif
-c
-c  next C--
-c  now evaluate the trace exploiting projection
-      do id1=3,4
-      do id2=3,4
-      do it=0,ksizet-1
-      itt=mod((ittt+it-1),ksizet)+1
-      ioff=(itt-1)*ksize2
-      do i=1,ksize2
-      cmm(it)=cmm(it)
-     &   +prop0L(i+ioff,id1,id2)*conjg(prop0L(i+ioff,id1,id2))
-      enddo
-      enddo
-      enddo
-      enddo
-c
-c     if(imass.ne.1)then
-c     do id1=3,4
-c     do id2=3,4
-c     do it=0,ksizet-1
-c     itt=mod((ittt+it-1),ksizet)+1
-c     ioff=(itt-1)*ksize2
-c     do i=1,ksize2
-c     cmmn(it)=cmmn(it)
-c    &   +prop0L(i+ioff,id1,id2)*conjg(prop0Ln(i+ioff,id1,id2))
-c     enddo
-c     enddo
-c     enddo
-c     enddo
-c     endif
-c
-c    now the fermion propagator
-c  = tr{ P_-*Psi(0,1)Psibar(x,Ls) + gamma_0*P_-*Psi(0,1)Psibar(x,1) }
-      do idd=3,4
-      do it=0,ksizet-1
-      itt=mod((ittt+it-1),ksizet)+1
-c correct for apbc
-      if(itt.ge.ittt)then
-        isign=1
-      else
-        isign=ibound
-      endif
-c
-      ioff=(itt-1)*ksize2
-      do i=1,ksize2
-      cferm1(it)=cferm1(it)
-     & +isign*akappa*prop0L(i+ioff,idd,idd)
-      cferm2(it)=cferm2(it)
-     & +isign*gamval(3,idd)*prop00(i+ioff,idd,gamin(3,idd))
-      enddo
-      enddo
-      enddo
-c
-c  finish loop over sources
-      enddo
-c
-      do it=0,ksizet-1
-      cpm(it)=cpm(it)/nsource
-      cmm(it)=cmm(it)/nsource
-c  Cf. (54) of 1507.07717
-      chim=chim+2*(cpm(it)+cmm(it))
-      enddo
-c     if(imass.ne.1)then
-c       if(imass.eq.3)then
-c         do it=0,ksizet-1
-c           cpmn(it)=cpmn(it)/nsource
-c           cmmn(it)=cmmn(it)/nsource
-c  Cf. (54),(61) of 1507.07717
-c           chip=chip-2*(cpmn(it)-cmmn(it))
-c         enddo
-c       else
-c         do it=0,ksizet-1
-c           cpmn(it)=cpmn(it)/nsource
-c           cmmn(it)=cmmn(it)/nsource
-c  Cf. (64),(65) of 1507.07717
-c           chip=chip-2*(cpm(it)-cmm(it))
-c         enddo
-c       endif
-c     endif
-c
-      do it=0,ksizet-1
-      write(302,*) it, cpm(it), cmm(it)
-      write(500,*) it, real(cferm1(it)), aimag(cferm1(it))
-      write(501,*) it, real(cferm2(it)), aimag(cferm2(it))
-      enddo
-c     write(6,*) chim
-      write(400,*) chim
-c     if(imass.ne.1)then
-c     do it=0,ksizet-1
-c     write(402,*) it, real(cpmn(it)), real(cmmn(it))
-c     write(403,*) it, aimag(cpmn(it)), aimag(cmmn(it))
-c     enddo
-c     write(401,*) chip
-c     endif
-c
-c     if(imass.eq.1)then
-      aviter=float(iter)/(2*nsource)
-c     else
-c     aviter=float(iter)/(4*nsource)
-c     endif
-c
-      return
-      end
-c*******************************************************************
-c
-      subroutine sread
-      parameter(ksize=12,ksizet=12,kvol=ksizet*ksize*ksize)
-      common/gauge/ theta(kvol,3),seed
-      real*8 seed
-      open(unit=10,file='con',
-     1     status='unknown',form='unformatted')
-      read (10) theta,seed
-      close(10)
-      return
-      end
-c
-      subroutine swrite
-      parameter(ksize=12,ksizet=12,kvol=ksizet*ksize*ksize)
-      common/gauge/ theta(kvol,3),seed
-      real*8 seed
-      open(unit=31,file='con',
-     1     status='unknown',form='unformatted')
-      write (31) theta,seed
-      close(31)
-      return
-      end
-c
+C       subroutine dwf3d_main
+C c*******************************************************************
+C c    Rational Hybrid Monte Carlo algorithm for bulk Thirring Model with Domain Wall
+C c         fermions
+C c
+C c    requires operation of QMR on complex vectors to determine
+C c    (Mdagger M)**-1  Phi 
+C c
+C c    requires input partial fraction coefficients from Remez algorithm
+C c    of Clarke & Kennedy
+C c
+C c    the "third" direction is actually indexed 4 in the code - sorry!
+C c      (should have used C I know)
+C c
+C c           { 1 - hermition mass term psibar psi
+C c    imass= { 3 - antih.    mass term i psibar gamma_3 psi
+C c           { 5 - antih.    mass term i psibar gamma_5 psi
+C c     linear combinations of above require code modification
+C c
+C c    code exploits fact that gamma_3 is diagonal in Dirac basis used - speeds up 
+C c    evolution slightly, and measurement by factor of two. 
+C c
+C c    Fermion expectation values are measured using a noisy estimator.
+C c    on the Wilson matrix, which has dimension 4*kvol*kthird
+C c    inversions done using congrad, and matrix multiplies with dslash, dslashd
+C c
+C c    Pauli-Villars determinant defined using a hermitian mass m_h=One
+C c
+C c    trajectory length is random with mean dt*iterl
+C c    The code runs for a fixed number iter2 of trajectories.
+C c
+C c    Phi: pseudofermion field 
+C c    am: bare fermion mass 
+C c    actiona: running average of total action
+C c
+C c                                               SJH February 2017
+C c*******************************************************************
+C       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
+C       parameter(respbp=0.000001,rescgg=0.000001,rescga=0.000000001)
+C       parameter(rescgm=0.000000001)
+C       parameter(itermax=1000)
+C       parameter(One=1.0)
+C       parameter(ndiag=25,ndiagg=12,Nf=1)
+C       common/gauge/theta(kvol,3),seed
+C       common/trial/ut(kvol,3),thetat(kvol,3),pp(kvol,3)
+C       common /para/beta,am3,ibound
+C       common/remez2/anum2(0:ndiag),aden2(ndiag),
+C      &              bnum2(0:ndiag),bden2(ndiag)
+C       common/remez4/anum4(0:ndiag),aden4(ndiag),
+C      &              bnum4(0:ndiag),bden4(ndiag)
+C       common/remez2g/anum2g(0:ndiagg),aden2g(ndiagg),
+C      &              bnum2g(0:ndiagg),bden2g(ndiagg)
+C       common/remez4g/anum4g(0:ndiagg),aden4g(ndiagg),
+C      &              bnum4g(0:ndiagg),bden4g(ndiagg)
+C       common/gforce/dSdpi(kvol,3)
+C       common /neighb/id(kvol,3),iu(kvol,3)
+C       common/param/ancg,ancgh,ancgf,ancgpf
+C       common/parampv/ancgpv,ancghpv,ancgfpv,ancgpfpv
+C       common/trans/tpi 
+C       common/dum1/ R(kthird,kvol,4),ps(kvol,2)
+C       common/vector/X1(kthird,kvol,4)
+C       common/ranseed/yran,idum
+C       common/v/v(97)
+C c     complex Phi(kthird,kvol,4,Nf),X0(kthird,kvol,4)
+C c     complex R,zi,qq,qbqb
+C c     complex u,ut,X1
+C c     complex a,b
+C       complex*16 Phi(kthird,kvol,4,Nf),X0(kthird,kvol,4)
+C       complex*16 R,zi,qq,qbqb
+C       complex*16 u,ut,X1
+C       complex*16 a,b
+C       real rano
+C       real*8 H0,H1,S0,S1,dH,dS,hg,hp
+C       real*8 seed
+C       real*8 anum2,aden2,bnum2,bden2
+C       real*8 anum4,aden4,bnum4,bden4
+C       real*8 anum2g,aden2g,bnum2g,bden2g
+C       real*8 anum4g,aden4g,bnum4g,bden4g
+C c*******************************************************************
+C c     input
+C c*******************************************************************
+C       ibound=-1
+C       istart=-1
+C       iread=1
+C       iwrite=0
+C       iprint=5
+C       iseed=0
+C       icheck=100
+C       zi=(0.0,1.0)
+C       tpi=2.0*acos(-1.0)
+C c*******************************************************************
+C c     end of input
+C c*******************************************************************
+C       open(unit=7,file='output',status='unknown')
+C       open(unit=25,file='midout',status='unknown')
+C       open(unit=98,file='control',status='unknown')
+C       open(unit=36,file='remez2',status='unknown')
+C       open(unit=37,file='remez4',status='unknown')
+C       open(unit=38,file='remez2g',status='unknown')
+C       open(unit=39,file='remez4g',status='unknown')
+C       if(iread.eq.1) then
+C       call sread
+C       endif
+C       read(25,*) dt,beta,am3,am,imass,iterl,iter2
+C       close(25)
+C c set a new seed by hand...
+C       if(iseed.ne.0)then
+C       seed=4139764973254.0
+C       endif
+C       write(7,*) 'seed: ', seed
+C       call rranset(seed)
+C       idum=-1
+C       y=rano(yran,idum)
+C c     write(6,*) 'rano: ', y,yran,idum
+C c*******************************************************************
+C c     initialization
+C c     istart.lt.0 : start from tape
+C c     istart=0    : ordered start
+C c     istart=1    : random start
+C c*******************************************************************
+C       call init(istart)
+C c  read in Remez coefficients
+C       read(36,*) anum2(0)
+C       read(37,*) anum4(0)
+C       read(38,*) anum2g(0)
+C       read(39,*) anum4g(0)
+C       do i=1,ndiag
+C       read(36,*) anum2(i),aden2(i)
+C       read(37,*) anum4(i),aden4(i)
+C       enddo
+C       do i=1,ndiagg
+C       read(38,*) anum2g(i),aden2g(i)
+C       read(39,*) anum4g(i),aden4g(i)
+C       enddo
+C       read(36,*) bnum2(0)
+C       read(37,*) bnum4(0)
+C       read(38,*) bnum2g(0)
+C       read(39,*) bnum4g(0)
+C       do i=1,ndiag
+C       read(36,*) bnum2(i),bden2(i)
+C       read(37,*) bnum4(i),bden4(i)
+C       enddo
+C       do i=1,ndiagg
+C       read(38,*) bnum2g(i),bden2g(i)
+C       read(39,*) bnum4g(i),bden4g(i)
+C       enddo
+C c*******************************************************************
+C c     print heading
+C c*******************************************************************
+C       traj=iterl*dt
+C       proby=1.0/float(iterl)
+C c     write(6, 9001)ksize,ksizet,kthird,Nf,dt,traj,ndiag,ndiagg,
+C c    & iter2,beta,am3,am,imass
+C       write(7, 9001)ksize,ksizet,kthird,Nf,dt,traj,ndiag,ndiagg,
+C      & iter2,beta,am3,am,imass
+C 9001  format(' ksize=',i3,' ksizet=',i3,/
+C      1 ,' kthird=',i3,/
+C      1 ,' Nf =',i3,/
+C      1 ,' time step: dt=',f6.4,' trajectory length=',f9.6,/
+C      1 ,' Remez ndiag: action =',i3' guidance=',i3,/
+C      1 ,' # trajectories=',i6,' beta=',f9.6,/
+C      1 ,' am3=',f6.4,' am=',f6.4/
+C      1 ,' imass=',i2)
+C c     write(6,9004) rescgg,rescga,respbp
+C       write(7,9004) rescgg,rescga,respbp
+C 9004  format(' Stopping residuals: guidance: ',e11.4,' acceptance: ',
+C      &     e11.4,' estimator: ',e11.4)
+C c     write(6,9044) rescgm
+C       write(7,9044) rescgm
+C 9044  format(' Stopping residuals: meson: ',e11.4)
+C       call rranget(seed)
+C c     write(6,*) 'seed: ', seed
+C       write(7,*) 'seed: ', seed
+C c*******************************************************************
+C c       initialize for averages
+C c*******************************************************************
+C       actiona=0.0
+C       vel2a=0.0
+C       pbpa=0.0
+C       ancg=0.0
+C       ancgh=0.0
+C       ancgf=0.0
+C       ancgpf=0.0
+C       ancgpv=0.0
+C       ancghpv=0.0
+C       ancgfpv=0.0
+C       ancgpfpv=0.0
+C       ancgma=0.0
+C       yav=0.0
+C       yyav=0.0 
+C       naccp=0
+C       ipbp=0
+C       itot=0
+C c*******************************************************************
+C c     start of classical evolution
+C c*******************************************************************
+C       do 601 isweep=1,iter2
+C c uncomment line below to go straight to measurement
+C c     goto 666
+C c*******************************************************************
+C c     initialise trial fields
+C c*******************************************************************
+C       do 2007 mu=1,3
+C       do 2007 i=1,kvol
+C       thetat(i,mu)=theta(i,mu)
+C 2007  continue
+C c
+C       call coef(ut,thetat)
+C c*******************************************************************
+C c  Pseudofermion fields: Phi = {MdaggerM(1)}^-1/4 * {MdaggerM(m)}^1/4 * R, where
+C c   R is gaussian
+C c*******************************************************************
+C       do ia=1,Nf
+C c
+C       do idirac=1,4
+C       do ithird=1,kthird
+C       call gauss0(ps)
+C       do i=1,kvol
+C       R(ithird,i,idirac)=cmplx(ps(i,1),ps(i,2))
+C       enddo
+C       enddo
+C       enddo
+C c
+C c  For now Phi = {MdaggerM}^0.25 * R
+C c
+C       call qmrherm(R,rescga,itercg,am,imass,anum4,aden4,ndiag,
+C      &             0,isweep,0)
+C       ancgpf=ancgpf+float(itercg)
+C       do idirac=1,4
+C       do i=1,kvol
+C       do ithird=1,kthird
+C       R(ithird,i,idirac)=X1(ithird,i,idirac)
+C       enddo
+C       enddo
+C       enddo
+C       call qmrherm(R,rescga,itercg,One,1,bnum4,bden4,ndiag,
+C      &             0,isweep,0)
+C       ancgpfpv=ancgpfpv+float(itercg)
+C c
+C       do idirac=1,4
+C       do i=1,kvol
+C       do ithird=1,kthird
+C       Phi(ithird,i,idirac,ia)=X1(ithird,i,idirac)
+C       enddo
+C       enddo
+C       enddo
+C c
+C       enddo
+C c*******************************************************************
+C c     heatbath for p 
+C c*******************************************************************
+C c  for some occult reason this write statement is needed to ensure compatibility with earlier versions
+C c     write(6,*) yran,idum
+C c     write(98,*) yran,idum
+C       do mu=1,3
+C       call gaussp(ps)
+C       do i=1,kvol
+C       pp(i,mu)=ps(i,1)
+C       enddo
+C       enddo
+C c     write(6,*) yran,idum
+C c*******************************************************************
+C c  call to Hamiltonian
+C c     
+C       call hamilton(Phi,
+C      &      H0,hg,hp,S0,rescga,isweep,0,am,imass)
+C       if(isweep.eq.1) then
+C       action=S0/kvol
+C       gaction=hg/kvol
+C       paction=hp/kvol
+C       endif 
+C c     goto 501
+C c*******************************************************************
+C c      half-step forward for p
+C c*******************************************************************
+C       call force(Phi,rescgg,am,imass,isweep,0)
+C       d=dt*0.5
+C       do 2004 mu=1,3
+C       do 2004 i=1,kvol
+C       pp(i,mu)=pp(i,mu)-dSdpi(i,mu)*d
+C 2004  continue
+C c*******************************************************************
+C c     start of main loop for classical time evolution
+C c*******************************************************************
+C       do 500 iter=1,itermax
+C c
+C c  step (i) st(t+dt)=st(t)+p(t+dt/2)*dt;
+C c
+C       d=dt
+C       do 2001 mu=1,3
+C       do 2001 i=1,kvol
+C       thetat(i,mu)=thetat(i,mu)+d*pp(i,mu)
+C 2001  continue
+C c
+C c  step (ii)  p(t+3dt/2)=p(t+dt/2)-dSds(t+dt)*dt (1/2 step on last iteration)
+C c
+C       call coef(ut,thetat)
+C       call force(Phi,rescgg,am,imass,isweep,iter)
+C c
+C c test for end of random trajectory
+C c 
+C       ytest=rano(yran,idum)
+C       if(ytest.lt.proby)then
+C       d=dt*0.5
+C       do 2005 mu=1,3
+C       do 2005 i=1,kvol
+C       pp(i,mu)=pp(i,mu)-d*dSdpi(i,mu)
+C 2005  continue
+C       itot=itot+iter 
+C       goto 501
+C       else
+C       d=dt
+C       do 3005 mu=1,3
+C       do 3005 i=1,kvol
+C       pp(i,mu)=pp(i,mu)-d*dSdpi(i,mu)
+C 3005  continue
+C       endif
+C c 
+C 500   continue
+C c**********************************************************************
+C c  Monte Carlo step: accept new fields with probability=
+C c              min(1,exp(H0-H1))
+C c**********************************************************************
+C 501   continue 
+C       call hamilton(Phi,
+C      &       H1,hg,hp,S1,rescga,isweep,-1,am,imass)
+C       dH=H0-H1
+C       dS=S0-S1
+C       write(98,*) dH,dS
+C       y=exp(dH)      
+C       yav=yav+y 
+C       yyav=yyav+y*y 
+C       if(dH.lt.0.0)then
+C       x=rano(yran,idum)
+C       if(x.gt.y)goto 600
+C       endif
+C c
+C c     step accepted: set s=st
+C c
+C       do 2006 mu=1,3
+C       do 2006 i=1,kvol
+C       theta(i,mu)=thetat(i,mu)
+C 2006  continue      
+C       naccp=naccp+1
+C       action=S1/kvol
+C       gaction=hg/kvol
+C       paction=hp/kvol
+C 600   continue
+C       write(11,*) isweep,gaction,paction
+C       actiona=actiona+action 
+C       vel2=0.0
+C       do 457 mu=1,3
+C       do 457 i=1,kvol
+C       vel2=vel2+pp(i,mu)*pp(i,mu)
+C 457   continue
+C       vel2=vel2/(3*kvol)
+C       vel2a=vel2a+vel2
+C c
+C c     uncomment to disable measurements
+C c     goto 601
+C 666   if((isweep/iprint)*iprint.eq.isweep)then
+C       do 2066 mu=1,3
+C       do 2066 i=1,kvol
+C       thetat(i,mu)=theta(i,mu)
+C 2066  continue      
+C       call coef(ut,thetat)
+C       call measure(pbp,respbp,ancgm,am,imass)
+C c     call meson(rescgm,itercg,ancgm,am,imass)
+C       pbpa=pbpa+pbp
+C       ancgma=ancgma+ancgm
+C       ipbp=ipbp+1
+C c     write(11,*) pbp
+C c     write(6,*) isweep,':  ',pbp,ancgm
+C       endif
+C c
+C       if((isweep/icheck)*icheck.eq.isweep)then
+C       call rranget(seed)
+C       if(iwrite.eq.1) then
+C       call swrite
+C       endif
+C       flush(100)
+C       flush(200)
+C c     flush(302)
+C c     flush(400)
+C c     flush(500)
+C c     flush(501)
+C       if(imass.ne.1)then
+C c     flush(401)
+C c     flush(402)
+C c     flush(403)
+C       endif
+C c     write(7,9023) seed
+C       endif
+C c
+C 601   continue
+C c*******************************************************************
+C c     end of main loop
+C c*******************************************************************
+C       actiona=actiona/iter2 
+C       vel2a=vel2a/iter2 
+C       pbpa=pbpa/ipbp
+C       ancg=ancg/(Nf*itot)
+C       ancgh=ancgh/(2*Nf*iter2)
+C       ancgpf=ancgpf/(Nf*iter2)
+C       ancgpv=ancgpv/(Nf*itot)
+C       ancgf=ancgf/(Nf*itot)
+C       ancgfpv=ancgfpv/(Nf*itot)
+C       ancghpv=ancghpv/(2*Nf*iter2)
+C       ancgpfpv=ancgpfpv/(iter2*Nf)
+C       ancgma=ancgma/ipbp
+C       yav=yav/iter2
+C       yyav=yyav/iter2-yav*yav 
+C       yyav=sqrt(yyav/(iter2-1)) 
+C       atraj=dt*itot/iter2 
+C c*******************************************************************
+C c     print global averages
+C c*******************************************************************
+C c     write(6, 9022) iter2,naccp,atraj,yav,yyav,ancg,ancgpv,ancgh,ancghpv,ancgf,
+C c    & ancgfpv,ancgpf,ancgpfpv,pbpa,vel2a,actiona
+C       write(7, 9022) iter2,naccp,atraj,yav,yyav,
+C      & ancg,ancgpv,ancgh,ancghpv,ancgf,ancgfpv,ancgpf,ancgpfpv,
+C      & pbpa,ancgma,vel2a,actiona
+C 9022  format(' averages for last ',i6,' trajectories',/ 
+C      & 1x,' # of acceptances: ',i6,' average trajectory length= ',f8.3/
+C      & 1x,' <exp-dH>=',e11.4,' +/-',e10.3/
+C      2 1x,' av. # QMR itr.'/
+C      & 1x,'     guidance: DWF  ',f9.3,'; PV  ',f9.3/
+C      & 1x,'   acceptance: DWF  ',f9.3,'; PV  ',f9.3/
+C      & 1x,'        force: DWF  ',f9.3,'; PV  ',f9.3/
+C      & 1x,'pseudofermion: DWF  ',f9.3,'; PV  ',f9.3/
+C      1 1x,' psibarpsi=',e11.3/
+C      2 1x,' av. # QMR itr.',f9.3//
+C      & 1x,' mean square velocity=',e10.3,'; action per site=',e10.3//)
+C       write(7, 9024)
+C       write(7, 9024)
+C 9024  format(1x)
+C c
+C       close(11)
+C c
+C       if(iwrite.eq.1) then
+C       call rranget(seed)
+C       call swrite
+C       write(7,*) 'seed: ', seed
+C       endif
+C c
+C       stop
+C       end
+C c******************************************************************
+C c   calculate dSds for gauge fields at each intermediate time
+C c******************************************************************
+C       subroutine force(Phi,res1,am,imass,isweep,iter)
+C       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksize*ksize*ksizet)
+C       parameter(kvol2=ksize*ksize)
+C       parameter(kferm=4*kvol*kthird)
+C       parameter(ndiagg=12,ndiag=ndiagg)
+C       parameter(One=1.0)
+C       parameter(Nf=1)
+C       common/remez2g/anum2(0:ndiag),aden2(ndiag),
+C      &              bnum2(0:ndiag),bden2(ndiag)
+C       common/remez4g/anum4(0:ndiag),aden4(ndiag),
+C      &              bnum4(0:ndiag),bden4(ndiag)
+C       common/phi0/Phi0(kferm,25)
+C       common/trial/u(kvol,3),theta(kvol,3),pp(kvol,3)
+C       common/para/beta,am3,ibound
+C       common/param/ancg,ancgh,ancgf,ancgpf
+C       common/parampv/ancgpv,ancghpv,ancgfpv,ancgpfpv
+C       common/gforce/dSdpi(kvol,3)
+C       common/vector/X1(kferm)
+C c     complex Phi(kferm,Nf),X2(kferm)
+C c     complex X1,u,Phi0
+C       complex*16 Phi(kferm,Nf),X2(kferm)
+C       complex*16 X1,u,Phi0
+C       real*8 anum2,aden2,bnum2,bden2
+C       real*8 anum4,aden4,bnum4,bden4
+C c
+C c     write(6,111)
+C 111   format(' Hi from force')
+C c
+C       do mu=1,3
+C       do i=1,kvol
+C          dSdpi(i,mu)=0.0
+C       enddo
+C       enddo
+C c
+C c uncomment this line to quench the fermions!
+C c     return
+C c pseudofermion action is
+C c   Phi^dagger {MdaggerM(1)}^1/4 {MdaggerM(m)})^-1/2 {MdaggerM(1)}^1/4 Phi
+C c
+C       do ia=1,Nf
+C c
+C       do i=1,kferm
+C       X2(i)=Phi(i,ia)
+C       enddo
+C       call qmrherm(X2,res1,itercg,One,1,anum4,aden4,ndiag,
+C      &             1,isweep,iter)
+C       ancgpv=ancgpv+float(itercg)
+C       do i=1,kferm
+C       X2(i)=X1(i)
+C       enddo
+C c
+C       call qmrherm(X2,res1,itercg,am,imass,bnum2,bden2,ndiag,
+C      &             0,isweep,iter)
+C       ancg=ancg+float(itercg)
+C c     write(111,*) itercg
+C       do i=1,kferm
+C       X2(i)=X1(i)
+C       enddo
+C c
+C c  evaluates -X2dagger * d/dpi[{MdaggerM(m)}^1/2] * X2
+C       call qmrherm(X2,res1,itercg,am,imass,anum2,aden2,ndiag,
+C      &             2,isweep,iter)
+C       ancgf=ancgf+float(itercg)
+C c     write(113,*) itercg
+C c  evaluates +2Re{Phidagger * d/dpi[{MdaggerM(1)}^1/4] * X2}
+C       call qmrherm(X2,res1,itercg,One,1,anum4,aden4,ndiag,
+C      &             3,isweep,iter)
+C       ancgfpv=ancgfpv+float(itercg)
+C c
+C       enddo
+C c
+C       if(ibound.eq.-1)then
+C       ioffset=(ksizet-1)*kvol2
+C       do i=ioffset+1,kvol
+C       dSdpi(i,3)=-dSdpi(i,3)
+C       enddo
+C       endif
+C c
+C       b=beta*Nf
+C       do mu=1,3
+C       do i=1,kvol
+C          dSdpi(i,mu)=dSdpi(i,mu)+b*theta(i,mu)
+C       enddo
+C       enddo
+C c
+C       return
+C       end
+C c******************************************************************
+C c   Evaluation of Hamiltonian function
+C c******************************************************************
+C       subroutine hamilton(Phi,
+C      &       h,hg,hp,s,res2,isweep,iflag,am,imass)
+C       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
+C       parameter(kmom=3*kvol,kferm=4*kvol*kthird)
+C       parameter(ndiag=25)
+C       parameter(One=1.0)
+C       parameter(Nf=1)
+C       common/trial/u(kvol,3),theta(kmom),pp(kmom)
+C       common/remez2/anum2(0:ndiag),aden2(ndiag),
+C      &              bnum2(0:ndiag),bden2(ndiag)
+C       common/remez4/anum4(0:ndiag),aden4(ndiag),
+C      &              bnum4(0:ndiag),bden4(ndiag)
+C       common/param/ancg,ancgh,ancgf,ancgpf
+C       common/parampv/ancgpv,ancghpv,ancgfpv,ancgpfpv
+C       common /para/beta,am3,ibound
+C       common/vector/ X1(kferm)      
+C       common/dum1/R(kferm),ps(kvol,2)
+C c     complex Phi(kferm,Nf)
+C c     complex X1,R
+C c     complex u
+C       complex*16 Phi(kferm,Nf)
+C       complex*16 X1,R
+C       complex*16 u
+C       real*8 hp,hg,hf,h,s
+C       real*8 anum2,aden2,bnum2,bden2
+C       real*8 anum4,aden4,bnum4,bden4
+C c     write(6,111)
+C 111   format(' Hi from hamilton')
+C c
+C       hp=0.0
+C       hg=0.0
+C       hf=0.0
+C c
+C       do 22 imom=1,kmom
+C       hp=hp+pp(imom)*pp(imom)
+C 22    continue
+C c
+C       hp=hp*0.5
+C c
+C       do imom=1,kmom
+C       hg=hg+theta(imom)*theta(imom)
+C       enddo
+C       hg=0.5*Nf*beta*hg
+C       h=hg+hp
+C c 
+C c uncomment these lines to quench the fermions!
+C c     write(6,*) isweep,':  hg', hg,'   hp', hp,'   h',h
+C c     return
+C c         
+C c  pseudofermion action is
+C c   Phi^dagger {MdaggerM(1)}^1/4 {MdaggerM(m)})^-1/2 {MdaggerM(1)}^1/4 Phi
+C c
+C       do ia=1,Nf
+C c
+C       do i=1,kferm
+C       R(i)=Phi(i,ia)
+C       enddo
+C       call qmrherm(R,res2,itercg,One,1,anum4,aden4,ndiag,
+C      &             0,isweep,iflag)
+C       ancghpv=ancghpv+float(itercg)
+C       do i=1,kferm
+C       R(i)=X1(i)
+C       enddo
+C c
+C       call qmrherm(R,res2,itercg,am,imass,bnum2,bden2,ndiag,
+C      &             0,isweep,iflag)
+C       ancgh=ancgh+float(itercg)
+C c
+C       do 4 iferm=1,kferm
+C       hf=hf+conjg(R(iferm))*X1(iferm)
+C 4     continue
+C c
+C       enddo
+C c
+C       h=hg+hp+hf
+C c     write(6,*) isweep,':  hg', hg,'   hp', hp,'   hf', hf,
+C c    &   '   h',h
+C       s=hg+hf
+C c
+C       return
+C       end              
+C c******************************************************************
+C c    multisolver matrix inversion via Lanczos technique
+C c  eg. Golub & van Loan "Matrix Computations" 9.3.1
+C c       solves (MdaggerM+diag)*x=Phi for ndiag different values of diag
+C c   iflag=0: simply evaluates X = {MdaggerM}^p * Phi
+C c   can be interchanged with congrad for p=-1
+C c   iflag=1: in addition updates Phi0 register needed for PV force term
+C c   iflag=2: evaluates DWF force term
+C c   iflag=3: evaluates PV force term
+C c*****************************************************************m
+C       subroutine qmrherm(Phi,res,itercg,am,imass,anum,aden,ndiag,
+C      &                   iflag,isweep,iter)
+C       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
+C       parameter(kferm=4*kthird*kvol)
+C c     parameter(niterc=10*kferm)
+C       parameter(niterc=7500)
+C       common/trial/u(kvol,3),theta(kvol,3),pp(kvol,3)
+C       common/para/bbb,am3,ibound
+C       common/vector/x(kferm)
+C       common/gforce/dSdpi(kvol,3)
+C       common/phi0/Phi0(kferm,25)
+C c     complex Phi(kferm)
+C c     complex x,u,Phi0
+C       complex*16 Phi(kferm)
+C       complex*16 x,u,Phi0
+C       real*8 anum(0:ndiag),aden(ndiag),coeff
+C c     complex vtild(kferm),q(kferm),pm1(kferm,ndiag)
+C c     complex qm1(kferm),p(kferm,ndiag),x3(kferm),R(kferm)
+C c     complex x1(kferm,ndiag),x2(kferm)
+C c     real alpha(ndiag),beta
+C c     real amu(ndiag),d(ndiag),dm1(ndiag),rho(ndiag),rhom1(ndiag)
+C       complex*16 vtild(kferm),q(kferm),pm1(kferm,ndiag)
+C       complex*16 qm1(kferm),p(kferm,ndiag),x3(kferm),R(kferm)
+C       complex*16 x1(kferm,ndiag),x2(kferm)
+C       real*8 alpha(ndiag),beta
+C       real*8 amu(ndiag),d(ndiag),dm1(ndiag),rho(ndiag),rhom1(ndiag)
+C c
+C c     write(6,111)
+C 111   format(' Hi from qmrherm')
+C c
+C       resid=sqrt(kferm*res*res)
+C c     write(6,*) iflag, resid
+C       itercg=0
+C c
+C c   initialise r=Phi
+C c
+C       do i=1,kferm
+C          R(i)=Phi(i)
+C          qm1(i)=(0.0,0.0)
+C          x(i)=anum(0)*Phi(i)
+C       enddo
+C       beta=0.0
+C       do i=1,kferm
+C          beta=beta+conjg(r(i))*r(i)
+C       enddo
+C       beta=sqrt(beta)
+C       phimod=beta
+C c     write(6,*) '|| Phi || = ', phimod
+C c
+C       do niter=1,niterc
+C       itercg=itercg+1
+C c
+C c  Lanczos steps
+C c
+C       do i=1,kferm
+C          q(i)=R(i)/beta
+C       enddo
+C c
+C       call dslash(vtild,q,u,am,imass)
+C       call dslashd(x3,vtild,u,am,imass)
+C c
+C       alphatild=0.0
+C       do i=1,kferm
+C          alphatild=alphatild+conjg(q(i))*x3(i)
+C       enddo
+C c
+C       do i=1,kferm
+C          R(i)=x3(i)-alphatild*q(i)-beta*qm1(i)
+C          qm1(i)=q(i)
+C       enddo
+C c
+C       beta0=beta
+C       beta=0.0
+C       do i=1,kferm
+C          beta=beta+conjg(R(i))*R(i)
+C       enddo
+C       beta=sqrt(beta)
+C c
+C       do idiag=1,ndiag
+C       alpha(idiag)=alphatild+aden(idiag)
+C       enddo
+C c
+C       if(niter.eq.1)then
+C            do idiag=1,ndiag
+C              d(idiag)=alpha(idiag)
+C              do i=1,kferm
+C               p(i,idiag)=q(i)
+C               pm1(i,idiag)=p(i,idiag)
+C              enddo
+C              rho(idiag)=beta0/alpha(idiag)
+C              rhom1(idiag)=rho(idiag)
+C              do i=1,kferm
+C               x1(i,idiag)=rho(idiag)*q(i)
+C              enddo
+C            enddo
+C       else
+C            do idiag=1,ndiag
+C              amu(idiag)=beta0/d(idiag)
+C              dm1(idiag)=d(idiag)
+C              d(idiag)=alpha(idiag)-beta0*amu(idiag)
+C              do i=1,kferm
+C               p(i,idiag)=q(i)-amu(idiag)*pm1(i,idiag)
+C               pm1(i,idiag)=p(i,idiag)
+C              enddo
+C              rho(idiag)=-amu(idiag)*dm1(idiag)*rhom1(idiag)/d(idiag)
+C c  Convergence criterion (a bit ad hoc for now...)
+C              if(idiag.eq.1)then
+C                rhomax=abs(phimod*rho(idiag))
+C              else
+C                if(abs(phimod*rho(idiag)).gt.rhomax)
+C      &             rhomax=abs(phimod*rho(idiag))
+C              endif
+C              rhom1(idiag)=rho(idiag)
+C              do i=1,kferm
+C                x1(i,idiag)=x1(i,idiag)+rho(idiag)*p(i,idiag)
+C              enddo
+C            enddo
+C c  check to see whether the residual is acceptable for all ndiag....
+C c  criterion is a bit ad hoc -- relaxing by a factor arelax improves code
+C c  stability and leads to quicker convergence
+C            arelax=2.0
+C            if(rhomax.lt.arelax*resid) then
+C c          if(rhomax.lt.resid) then
+C c          call testinv(Phi,resmax,itercg,am,imass,x1,aden,ndiag)
+C c  convergence based on || residual || not working well in single precision...
+C c          if(resmax.lt.resid) goto 8
+C              goto 8
+C            endif
+C       endif
+C c
+C c   end of loop over iter
+C       enddo
+C       write(7,*) 'QMRniterc!, isweep,iter,iflag,imass,anum,ndiag = '
+C      &        ,isweep,iter,iflag,imass,anum(0),ndiag
+C 8     continue
+C c
+C       if(iflag.lt.2)then
+C c  Now evaluate solution x=(MdaggerM)^p * Phi
+C       do idiag=1,ndiag
+C       do i=1,kferm
+C       x(i)=x(i)+anum(idiag)*x1(i,idiag)
+C       enddo
+C       enddo
+C c
+C c  update phi0 block if required...
+C       if(iflag.eq.1) then
+C       do idiag=1,ndiag
+C       do i=1,kferm
+C       Phi0(i,idiag)=x1(i,idiag)
+C       enddo
+C       enddo
+C       endif
+C c
+C       else
+C c
+C       do idiag=1,ndiag
+C c
+C c  X2 = M*X1
+C       do i=1,kferm
+C       R(i)=x1(i,idiag)
+C       enddo
+C       call dslash(X2,R,u,am,imass)
+C c
+C       if(iflag.eq.2)then
+C           coeff=anum(idiag)
+C           call derivs(R,X2,coeff,0)
+C       else
+C           coeff=-anum(idiag)
+C           do i=1,kferm
+C           R(i)=Phi0(i,idiag)
+C           enddo
+C           call derivs(R,X2,coeff,0)
+C c
+C           call dslash(X2,R,u,am,imass)
+C           do i=1,kferm
+C           R(i)=x1(i,idiag)
+C           enddo
+C           call derivs(X2,R,coeff,1)
+C       endif
+C c
+C       enddo
+C       endif
+C c
+C c
+C       return
+C       end
+C c**********************************************************************
+C c  iflag = 0 : evaluates Rdagger*(Mdagger)'*X2
+C c  iflag = 1 : evaluates Rdagger*(M)'*X2
+C c**********************************************************************
+C       subroutine derivs(R,X2,anum,iflag)
+C       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
+C       parameter(akappa=0.5)
+C       common/neighb/id(kvol,3),iu(kvol,3)
+C       common/dirac/gamval(6,4),gamin(6,4)
+C       common/gforce/dSdpi(kvol,3)
+C c     complex R(kthird,kvol,4),X2(kthird,kvol,4)
+C       complex*16 R(kthird,kvol,4),X2(kthird,kvol,4)
+C c     complex gamval
+C       complex*16 gamval
+C       real*8 anum
+C       complex*16 tzi
+C       integer gamin
+C c
+C c     write(6,111)
+C 111   format(' Hi from derivs')
+
+C c     dSdpi=dSdpi-Re(Rdagger *(d(Mdagger)dp)* X2)
+C c     Cf. Montvay & Muenster (7.215)
+C       tzi=cmplx(0.0,2*anum)
+C c     factor of 2 picks up second term in M&M (7.215)
+C c
+C       do mu=1,3
+C       do idirac=1,4
+C       do ithird=1,kthird
+C c
+C       do i=1,kvol
+C       dSdpi(i,mu)=dSdpi(i,mu)-akappa*real(tzi*
+C      &(conjg(R(ithird,i,idirac))*
+C      & X2(ithird,iu(i,mu),idirac)
+C      &-conjg(R(ithird,iu(i,mu),idirac))*
+C      &  X2(ithird,i,idirac)))
+C       enddo
+C c
+C       igork1=gamin(mu,idirac)
+C       if(iflag.eq.0)then
+C       do i=1,kvol
+C       dSdpi(i,mu)=dSdpi(i,mu)-real(tzi*gamval(mu,idirac)*
+C      &(conjg(R(ithird,i,idirac))*
+C      &        X2(ithird, iu(i,mu),igork1)
+C      &+conjg(R(ithird,iu(i,mu),idirac))*
+C      &             X2(ithird,i,igork1)))
+C       enddo
+C       else
+C       do i=1,kvol
+C       dSdpi(i,mu)=dSdpi(i,mu)+real(tzi*gamval(mu,idirac)*
+C      &(conjg(R(ithird,i,idirac))*
+C      &        X2(ithird,iu(i,mu),igork1)
+C      &+conjg(R(ithird,iu(i,mu),idirac))*
+C      &             X2(ithird,i,igork1)))
+C       enddo
+C       endif
+C c
+C       enddo
+C       enddo
+C       enddo
+C c
+C       return
+C       end
+C c******************************************************************
+C c   Calculates residual for testing purposes....
+C c   needs to run with double precision vectors to be useful.....
+C c******************************************************************
+C       subroutine testinv(Phi,resmax,itercg,am,imass,x,aden,ndiag)
+C       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
+C       parameter(kferm=4*kthird*kvol)
+C       common/trial/u(kvol,3),theta(kvol,3),pp(kvol,3)
+C       common/para/bbb,am3,ibound
+C       complex Phi(kferm)
+C       complex*16 vtild(kferm)
+C       complex*16 x3(kferm)
+C       complex*16 x(kferm,ndiag),x1(kferm),x2(kferm)
+C       complex*16 u
+C c     complex vtild(kferm)
+C c     complex x3(kferm)
+C c     complex x(kferm,ndiag),x1(kferm),x2(kferm)
+C c      complex u
+C       real*8 residual
+C       real*8 aden(ndiag)
+C c
+C       write(6,111)
+C 111   format(' Hi from testinv')
+C c
+C       resmax=0.0
+C c
+C       do idiag=1,ndiag
+C       residual=0.0
+C       do i=1,kferm
+C       x3(i)=x(i,idiag)
+C       enddo
+C       call dslash(x2,x3,u,am,imass)
+C       call dslashd(x1,x2,u,am,imass)
+C       do i=1,kferm
+C       vtild(i)=x1(i)+aden(idiag)*x3(i)-Phi(i)
+C       residual=residual+conjg(vtild(i))*vtild(i)
+C       enddo
+C c     residual=sqrt(residual)
+C       if(residual.gt.resmax) resmax=residual
+C c
+C       write(6,*) idiag, 'itercg = ',itercg, ' residual = ',residual
+C       enddo
+C c
+C       resmax=sqrt(resmax)
+C c
+C       return
+C       end
+C c******************************************************************
+C c    matrix inversion via conjugate gradient algorithm
+C c       solves (Mdagger)Mx=Phi, 
+C c           NB. no even/odd partitioning
+C c******************************************************************
+C       subroutine congrad(Phi,res,itercg,am,imass)
+C       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
+C       parameter(kferm=4*kthird*kvol)
+C       parameter(niterc=kthird*kvol)
+C       common/trial/u(kvol,3),thetas(kvol,3),pp(kvol,3)
+C       common/para/bbb,am3,ibound
+C       common/vector/x(kferm)
+C c     complex Phi(kferm)
+C c     complex x,u
+C c     complex x1(kferm),x2(kferm),p(kferm),r(kferm)
+C       complex*16 Phi(kferm)
+C       complex*16 x,u
+C       complex*16 x1(kferm),x2(kferm),p(kferm),r(kferm)
+C c     write(6,111)
+C 111   format(' Hi from congrad')
+C c
+C       resid=kferm*res*res
+C       itercg=0
+C c
+C       do 1 nx=1,niterc
+C       itercg=itercg+1
+C       if(nx.gt.1) goto 51
+C c
+C c   initialise p=x, r=Phi(na)
+C c
+C       do 2 i=1,kferm
+C       p(i)=x(i)
+C       r(i)=Phi(i)
+C 2     continue
+C       betad=1.0
+C       alpha=1.0
+C 51    alphad=0.0
+C c
+C c  x1=Mp
+C c
+C       call dslash(x1,p,u,am,imass)
+C c
+C       if(nx.eq.1) goto 201
+C c
+C c   alpha=(r,r)/(p,(Mdagger)Mp)
+C c 
+C       alphad=0.0
+C       do 31 i=1,kferm
+C       alphad=alphad+conjg(x1(i))*x1(i)
+C 31    continue
+C       alpha=alphan/alphad
+C c      
+C c   x=x+alpha*p
+C c
+C       do 4 i=1,kferm
+C       x(i)=x(i)+alpha*p(i)
+C 4     continue
+C 201   continue
+C c     
+C c   x2=(Mdagger)x1=(Mdagger)Mp
+C c
+C       call dslashd(x2,x1,u,am,imass)
+C c
+C c   r=r-alpha*(Mdagger)Mp
+C c
+C       do 6 i=1,kferm
+C       r(i)=r(i)-alpha*x2(i)
+C 6     continue
+C c
+C c   beta=(r_k+1,r_k+1)/(r_k,r_k)
+C c
+C       betan=0.0 
+C       do 61 i=1,kferm
+C       betan=betan+conjg(r(i))*r(i) 
+C 61    continue 
+C       beta=betan/betad
+C       betad=betan
+C       alphan=betan
+C c
+C       if(nx.eq.1) beta=0.0
+C c
+C c   p=r+beta*p
+C c
+C       do 7 i=1,kferm
+C       p(i)=r(i)+beta*p(i)
+C 7     continue
+C       if(betan.lt.resid) goto 8
+C 1     continue
+C c     write(6,1000)
+C       write(7,1000)
+C 1000  format(' # iterations of congrad exceeds niterc')
+C 8     continue
+C c     write(6,*) itercg
+C       return
+C       end      
+C c*****************************************************************
+C c   Calculate fermion expectation values via a noisy estimator
+C c   -matrix inversion via conjugate gradient algorithm
+C c       solves Mx=x1
+C c     (Numerical Recipes section 2.10 pp.70-73)   
+C c*******************************************************************
+C       subroutine measure(psibarpsi,res,aviter,am,imass)
+C       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
+C       parameter(akappa=0.5)
+C       parameter(knoise=10)
+C       common/trial/u(kvol,3),theta(kvol,3),pp(kvol,3)
+C       common/para/beta,am3,ibound
+C       common/dirac/gamval(6,4),gamin(6,4)
+C       common /neighb/id(kvol,3),iu(kvol,3)
+C       common/vector/xi(kthird,kvol,4)
+C       common/ranseed/yran,idum
+C       common/v/v(97)
+C c     complex x(kvol,4), Phi(kthird,kvol,4)
+C c     complex xi,gamval
+C c     complex psibarpsi1,psibarpsi2
+C c     complex u
+C       complex*16 x(kvol,4), Phi(kthird,kvol,4)
+C       complex*16 xi,gamval
+C       complex*16 psibarpsi1,psibarpsi2
+C       complex*16 u
+C       real*8 cnum(0:1),cden(1)
+C       real ps(kvol,2),pt(kvol,2)
+C       real*8 pbp(knoise)
+C       integer gamin
+C c     write(6,*) 'hi from measure'
+C c
+C       iter=0
+C c     pbp=0.0
+C       cnum(0)=0.0
+C       cnum(1)=1.0
+C       cden(1)=0.0
+C c
+C       do inoise=1,knoise
+C c
+C c     set up noise
+C       call gauss0(ps)
+C       psibarpsi1=(0.0,0.0)
+C       call gauss0(pt)
+C       psibarpsi2=(0.0,0.0)
+C c
+C       do idsource=1,2
+C c
+C c  source on domain wall at ithird=1
+C c   
+C       if(imass.ne.5)then
+C          do idirac=1,4
+C            if(idirac.eq.idsource)then
+C              do i=1,kvol
+C                x(i,idirac)=cmplx(ps(i,1),ps(i,2))
+C              enddo
+C            else
+C              do i=1,kvol
+C                x(i,idirac)=(0.0,0.0)
+C              enddo
+C            endif
+C          enddo
+C       else
+C          do idirac=1,4
+C            if(idirac.eq.idsource+2)then
+C              do i=1,kvol
+C                x(i,idirac)=cmplx(ps(i,1),ps(i,2))
+C              enddo
+C            else
+C              do i=1,kvol
+C                x(i,idirac)=(0.0,0.0)
+C              enddo
+C            endif
+C          enddo
+C       endif
+C c
+C c
+C       if(imass.ne.5)then
+C          do ithird=1,kthird
+C          if(ithird.eq.1)then
+C             do idirac=1,4
+C             do i=1,kvol
+C                xi(ithird,i,idirac)=x(i,idirac)
+C             enddo
+C             enddo
+C          else
+C             do idirac=1,4
+C             do i=1,kvol
+C                xi(ithird,i,idirac)=(0.0,0.0)
+C             enddo
+C             enddo
+C          endif
+C          enddo
+C       else
+C c   xi = 0.5(1+gamma_4)*gamma_5*eta on DW at ithird=1
+C          do ithird=1,kthird
+C          if(ithird.eq.1)then
+C             do idirac=1,2
+C             do i=1,kvol
+C                xi(ithird,i,idirac)=-x(i,idirac+2)
+C                xi(ithird,i,idirac+2)=(0.0,0.0)
+C             enddo
+C             enddo
+C          else
+C c   xi = 0.5(1+gamma_4)*eta on DW at ithird=1
+C             do idirac=1,4
+C             do i=1,kvol
+C                xi(ithird,i,idirac)=(0.0,0.0)
+C             enddo
+C             enddo
+C          endif
+C          enddo
+C       endif
+C c
+C c Phi= Mdagger*xi
+C c
+C       call dslashd(Phi,xi,u,am,imass)
+C c     call qmrherm(Phi,res,itercg,am,imass,cnum,cden,1,0)
+C       call congrad(Phi,res,itercg,am,imass)
+C       iter=iter+itercg
+C c
+C       if(imass.ne.5)then
+C c  pbp1 = x^dagger (0.5(1+gamma_4)) xi(kthird)
+C          do i=1,kvol
+C          psibarpsi1=psibarpsi1
+C      &    +conjg(x(i,idsource))*xi(kthird,i,idsource)
+C          enddo
+C       else
+C c  pbp1 = x^dagger (0.5(1-gamma_4)) xi(1)
+C          do i=1,kvol
+C          psibarpsi1=psibarpsi1
+C      &    +conjg(x(i,idsource+2))*xi(1,i,idsource+2)
+C          enddo
+C       endif
+C c
+C c
+C c  source on domain wall at ithird=kthird
+C       idsource2=idsource+2
+C c
+C       if(imass.ne.5)then
+C          do idirac=1,4
+C          do i=1,kvol
+C          if(idirac.eq.idsource2)then
+C              x(i,idirac)=cmplx(pt(i,1),pt(i,2))
+C          else
+C              x(i,idirac)=(0.0,0.0)
+C          endif
+C          enddo
+C          enddo
+C       else
+C          do idirac=1,4
+C          do i=1,kvol
+C          if(idirac.eq.idsource2-2)then
+C              x(i,idirac)=cmplx(pt(i,1),pt(i,2))
+C          else
+C              x(i,idirac)=(0.0,0.0)
+C          endif
+C          enddo
+C          enddo
+C       endif
+C c
+C       if(imass.ne.5)then
+C c   xi = 0.5(1-gamma_4)*eta on DW at ithird=kthird
+C          do ithird=1,kthird
+C          if(ithird.eq.kthird)then
+C             do idirac=1,4
+C             do i=1,kvol
+C                xi(ithird,i,idirac)=x(i,idirac)
+C             enddo
+C             enddo
+C          else
+C             do idirac=1,4
+C             do i=1,kvol
+C                xi(ithird,i,idirac)=(0.0,0.0)
+C             enddo
+C             enddo
+C          endif
+C          enddo
+C       else
+C c   xi = 0.5(1-gamma_4)*gamma_5*eta on DW at ithird=kthird
+C          do ithird=1,kthird
+C          if(ithird.eq.kthird)then
+C             do idirac=1,2
+C             do i=1,kvol
+C                xi(ithird,i,idirac+2)=-x(i,idirac)
+C                xi(ithird,i,idirac)=(0.0,0.0)
+C             enddo
+C             enddo
+C          else
+C             do idirac=1,4
+C             do i=1,kvol
+C                xi(ithird,i,idirac)=(0.0,0.0)
+C             enddo
+C             enddo
+C          endif
+C          enddo
+C       endif
+C c
+C c Phi= Mdagger*xi
+C c
+C       call dslashd(Phi,xi,u,am,imass)
+C c
+C c xi= (M)**-1 * Phi
+C c
+C c     call qmrherm(Phi,res,itercg,am,imass,cnum,cden,1,0)
+C       call congrad(Phi,res,itercg,am,imass)
+C       iter=iter+itercg
+C c
+C       if(imass.ne.5)then
+C c pbp2= - x^dagger (0.5(1-gamma_4)) xi(1)
+C          do i=1,kvol
+C          psibarpsi2=psibarpsi2
+C      &     +conjg(x(i,idsource2))*xi(1,i,idsource2)
+C          enddo
+C       else
+C c pbp2= - x^dagger (0.5(1-gamma_4)) xi(kthird)
+C          do i=1,kvol
+C          psibarpsi2=psibarpsi2
+C      &     +conjg(x(i,idsource))*xi(kthird,i,idsource)
+C          enddo
+C       endif
+C c
+C c  end trace on Dirac indices....
+C       enddo
+C c
+C       if(imass.eq.1)then
+C          psibarpsi1=psibarpsi1/kvol
+C          psibarpsi2=psibarpsi2/kvol
+C          pbp(inoise)=psibarpsi1+psibarpsi2
+C       elseif(imass.eq.3)then
+C          psibarpsi1=(0.0,-1.0)*psibarpsi1/kvol
+C          psibarpsi2=(0.0,+1.0)*psibarpsi2/kvol
+C          pbp(inoise)=psibarpsi1+psibarpsi2
+C       elseif(imass.eq.5)then
+C          psibarpsi1=(0.0,-1.0)*psibarpsi1/kvol
+C          psibarpsi2=(0.0,-1.0)*psibarpsi2/kvol
+C          pbp(inoise)=psibarpsi1+psibarpsi2
+C       endif
+C c        write(6,*) real(psibarpsi1),aimag(psibarpsi1),
+C c    &       real(psibarpsi2),aimag(psibarpsi2)
+C          write(100,*) real(psibarpsi1),aimag(psibarpsi1),
+C      &       real(psibarpsi2),aimag(psibarpsi2)
+C c
+C c end loop on noise
+C       enddo
+C c
+C       psibarpsi=0.0
+C       susclsing=0.0
+C c
+C       do inoise=1,knoise
+C       psibarpsi=psibarpsi+pbp(inoise)
+C          do jnoise=knoise,inoise+1,-1
+C          susclsing=susclsing+pbp(inoise)*pbp(jnoise)
+C          enddo
+C       enddo
+C       psibarpsi=psibarpsi/knoise
+C       susclsing=2*kvol*susclsing/(knoise*(knoise-1))
+C          write(200,*) psibarpsi,susclsing
+C       aviter=float(iter)/(4*knoise)
+C       return
+C       end
+C c******************************************************************
+C c   Calculate meson correlators using point sources on domain walls
+C c   -matrix inversion via conjugate gradient algorithm
+C c       solves Mx=x1
+C c     (Numerical Recipes section 2.10 pp.70-73)   
+C c*******************************************************************
+C       subroutine meson(res,itercg,aviter,am,imass)
+C       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
+C       parameter(ksize2=ksize*ksize)
+C       parameter(akappa=0.5)
+C       common/trial/u(kvol,3),theta(kvol,3),pp(kvol,3)
+C       common/para/beta,am3,ibound
+C       common/dirac/gamval(6,4),gamin(6,4)
+C       common /neighb/id(kvol,3),iu(kvol,3)
+C       common/vector/xi(kthird,kvol,4)
+C       common/ranseed/yran,idum
+C       common/v/v(97)
+C c     complex x(kvol,4),x0(kvol,4),Phi(kthird,kvol,4)
+C c     complex xi,gamval
+C c     complex prop00(kvol,3:4,1:2),prop0L(kvol,3:4,3:4)
+C       complex*16 x(kvol,4),x0(kvol,4),Phi(kthird,kvol,4)
+C       complex*16 xi,gamval
+C       complex*16 prop00(kvol,3:4,1:2),prop0L(kvol,3:4,3:4)
+C c     complex prop00n(kvol,3:4,1:2),prop0Ln(kvol,3:4,3:4)
+C       real cpm(0:ksizet-1),cmm(0:ksizet-1)
+C c     complex cpmn(0:ksizet-1),cmmn(0:ksizet-1)
+C c     complex cferm1(0:ksizet-1), cferm2(0:ksizet-1)
+C c     complex u
+C       complex*16 cferm1(0:ksizet-1), cferm2(0:ksizet-1)
+C       complex*16 u
+C       real ps(kvol,2)
+C       real rano
+C       integer gamin
+C c     write(6,*) 'hi from meson'
+C c      
+C       nsource=5
+C       nsmear=10
+C       c=0.25
+C       iter=0
+C c
+C       do it=0,ksizet-1
+C       cpm(it)=(0.0,0.0)
+C       cmm(it)=(0.0,0.0)
+C c     cpmn(it)=(0.0,0.0)
+C c     cmmn(it)=(0.0,0.0)
+C       cferm1(it)=(0.0,0.0)
+C       cferm2(it)=(0.0,0.0)
+C       enddo
+C c
+C c      susceptibility
+C       chim=0.0
+C       chip=0.0
+C c
+C       do ksource=1,nsource
+C c
+C c   random location for +m source
+C       ixxx=int(ksize*rano(yran,idum))+1
+C       iyyy=int(ksize*rano(yran,idum))+1
+C       ittt=int(ksizet*rano(yran,idum))+1
+C       isource=ixxx+ksize*((iyyy-1)+ksize*(ittt-1))
+C c     write(6,*) ixxx,iyyy,ittt, isource
+C c
+C c  loop over Dirac index of source...   
+C       do idsource=3,4
+C c
+C c  source on domain wall at ithird=1
+C       do 300 ithird=1,kthird
+C       if(ithird.eq.1)then
+C       do idirac=1,4
+C       do i=1,kvol
+C       x(i,idirac)=(0.0,0.0)
+C       enddo
+C c  wall source
+C c     ioff=(ittt-1)*ksize2
+C c     do i=1,ksize2
+C c     x(i+ioff,idirac)=(1.0,0.0)/ksize2
+C c     enddo
+C c
+C       enddo
+C c  point source at fixed site, spin...
+C       x(isource,idsource)=(1.0,0.0)
+C c
+C c now smear it.....
+C c
+C       do ismear=1,nsmear
+C       call dslash2d(x0,x,u)
+C       do idirac=1,4
+C       do i=1,kvol
+C       x(i,idirac)=(1.0-c)*x(i,idirac)+c*x0(i,idirac)
+C       enddo
+C       enddo
+C       enddo
+C c
+C       else
+C       do idirac=1,4
+C       do i=1,kvol
+C       xi(ithird,i,idirac)=(0.0,0.0)
+C       enddo
+C       enddo
+C       endif
+C 300   continue
+C c
+C c   xi = x  on DW at ithird=1
+C c
+C       do idirac=1,4
+C       do i=1,kvol
+C       xi(1,i,idirac)=x(i,idirac)
+C       enddo
+C       enddo
+C c
+C c Phi= Mdagger*xi
+C c
+C       call dslashd(Phi,xi,u,am,imass)
+C c
+C c  preconditioning (no,really)
+C       call dslashd(xi,Phi,u,am,imass)
+C c  
+C c xi= (MdaggerM)**-1 * Phi 
+C c
+C c     call congrad(Phi,res,itercg,am,imass) 
+C       iter=iter+itercg
+C c
+C       do idsink=1,2
+C       idsink2=idsink+2
+C       do i=1,kvol
+C       prop00(i,idsource,idsink)=xi(1,i,idsink)
+C       prop0L(i,idsource,idsink2)=xi(kthird,i,idsink2)
+C       enddo
+C       enddo
+C c
+C c     if(imass.ne.1)then
+C c  now evaluate with sign of mass reversed (not needed for hermitian mass term)
+C c     am=-am
+C c  source on domain wall at ithird=1
+C c     do 400 ithird=1,kthird
+C c     if(ithird.eq.1)then
+C c     do idirac=1,4
+C c     do i=1,kvol
+C c     xi(1,i,idirac)=x(i,idirac)
+C c     enddo
+C c     enddo
+C c     else
+C c     do idirac=1,4
+C c     do i=1,kvol
+C c     xi(ithird,i,idirac)=(0.0,0.0)
+C c     enddo
+C c     enddo
+C c     endif
+C 400   continue
+C c
+C c Phi= Mdagger*xi
+C c
+C c     call dslashd(Phi,xi,u,am,imass)
+C c
+C c     call dslashd(xi,Phi,u,am,imass)
+C c  
+C c xi= (MdaggerM)**-1 * Phi 
+C c
+C c     call congrad(Phi,res,itercg,am,imass) 
+C c     iter=iter+itercg
+C c
+C c     do idsink=1,2
+C c     idsink2=idsink+2
+C c     do i=1,kvol
+C c     prop00n(i,idsource,idsink)=xi(1,i,idsink)
+C c     prop0Ln(i,idsource,idsink2)=xi(kthird,i,idsink2)
+C c     enddo
+C c     enddo
+C c
+C c     am=-am
+C c     endif
+C c
+C c  end loop on source Dirac index....
+C       enddo
+C c
+C c  Now tie up the ends....
+C c
+C c  First C+-
+C c
+C c  now evaluate the trace (exploiting projection)
+C       do id1=3,4
+C       do id2=1,2
+C       do it=0,ksizet-1
+C       itt=mod((ittt+it-1),ksizet)+1
+C       ioff=(itt-1)*ksize2
+C       do i=1,ksize2
+C       cpm(it)=cpm(it)
+C      &        +prop00(i+ioff,id1,id2)*conjg(prop00(i+ioff,id1,id2))
+C       enddo
+C       enddo
+C       enddo
+C       enddo
+C c
+C c     if(imass.ne.1)then
+C c     do id1=3,4
+C c     do id2=1,2
+C c     do it=0,ksizet-1
+C c     itt=mod((ittt+it-1),ksizet)+1
+C c     ioff=(itt-1)*ksize2
+C c     do i=1,ksize2
+C c     cpmn(it)=cpmn(it)
+C c    &        +prop00(i+ioff,id1,id2)*conjg(prop00n(i+ioff,id1,id2))
+C c     enddo
+C c     enddo
+C c     enddo
+C c     enddo
+C c     endif
+C c
+C c  next C--
+C c  now evaluate the trace exploiting projection
+C       do id1=3,4
+C       do id2=3,4
+C       do it=0,ksizet-1
+C       itt=mod((ittt+it-1),ksizet)+1
+C       ioff=(itt-1)*ksize2
+C       do i=1,ksize2
+C       cmm(it)=cmm(it)
+C      &   +prop0L(i+ioff,id1,id2)*conjg(prop0L(i+ioff,id1,id2))
+C       enddo
+C       enddo
+C       enddo
+C       enddo
+C c
+C c     if(imass.ne.1)then
+C c     do id1=3,4
+C c     do id2=3,4
+C c     do it=0,ksizet-1
+C c     itt=mod((ittt+it-1),ksizet)+1
+C c     ioff=(itt-1)*ksize2
+C c     do i=1,ksize2
+C c     cmmn(it)=cmmn(it)
+C c    &   +prop0L(i+ioff,id1,id2)*conjg(prop0Ln(i+ioff,id1,id2))
+C c     enddo
+C c     enddo
+C c     enddo
+C c     enddo
+C c     endif
+C c
+C c    now the fermion propagator
+C c  = tr{ P_-*Psi(0,1)Psibar(x,Ls) + gamma_0*P_-*Psi(0,1)Psibar(x,1) }
+C       do idd=3,4
+C       do it=0,ksizet-1
+C       itt=mod((ittt+it-1),ksizet)+1
+C c correct for apbc
+C       if(itt.ge.ittt)then
+C         isign=1
+C       else
+C         isign=ibound
+C       endif
+C c
+C       ioff=(itt-1)*ksize2
+C       do i=1,ksize2
+C       cferm1(it)=cferm1(it)
+C      & +isign*akappa*prop0L(i+ioff,idd,idd)
+C       cferm2(it)=cferm2(it)
+C      & +isign*gamval(3,idd)*prop00(i+ioff,idd,gamin(3,idd))
+C       enddo
+C       enddo
+C       enddo
+C c
+C c  finish loop over sources
+C       enddo
+C c
+C       do it=0,ksizet-1
+C       cpm(it)=cpm(it)/nsource
+C       cmm(it)=cmm(it)/nsource
+C c  Cf. (54) of 1507.07717
+C       chim=chim+2*(cpm(it)+cmm(it))
+C       enddo
+C c     if(imass.ne.1)then
+C c       if(imass.eq.3)then
+C c         do it=0,ksizet-1
+C c           cpmn(it)=cpmn(it)/nsource
+C c           cmmn(it)=cmmn(it)/nsource
+C c  Cf. (54),(61) of 1507.07717
+C c           chip=chip-2*(cpmn(it)-cmmn(it))
+C c         enddo
+C c       else
+C c         do it=0,ksizet-1
+C c           cpmn(it)=cpmn(it)/nsource
+C c           cmmn(it)=cmmn(it)/nsource
+C c  Cf. (64),(65) of 1507.07717
+C c           chip=chip-2*(cpm(it)-cmm(it))
+C c         enddo
+C c       endif
+C c     endif
+C c
+C       do it=0,ksizet-1
+C       write(302,*) it, cpm(it), cmm(it)
+C       write(500,*) it, real(cferm1(it)), aimag(cferm1(it))
+C       write(501,*) it, real(cferm2(it)), aimag(cferm2(it))
+C       enddo
+C c     write(6,*) chim
+C       write(400,*) chim
+C c     if(imass.ne.1)then
+C c     do it=0,ksizet-1
+C c     write(402,*) it, real(cpmn(it)), real(cmmn(it))
+C c     write(403,*) it, aimag(cpmn(it)), aimag(cmmn(it))
+C c     enddo
+C c     write(401,*) chip
+C c     endif
+C c
+C c     if(imass.eq.1)then
+C       aviter=float(iter)/(2*nsource)
+C c     else
+C c     aviter=float(iter)/(4*nsource)
+C c     endif
+C c
+C       return
+C       end
+C c*******************************************************************
+C c
+C       subroutine sread
+C       parameter(ksize=12,ksizet=12,kvol=ksizet*ksize*ksize)
+C       common/gauge/ theta(kvol,3),seed
+C       real*8 seed
+C       open(unit=10,file='con',
+C      1     status='unknown',form='unformatted')
+C       read (10) theta,seed
+C       close(10)
+C       return
+C       end
+C c
+C       subroutine swrite
+C       parameter(ksize=12,ksizet=12,kvol=ksizet*ksize*ksize)
+C       common/gauge/ theta(kvol,3),seed
+C       real*8 seed
+C       open(unit=31,file='con',
+C      1     status='unknown',form='unformatted')
+C       write (31) theta,seed
+C       close(31)
+C       return
+C       end
+C c
       subroutine init(nc)
 c*******************************************************************
 c     sets initial values
@@ -1623,8 +1651,8 @@ c     nc<0 no initialization
 c*******************************************************************
       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
       parameter(akappa=0.5)
-      common/gauge/theta(kvol,3),seed
-      common /neighb/id(kvol,3),iu(kvol,3)
+C      common/gauge/theta(kvol,3),seed
+C      common /neighb/id(kvol,3),iu(kvol,3)
       common/dirac/gamval(6,4),gamin(6,4)
       common/ranseed/yran,idum
       common/v/v(97)
@@ -1640,7 +1668,7 @@ c
 c*******************************************************************
 c  calculate constants
 c*******************************************************************
-      call addrc
+C      call addrc
 c*******************************************************************
 c    setup Dirac algebra
 c*******************************************************************
@@ -1717,377 +1745,358 @@ c
       gamin(6,4)=2
 c
 c
-      do idirac=1,4
-      do mu=1,6
-      gamval(mu,idirac)=gamval(mu,idirac)*akappa
-      enddo
-      enddo
+      gamval = gamval * akappa
 c
       if(nc.lt.0) return
 c
 c     initialize gauge fields
 c
-      if(nc .eq. 1)goto 40
-c     (else cold start)
-      do 10 mu=1,3
-      do 10 ind=1,kvol
-      theta(ind,mu)=0.0
-10    continue
-      return
-c
-40    continue
-      g=0.05
-      do 61 mu=1,3
-      do 61 ind=1,kvol
-c     theta(ind,mu)=2.0*g*rranf()-1.0
-      theta(ind,mu)=2.0*g*rano(yran,idum)-1.0
-61    continue
+C      if(nc .eq. 1)goto 40
+Cc     (else cold start)
+C      theta = 0.0
+C      return
+Cc
+C40    continue
+C      g=0.05
+C      do 61 mu=1,3
+C      do 61 ind=1,kvol
+Cc     theta(ind,mu)=2.0*g*rranf()-1.0
+C      theta(ind,mu)=2.0*g*rano(yran,idum)-1.0
+C61    continue
       return
       end
-c
-      subroutine addrc
-      parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-c*******************************************************************
-c
-c     loads the addresses required during the update
-c
-c*******************************************************************
-      common /neighb/id(kvol,3),iu(kvol,3)
-      do 30 j3=1,ksizet
-      do 30 j2=1,ksize
-      do 30 j1=1,ksize
-      ic=((j3-1)*ksize+(j2-1))*ksize+j1
-      call ia(j1-1,j2,j3,id(ic,1))
-      call ia(j1+1,j2,j3,iu(ic,1))
-      call ia(j1,j2-1,j3,id(ic,2))
-      call ia(j1,j2+1,j3,iu(ic,2))
-      call ia(j1,j2,j3-1,id(ic,3))
-      call ia(j1,j2,j3+1,iu(ic,3))
-  30  continue
-      return
-      end
-c
-      subroutine ia(i1,i2,i3,nnn)
-      parameter(ksize=12,ksizet=12)
-c*******************************************************************
-c
-c     address calculator
-c
-c*******************************************************************
-      n1=i1
-      n2=i2
-      n3=i3 
-      if(n1) 2,2,3
-   2  n1=n1+ksize
-      go to 4
-   3  if(n1-ksize) 4,4,5
-   5  n1=n1-ksize
-   4  if(n2) 6,6,7
-   6  n2=n2+ksize
-      go to 8
-   7  if(n2-ksize) 8,8,9
-   9  n2=n2-ksize
-   8  if(n3) 10,10,11
-  10  n3=n3+ksizet 
-      go to 12
-  11  if(n3-ksizet) 12,12,13
-  13  n3=n3-ksizet   
-  12  nnn=((n3-1)*ksize+(n2-1))*ksize+n1
-      return
-      end
-c******************************************************************
-c   calculate compact links from non-compact links
-c******************************************************************
-      subroutine coef(u,theta)
-      parameter(ksize=12,ksizet=12,kvol2=ksize*ksize,kvol=kvol2*ksizet)
-      common/para/beta,am3,ibound
-c     complex u(kvol,3)
-      complex*16 u(kvol,3)
-      real theta(kvol,3)
-c
-      do mu=1,3
-      do i=1,kvol
-c        u(i,mu)=exp(cmplx(0.0,theta(i,mu)))
-         u(i,mu)=(1.0+cmplx(0.0,theta(i,mu)))
-      enddo
-      enddo
-c
-c  anti-p.b.c. in timelike direction
-      if(ibound.eq.-1)then
-      ioffset=(ksizet-1)*kvol2
-      do i=1,kvol2
-         ind=ioffset+i
-         u(ind,3)=-u(ind,3)
-      enddo
-      endif
-c
-      return
-      end
-c**********************************************************************
-c calculate vector of gaussian random numbers with unit variance
-c to refresh momenta
-c   Numerical Recipes pp.203
-c**********************************************************************
-      subroutine gaussp(ps)
-      parameter(ksize=12,ksizet=12,kvol=ksize*ksize*ksizet)
-      common/trans/tpi 
-      common/ranseed/yran,idum
-      common/v/v(97)
-      real rano
-      real ps(kvol,2)
-c     write(6,1)
-1     format(' Hi from gaussp')
-      do 1000 il=1,kvol
-1000  ps(il,2)=sqrt(-2.0*log(rano(yran,idum)))
-      do 1001 il=1,kvol
-      theta=tpi*rano(yran,idum)
-      ps(il,1)=ps(il,2)*sin(theta)
-      ps(il,2)=ps(il,2)*cos(theta)
-1001  continue 
-      return
-      end      
-c**********************************************************************
-c calculate vector of gaussian random numbers with unit variance
-c to generate pseudofermion fields R
-c   Numerical Recipes pp.203
-c**********************************************************************
-      subroutine gauss0(ps)
-      parameter(ksize=12,ksizet=12,kvol=ksize*ksize*ksizet)
-      common/trans/tpi 
-      common/ranseed/yran,idum
-      common/v/v(97)
-      real rano
-      real ps(kvol,2)
-c     write(6,1)
-1     format(' Hi from gauss0')
-      do 1000 il=1,kvol
-1000  ps(il,2)=sqrt(-log(rano(yran,idum)))
-      do 1001 il=1,kvol
-      theta=tpi*rano(yran,idum)
-      ps(il,1)=ps(il,2)*sin(theta)
-      ps(il,2)=ps(il,2)*cos(theta)
-1001  continue 
-      return
-      end      
-c*****************************************
-c  Random number generator Numerical recipes 7.1
-c
-          real function rano(y,idum)
-          common/v/v(97)
-c
-          if(idum.lt.0)then
-               idum=1
-               do j=1,97
-                  dum=rranf()
-               enddo
-               do j=1,97
-                  v(j)=rranf()
-               enddo
-               y=rranf()
-          endif
-c
-          j=1+int(97.0*y)
-          if(j.gt.97) j=97
-          if(j.lt.1) j=1
-c         write(6,*) j,y
-c         write(6,*) 'problems with rano'
-c         stop
-c         endif
-          y=v(j)
-          rano=y
-          v(j)=rranf()
-          return
-          end
-C========================================================================
-C
-          SUBROUTINE RRANGET(SEED)
-          DOUBLE PRECISION    SEED,     G900GT,   G900ST,   DUMMY
-          SEED  =  G900GT()
-          RETURN
-          ENTRY RRANSET(SEED)
-          DUMMY  =  G900ST(SEED)
-          RETURN
-          END
-          REAL FUNCTION RRANF()
-          DOUBLE PRECISION    DRANF,    G900GT,   G900ST
-          DOUBLE PRECISION    DS(2),    DM(2),    DSEED
-          DOUBLE PRECISION    DX24,     DX48
-          DOUBLE PRECISION    DL,       DC,       DU,       DR
-          LOGICAL             SINGLE
-          DATA      DS     /  1665 1885.D0, 286 8876.D0  /
-          DATA      DM     /  1518 4245.D0, 265 1554.D0  /
-          DATA      DX24   /  1677 7216.D0  /
-          DATA      DX48   /  281 4749 7671 0656.D0  /
-          SINGLE  =  .TRUE.
-          GOTO 10
-          ENTRY DRANF()
-          SINGLE  =  .FALSE.
-  10      DL  =  DS(1) * DM(1)
-          DC  =  DINT(DL/DX24)
-          DL  =  DL - DC*DX24
-          DU  =  DS(1)*DM(2) + DS(2)*DM(1) + DC
-          DS(2)  =  DU - DINT(DU/DX24)*DX24
-          DS(1)  =  DL
-          DR     =  (DS(2)*DX24 + DS(1)) / DX48
-          IF(SINGLE)  THEN
-             RRANF  =  SNGL(DR)
-          ELSE
-             DRANF  =  DR
-          ENDIF
-          RETURN
-          ENTRY G900GT()
-          G900GT  =  DS(2)*DX24 + DS(1)
-          RETURN
-          ENTRY G900ST(DSEED)
-          DS(2)  =  DINT(DSEED/DX24)
-          DS(1)  =  DSEED - DS(2)*DX24
-          G900ST =  DS(1)
-          RETURN
-          END
+C c
+C       subroutine addrc
+C       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
+C c*******************************************************************
+C c
+C c     loads the addresses required during the update
+C c
+C c*******************************************************************
+C       common /neighb/id(kvol,3),iu(kvol,3)
+C       do 30 j3=1,ksizet
+C       do 30 j2=1,ksize
+C       do 30 j1=1,ksize
+C       ic=((j3-1)*ksize+(j2-1))*ksize+j1
+C       call ia(j1-1,j2,j3,id(ic,1))
+C       call ia(j1+1,j2,j3,iu(ic,1))
+C       call ia(j1,j2-1,j3,id(ic,2))
+C       call ia(j1,j2+1,j3,iu(ic,2))
+C       call ia(j1,j2,j3-1,id(ic,3))
+C       call ia(j1,j2,j3+1,iu(ic,3))
+C   30  continue
+C       return
+C       end
+C c
+C       subroutine ia(i1,i2,i3,nnn)
+C       parameter(ksize=12,ksizet=12)
+C c*******************************************************************
+C c
+C c     address calculator
+C c
+C c*******************************************************************
+C       n1=i1
+C       n2=i2
+C       n3=i3 
+C       if(n1) 2,2,3
+C    2  n1=n1+ksize
+C       go to 4
+C    3  if(n1-ksize) 4,4,5
+C    5  n1=n1-ksize
+C    4  if(n2) 6,6,7
+C    6  n2=n2+ksize
+C       go to 8
+C    7  if(n2-ksize) 8,8,9
+C    9  n2=n2-ksize
+C    8  if(n3) 10,10,11
+C   10  n3=n3+ksizet 
+C       go to 12
+C   11  if(n3-ksizet) 12,12,13
+C   13  n3=n3-ksizet   
+C   12  nnn=((n3-1)*ksize+(n2-1))*ksize+n1
+C       return
+C       end
+C c******************************************************************
+C c   calculate compact links from non-compact links
+C c******************************************************************
+C       subroutine coef(u,theta)
+C       parameter(ksize=12,ksizet=12,kvol2=ksize*ksize,kvol=kvol2*ksizet)
+C       common/para/beta,am3,ibound
+C c     complex u(kvol,3)
+C       complex*16 u(kvol,3)
+C       real theta(kvol,3)
+C c
+C       do mu=1,3
+C       do i=1,kvol
+C c        u(i,mu)=exp(cmplx(0.0,theta(i,mu)))
+C          u(i,mu)=(1.0+cmplx(0.0,theta(i,mu)))
+C       enddo
+C       enddo
+C c
+C c  anti-p.b.c. in timelike direction
+C       if(ibound.eq.-1)then
+C       ioffset=(ksizet-1)*kvol2
+C       do i=1,kvol2
+C          ind=ioffset+i
+C          u(ind,3)=-u(ind,3)
+C       enddo
+C       endif
+C c
+C       return
+C       end
+C c**********************************************************************
+C c calculate vector of gaussian random numbers with unit variance
+C c to refresh momenta
+C c   Numerical Recipes pp.203
+C c**********************************************************************
+C       subroutine gaussp(ps)
+C       parameter(ksize=12,ksizet=12,kvol=ksize*ksize*ksizet)
+C       common/trans/tpi 
+C       common/ranseed/yran,idum
+C       common/v/v(97)
+C       real rano
+C       real ps(kvol,2)
+C c     write(6,1)
+C 1     format(' Hi from gaussp')
+C       do 1000 il=1,kvol
+C 1000  ps(il,2)=sqrt(-2.0*log(rano(yran,idum)))
+C       do 1001 il=1,kvol
+C       theta=tpi*rano(yran,idum)
+C       ps(il,1)=ps(il,2)*sin(theta)
+C       ps(il,2)=ps(il,2)*cos(theta)
+C 1001  continue 
+C       return
+C       end      
+C c**********************************************************************
+C c calculate vector of gaussian random numbers with unit variance
+C c to generate pseudofermion fields R
+C c   Numerical Recipes pp.203
+C c**********************************************************************
+C       subroutine gauss0(ps)
+C       parameter(ksize=12,ksizet=12,kvol=ksize*ksize*ksizet)
+C       common/trans/tpi 
+C       common/ranseed/yran,idum
+C       common/v/v(97)
+C       real rano
+C       real ps(kvol,2)
+C c     write(6,1)
+C 1     format(' Hi from gauss0')
+C       do 1000 il=1,kvol
+C 1000  ps(il,2)=sqrt(-log(rano(yran,idum)))
+C       do 1001 il=1,kvol
+C       theta=tpi*rano(yran,idum)
+C       ps(il,1)=ps(il,2)*sin(theta)
+C       ps(il,2)=ps(il,2)*cos(theta)
+C 1001  continue 
+C       return
+C       end      
+C c*****************************************
+C c  Random number generator Numerical recipes 7.1
+C c
+C           real function rano(y,idum)
+C           common/v/v(97)
+C c
+C           if(idum.lt.0)then
+C                idum=1
+C                do j=1,97
+C                   dum=rranf()
+C                enddo
+C                do j=1,97
+C                   v(j)=rranf()
+C                enddo
+C                y=rranf()
+C           endif
+C c
+C           j=1+int(97.0*y)
+C           if(j.gt.97) j=97
+C           if(j.lt.1) j=1
+C c         write(6,*) j,y
+C c         write(6,*) 'problems with rano'
+C c         stop
+C c         endif
+C           y=v(j)
+C           rano=y
+C           v(j)=rranf()
+C           return
+C           end
+C C========================================================================
+C C
+C           SUBROUTINE RRANGET(SEED)
+C           DOUBLE PRECISION    SEED,     G900GT,   G900ST,   DUMMY
+C           SEED  =  G900GT()
+C           RETURN
+C           ENTRY RRANSET(SEED)
+C           DUMMY  =  G900ST(SEED)
+C           RETURN
+C           END
+C           REAL FUNCTION RRANF()
+C           DOUBLE PRECISION    DRANF,    G900GT,   G900ST
+C           DOUBLE PRECISION    DS(2),    DM(2),    DSEED
+C           DOUBLE PRECISION    DX24,     DX48
+C           DOUBLE PRECISION    DL,       DC,       DU,       DR
+C           LOGICAL             SINGLE
+C           DATA      DS     /  1665 1885.D0, 286 8876.D0  /
+C           DATA      DM     /  1518 4245.D0, 265 1554.D0  /
+C           DATA      DX24   /  1677 7216.D0  /
+C           DATA      DX48   /  281 4749 7671 0656.D0  /
+C           SINGLE  =  .TRUE.
+C           GOTO 10
+C           ENTRY DRANF()
+C           SINGLE  =  .FALSE.
+C   10      DL  =  DS(1) * DM(1)
+C           DC  =  DINT(DL/DX24)
+C           DL  =  DL - DC*DX24
+C           DU  =  DS(1)*DM(2) + DS(2)*DM(1) + DC
+C           DS(2)  =  DU - DINT(DU/DX24)*DX24
+C           DS(1)  =  DL
+C           DR     =  (DS(2)*DX24 + DS(1)) / DX48
+C           IF(SINGLE)  THEN
+C              RRANF  =  SNGL(DR)
+C           ELSE
+C              DRANF  =  DR
+C           ENDIF
+C           RETURN
+C           ENTRY G900GT()
+C           G900GT  =  DS(2)*DX24 + DS(1)
+C           RETURN
+C           ENTRY G900ST(DSEED)
+C           DS(2)  =  DINT(DSEED/DX24)
+C           DS(1)  =  DSEED - DS(2)*DX24
+C           G900ST =  DS(1)
+C           RETURN
+C           END
 c***********************************************************************
-      subroutine dslash(Phi,R,u,am,imass)
+      pure subroutine dslash(Phi,R,u,am,imass)
 c
 c     calculates Phi = M*R
 c
-      parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-      parameter(akappa=0.5)
+      use purefunctions
+      implicit none
+      integer, parameter :: ksize=12,ksizet=12,kthird=24
+      real, parameter :: akappa=0.5
       common/para/beta,am3,ibound
       common/dirac/gamval(6,4),gamin(6,4)
-      common /neighb/id(kvol,3),iu(kvol,3)
-c     complex u(kvol,3)
-c     complex Phi(kthird,kvol,4),R(kthird,kvol,4)
+c     complex u(ksize,ksize,ksizet,3)
+c     complex Phi(kthird,kthird,ksize,ksize,ksizet,4)
+c     complex R(kthird,kthird,ksize,ksize,ksizet,4)
 c     complex gamval
 c     complex zkappa
-      complex*16 u(kvol,3)
-      complex*16 Phi(kthird,kvol,4),R(kthird,kvol,4)
+      complex*16, intent(in) :: u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
+      complex*16, intent(inout) :: Phi(kthird, 0:ksize+1,
+     &                                 0:ksize+1, 0:ksizet+1, 4)
+      complex*16, intent(in) :: R(kthird, 0:ksize+1, 0:ksize+1,
+     &                            0:ksizet+1, 4)
+      integer, intent(in) :: imass
+      real, intent(in) :: am
       complex*16 gamval
       complex*16 zkappa
       integer gamin
+      real :: beta, am3, diag
+      integer :: ibound
+      integer :: ixup, iyup, itup, ix, iy, it, ithird, idirac, mu, igork
 c     write(6,*) 'hi from dslash'
 c
 c     diagonal term
       diag=(3.0-am3)+1.0
-      do idirac=1,4
-      do  i=1,kvol
-      do ithird=1,kthird
-      Phi(ithird,i,idirac)=diag*R(ithird,i,idirac)
-      enddo
-      enddo
-      enddo
-c
-c     Wilson term
+      Phi=diag*R
+c      
+c     Wilson term (hermitian) and Dirac term (antihermitian)
       do mu=1,3
-      do idirac=1,4
-      do i=1,kvol
-      do ithird=1,kthird
-      Phi(ithird,i,idirac)=Phi(ithird,i,idirac)
-     &    -akappa*(      u(i,mu)*R(ithird,iu(i,mu),idirac)
-     &         +conjg(u(id(i,mu),mu))*R(ithird,id(i,mu),idirac))
-      enddo
-      enddo
-      enddo
-      enddo
-c
-c     Dirac term
-      do mu=1,3
+      ixup = kdelta(1, mu)
+      iyup = kdelta(2, mu)
+      itup = kdelta(3, mu)
+
       do idirac=1,4
       igork=gamin(mu,idirac)
-      do i=1,kvol
-      do ithird=1,kthird
-      Phi(ithird,i,idirac)=Phi(ithird,i,idirac)
-     &+gamval(mu,idirac)*
-     &    (          u(i,mu)*R(ithird,iu(i,mu),igork)
-     &         -conjg(u(id(i,mu),mu))*R(ithird,id(i,mu),igork))
+      do it = 1,ksizet
+      do iy = 1,ksize
+      do ix = 1,ksize
+      Phi(:,ix,iy,it,idirac)=Phi(:,ix,iy,it,idirac)
+c Wilson term (hermitian)
+     &    -akappa*(u(ix,iy,it,mu)
+     &              *R(:, ix+ixup, iy+iyup, it+itup, idirac)
+     &             +conjg(u(ix-ixup, iy-iyup, it-itup, mu))
+     &              *R(:, ix-ixup, iy-iyup, it-itup, idirac))
+c Dirac term (antihermitian)
+     &     +gamval(mu,idirac)*
+     &       (u(ix,iy,it,mu)
+     &         *R(:, ix+ixup, iy+iyup, it+itup, igork)
+     &        -conjg(u(ix-ixup, iy-iyup, it-itup, mu))
+     &         *R(:, ix-ixup, iy-iyup, it-itup, igork))
+      enddo
       enddo
       enddo
       enddo
       enddo
 c
 c  s-like term exploiting projection
-      do idirac=3,4
-      do i=1,kvol
-      do ithird=1,kthird-1
-      Phi(ithird,i,idirac)=Phi(ithird,i,idirac)
-     &   -R(ithird+1,i,idirac)
-      enddo
-      enddo
-      enddo
-      do idirac=1,2
-      do ithird=1,kthird-1
-      do i=1,kvol
-      Phi(ithird+1,i,idirac)=Phi(ithird+1,i,idirac)
-     &    -R(ithird,i,idirac)
-      enddo
-      enddo
-      enddo
+      Phi(1:kthird-1,:,:,:,3:4)=Phi(1:kthird-1,:,:,:,3:4)
+     &   -R(2:kthird,:,:,:,3:4)
+      Phi(2:kthird,:,:,:,1:2)=Phi(2:kthird,:,:,:,1:2)
+     &    -R(1:kthird-1,:,:,:,1:2)
 c
 c  Mass term (couples the two walls unless imass=5)
-      if(imass.eq.1)then
+      if (imass.eq.1) then
          zkappa=cmplx(am,0.0)
-         do idirac=3,4
-         do i=1,kvol
-         Phi(kthird,i,idirac)=Phi(kthird,i,idirac)+zkappa*R(1,i,idirac)
-         enddo
-         enddo
-         do idirac=1,2
-         do i=1,kvol
-         Phi(1,i,idirac)=Phi(1,i,idirac)+zkappa*R(kthird,i,idirac)
-         enddo
-         enddo
-      elseif(imass.eq.3)then
+         Phi(kthird, :, :, :, 3:4) = Phi(kthird, :, :, :, 3:4)
+     &                               + zkappa * R(1, :, :, :, 3:4)
+         Phi(1, :, :, :, 1:2) = Phi(1, :, :, :, 1:2)
+     &                          + zkappa * R(kthird, :, :, :, 1:2)
+      elseif (imass.eq.3) then
          zkappa=cmplx(0.0,-am)
-         do idirac=3,4
-         do i=1,kvol
-         Phi(kthird,i,idirac)=Phi(kthird,i,idirac)-zkappa*R(1,i,idirac)
-         enddo
-         enddo
-         do idirac=1,2
-         do i=1,kvol
-         Phi(1,i,idirac)=Phi(1,i,idirac)+zkappa*R(kthird,i,idirac)
-         enddo
-         enddo
-      elseif(imass.eq.5)then
+         Phi(kthird,:, :, :, 3:4) = Phi(kthird, :, :, :, 3:4)
+     &                              - zkappa * R(1, :, :, :, 3:4)
+         Phi(1, :, :, :, 1:2) = Phi(1, :, :, :, 1:2)
+     &                          + zkappa * R(kthird, :, :, :, 1:2)
+      elseif (imass.eq.5) then
          zkappa=cmplx(0.0,-am)
-         do idirac=3,4
-         igork=gamin(5,idirac)
-         do i=1,kvol
-         Phi(kthird,i,idirac)=Phi(kthird,i,idirac)
-     &                        -zkappa*R(kthird,i,idirac-2)
-c        Phi(kthird,i,idirac)=Phi(kthird,i,idirac)
-c    &           +2*zkappa*gamval(5,idirac)*R(kthird,i,igork)
-         enddo
-         enddo
-         do idirac=1,2
-         igork=gamin(5,idirac)
-         do i=1,kvol
-         Phi(1,i,idirac)=Phi(1,i,idirac)-zkappa*R(1,i,idirac+2)
-c        Phi(1,i,idirac)=Phi(1,i,idirac)
-c    &        +2*zkappa*gamval(5,idirac)*R(1,i,igork)
-         enddo
-         enddo
+c         do idirac=3,4
+c         igork=gamin(5,idirac)
+         Phi(kthird, :, :, :, 3:4) = Phi(kthird, :, :, :, 3:4)
+     &                               - zkappa * R(kthird, :, :, :, 1:2)
+c        Phi(kthird,:,:,:,idirac)=Phi(kthird,:,:,:,idirac)
+c    &           +2*zkappa*gamval(5,idirac)*R(kthird,:,:,:,igork)
+c         enddo
+c         do idirac=1,2
+c         igork=gamin(5,idirac)
+         Phi(1, :, :, :, 1:2) = Phi(1, :, :, :, 1:2)
+     &                          - zkappa * R(1, :, :, :, 3:4)
+c        Phi(1,:,:,:,idirac)=Phi(1,:,:,:,idirac)
+c    &        +2*zkappa*gamval(5,idirac)*R(1,:,:,:,igork)
+c         enddo
       endif
 c
       return
       end
 c***********************************************************************
-      subroutine dslashd(Phi,R,u,am,imass)
+      pure subroutine dslashd(Phi,R,u,am,imass)
 c
 c     calculates Phi = Mdagger*R
 c
-      parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-      parameter(akappa=0.5)
+      use purefunctions
+      implicit none
+      integer, parameter :: ksize=12,ksizet=12,kthird=24
+      real, parameter :: akappa=0.5
       common/para/beta,am3,ibound
       common/dirac/gamval(6,4),gamin(6,4)
-      common /neighb/id(kvol,3),iu(kvol,3)
-c     complex u(kvol,3)
-c     complex Phi(kthird,kvol,4),R(kthird,kvol,4)
+c     complex u(ksize,ksize,ksizet,3)
+c     complex Phi(kthird,kthird,ksize,ksize,ksizet,4)
+c     complex R(kthird,kthird,ksize,ksize,ksizet,4)
 c     complex gamval
 c     complex zkappa
-      complex*16 u(kvol,3)
-      complex*16 Phi(kthird,kvol,4),R(kthird,kvol,4)
+      complex*16, intent(in) :: u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
+      complex*16, intent(inout) :: Phi(kthird, 0:ksize+1,
+     &                                 0:ksize+1, 0:ksizet+1, 4)
+      complex*16, intent(in) :: R(kthird, 0:ksize+1, 0:ksize+1,
+     &                            0:ksizet+1, 4)
+      integer, intent(in) :: imass
+      real, intent(in) :: am
       complex*16 gamval
       complex*16 zkappa
       integer gamin
+      real :: beta, am3, diag
+      integer :: ibound
+      integer :: ixup, iyup, itup, ix, iy, it, ithird, idirac, mu, igork
 c     write(6,*) 'hi from dslashd'
 c
 c     diagonal term (hermitian)
@@ -2096,60 +2105,84 @@ c     diagonal term (hermitian)
 c
 c     Wilson term (hermitian) and Dirac term (antihermitian)
       do mu=1,3
+      ixup = kdelta(1, mu)
+      iyup = kdelta(2, mu)
+      itup = kdelta(3, mu)
+
       do idirac=1,4
       igork=gamin(mu,idirac)
-      do i=1,kvol
-      Phi(:,i,idirac)=Phi(:,i,idirac)
+      do it = 1,ksizet
+      do iy = 1,ksize
+      do ix = 1,ksize
+      Phi(:,ix,iy,it,idirac)=Phi(:,ix,iy,it,idirac)
 c Wilson term (hermitian)
-     &    -akappa*(      u(i,mu)*R(:,iu(i,mu),idirac)
-     &         +conjg(u(id(i,mu),mu))*R(:,id(i,mu),idirac))
+     &    -akappa*(u(ix,iy,it,mu)
+     &              *R(:, ix+ixup, iy+iyup, it+itup, idirac)
+     &             +conjg(u(ix-ixup, iy-iyup, it-itup, mu))
+     &              *R(:, ix-ixup, iy-iyup, it-itup, idirac))
 c Dirac term (antihermitian)
-     &-gamval(mu,idirac)*
-     &    (          u(i,mu)*R(:,iu(i,mu),igork)
-     &         -conjg(u(id(i,mu),mu))*R(:,id(i,mu),igork))
+     &     -gamval(mu,idirac)*
+     &       (u(ix,iy,it,mu)
+     &         *R(:, ix+ixup, iy+iyup, it+itup, igork)
+     &        -conjg(u(ix-ixup, iy-iyup, it-itup, mu))
+     &         *R(:, ix-ixup, iy-iyup, it-itup, igork))
+      enddo
+      enddo
       enddo
       enddo
       enddo
 c
 c  s-like term exploiting projection
-      Phi(1:kthird-1,:,1:2)=Phi(1:kthird-1,:,1:2)
-     &   -R(2:kthird,:,1:2)
-      Phi(2:kthird,:,3:4)=Phi(2:kthird,:,3:4)
-     &   -R(1:kthird-1,:,3:4)
+      Phi(1:kthird-1,:,:,:,1:2)=Phi(1:kthird-1,:,:,:,1:2)
+     &   -R(2:kthird,:,:,:,1:2)
+      Phi(2:kthird,:,:,:,3:4)=Phi(2:kthird,:,:,:,3:4)
+     &   -R(1:kthird-1,:,:,:,3:4)
 c
 c  Mass term (couples the two walls unless imass=5) 
       if(imass.eq.1)then
          zkappa=cmplx(am,0.0)
-         Phi(kthird,:,1:2)=Phi(kthird,:,1:2)+zkappa*R(1,:,1:2)
-         Phi(1,:,3:4)=Phi(1,:,3:4)+zkappa*R(kthird,:,3:4)
+         Phi(kthird,:,:,:,1:2)=Phi(kthird,:,:,:,1:2)
+     &                         +zkappa*R(1,:,:,:,1:2)
+         Phi(1,:,:,:,3:4)=Phi(1,:,:,:,3:4)+zkappa*R(kthird,:,:,:,3:4)
       elseif(imass.eq.3)then
          zkappa=cmplx(0.0,am)
-         Phi(kthird,:,1:2)=Phi(kthird,:,1:2)+zkappa*R(1,:,1:2)
-         Phi(1,i,idirac)=Phi(1,i,idirac)-zkappa*R(kthird,i,idirac)
+         Phi(kthird,:,:,:,1:2)=Phi(kthird,:,:,:,1:2)
+     &                         +zkappa*R(1,:,:,:,1:2)
+         Phi(1,:,:,:,3:4)=Phi(1,:,:,:,3:4)
+     &                       -zkappa*R(kthird,:,:,:,3:4)
       elseif(imass.eq.5)then
          zkappa=cmplx(0.0,am)
-         Phi(kthird,:,1:2)=Phi(kthird,:,1:2)
-     &                        -zkappa*R(kthird,:,3:4)
-         Phi(1,:,3:4)=Phi(1,:,3:4)-zkappa*R(1,:,1:2)
+         Phi(kthird,:,:,:,1:2)=Phi(kthird,:,:,:,1:2)
+     &                        -zkappa*R(kthird,:,:,:,3:4)
+         Phi(1,:,:,:,3:4)=Phi(1,:,:,:,3:4)-zkappa*R(1,:,:,:,1:2)
       endif
+!      call update_halo_5(4, Phi)
 c
       return
       end
+
 c***********************************************************************
-      subroutine dslash2d(Phi,R,u)
+      pure subroutine dslash2d(Phi,R,u)
+      use purefunctions
 c
 c     calculates Phi = M*R
 c
-      parameter(ksize=12,ksizet=12,kvol=ksize*ksize*ksizet)
-      parameter(akappa=0.5)
+      implicit none
+C      integer :: kdelta
+      integer, parameter :: ksize=12, ksizet=12
+      real, parameter :: akappa=0.5
       common/dirac/gamval(6,4),gamin(6,4)
 c     complex u(ksize,ksize,ksizet,3)
 c     complex Phi(ksize,ksize,ksizet,4),R(ksize,ksize,ksizet,4)
 c     complex gamval
-      complex*16 u(ksize,ksize,ksizet,3)
-      complex*16 Phi(ksize,ksize,ksizet,4),R(ksize,ksize,ksizet,4)
-      complex*16 gamval
-      integer gamin
+      complex*16, intent(in) ::  u(0:ksize+1,0:ksize+1,0:ksizet+1,3)
+      complex*16, intent(inout) :: Phi(0:ksize+1,0:ksize+1,0:ksizet+1,4)
+      complex*16, intent(in) :: R(0:ksize+1,0:ksize+1,0:ksizet+1,4)
+      complex*16 :: gamval
+      integer :: gamin
+      integer :: ix, iy, it, idirac, mu, ixup, iyup, itup, igork
+      real :: diag
+      
 c     write(6,*) 'hi from dslash2d'
 c
 c     diagonal term
@@ -2163,50 +2196,82 @@ c     Wilson and Dirac terms
 c
       do idirac=1,4
       igork=gamin(mu,idirac)
+      do it=1,ksizet
       do iy=1,ksize
       do ix=1,ksize
-      Phi(ix,iy,:,idirac)=
+      Phi(ix,iy,it,idirac)=
 c Wilson term
-     &    Phi(ix,iy,:,idirac)
-     &    -akappa*(u(ix,iy,:,mu)*R(modulo(ix+ixup-1,ksize)+1,
-     &                              modulo(iy+iyup-1,ksize)+1,
-     &                              :,idirac)
-     &             +conjg(u(modulo(ix-ixup-1,ksize)+1,
-     &                      modulo(iy-iyup-1,ksize)+1,
-     &                      :,mu))
-     &              *R(modulo(ix-ixup-1,ksize)+1,
-     &                 modulo(iy-iyup-1,ksize)+1,
-     &                 :,idirac))
+     &    Phi(ix,iy,it,idirac)
+     &    -akappa*(u(ix,iy,it,mu)*R(ix+ixup, iy+iyup, it, idirac)
+     &             +conjg(u(ix-ixup, iy-iyup, it, mu))
+     &              *R(ix-ixup, iy-iyup, it, idirac))
 c Dirac term
      &     +gamval(mu,idirac)*
-     &      (u(ix,iy,:,mu)*R(modulo(ix+ixup-1,ksize)+1,
-     &                        modulo(iy+iyup-1,ksize)+1,
-     &                        :,igork)
-     &       -conjg(u(modulo(ix-ixup-1,ksize)+1,
-     &                modulo(iy-iyup-1,ksize)+1,
-     &                :,mu))
-     &        *R(modulo(ix-ixup-1,ksize)+1,
-     &           modulo(iy-iyup-1,ksize)+1,
-     &           :,igork))
+     &      (u(ix,iy,it,mu)*R(ix+ixup, iy+iyup, it, igork)
+     &       -conjg(u(ix-ixup, iy-iyup, it,mu))
+     &        *R(ix-ixup, iy-iyup, it, igork))
       enddo
       enddo
       enddo
       enddo
+      enddo
+      call update_halo_4(4, Phi)
 c
       return
       end
 c
 c***********************************************************************
+c   Update boundary terms
+c***********************************************************************
+      pure subroutine update_halo_4(size4, Array)
+c     
+      implicit none
+      integer, parameter :: ksize=12,ksizet=12
+c
+      integer, intent(in) :: size4
+      complex*16, intent(inout) :: Array(0:ksize+1, 0:ksize+1,
+     &                                   0:ksizet+1, size4)
+c
+      Array(0,:,:,:) = Array(ksize,:,:,:)
+      Array(ksize+1,:,:,:) = Array(1,:,:,:)
+      Array(:,0,:,:) = Array(:,ksize,:,:)
+      Array(:,ksize+1,:,:) = Array(:,1,:,:)
+      Array(:,:,0,:) = Array(:,:,ksize,:)
+      Array(:,:,ksize+1,:) = Array(:,:,1,:)
+c      
+      return
+c      
+      end subroutine
+c***********************************************************************
+      pure subroutine update_halo_5(size5, Array)
+c     
+      implicit none
+      integer, parameter :: ksize=12,ksizet=12,kthird=24
+c
+      integer, intent(in) :: size5
+      complex*16, intent(inout) :: Array(kthird, 0:ksize+1, 0:ksize+1,
+     &                                   0:ksizet+1, size5)
+c
+      Array(:,0,:,:,:) = Array(:,ksize,:,:,:)
+      Array(:,ksize+1,:,:,:) = Array(:,1,:,:,:)
+      Array(:,:,0,:,:) = Array(:,:,ksize,:,:)
+      Array(:,:,ksize+1,:,:) = Array(:,:,1,:,:)
+      Array(:,:,:,0,:) = Array(:,:,:,ksize,:)
+      Array(:,:,:,ksize+1,:) = Array(:,:,:,1,:)
+c      
+      return
+c      
+      end subroutine
+
+c***********************************************************************
 c   A Kronecker delta function
 c   Useful for calculating coordinate offsets
 c***********************************************************************
-      integer function kdelta(nu, mu)
+      pure integer function kdelta(nu, mu)
+        implicit none
         integer, intent(in) :: nu
         integer, intent(in) :: mu
 
-        if(nu.eq.mu) then
-          kdelta=1
-        else
-          kdelta=0
-        endif
+        kdelta=merge(1,0,nu==mu)
       end
+

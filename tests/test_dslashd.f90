@@ -1,7 +1,7 @@
-program test_dslash
+program test_dslashd
       implicit none
 ! function to test
-      external :: dslash
+      external :: dslashd
 
 ! supporting functions
       external :: init
@@ -75,7 +75,7 @@ program test_dslash
       call init(istart)
 ! call function
       do i = 1,timing_loops
-         call dslash(Phi, R, u, am, imass)
+         call dslashd(Phi, R, u, am, imass)
       end do
 ! check output
 !      do i = 1,10
@@ -84,7 +84,7 @@ program test_dslash
 !         print *,'Phi(', j, ',', l, ') = ', Phi(j, l)
 !      enddo
 
-      open(3, file='test_dslash.dat', form="unformatted", access="sequential")
+      open(3, file='test_dslashd.dat', form="unformatted", access="sequential")
       if (generate) then
          write(3) Phi(:,1:ksize,1:ksize,1:ksizet,:)
       else
