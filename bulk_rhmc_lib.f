@@ -1976,9 +1976,9 @@ c
       real, parameter :: akappa=0.5
       common/para/beta,am3,ibound
       common/dirac/gamval(6,4),gamin(6,4)
-c     complex u(ksize,ksize,ksizet,3)
-c     complex Phi(kthird,kthird,ksize,ksize,ksizet,4)
-c     complex R(kthird,kthird,ksize,ksize,ksizet,4)
+c     complex, intent(in) :: u(0:ksize+1,0:ksize+1,0:ksizet+1,3)
+c     complex, intent(in) :: Phi(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
+c     complex, intent(in) :: R(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
 c     complex gamval
 c     complex zkappa
       complex*16, intent(in) :: u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
@@ -1988,9 +1988,9 @@ c     complex zkappa
      &                            0:ksizet+1, 4)
       integer, intent(in) :: imass
       real, intent(in) :: am
-      complex*16 gamval
-      complex*16 zkappa
-      integer gamin
+      complex*16 :: gamval
+      complex*16 :: zkappa
+      integer :: gamin
       real :: beta, am3, diag
       integer :: ibound
       integer :: ixup, iyup, itup, ix, iy, it, ithird, idirac, mu, igork
@@ -2079,9 +2079,9 @@ c
       real, parameter :: akappa=0.5
       common/para/beta,am3,ibound
       common/dirac/gamval(6,4),gamin(6,4)
-c     complex u(ksize,ksize,ksizet,3)
-c     complex Phi(kthird,kthird,ksize,ksize,ksizet,4)
-c     complex R(kthird,kthird,ksize,ksize,ksizet,4)
+c     complex, intent(in) ::  u(0:ksize+1,0:ksize+1,0:ksizet+1,3)
+c     complex, intent(inout) :: Phi(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
+c     complex, intent(in) R(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
 c     complex gamval
 c     complex zkappa
       complex*16, intent(in) :: u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
@@ -2091,9 +2091,9 @@ c     complex zkappa
      &                            0:ksizet+1, 4)
       integer, intent(in) :: imass
       real, intent(in) :: am
-      complex*16 gamval
-      complex*16 zkappa
-      integer gamin
+      complex*16 :: gamval
+      complex*16 :: zkappa
+      integer :: gamin
       real :: beta, am3, diag
       integer :: ibound
       integer :: ixup, iyup, itup, ix, iy, it, ithird, idirac, mu, igork
