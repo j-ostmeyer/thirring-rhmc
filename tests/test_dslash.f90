@@ -52,8 +52,8 @@ program test_dslash
             enddo
          enddo
       enddo
+      idx = 0
       do j = 1,3
-         idx = 4 * ksize * ksize * ksizet * kthird + (j-1) * kthird
          do it = 1,ksizet
             do iy = 1,ksize
                do ix = 1,ksize
