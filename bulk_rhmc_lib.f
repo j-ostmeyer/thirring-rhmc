@@ -15,6 +15,15 @@
         end subroutine
       end interface
       interface
+        pure subroutine update_halo_4_real(size4, Array)
+          integer, parameter :: ksize=12,ksizet=12
+          integer, intent(in) :: size4
+          real, intent(inout) :: Array(0:ksize+1, 0:ksize+1,
+     &                                       0:ksizet+1, size4)
+        end subroutine
+      end interface
+
+      interface
         pure subroutine update_halo_5(size5, Array)
 c     
           integer, parameter :: ksize=12,ksizet=12,kthird=24
@@ -87,7 +96,7 @@ C       common/parampv/ancgpv,ancghpv,ancgfpv,ancgpfpv
 C       common/trans/tpi 
 C       common/dum1/ R(kthird,kvol,4),ps(kvol,2)
 C       common/vector/X1(kthird,kvol,4)
-C       common/ranseed/yran,idum
+C       common/ranseed/idum
 C       common/v/v(97)
 C c     complex Phi(kthird,kvol,4,Nf),X0(kthird,kvol,4)
 C c     complex R,zi,qq,qbqb
@@ -97,7 +106,7 @@ C       complex*16 Phi(kthird,kvol,4,Nf),X0(kthird,kvol,4)
 C       complex*16 R,zi,qq,qbqb
 C       complex*16 u,ut,X1
 C       complex*16 a,b
-C       real rano
+C       real ran
 C       real*8 H0,H1,S0,S1,dH,dS,hg,hp
 C       real*8 seed
 C       real*8 anum2,aden2,bnum2,bden2
@@ -138,8 +147,8 @@ C       endif
 C       write(7,*) 'seed: ', seed
 C       call rranset(seed)
 C       idum=-1
-C       y=rano(yran,idum)
-C c     write(6,*) 'rano: ', y,yran,idum
+C       y=ran(idum)
+C c     write(6,*) 'ran: ', y,idum
 C c*******************************************************************
 C c     initialization
 C c     istart.lt.0 : start from tape
@@ -278,15 +287,15 @@ C c*******************************************************************
 C c     heatbath for p 
 C c*******************************************************************
 C c  for some occult reason this write statement is needed to ensure compatibility with earlier versions
-C c     write(6,*) yran,idum
-C c     write(98,*) yran,idum
+C c     write(6,*) idum
+C c     write(98,*) idum
 C       do mu=1,3
 C       call gaussp(ps)
 C       do i=1,kvol
 C       pp(i,mu)=ps(i,1)
 C       enddo
 C       enddo
-C c     write(6,*) yran,idum
+C c     write(6,*) idum
 C c*******************************************************************
 C c  call to Hamiltonian
 C c     
@@ -327,7 +336,7 @@ C       call force(Phi,rescgg,am,imass,isweep,iter)
 C c
 C c test for end of random trajectory
 C c 
-C       ytest=rano(yran,idum)
+C       ytest=ran(idum)
 C       if(ytest.lt.proby)then
 C       d=dt*0.5
 C       do 2005 mu=1,3
@@ -359,7 +368,7 @@ C       y=exp(dH)
 C       yav=yav+y 
 C       yyav=yyav+y*y 
 C       if(dH.lt.0.0)then
-C       x=rano(yran,idum)
+C       x=ran(idum)
 C       if(x.gt.y)goto 600
 C       endif
 C c
@@ -843,69 +852,99 @@ C c
 C c
 C       return
 C       end
-C c**********************************************************************
-C c  iflag = 0 : evaluates Rdagger*(Mdagger)'*X2
-C c  iflag = 1 : evaluates Rdagger*(M)'*X2
-C c**********************************************************************
-C       subroutine derivs(R,X2,anum,iflag)
-C       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-C       parameter(akappa=0.5)
-C       common/neighb/id(kvol,3),iu(kvol,3)
-C       common/dirac/gamval(6,4),gamin(6,4)
-C       common/gforce/dSdpi(kvol,3)
-C c     complex R(kthird,kvol,4),X2(kthird,kvol,4)
-C       complex*16 R(kthird,kvol,4),X2(kthird,kvol,4)
-C c     complex gamval
-C       complex*16 gamval
-C       real*8 anum
-C       complex*16 tzi
-C       integer gamin
-C c
-C c     write(6,111)
-C 111   format(' Hi from derivs')
+c**********************************************************************
+c  iflag = 0 : evaluates Rdagger*(Mdagger)'*X2
+c  iflag = 1 : evaluates Rdagger*(M)'*X2
+c**********************************************************************
+      subroutine derivs(R,X2,anum,iflag)
+      use purefunctions
+      implicit none
+c      complex, intent(in) :: R(kthird, ksize, ksize, ksizet, 4)
+c      complex, intent(in) :: X2(kthird, ksize, ksize, ksizet, 4)
+      integer, parameter :: ksize=12, ksizet=12, kthird=24
+      real, parameter :: akappa = 0.5
 
-C c     dSdpi=dSdpi-Re(Rdagger *(d(Mdagger)dp)* X2)
-C c     Cf. Montvay & Muenster (7.215)
-C       tzi=cmplx(0.0,2*anum)
-C c     factor of 2 picks up second term in M&M (7.215)
-C c
-C       do mu=1,3
-C       do idirac=1,4
-C       do ithird=1,kthird
-C c
-C       do i=1,kvol
-C       dSdpi(i,mu)=dSdpi(i,mu)-akappa*real(tzi*
-C      &(conjg(R(ithird,i,idirac))*
-C      & X2(ithird,iu(i,mu),idirac)
-C      &-conjg(R(ithird,iu(i,mu),idirac))*
-C      &  X2(ithird,i,idirac)))
-C       enddo
-C c
-C       igork1=gamin(mu,idirac)
-C       if(iflag.eq.0)then
-C       do i=1,kvol
-C       dSdpi(i,mu)=dSdpi(i,mu)-real(tzi*gamval(mu,idirac)*
-C      &(conjg(R(ithird,i,idirac))*
-C      &        X2(ithird, iu(i,mu),igork1)
-C      &+conjg(R(ithird,iu(i,mu),idirac))*
-C      &             X2(ithird,i,igork1)))
-C       enddo
-C       else
-C       do i=1,kvol
-C       dSdpi(i,mu)=dSdpi(i,mu)+real(tzi*gamval(mu,idirac)*
-C      &(conjg(R(ithird,i,idirac))*
-C      &        X2(ithird,iu(i,mu),igork1)
-C      &+conjg(R(ithird,iu(i,mu),idirac))*
-C      &             X2(ithird,i,igork1)))
-C       enddo
-C       endif
-C c
-C       enddo
-C       enddo
-C       enddo
-C c
-C       return
-C       end
+      complex*16, intent(in) :: R(kthird, 0:ksize+1, 0:ksize+1, 
+     &                            0:ksizet+1, 4)
+      complex*16, intent(in) :: X2(kthird, 0:ksize+1, 0:ksize+1, 
+     &                            0:ksizet+1, 4)
+      real*8, intent(in) :: anum
+      integer, intent(in) :: iflag
+
+      
+      common/dirac/gamval(6,4),gamin(6,4)
+      common/gforce/dSdpi(ksize,ksize,ksizet,3)
+
+c      complex :: gamval
+      complex*16 :: gamval
+      integer :: gamin
+      real :: dSdpi
+
+      complex*16 :: tzi
+      integer :: ix, iy, it, ixup, iyup, itup, idirac, ithird, mu
+      integer :: igork1
+c
+c     write(6,111)
+111   format(' Hi from derivs')
+
+c     dSdpi=dSdpi-Re(Rdagger *(d(Mdagger)dp)* X2)
+c     Cf. Montvay & Muenster (7.215)
+      tzi=cmplx(0.0,2*anum)
+c     factor of 2 picks up second term in M&M (7.215)
+c
+      do mu = 1,3
+      ixup = kdelta(1, mu)
+      iyup = kdelta(2, mu)
+      itup = kdelta(3, mu)
+
+      do idirac=1,4
+      do ithird=1,kthird
+c
+      do it = 1,ksizet
+      do iy = 1,ksize
+      do ix = 1,ksize
+      dSdpi(ix,iy,it,mu)=dSdpi(ix,iy,it,mu)-akappa*real(tzi*
+     &(conjg(R(ithird,ix,iy,it,idirac))*
+     & X2(ithird,ix+ixup,iy+iyup,it+itup,idirac)
+     &-conjg(R(ithird,ix+ixup,iy+iyup,it+itup,idirac))*
+     &  X2(ithird,ix,iy,it,idirac)))
+      enddo
+      enddo
+      enddo
+c
+      igork1=gamin(mu,idirac)
+      if(iflag.eq.0)then
+      do it = 1,ksizet
+      do iy = 1,ksize
+      do ix = 1,ksize
+      dSdpi(ix,iy,it,mu)=dSdpi(ix,iy,it,mu)-real(tzi*gamval(mu,idirac)*
+     &(conjg(R(ithird,ix,iy,it,idirac))*
+     &        X2(ithird, ix+ixup,iy+iyup,it+itup,igork1)
+     &+conjg(R(ithird,ix+ixup,iy+iyup,it+itup,idirac))*
+     &             X2(ithird,ix,iy,it,igork1)))
+      enddo
+      enddo
+      enddo
+      else
+      do it = 1,ksizet
+      do iy = 1,ksize
+      do ix = 1,ksize
+      dSdpi(ix,iy,it,mu)=dSdpi(ix,iy,it,mu)+real(tzi*gamval(mu,idirac)*
+     &(conjg(R(ithird,ix,iy,it,idirac))*
+     &        X2(ithird,ix+ixup,iy+iyup,it+itup,igork1)
+     &+conjg(R(ithird,ix+ixup,iy+iyup,it+itup,idirac))*
+     &             X2(ithird,ix,iy,it,igork1)))
+      enddo
+      enddo
+      enddo
+      endif
+c
+      enddo
+      enddo
+      enddo
+c
+      return
+      end
 C c******************************************************************
 C c   Calculates residual for testing purposes....
 C c   needs to run with double precision vectors to be useful.....
@@ -1063,7 +1102,7 @@ C       common/para/beta,am3,ibound
 C       common/dirac/gamval(6,4),gamin(6,4)
 C       common /neighb/id(kvol,3),iu(kvol,3)
 C       common/vector/xi(kthird,kvol,4)
-C       common/ranseed/yran,idum
+C       common/ranseed/idum
 C       common/v/v(97)
 C c     complex x(kvol,4), Phi(kthird,kvol,4)
 C c     complex xi,gamval
@@ -1323,7 +1362,7 @@ C       common/para/beta,am3,ibound
 C       common/dirac/gamval(6,4),gamin(6,4)
 C       common /neighb/id(kvol,3),iu(kvol,3)
 C       common/vector/xi(kthird,kvol,4)
-C       common/ranseed/yran,idum
+C       common/ranseed/idum
 C       common/v/v(97)
 C c     complex x(kvol,4),x0(kvol,4),Phi(kthird,kvol,4)
 C c     complex xi,gamval
@@ -1339,7 +1378,7 @@ C c     complex u
 C       complex*16 cferm1(0:ksizet-1), cferm2(0:ksizet-1)
 C       complex*16 u
 C       real ps(kvol,2)
-C       real rano
+C       real ran
 C       integer gamin
 C c     write(6,*) 'hi from meson'
 C c      
@@ -1364,9 +1403,9 @@ C c
 C       do ksource=1,nsource
 C c
 C c   random location for +m source
-C       ixxx=int(ksize*rano(yran,idum))+1
-C       iyyy=int(ksize*rano(yran,idum))+1
-C       ittt=int(ksizet*rano(yran,idum))+1
+C       ixxx=int(ksize*ran(idum))+1
+C       iyyy=int(ksize*ran(idum))+1
+C       ittt=int(ksizet*ran(idum))+1
 C       isource=ixxx+ksize*((iyyy-1)+ksize*(ittt-1))
 C c     write(6,*) ixxx,iyyy,ittt, isource
 C c
@@ -1618,30 +1657,35 @@ C c     endif
 C c
 C       return
 C       end
-C c*******************************************************************
-C c
-C       subroutine sread
-C       parameter(ksize=12,ksizet=12,kvol=ksizet*ksize*ksize)
-C       common/gauge/ theta(kvol,3),seed
-C       real*8 seed
-C       open(unit=10,file='con',
-C      1     status='unknown',form='unformatted')
-C       read (10) theta,seed
-C       close(10)
-C       return
-C       end
-C c
-C       subroutine swrite
-C       parameter(ksize=12,ksizet=12,kvol=ksizet*ksize*ksize)
-C       common/gauge/ theta(kvol,3),seed
-C       real*8 seed
-C       open(unit=31,file='con',
-C      1     status='unknown',form='unformatted')
-C       write (31) theta,seed
-C       close(31)
-C       return
-C       end
-C c
+c*******************************************************************
+c
+      subroutine sread
+      implicit none
+      integer, parameter :: ksize=12, ksizet=12
+      common/gauge/ theta(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3), seed
+      real :: theta
+      real*8 :: seed
+      open(unit=10,file='con',
+     1     status='unknown',form='unformatted')
+      read (10) theta(1:ksize, 1:ksize, 1:ksizet, :), seed
+      close(10)
+      call update_halo_4_real(3, theta)
+      return
+      end
+c
+      subroutine swrite
+      implicit none
+      integer, parameter :: ksize=12, ksizet=12
+      common/gauge/ theta(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3), seed
+      real :: theta
+      real*8 seed
+      open(unit=31,file='con',
+     1     status='unknown',form='unformatted')
+      write (31) theta(1:ksize, 1:ksize, 1:ksizet, :), seed
+      close(31)
+      return
+      end
+c
       subroutine init(nc)
 c*******************************************************************
 c     sets initial values
@@ -1649,18 +1693,22 @@ c     nc=0 cold start
 c     nc=1 hot start
 c     nc<0 no initialization
 c*******************************************************************
-      parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-      parameter(akappa=0.5)
-C      common/gauge/theta(kvol,3),seed
-C      common /neighb/id(kvol,3),iu(kvol,3)
+      implicit none
+      integer, parameter :: ksize=12, ksizet=12, kthird=24
+      real, parameter :: akappa=0.5
+      integer, intent(in) :: nc
+      common/gauge/theta(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3), seed
       common/dirac/gamval(6,4),gamin(6,4)
-      common/ranseed/yran,idum
-      common/v/v(97)
+      common/ranseed/idum
 c     complex gamval,one,zi
-      complex*16 gamval,one,zi
-      real rano
-      real*8 seed
-      integer gamin
+      complex*16 :: gamval,one,zi
+      real :: ran
+      real :: theta
+      real*8 :: seed
+      integer :: gamin
+      integer :: idum
+      integer :: ix, iy, it, mu
+      real :: g
 c
 c
       one=(1.0,0.0)
@@ -1751,220 +1799,168 @@ c
 c
 c     initialize gauge fields
 c
-C      if(nc .eq. 1)goto 40
-Cc     (else cold start)
-C      theta = 0.0
-C      return
-Cc
-C40    continue
-C      g=0.05
-C      do 61 mu=1,3
-C      do 61 ind=1,kvol
-Cc     theta(ind,mu)=2.0*g*rranf()-1.0
-C      theta(ind,mu)=2.0*g*rano(yran,idum)-1.0
-C61    continue
+      if(nc .eq. 1)goto 40
+c     (else cold start)
+      theta = 0.0
+      return
+c
+40    continue
+      g=0.05
+      do mu=1,3
+        do it = 1, ksizet
+          do iy = 1, ksize
+            do ix = 1, ksize
+c             theta(ix, iy, it, mu) = 2.0 * g * rranf() - 1.0
+              theta(ix, iy, it, mu) = 2.0 * g * ran(idum) - 1.0
+            enddo
+          enddo
+        enddo
+      enddo
+      call update_halo_4(3, theta)
       return
       end
-C c
-C       subroutine addrc
-C       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-C c*******************************************************************
-C c
-C c     loads the addresses required during the update
-C c
-C c*******************************************************************
-C       common /neighb/id(kvol,3),iu(kvol,3)
-C       do 30 j3=1,ksizet
-C       do 30 j2=1,ksize
-C       do 30 j1=1,ksize
-C       ic=((j3-1)*ksize+(j2-1))*ksize+j1
-C       call ia(j1-1,j2,j3,id(ic,1))
-C       call ia(j1+1,j2,j3,iu(ic,1))
-C       call ia(j1,j2-1,j3,id(ic,2))
-C       call ia(j1,j2+1,j3,iu(ic,2))
-C       call ia(j1,j2,j3-1,id(ic,3))
-C       call ia(j1,j2,j3+1,iu(ic,3))
-C   30  continue
-C       return
-C       end
-C c
-C       subroutine ia(i1,i2,i3,nnn)
-C       parameter(ksize=12,ksizet=12)
-C c*******************************************************************
-C c
-C c     address calculator
-C c
-C c*******************************************************************
-C       n1=i1
-C       n2=i2
-C       n3=i3 
-C       if(n1) 2,2,3
-C    2  n1=n1+ksize
-C       go to 4
-C    3  if(n1-ksize) 4,4,5
-C    5  n1=n1-ksize
-C    4  if(n2) 6,6,7
-C    6  n2=n2+ksize
-C       go to 8
-C    7  if(n2-ksize) 8,8,9
-C    9  n2=n2-ksize
-C    8  if(n3) 10,10,11
-C   10  n3=n3+ksizet 
-C       go to 12
-C   11  if(n3-ksizet) 12,12,13
-C   13  n3=n3-ksizet   
-C   12  nnn=((n3-1)*ksize+(n2-1))*ksize+n1
-C       return
-C       end
-C c******************************************************************
-C c   calculate compact links from non-compact links
-C c******************************************************************
-C       subroutine coef(u,theta)
-C       parameter(ksize=12,ksizet=12,kvol2=ksize*ksize,kvol=kvol2*ksizet)
-C       common/para/beta,am3,ibound
-C c     complex u(kvol,3)
-C       complex*16 u(kvol,3)
-C       real theta(kvol,3)
-C c
-C       do mu=1,3
-C       do i=1,kvol
-C c        u(i,mu)=exp(cmplx(0.0,theta(i,mu)))
-C          u(i,mu)=(1.0+cmplx(0.0,theta(i,mu)))
-C       enddo
-C       enddo
-C c
-C c  anti-p.b.c. in timelike direction
-C       if(ibound.eq.-1)then
-C       ioffset=(ksizet-1)*kvol2
-C       do i=1,kvol2
-C          ind=ioffset+i
-C          u(ind,3)=-u(ind,3)
-C       enddo
-C       endif
-C c
-C       return
-C       end
-C c**********************************************************************
-C c calculate vector of gaussian random numbers with unit variance
-C c to refresh momenta
-C c   Numerical Recipes pp.203
-C c**********************************************************************
-C       subroutine gaussp(ps)
-C       parameter(ksize=12,ksizet=12,kvol=ksize*ksize*ksizet)
-C       common/trans/tpi 
-C       common/ranseed/yran,idum
-C       common/v/v(97)
-C       real rano
-C       real ps(kvol,2)
-C c     write(6,1)
-C 1     format(' Hi from gaussp')
-C       do 1000 il=1,kvol
-C 1000  ps(il,2)=sqrt(-2.0*log(rano(yran,idum)))
-C       do 1001 il=1,kvol
-C       theta=tpi*rano(yran,idum)
-C       ps(il,1)=ps(il,2)*sin(theta)
-C       ps(il,2)=ps(il,2)*cos(theta)
-C 1001  continue 
-C       return
-C       end      
-C c**********************************************************************
-C c calculate vector of gaussian random numbers with unit variance
-C c to generate pseudofermion fields R
-C c   Numerical Recipes pp.203
-C c**********************************************************************
-C       subroutine gauss0(ps)
-C       parameter(ksize=12,ksizet=12,kvol=ksize*ksize*ksizet)
-C       common/trans/tpi 
-C       common/ranseed/yran,idum
-C       common/v/v(97)
-C       real rano
-C       real ps(kvol,2)
-C c     write(6,1)
-C 1     format(' Hi from gauss0')
-C       do 1000 il=1,kvol
-C 1000  ps(il,2)=sqrt(-log(rano(yran,idum)))
-C       do 1001 il=1,kvol
-C       theta=tpi*rano(yran,idum)
-C       ps(il,1)=ps(il,2)*sin(theta)
-C       ps(il,2)=ps(il,2)*cos(theta)
-C 1001  continue 
-C       return
-C       end      
-C c*****************************************
-C c  Random number generator Numerical recipes 7.1
-C c
-C           real function rano(y,idum)
-C           common/v/v(97)
-C c
-C           if(idum.lt.0)then
-C                idum=1
-C                do j=1,97
-C                   dum=rranf()
-C                enddo
-C                do j=1,97
-C                   v(j)=rranf()
-C                enddo
-C                y=rranf()
-C           endif
-C c
-C           j=1+int(97.0*y)
-C           if(j.gt.97) j=97
-C           if(j.lt.1) j=1
-C c         write(6,*) j,y
-C c         write(6,*) 'problems with rano'
-C c         stop
-C c         endif
-C           y=v(j)
-C           rano=y
-C           v(j)=rranf()
-C           return
-C           end
-C C========================================================================
-C C
-C           SUBROUTINE RRANGET(SEED)
-C           DOUBLE PRECISION    SEED,     G900GT,   G900ST,   DUMMY
-C           SEED  =  G900GT()
-C           RETURN
-C           ENTRY RRANSET(SEED)
-C           DUMMY  =  G900ST(SEED)
-C           RETURN
-C           END
-C           REAL FUNCTION RRANF()
-C           DOUBLE PRECISION    DRANF,    G900GT,   G900ST
-C           DOUBLE PRECISION    DS(2),    DM(2),    DSEED
-C           DOUBLE PRECISION    DX24,     DX48
-C           DOUBLE PRECISION    DL,       DC,       DU,       DR
-C           LOGICAL             SINGLE
-C           DATA      DS     /  1665 1885.D0, 286 8876.D0  /
-C           DATA      DM     /  1518 4245.D0, 265 1554.D0  /
-C           DATA      DX24   /  1677 7216.D0  /
-C           DATA      DX48   /  281 4749 7671 0656.D0  /
-C           SINGLE  =  .TRUE.
-C           GOTO 10
-C           ENTRY DRANF()
-C           SINGLE  =  .FALSE.
-C   10      DL  =  DS(1) * DM(1)
-C           DC  =  DINT(DL/DX24)
-C           DL  =  DL - DC*DX24
-C           DU  =  DS(1)*DM(2) + DS(2)*DM(1) + DC
-C           DS(2)  =  DU - DINT(DU/DX24)*DX24
-C           DS(1)  =  DL
-C           DR     =  (DS(2)*DX24 + DS(1)) / DX48
-C           IF(SINGLE)  THEN
-C              RRANF  =  SNGL(DR)
-C           ELSE
-C              DRANF  =  DR
-C           ENDIF
-C           RETURN
-C           ENTRY G900GT()
-C           G900GT  =  DS(2)*DX24 + DS(1)
-C           RETURN
-C           ENTRY G900ST(DSEED)
-C           DS(2)  =  DINT(DSEED/DX24)
-C           DS(1)  =  DSEED - DS(2)*DX24
-C           G900ST =  DS(1)
-C           RETURN
-C           END
+c******************************************************************
+c   calculate compact links from non-compact links
+c******************************************************************
+      pure subroutine coef(u,theta)
+      use purefunctions
+      implicit none
+      integer, parameter :: ksize=12, ksizet=12
+      common/para/beta,am3,ibound
+c     complex u(kvol,3)
+      complex*16, intent(inout) :: u(0:ksize+1, 0:ksize+1, 
+     &                               0:ksizet+1, 3)
+      real, intent(in) :: theta(ksize, ksize, ksizet, 3)
+      real :: beta, am3
+      integer :: ibound
+      integer :: ix, iy, it, mu
+c
+      do mu=1, 3
+        do it = 1, ksizet
+          do iy = 1, ksize
+            do ix = 1, ksize
+c             u(ix, iy, it, mu) = exp(cmplx(0.0, theta(ix, iy, it, mu)))
+              u(ix, iy, it, mu) = (1.0 + 
+     &                             cmplx(0.0, theta(ix, iy, it, mu)))
+            enddo
+          enddo
+        enddo
+      enddo
+c
+c  anti-p.b.c. in timelike direction
+      if(ibound.eq.-1)then
+        u(:, :, ksizet, 3) = -u(:, :, ksizet, 3)
+      end if
+c      
+      call update_halo_4(3, u)
+      call update_halo_4_real(3, theta)
+      return
+      end
+c**********************************************************************
+c calculate vector of gaussian random numbers with unit variance
+c to refresh momenta
+c   Numerical Recipes pp.203
+c**********************************************************************
+      pure subroutine gaussp(ps)
+      use purefunctions
+      implicit none
+      integer, parameter :: ksize=12, ksizet=12
+      common/trans/tpi 
+      common/ranseed/idum
+      real :: ran
+      real, intent(out) :: ps(0:ksize+1, 0:ksize+1, 0:ksizet+1, 2)
+      real :: tpi
+      integer ix, iy, it
+      integer :: idum
+      real :: theta
+c     write(6,1)
+1     format(' Hi from gaussp')
+      do it = 1, ksizet
+        do iy = 1, ksize
+          do ix = 1, ksize
+            ps(ix, iy, it, 2) = sqrt(-2.0 * log(ran(idum)))
+          end do
+        end do
+      end do
+      do it = 1, ksizet
+        do iy = 1, ksize
+          do ix = 1, ksize
+            theta = tpi * ran(idum)
+            ps(ix, iy, it, 1) = ps(ix, iy, it, 2) * sin(theta)
+            ps(ix, iy, it, 2) = ps(ix, iy, it, 2) * cos(theta)
+          end do
+        end do
+      end do
+      call update_halo_4_real(2, ps)
+
+      return
+      end      
+c**********************************************************************
+c calculate vector of gaussian random numbers with unit variance
+c to generate pseudofermion fields R
+c   Numerical Recipes pp.203
+c**********************************************************************
+      pure subroutine gauss0(ps)
+      use purefunctions
+      implicit none
+      integer, parameter :: ksize=12, ksizet=12
+      common/trans/tpi 
+      common/ranseed/idum
+      real :: ran
+      real :: tpi
+      integer :: idum
+      real, intent(out) :: ps(0:ksize+1, 0:ksize+1, 0:ksizet+1, 2)
+      integer :: ix, iy, it
+      real :: theta
+c     write(6,1)
+1     format(' Hi from gauss0')
+      do it = 1, ksizet
+        do iy = 1, ksize
+          do ix = 1, ksize
+            ps(ix, iy, it, 2) = sqrt(-log(ran(idum)))
+          end do
+        end do
+      end do
+      do it = 1, ksizet
+        do iy = 1, ksize
+          do ix = 1, ksize
+            theta = tpi * ran(idum)
+            ps(ix, iy, it, 1) = ps(ix, iy, it, 2) * sin(theta)
+            ps(ix, iy, it, 2) = ps(ix, iy, it, 2) * cos(theta)
+          end do
+        end do
+      end do
+      call update_halo_4_real(2, ps)
+1001  continue 
+      return
+      end      
+
+c*****************************************
+c  Random number generator Numerical recipes B7
+c
+      real function ran(idum)
+      implicit none
+
+      integer, parameter :: k4b=selected_int_kind(9)
+      integer(k4b), intent(inout) :: idum
+      integer(k4b), parameter :: IA=16807, IM=2147483647,
+     &                           IQ=127773, IR=2836
+      real, save :: am
+      integer(k4b), save :: ix=-1, iy=-1, k
+      if (idum <= 0 .or. iy < 0) then
+        am = nearest(1.0,-1.0) / IM
+        iy = ior(ieor(888889999, abs(idum)), 1)
+        ix = ieor(777755555, abs(idum))
+        idum = abs(idum) + 1
+      end if
+      ix = ieor(ix, ishft(ix, 13))
+      ix = ieor(ix, ishft(ix, -17))
+      ix = ieor(ix, ishft(ix, 5))
+      k = iy / IQ
+      iy = IA * (iy - k * IQ) - IR * k
+      if (iy < 0) iy = iy + IM
+      ran = am * ior(iand(IM, ieor(ix, iy)), 1)
+      end function ran
 c***********************************************************************
       pure subroutine dslash(Phi,R,u,am,imass)
 c
@@ -2231,6 +2227,26 @@ c
       integer, intent(in) :: size4
       complex*16, intent(inout) :: Array(0:ksize+1, 0:ksize+1,
      &                                   0:ksizet+1, size4)
+c
+      Array(0,:,:,:) = Array(ksize,:,:,:)
+      Array(ksize+1,:,:,:) = Array(1,:,:,:)
+      Array(:,0,:,:) = Array(:,ksize,:,:)
+      Array(:,ksize+1,:,:) = Array(:,1,:,:)
+      Array(:,:,0,:) = Array(:,:,ksize,:)
+      Array(:,:,ksize+1,:) = Array(:,:,1,:)
+c      
+      return
+c      
+      end subroutine
+c***********************************************************************
+      pure subroutine update_halo_4_real(size4, Array)
+c     
+      implicit none
+      integer, parameter :: ksize=12,ksizet=12
+c
+      integer, intent(in) :: size4
+      real, intent(inout) :: Array(0:ksize+1, 0:ksize+1,
+     &                             0:ksizet+1, size4)
 c
       Array(0,:,:,:) = Array(ksize,:,:,:)
       Array(ksize+1,:,:,:) = Array(1,:,:,:)
