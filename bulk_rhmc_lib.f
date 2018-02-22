@@ -880,7 +880,8 @@ c      complex :: gamval
       integer :: gamin
       real :: dSdpi
 
-      complex*16 :: tzi
+c      complex*16 :: tzi
+      real*8 :: tzi_real
       integer :: ix, iy, it, ixup, iyup, itup, idirac, ithird, mu
       integer :: igork1
 c
@@ -889,7 +890,8 @@ c     write(6,111)
 
 c     dSdpi=dSdpi-Re(Rdagger *(d(Mdagger)dp)* X2)
 c     Cf. Montvay & Muenster (7.215)
-      tzi=cmplx(0.0,2*anum)
+c      tzi=cmplx(0.0,2*anum)
+      tzi_real = 2 * anum
 c     factor of 2 picks up second term in M&M (7.215)
 c
       do mu = 1,3
@@ -898,16 +900,17 @@ c
       itup = kdelta(3, mu)
 
       do idirac=1,4
-      do ithird=1,kthird
+c      do ithird=1,kthird
 c
       do it = 1,ksizet
       do iy = 1,ksize
       do ix = 1,ksize
-      dSdpi(ix,iy,it,mu)=dSdpi(ix,iy,it,mu)-akappa*real(tzi*
-     &(conjg(R(ithird,ix,iy,it,idirac))*
-     & X2(ithird,ix+ixup,iy+iyup,it+itup,idirac)
-     &-conjg(R(ithird,ix+ixup,iy+iyup,it+itup,idirac))*
-     &  X2(ithird,ix,iy,it,idirac)))
+      dSdpi(ix,iy,it,mu)=
+     &     dSdpi(ix,iy,it,mu) + tzi_real * akappa * sum(dimag(
+     &conjg(R(:,ix,iy,it,idirac))*
+     & X2(:,ix+ixup,iy+iyup,it+itup,idirac))
+     &-dimag(conjg(R(:,ix+ixup,iy+iyup,it+itup,idirac))*
+     &  X2(:,ix,iy,it,idirac)))
       enddo
       enddo
       enddo
@@ -917,11 +920,12 @@ c
       do it = 1,ksizet
       do iy = 1,ksize
       do ix = 1,ksize
-      dSdpi(ix,iy,it,mu)=dSdpi(ix,iy,it,mu)-real(tzi*gamval(mu,idirac)*
-     &(conjg(R(ithird,ix,iy,it,idirac))*
-     &        X2(ithird, ix+ixup,iy+iyup,it+itup,igork1)
-     &+conjg(R(ithird,ix+ixup,iy+iyup,it+itup,idirac))*
-     &             X2(ithird,ix,iy,it,igork1)))
+      dSdpi(ix,iy,it,mu)=
+     &     dSdpi(ix,iy,it,mu)+ tzi_real * sum(dimag(gamval(mu,idirac)*
+     &(conjg(R(:,ix,iy,it,idirac))*
+     &        X2(:, ix+ixup,iy+iyup,it+itup,igork1)
+     &+conjg(R(:,ix+ixup,iy+iyup,it+itup,idirac))*
+     &             X2(:,ix,iy,it,igork1))))
       enddo
       enddo
       enddo
@@ -929,18 +933,19 @@ c
       do it = 1,ksizet
       do iy = 1,ksize
       do ix = 1,ksize
-      dSdpi(ix,iy,it,mu)=dSdpi(ix,iy,it,mu)+real(tzi*gamval(mu,idirac)*
-     &(conjg(R(ithird,ix,iy,it,idirac))*
-     &        X2(ithird,ix+ixup,iy+iyup,it+itup,igork1)
-     &+conjg(R(ithird,ix+ixup,iy+iyup,it+itup,idirac))*
-     &             X2(ithird,ix,iy,it,igork1)))
+      dSdpi(ix,iy,it,mu)=
+     &     dSdpi(ix,iy,it,mu)- tzi_real * sum(dimag(gamval(mu,idirac)*
+     &(conjg(R(:,ix,iy,it,idirac))*
+     &        X2(:,ix+ixup,iy+iyup,it+itup,igork1)
+     &+conjg(R(:,ix+ixup,iy+iyup,it+itup,idirac))*
+     &             X2(:,ix,iy,it,igork1))))
       enddo
       enddo
       enddo
       endif
 c
       enddo
-      enddo
+c      enddo
       enddo
 c
       return

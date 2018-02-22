@@ -83,12 +83,6 @@ program test_dslash
          call derivs(R, X2, anum, iflag)
       end do
 ! check output
-!      do i = 1,10
-!         j = 1 + i * (kvol - 1) / 10
-!         l = 1 + i * (4 - 1) / 10
-!         print *,'Phi(', j, ',', l, ') = ', Phi(j, l)
-!      enddo
-
       open(3, file='test_derivs.dat', form="unformatted", access="sequential")
       if (generate) then
          write(3) dSdpi
@@ -98,5 +92,15 @@ program test_dslash
          diff = dSdpi - dSdpi_ref
          print *, 'sum delta = ', sum(diff)
          print *, 'max delta = ', maxval(abs(diff))
-      end if
+!         do j=1,3
+!            do it=1,ksizet
+!               do iy=1,ksize
+!                  do ix=1,ksize
+!                     print *, ix, iy, it, j, diff(ix, iy, it, j)
+!                  enddo
+!               enddo
+!            enddo
+!         enddo
+      
+   end if
 end program
