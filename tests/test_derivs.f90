@@ -63,7 +63,7 @@ program test_dslash
                do ix = 1,ksize
                   idx = idx + 1
                   u(ix, iy, it, j) = exp(iunit * idx * tau / idxmax)
-                  dSdpi(ix, iy, it, j) = tau * exp(iunit * idx * tau / idxmax)
+                  dSdpi_ref(ix, iy, it, j) = tau * exp(iunit * idx * tau / idxmax)
                enddo
             enddo
          enddo
@@ -80,6 +80,7 @@ program test_dslash
       call init(istart)
 ! call function
       do i = 1,timing_loops
+         dSdpi = dSdpi_ref
          call derivs(R, X2, anum, iflag)
       end do
 ! check output
