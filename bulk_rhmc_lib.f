@@ -656,202 +656,192 @@ C       s=hg+hf
 C c
 C       return
 C       end              
-C c******************************************************************
-C c    multisolver matrix inversion via Lanczos technique
-C c  eg. Golub & van Loan "Matrix Computations" 9.3.1
-C c       solves (MdaggerM+diag)*x=Phi for ndiag different values of diag
-C c   iflag=0: simply evaluates X = {MdaggerM}^p * Phi
-C c   can be interchanged with congrad for p=-1
-C c   iflag=1: in addition updates Phi0 register needed for PV force term
-C c   iflag=2: evaluates DWF force term
-C c   iflag=3: evaluates PV force term
-C c*****************************************************************m
-C       subroutine qmrherm(Phi,res,itercg,am,imass,anum,aden,ndiag,
-C      &                   iflag,isweep,iter)
-C       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-C       parameter(kferm=4*kthird*kvol)
-C c     parameter(niterc=10*kferm)
-C       parameter(niterc=7500)
-C       common/trial/u(kvol,3),theta(kvol,3),pp(kvol,3)
-C       common/para/bbb,am3,ibound
-C       common/vector/x(kferm)
-C       common/gforce/dSdpi(kvol,3)
-C       common/phi0/Phi0(kferm,25)
-C c     complex Phi(kferm)
-C c     complex x,u,Phi0
-C       complex*16 Phi(kferm)
-C       complex*16 x,u,Phi0
-C       real*8 anum(0:ndiag),aden(ndiag),coeff
-C c     complex vtild(kferm),q(kferm),pm1(kferm,ndiag)
-C c     complex qm1(kferm),p(kferm,ndiag),x3(kferm),R(kferm)
-C c     complex x1(kferm,ndiag),x2(kferm)
-C c     real alpha(ndiag),beta
-C c     real amu(ndiag),d(ndiag),dm1(ndiag),rho(ndiag),rhom1(ndiag)
-C       complex*16 vtild(kferm),q(kferm),pm1(kferm,ndiag)
-C       complex*16 qm1(kferm),p(kferm,ndiag),x3(kferm),R(kferm)
-C       complex*16 x1(kferm,ndiag),x2(kferm)
-C       real*8 alpha(ndiag),beta
-C       real*8 amu(ndiag),d(ndiag),dm1(ndiag),rho(ndiag),rhom1(ndiag)
-C c
-C c     write(6,111)
-C 111   format(' Hi from qmrherm')
-C c
-C       resid=sqrt(kferm*res*res)
-C c     write(6,*) iflag, resid
-C       itercg=0
-C c
-C c   initialise r=Phi
-C c
-C       do i=1,kferm
-C          R(i)=Phi(i)
-C          qm1(i)=(0.0,0.0)
-C          x(i)=anum(0)*Phi(i)
-C       enddo
-C       beta=0.0
-C       do i=1,kferm
-C          beta=beta+conjg(r(i))*r(i)
-C       enddo
-C       beta=sqrt(beta)
-C       phimod=beta
-C c     write(6,*) '|| Phi || = ', phimod
-C c
-C       do niter=1,niterc
-C       itercg=itercg+1
-C c
-C c  Lanczos steps
-C c
-C       do i=1,kferm
-C          q(i)=R(i)/beta
-C       enddo
-C c
-C       call dslash(vtild,q,u,am,imass)
-C       call dslashd(x3,vtild,u,am,imass)
-C c
-C       alphatild=0.0
-C       do i=1,kferm
-C          alphatild=alphatild+conjg(q(i))*x3(i)
-C       enddo
-C c
-C       do i=1,kferm
-C          R(i)=x3(i)-alphatild*q(i)-beta*qm1(i)
-C          qm1(i)=q(i)
-C       enddo
-C c
-C       beta0=beta
-C       beta=0.0
-C       do i=1,kferm
-C          beta=beta+conjg(R(i))*R(i)
-C       enddo
-C       beta=sqrt(beta)
-C c
-C       do idiag=1,ndiag
-C       alpha(idiag)=alphatild+aden(idiag)
-C       enddo
-C c
-C       if(niter.eq.1)then
-C            do idiag=1,ndiag
-C              d(idiag)=alpha(idiag)
-C              do i=1,kferm
-C               p(i,idiag)=q(i)
-C               pm1(i,idiag)=p(i,idiag)
-C              enddo
-C              rho(idiag)=beta0/alpha(idiag)
-C              rhom1(idiag)=rho(idiag)
-C              do i=1,kferm
-C               x1(i,idiag)=rho(idiag)*q(i)
-C              enddo
-C            enddo
-C       else
-C            do idiag=1,ndiag
-C              amu(idiag)=beta0/d(idiag)
-C              dm1(idiag)=d(idiag)
-C              d(idiag)=alpha(idiag)-beta0*amu(idiag)
-C              do i=1,kferm
-C               p(i,idiag)=q(i)-amu(idiag)*pm1(i,idiag)
-C               pm1(i,idiag)=p(i,idiag)
-C              enddo
-C              rho(idiag)=-amu(idiag)*dm1(idiag)*rhom1(idiag)/d(idiag)
-C c  Convergence criterion (a bit ad hoc for now...)
-C              if(idiag.eq.1)then
-C                rhomax=abs(phimod*rho(idiag))
-C              else
-C                if(abs(phimod*rho(idiag)).gt.rhomax)
-C      &             rhomax=abs(phimod*rho(idiag))
-C              endif
-C              rhom1(idiag)=rho(idiag)
-C              do i=1,kferm
-C                x1(i,idiag)=x1(i,idiag)+rho(idiag)*p(i,idiag)
-C              enddo
-C            enddo
-C c  check to see whether the residual is acceptable for all ndiag....
-C c  criterion is a bit ad hoc -- relaxing by a factor arelax improves code
-C c  stability and leads to quicker convergence
-C            arelax=2.0
-C            if(rhomax.lt.arelax*resid) then
-C c          if(rhomax.lt.resid) then
-C c          call testinv(Phi,resmax,itercg,am,imass,x1,aden,ndiag)
-C c  convergence based on || residual || not working well in single precision...
-C c          if(resmax.lt.resid) goto 8
-C              goto 8
-C            endif
-C       endif
-C c
-C c   end of loop over iter
-C       enddo
-C       write(7,*) 'QMRniterc!, isweep,iter,iflag,imass,anum,ndiag = '
-C      &        ,isweep,iter,iflag,imass,anum(0),ndiag
-C 8     continue
-C c
-C       if(iflag.lt.2)then
-C c  Now evaluate solution x=(MdaggerM)^p * Phi
-C       do idiag=1,ndiag
-C       do i=1,kferm
-C       x(i)=x(i)+anum(idiag)*x1(i,idiag)
-C       enddo
-C       enddo
-C c
-C c  update phi0 block if required...
-C       if(iflag.eq.1) then
-C       do idiag=1,ndiag
-C       do i=1,kferm
-C       Phi0(i,idiag)=x1(i,idiag)
-C       enddo
-C       enddo
-C       endif
-C c
-C       else
-C c
-C       do idiag=1,ndiag
-C c
-C c  X2 = M*X1
-C       do i=1,kferm
-C       R(i)=x1(i,idiag)
-C       enddo
-C       call dslash(X2,R,u,am,imass)
-C c
-C       if(iflag.eq.2)then
-C           coeff=anum(idiag)
-C           call derivs(R,X2,coeff,0)
-C       else
-C           coeff=-anum(idiag)
-C           do i=1,kferm
-C           R(i)=Phi0(i,idiag)
-C           enddo
-C           call derivs(R,X2,coeff,0)
-C c
-C           call dslash(X2,R,u,am,imass)
-C           do i=1,kferm
-C           R(i)=x1(i,idiag)
-C           enddo
-C           call derivs(X2,R,coeff,1)
-C       endif
-C c
-C       enddo
-C       endif
-C c
-C c
-C       return
-C       end
+c******************************************************************
+c    multisolver matrix inversion via Lanczos technique
+c  eg. Golub & van Loan "Matrix Computations" 9.3.1
+c       solves (MdaggerM+diag)*x=Phi for ndiag different values of diag
+c   iflag=0: simply evaluates X = {MdaggerM}^p * Phi
+c   can be interchanged with congrad for p=-1
+c   iflag=1: in addition updates Phi0 register needed for PV force term
+c   iflag=2: evaluates DWF force term
+c   iflag=3: evaluates PV force term
+c*****************************************************************m
+      subroutine qmrherm(Phi,res,itercg,am,imass,anum,aden,ndiag,
+     &                   iflag,isweep,iter)
+      use purefunctions
+      implicit none
+      integer, parameter :: ksize=12, ksizet=12, kthird=24
+      integer, parameter :: niterc=2 !was 7500
+      common/trial/u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3),
+     &             theta(kthird, ksize, ksize, ksizet, 3),
+     &             pp(kthird, ksize, ksize, ksizet, 3)
+      common/para/bbb,am3,ibound
+      common/vector/x(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+      common/gforce/dSdpi(ksize, ksize, ksizet,3)
+      common/phi0/Phi0(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, 25)
+c     complex, intent(in) :: Phi(kthird, ksize, ksize, ksizet, 4)
+c     complex :: x,u,Phi0
+      complex*16, intent(in) :: Phi(kthird, 0:ksize+1, 
+     &                              0:ksize+1, 0:ksizet+1, 4)
+      complex*16 :: x,u,Phi0
+      integer, intent(in) :: imass, ndiag, iflag, isweep, iter
+      real*8, intent(in) :: anum(0:ndiag), aden(ndiag)
+      real, intent(in) :: res, am
+      integer, intent(out) :: itercg
+      real :: coeff, alphatild, theta, pp, bbb, am3, ibound, dSdpi
+c      
+c     complex :: vtild(kthird, ksize, ksize, ksizet, 4)
+c     complex :: q(kthird, ksize, ksize, ksizet, 4)
+c     complex :: pm1(kthird, ksize, ksize, ksizet, 4,ndiag)
+c     complex :: qm1(kthird, ksize, ksize, ksizet, 4)
+c     complex :: p(kthird, ksize, ksize, ksizet, 4,ndiag)
+c     complex :: x3(kthird, ksize, ksize, ksizet, 4)
+c     complex :: R(kthird, ksize, ksize, ksizet, 4)
+c     complex x1(kthird, ksize, ksize, ksizet, 4,ndiag)
+c     complex :: x2(kthird, ksize, ksize, ksizet, 4)
+c     real alpha(ndiag),beta
+c     real amu(ndiag),d(ndiag),dm1(ndiag),rho(ndiag),rhom1(ndiag)
+      complex*16 :: vtild(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+      complex*16 :: q(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+      complex*16 :: pm1(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, 
+     &                  ndiag)
+      complex*16 :: qm1(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+      complex*16 :: p(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4,ndiag)
+      complex*16 :: x3(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+      complex*16 :: R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+      complex*16 :: x1(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, 
+     &                 ndiag)
+      complex*16 :: x2(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+      real*8 :: alpha(ndiag), beta, beta0, phimod
+      real*8 :: amu(ndiag), d(ndiag), dm1(ndiag)
+      real*8 :: rho(ndiag), rhom1(ndiag)
+c      
+      real :: resid, rhomax, arelax
+      integer :: niter, idiag, ix, iy, it
+c
+c     write(6,111)
+111   format(' Hi from qmrherm')
+c
+      resid=sqrt(kthird*ksize*ksize*ksizet*4*res*res)
+c     write(6,*) iflag, resid
+      itercg=0
+c
+c   initialise r=Phi
+c
+      R = Phi
+      qm1 = cmplx(0.0, 0.0)
+      x = anum(0) * Phi
+
+      beta = sqrt(sum(abs(R) ** 2))
+      phimod=beta
+c     write(6,*) '|| Phi || = ', phimod
+c
+      do niter=1,niterc
+      itercg=itercg+1
+c
+c  Lanczos steps
+c
+      q = R / beta
+      
+      call dslash(vtild,q,u,am,imass)
+      call dslashd(x3,vtild,u,am,imass)
+c
+      alphatild = sum(conjg(q) * x3)
+c
+      R = x3 - alphatild * q - beta * qm1
+      qm1 = q
+c
+      beta0=beta
+      beta = sqrt(sum(abs(R) ** 2))
+c
+      alpha = alphatild + aden
+c
+      if(niter.eq.1)then
+        d = alpha
+        rho = beta0 / alpha
+        rhom1 = rho
+        do idiag = 1, ndiag
+          p(:, :, :, :, :, idiag) = q
+          pm1(:, :, :, :, :, idiag) = q
+          x1(:, :, :, :, :, idiag) = rho(idiag) * q
+        enddo
+      else
+        amu = beta0 / d
+        dm1 = d
+        d = alpha - beta0 * amu
+        rho = -amu * dm1 * rhom1 / d
+        do idiag = 1, ndiag
+          p(:, :, :, :, :, idiag) =
+     &        q - amu(idiag) * pm1(:, :, :, :, :, idiag)
+          pm1(:, :, :, :, :, idiag) = p(:, :, :, :, :, idiag)
+        enddo
+c  Convergence criterion (a bit ad hoc for now...)
+        rhomax = maxval(abs(phimod * rho))
+        rhom1 = rho
+        do idiag = 1, ndiag
+          x1(:, :, :, :, :, idiag) = x1(:, :, :, :, :, idiag) 
+     &        + rho(idiag) * p(:, :, :, :, :, idiag)
+        enddo
+
+c  check to see whether the residual is acceptable for all ndiag....
+c  criterion is a bit ad hoc -- relaxing by a factor arelax improves code
+c  stability and leads to quicker convergence
+        arelax=2.0
+        if(rhomax .lt. arelax * resid) then
+c       if(rhomax.lt.resid) then
+c       call testinv(Phi,resmax,itercg,am,imass,x1,aden,ndiag)
+c  convergence based on || residual || not working well in single precision...
+c       if(resmax.lt.resid) goto 8
+          exit
+        endif
+      endif
+c
+c   end of loop over iter
+      enddo
+      if (niter .gt. niterc) then
+        write(7,*) 'QMRniterc!, isweep,iter,iflag,imass,anum,ndiag = '
+     &          ,isweep, iter, iflag, imass, anum(0), ndiag
+      end if
+c
+      if(iflag.lt.2)then
+c  Now evaluate solution x=(MdaggerM)^p * Phi
+      do idiag=1,ndiag
+        x = x + anum(idiag) * x1(:, :, :, :, :, idiag)
+      enddo
+c
+c  update phi0 block if required...
+      if(iflag.eq.1) then
+        Phi0 = X1
+      endif
+c
+      else
+c
+      do idiag=1, ndiag
+c
+c  X2 = M*X1
+        R = X1(:, :, :, :, :, idiag)
+        call dslash(X2, R, u, am, imass)
+c
+        if(iflag.eq.2)then
+          coeff=anum(idiag)
+          call derivs(R, X2, coeff, 0)
+        else
+          coeff=-anum(idiag)
+          R = Phi0(:, :, :, :, :, idiag)
+          call derivs(R, X2, coeff, 0)
+c
+          call dslash(X2, R, u, am, imass)
+c
+          R = x1(: ,:, :, :, :, idiag)
+          call derivs(X2, R, coeff, 1)
+        endif
+c
+      enddo
+      endif
+c
+c
+      return
+      end
 c**********************************************************************
 c  iflag = 0 : evaluates Rdagger*(Mdagger)'*X2
 c  iflag = 1 : evaluates Rdagger*(M)'*X2
@@ -859,8 +849,10 @@ c**********************************************************************
       subroutine derivs(R,X2,anum,iflag)
       use purefunctions
       implicit none
-c      complex, intent(in) :: R(kthird, ksize, ksize, ksizet, 4)
-c      complex, intent(in) :: X2(kthird, ksize, ksize, ksizet, 4)
+c      complex, intent(in) :: R(kthird, 0:ksize+1, 0:ksize+1, 
+c    &                                  0:ksizet+1, 4)
+c      complex, intent(in) :: X2(kthird, 0:ksize+1, 0:ksize+1, 
+c    &                                   0:ksizet+1, 4)
       integer, parameter :: ksize=12, ksizet=12, kthird=24
       real, parameter :: akappa = 0.5
 
