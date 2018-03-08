@@ -1,13 +1,6 @@
 program test_qmrherm
+      use dwf3d_lib
       implicit none
-! function to test
-      external :: qmrherm
-
-! supporting functions
-      external :: init
-      external :: update_halo_4
-      external :: update_halo_5
-      external :: update_halo_6
 
 ! general parameters
       logical :: generate = .false.

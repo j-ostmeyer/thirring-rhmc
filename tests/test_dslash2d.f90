@@ -1,11 +1,6 @@
 program test_dslash
+      use dwf3d_lib
       implicit none
-! function to test
-      external :: dslash2d
-
-! supporting functions
-      external :: init
-      external :: update_halo_4
 
 ! general parameters
       logical :: generate = .false.
