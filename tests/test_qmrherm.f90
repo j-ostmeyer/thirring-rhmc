@@ -7,10 +7,11 @@ program test_qmrherm
       external :: init
       external :: update_halo_4
       external :: update_halo_5
+      external :: update_halo_6
 
 ! general parameters
       logical :: generate = .false.
-      integer :: timing_loops = 1
+      integer :: timing_loops = 100
       integer, parameter :: ksize=12, ksizet=12, kthird=24
       integer, parameter :: ndiag = 25
       complex, parameter :: iunit = cmplx(0, 1)
@@ -41,6 +42,9 @@ program test_qmrherm
       complex*16 X2(kthird,0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
       complex*16 :: Phi0_ref(kthird, ksize, ksize, ksizet, 4, 25)
       complex*16 :: x_ref(kthird, ksize, ksize, ksizet, 4)
+      complex*16 :: delta_x(kthird, ksize, ksize, ksizet, 4)
+      complex*16 :: ratio_x(kthird, ksize, ksize, ksizet, 4)
+      complex*16 :: delta_Phi0(kthird, ksize, ksize, ksizet, 4, 25)
       complex*16 R(kthird,0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
       real :: diff(ksize, ksize, ksizet, 3)
 
@@ -73,9 +77,8 @@ program test_qmrherm
                      idx = idx + 1
                      Phi(ithird, ix, iy, it, j) = 1.1 * exp(iunit * idx * tau / idxmax)
                      R(ithird, ix, iy, it, j) = 1.3 * exp(iunit * idx * tau / idxmax)
-                     X2(ithird, ix, iy, it, j) = 0.5 * exp(1.0) * exp(iunit * idx * tau / idxmax)
                      do l = 1, 25
-                        Phi0(ithird, ix, iy, it, j, l) = 1.7 * exp(1.0) * exp(iunit * idx * tau / idxmax) + l
+                        Phi0_ref(ithird, ix, iy, it, j, l) = 1.7 * exp(1.0) * exp(iunit * idx * tau / idxmax) + l
                      enddo
                   enddo
                enddo
@@ -94,7 +97,8 @@ program test_qmrherm
             enddo
          enddo
       enddo
-      call update_halo_5(4, X2)
+      call update_halo_6(4, 25, Phi0)
+      call update_halo_5(4, Phi)
       call update_halo_5(4, R)
       call update_halo_4(3, u)
 
@@ -106,8 +110,9 @@ program test_qmrherm
       call init(istart)
 ! call function
       do i = 1,timing_loops
+         Phi0(:, 1:ksize, 1:ksize, 1:ksizet,:, :) = Phi0_ref
          call qmrherm(Phi,res,itercg,am,imass,anum,aden,ndiag,iflag,isweep,iter)
-         print *, "CG iterations:", itercg
+!         print *, "CG iterations:", itercg
       end do
 ! check output
       open(3, file='test_qmrherm_x.dat', form="unformatted", access="sequential")
@@ -118,11 +123,12 @@ program test_qmrherm
       else
          read(3) x_ref
          read(4) Phi0_ref
-         
-         print *, 'sum delta = ', sum(x(:,1:ksize,1:ksize,1:ksizet,:) - x_ref), &
-                                  sum(Phi0(:,1:ksize,1:ksize,1:ksizet,:,:) - Phi0_ref)
-         print *, 'max delta = ', maxval(abs(x(:,1:ksize,1:ksize,1:ksizet,:) - x_ref)), &
-                                  maxval(abs(Phi0(:,1:ksize,1:ksize,1:ksizet,:,:) - Phi0_ref))
+         delta_x = x(:,1:ksize,1:ksize,1:ksizet,:) - x_ref
+         delta_Phi0 = Phi0(:,1:ksize,1:ksize,1:ksizet,:,:) - Phi0_ref
+         ratio_x = x_ref / x(:, 1:ksize, 1:ksize, 1:ksizet, :)
+         print *, 'sum delta = ', sum(delta_x), sum(delta_Phi0)
+         print *, 'max delta = ', maxval(abs(delta_x)), maxval(abs(delta_Phi0))
+         print *, 'sum ratio = ', sum(ratio_x), 'max = ', maxval(abs(ratio_x))
 !         do j=1,3
 !            do it=1,ksizet
 !               do iy=1,ksize

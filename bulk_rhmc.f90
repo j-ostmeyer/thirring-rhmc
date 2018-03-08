@@ -1,4 +1,5 @@
 program dwf3d
-  external dwf3d_main
+  use dwf3d_lib
+  implicit none
   call dwf3d_main
 end program

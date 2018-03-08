@@ -1,4 +1,4 @@
-program test_force
+program test_measure
       use dwf3d_lib
       implicit none
 
@@ -23,6 +23,8 @@ program test_force
       common/remez4g/anum4(0:ndiag),aden4(ndiag),bnum4(0:ndiag),bden4(ndiag)
       common/param/ancg,ancgh,ancgf,ancgpf
       common/parampv/ancgpv,ancghpv,ancgfpv,ancgpfpv
+      common/ranseed/idum
+      integer :: idum = -1
       real :: beta, am3
       integer :: ibound, istart
       complex(dp) :: gamval, x
@@ -40,13 +42,14 @@ program test_force
       complex(dp) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
       complex(dp) :: Phi0(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, 25)
       complex(dp) :: Phi0_ref(kthird, ksize, ksize, ksizet, 4, 25)
-      complex(dp) :: delta(ksize, ksize, ksizet, 3)
+      complex(dp) :: x_ref(kthird, ksize, ksize, ksizet, 4)
+      complex(dp) :: delta(kthird, ksize, ksize, ksizet, 4)
       complex(dp) :: R(kthird,0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
       real :: diff(ksize, ksize, ksizet, 3)
-
+      real psibarpsi, aviter
       integer :: imass, iflag, isweep, iter
       real(dp) :: anum(0:ndiag), aden(ndiag), coeff
-      real :: res1, am
+      real :: res, am
       real(dp) :: h, hg, hp, s
       integer :: itercg
       
@@ -58,7 +61,8 @@ program test_force
       hg = 0
       hp = 0
       s = 0
-      res1 = 0.1
+      res = ran(idum)
+      res = 0.1
       am = 0.05
       imass = 3
       iflag = 0
@@ -125,17 +129,17 @@ program test_force
          hp = 0
          s = 0
          call update_halo_6(4, 25, Phi0)
-         call force(Phi, res1, am, imass, isweep, iter)
+         call measure(psibarpsi, res, aviter, am, imass)
       end do
-      print *, ancgpv, ancg, ancgf, ancgfpv
+      print *, psibarpsi, aviter
 ! check output
-      open(3, file='test_force.dat', form="unformatted", access="sequential")
-      if (generate) then
-         write(3) dSdpi
-      else
-         read(3) dSdpi_ref
-         delta = dSdpi_ref - dSdpi
-         print *, 'sum delta = ', sum(delta)
-         print *, 'max delta = ', maxval(abs(delta))
-   end if
+!      open(3, file='test_congrad.dat', form="unformatted", access="sequential")
+!      if (generate) then
+!         write(3) x(:, 1:ksize, 1:ksize, 1:ksizet, :)
+!      else
+!         read(3) x_ref
+!         delta = x_ref - x(:, 1:ksize, 1:ksize, 1:ksizet, :)
+!         print *, 'sum delta = ', sum(delta)
+!         print *, 'max delta = ', maxval(abs(delta))
+!   end if
 end program
