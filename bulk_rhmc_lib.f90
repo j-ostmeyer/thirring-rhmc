@@ -9,6 +9,11 @@ module params
   integer, parameter :: ndiag=25, ndiagg=12
   integer, parameter :: Nf=1
   real, parameter :: akappa = 0.5
+  
+  ! Runtime parameters
+  real :: beta
+  real :: am3
+  integer :: ibound
 end module params
 
 module remez
@@ -33,6 +38,76 @@ module remezg
   real(dp) :: bnum4g(0:ndiagg), bden4g(ndiagg)
 end module remezg
 
+module trial
+  use params
+  implicit none
+  save
+
+  complex(dp) :: u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
+  real :: theta(ksize, ksize, ksizet, 3)
+  real :: pp(ksize, ksize, ksizet, 3)
+end module trial
+
+module gauge
+  use params
+  implicit none
+  save
+  
+  real :: theta(ksize, ksize, ksizet, 3)
+end module gauge
+
+module vector
+  use params
+  implicit none
+  save
+
+  complex(dp) :: X(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+end module vector
+
+module gforce
+  use params
+  implicit none
+  save
+
+  real :: dSdpi(ksize, ksize, ksizet, 3)
+end module 
+
+  
+
+module param
+  implicit none
+  save
+
+  real :: ancg, ancgh, ancgf, ancgpf
+  real :: ancgpv, ancghpv, ancgfpv, ancgpfpv
+end module param
+
+module dum1
+  use params
+  implicit none
+  save
+
+  complex(dp) :: R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+  real :: ps(0:ksize+1, 0:ksize+1, 0:ksizet+1, 2)
+end module dum1
+
+module phizero
+  use params
+  implicit none
+  save
+
+  complex(dp) :: Phi0(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, 25)
+end module phizero
+
+module dirac
+  use params
+  implicit none
+  save
+
+  complex(dp) :: gamval(6,4)
+  integer :: gamin(6,4)
+end module dirac
+
 module dwf3d_lib
   use params
   implicit none
@@ -42,13 +117,19 @@ module dwf3d_lib
 
 ! Useful constants
   real, parameter :: One = 1.0
-
+  real, parameter :: tpi = 2.0*acos(-1.0)
 contains
 
   subroutine dwf3d_main
     use random
     use remez
     use remezg
+    use trial, ut=>u, thetat=>theta
+    use gauge
+    use vector, X1=>X
+    use gforce
+    use param
+    use dum1
 !*******************************************************************
 !    Rational Hybrid Monte Carlo algorithm for bulk Thirring Model with Domain Wall
 !         fermions
@@ -89,40 +170,23 @@ contains
     real, parameter :: rescga=0.000000001
     real, parameter :: rescgm=0.000000001
     integer, parameter :: itermax=1000
-    common/gauge/theta(ksize, ksize, ksizet, 3)
-    common/trial/ut(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3), &
-         &     thetat(ksize, ksize, ksizet, 3), &
-         &     pp(ksize, ksize, ksizet, 3)
-    common /para/beta,am3,ibound
-    common/gforce/dSdpi(ksize, ksize, ksizet, 3)
-!       common /neighb/id(kvol,3),iu(kvol,3)
-    common/param/ancg,ancgh,ancgf,ancgpf
-    common/parampv/ancgpv,ancghpv,ancgfpv,ancgpfpv
-    common/trans/tpi 
-    common/dum1/ R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4), &
-         &     ps(0:ksize+1, 0:ksize+1, 0:ksizet+1, 2)
-    common/vector/X1(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
 !     complex :: Phi(kthird,0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, Nf)
-!     complex R,qq,qbqb
-!     complex u,ut,X1
+!     complex qq,qbqb
+!     complex u
 !     complex a,b
     complex(dp) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)!
-    complex(dp) :: R,qq,qbqb
-    complex(dp) :: u,ut,X1
+    complex(dp) :: qq,qbqb
+    complex(dp) :: u
     complex(dp) :: a,b
     real(dp) :: H0,H1,S0,S1,dH,dS,hg,hp
     real :: action, paction, gaction
     real :: vel2, x, ytest, atraj
-    real :: thetat, theta, dSdpi
-    real :: tpi, dt, beta, am3, am, y, traj, proby
+    real :: dt, am, y, traj, proby
     real :: actiona, vel2a, pbp, pbpa, yav, yyav
-    real :: ps, pp
-    real :: ancg, ancgh, ancgf, ancgpf, ancgm, &
-         &     ancgpv, ancgfpv, ancghpv, ancgpfpv, ancgma
+    real :: ancgm, ancgma
     integer :: imass, iter, iterl, iter2, i, ia, idirac, ithird
     integer :: naccp, ipbp, itot, isweep, itercg, mu
 !
-    integer :: ibound
 !*******************************************************************
 !     input
 !*******************************************************************
@@ -133,9 +197,7 @@ contains
     integer, parameter :: iseed=1
     integer, parameter :: icheck=100
     complex(dp), parameter :: zi=(0.0,1.0)
-!      integer(k4b) :: idum
     ibound=-1
-    tpi=2.0*acos(-1.0)
 !*******************************************************************
 !     end of input
 !*******************************************************************
@@ -152,13 +214,10 @@ contains
     read(25,*) dt,beta,am3,am,imass,iterl,iter2
     close(25)
 ! set a new seed by hand...
-!      if(iseed.ne.0)then
-!         idum=-413976497
-!      endif
     if(iseed.ne.0)then
        seed=4139764973254.0
     endif
-    write(7,*) 'seed: ', seed !idum
+    write(7,*) 'seed: ', seed
     call rranset(seed)
     idum=-1
     y=rano(yran,idum)
@@ -453,26 +512,17 @@ contains
 !******************************************************************
   subroutine force(Phi,res1,am,imass,isweep,iter)
     use remezg
+    use trial
+    use vector, X1=>X
+    use gforce
+    use param
     complex(dp), intent(in) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, Nf)
     real, intent(in) :: res1, am
     integer, intent(in) :: imass, isweep, iter
-    common/phi0/Phi0(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, 25)
-    common/trial/u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3), &
-         &     theta(ksize, ksize, ksizet, 3), &
-         &     pp(ksize, ksize, ksizet, 3)
-    common/para/beta,am3,ibound
-    common/param/ancg,ancgh,ancgf,ancgpf
-    common/parampv/ancgpv,ancghpv,ancgfpv,ancgpfpv
-    common/gforce/dSdpi(ksize, ksize, ksizet, 3)
-    common/vector/X1(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
 !     complex Phi(kferm,Nf),X2(kferm)
-!     complex X1,u,Phi0
+!     complex X1,u
     complex(dp) :: X2(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    complex(dp) :: X1,u,Phi0
-    real :: ancg, ancgh, ancgf, ancgpf
-    real :: ancgpv, ancghpv, ancgfpv, ancgpfpv
-    real :: theta, pp, beta, am3, dSdpi
-    integer :: ibound, ia, itercg
+    integer :: ia, itercg
 !
 !     write(6,111)
 111 format(' Hi from force')
@@ -522,29 +572,18 @@ contains
 !******************************************************************
   subroutine hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass)
     use remez
+    use trial, only: theta, pp
+    use vector, X1=>X
+    use dum1
+    use param
     complex(dp), intent(in) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, Nf)
     real(dp), intent(out) :: h, hg, hp, s
     real, intent(in) :: res2, am
     integer, intent(in) :: isweep, iflag, imass
-    common/trial/u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3), &
-    &     theta(ksize, ksize, ksizet, 3), &
-    &     pp(ksize, ksize, ksizet, 3)
-    common/param/ancg,ancgh,ancgf,ancgpf
-    common/parampv/ancgpv,ancghpv,ancgfpv,ancgpfpv
-    common /para/beta,am3,ibound
-    common/vector/X1(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    common/dum1/R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4), &
-    &     ps(0:ksize+1, 0:ksize+1, 0:ksizet+1, 2)
 !     complex, intent(in) :: Phi(kthird, ksize, ksize, ksizet, 4, Nf)
 !     complex X1,R
-!     complex u
-    complex(dp) :: X1,R
-    complex(dp) :: u
     real(dp) :: hf
-    real :: ancg, ancgh, ancgf, ancgpf, ancgma
-    real :: ancgpv, ancgfpv, ancghpv, ancgpfpv
-    real :: pp, ps, beta, theta, am3
-    integer :: itercg, ia, ibound
+    integer :: itercg, ia
 !     write(6,111)
 111 format(' Hi from hamilton')
 !
@@ -582,8 +621,7 @@ contains
     enddo
 !
     h = hg + hp + hf
-!     write(6,*) isweep,':  hg', hg,'   hp', hp,'   hf', hf,
-!    &   '   h',h
+!     write(6,*) isweep,':  hg', hg,'   hp', hp,'   hf', hf, '   h',h
     s = hg + hf
 !
     return
@@ -600,7 +638,10 @@ contains
 !   iflag=3: evaluates PV force term
 !*****************************************************************m
   subroutine qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, iter)
-    implicit none
+    use trial, only: u
+    use vector
+    use gforce
+    use phizero
     complex(dp), intent(in) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
     integer, intent(in) :: imass, ndiagq, iflag, isweep, iter
     real(dp), intent(in) :: anum(0:ndiagq), aden(ndiagq)
@@ -608,22 +649,7 @@ contains
     integer, intent(out) :: itercg
 !
     integer, parameter :: niterc=7500
-    common/trial/u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3), &
-    &             theta(kthird, ksize, ksize, ksizet, 3), &
-    &             pp(kthird, ksize, ksize, ksizet, 3)
-    complex(dp) :: u
-    real :: theta, pp
-    common/para/bbb,am3,ibound
-    real :: bbb, am3
-    integer :: ibound
-    common/vector/x(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    complex(dp) :: x
-    common/gforce/dSdpi(ksize, ksize, ksizet,3)
-    real :: dSdpi
-    common/phi0/Phi0(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, 25)
-    complex(dp) :: Phi0
 !     complex, intent(in) :: Phi(kthird, ksize, ksize, ksizet, 4)
-!     complex :: x,u,Phi0
     real :: alphatild
     real(dp) :: coeff
 !      
@@ -647,7 +673,7 @@ contains
     complex(dp) :: R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
     complex(dp) :: x1(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, ndiagq)
     complex(dp) :: x2(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    real(dp) :: alpha(ndiagq), beta, beta0, phimod
+    real(dp) :: alpha(ndiagq), betaq, betaq0, phimod
     real(dp) :: amu(ndiagq), d(ndiagq), dm1(ndiagq)
     real(dp) :: rho(ndiagq), rhom1(ndiagq)
 !      
@@ -667,8 +693,8 @@ contains
     qm1 = cmplx(0.0, 0.0)
     x = anum(0) * Phi
 
-    beta = sqrt(sum(abs(R(:,1:ksize,1:ksize,1:ksizet,:)) ** 2))
-    phimod=beta
+    betaq = sqrt(sum(abs(R(:,1:ksize,1:ksize,1:ksizet,:)) ** 2))
+    phimod=betaq
 !     write(6,*) '|| Phi || = ', phimod
 !
     do niter=1,niterc
@@ -676,7 +702,7 @@ contains
 !
 !  Lanczos steps
 !
-       q = R / beta
+       q = R / betaq
 
        call dslash(vtild,q,u,am,imass)
        call update_halo_5(4, vtild)
@@ -686,17 +712,17 @@ contains
        alphatild = sum(real(conjg(q(:,1:ksize,1:ksize,1:ksizet,:)) & 
        &                * x3(:,1:ksize,1:ksize,1:ksizet,:)))
 !
-       R = x3 - alphatild * q - beta * qm1
+       R = x3 - alphatild * q - betaq * qm1
        qm1 = q
 !
-       beta0=beta
-       beta = sqrt(sum(abs(R(:,1:ksize,1:ksize,1:ksizet,:)) ** 2))
+       betaq0=betaq
+       betaq = sqrt(sum(abs(R(:,1:ksize,1:ksize,1:ksizet,:)) ** 2))
 !
        alpha = alphatild + aden
 !
        if(niter.eq.1)then
           d = alpha
-          rho = beta0 / alpha
+          rho = betaq0 / alpha
           rhom1 = rho
           do idiag = 1, ndiagq
              p(:, :, :, :, :, idiag) = q
@@ -704,9 +730,9 @@ contains
              x1(:, :, :, :, :, idiag) = rho(idiag) * q
           enddo
        else
-          amu = beta0 / d
+          amu = betaq0 / d
           dm1 = d
-          d = alpha - beta0 * amu
+          d = alpha - betaq0 * amu
           rho = -amu * dm1 * rhom1 / d
           do idiag = 1, ndiagq
              p(:, :, :, :, :, idiag) = q - amu(idiag) * pm1(:, :, :, :, :, idiag)
@@ -786,25 +812,15 @@ contains
 !  iflag = 1 : evaluates Rdagger*(M)'*X2
 !**********************************************************************
   subroutine derivs(R,X2,anum,iflag)
-    implicit none
-!      complex, intent(in) :: R(kthird, 0:ksize+1, 0:ksize+1, 
-!    &                                  0:ksizet+1, 4)
-!      complex, intent(in) :: X2(kthird, 0:ksize+1, 0:ksize+1, 
-!    &                                   0:ksizet+1, 4)
+    use gforce
+    use dirac
+!      complex, intent(in) :: R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+!      complex, intent(in) :: X2(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
 
     complex(dp), intent(in) :: R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
     complex(dp), intent(in) :: X2(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
     real(dp), intent(in) :: anum
     integer, intent(in) :: iflag
-
-
-    common/dirac/gamval(6,4),gamin(6,4)
-    common/gforce/dSdpi(ksize,ksize,ksizet,3)
-
-!      complex :: gamval
-    complex(dp) :: gamval
-    integer :: gamin
-    real :: dSdpi
 
 !      complex(dp) :: tzi
     real(dp) :: tzi_real
@@ -929,6 +945,8 @@ contains
 !           NB. no even/odd partitioning
 !******************************************************************
   subroutine congrad(Phi,res,itercg,am,imass)
+    use trial, only: u
+    use vector
     complex(dp), intent(in) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
 !     complex, intent(in) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
     real, intent(in) :: res, am
@@ -936,23 +954,14 @@ contains
     integer, intent(in) :: imass
 
     integer, parameter :: niterc=kthird*kvol
-    common/trial/u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3), &
-    &     thetas(ksize, ksize, ksizet, 3), &
-    &     pp(ksize, ksize, ksizet, 3)
-    real :: thetas, pp
-    common/para/bbb,am3,ibound
-    real :: bbb, am3
-    integer :: ibound
-    common/vector/x(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
 !     complex x,u
 !     complex x1(kferm),x2(kferm),p(kferm),r(kferm)
-    complex(dp) x,u
     complex(dp) :: x1(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
     complex(dp) :: x2(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
     complex(dp) :: p(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
     complex(dp) :: r(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
     real :: resid
-    real :: beta, betan, betad, alpha, alphan, alphad
+    real :: betacg, betacgn, betacgd, alpha, alphan, alphad
     integer :: nx
 !     write(6,111)
 111 format(' Hi from congrad')
@@ -969,7 +978,7 @@ contains
        p = x
        r = Phi
 !
-       betad=1.0
+       betacgd=1.0
        alpha=1.0
 51     alphad=0.0
 !
@@ -994,17 +1003,17 @@ contains
 !   r=r-alpha*(Mdagger)Mp
        r = r - alpha * x2
 !
-!   beta=(r_k+1,r_k+1)/(r_k,r_k)
-       betan = sum(abs(r(:, 1:ksize, 1:ksize, 1:ksizet, :)) ** 2)
-       beta = betan / betad
-       betad = betan
-       alphan = betan
+!   betacg=(r_k+1,r_k+1)/(r_k,r_k)
+       betacgn = sum(abs(r(:, 1:ksize, 1:ksize, 1:ksizet, :)) ** 2)
+       betacg = betacgn / betacgd
+       betacgd = betacgn
+       alphan = betacgn
 !
-       if(nx.eq.1) beta=0.0
+       if(nx.eq.1) betacg=0.0
 !
-!   p=r+beta*p
-       p = r + beta * p
-       if(betan.lt.resid) exit
+!   p=r+betacg*p
+       p = r + betacg * p
+       if(betacgn.lt.resid) exit
     end do
 !     write(6,1000)
     if (nx.gt.niterc) then
@@ -1022,36 +1031,22 @@ contains
 !     (Numerical Recipes section 2.10 pp.70-73)   
 !*******************************************************************
   subroutine measure(psibarpsi, res, aviter, am, imass)
+    use trial, only: u
+    use vector, xi=>x
     real, intent(out) :: psibarpsi, aviter
     real, intent(in) :: res, am
     integer, intent(in) :: imass
     integer, parameter :: knoise = 10
-    common/trial/u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3), &
-    &     thetat(ksize, ksize, ksizet, 3), &
-    &     pp(ksize, ksize, ksizet, 3)
-    real :: thetat, pp
-    common/para/beta,am3,ibound
-    real :: beta, am3
-    integer :: ibound
-    common/dirac/gamval(6,4),gamin(6,4)
-    common/vector/xi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-!      common/ranseed/idum
-!      integer(k4b) :: idum
 !     complex :: x(0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
 !     complex :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-!     complex :: xi,gamval
 !     complex :: psibarpsi1,psibarpsi2
-!     complex :: u
     complex(dp) :: x(0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
     complex(dp) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    complex(dp) :: xi,gamval
     complex(dp) :: psibarpsi1,psibarpsi2
-    complex(dp) :: u
     real(dp) :: cnum(0:1),cden(1)
     real :: ps(0:ksize+1, 0:ksize+1, 0:ksizet+1, 2)
     real :: pt(0:ksize+1, 0:ksize+1, 0:ksizet+1, 2)
     real(dp) :: pbp(knoise)
-    integer :: gamin
     integer :: idsource, idsource2, idirac, inoise, jnoise, ithird
     integer :: iter, itercg
     real :: susclsing
@@ -1172,8 +1167,7 @@ contains
           psibarpsi2 = cmplx(0.0,-1.0) * psibarpsi2 / kvol
           pbp(inoise) = psibarpsi1 + psibarpsi2
        endif
-!        write(6,*) real(psibarpsi1),aimag(psibarpsi1),
-!    &       real(psibarpsi2),aimag(psibarpsi2)
+!        write(6,*) real(psibarpsi1),aimag(psibarpsi1), real(psibarpsi2),aimag(psibarpsi2)
        write(100,*) real(psibarpsi1), aimag(psibarpsi1), real(psibarpsi2), aimag(psibarpsi2)
 !
 ! end loop on noise
@@ -1184,8 +1178,7 @@ contains
 !
     psibarpsi = sum(pbp)
     do inoise=1,knoise
-       susclsing = susclsing + &
-       &        sum(pbp(inoise) * pbp(inoise+1:knoise))
+       susclsing = susclsing + sum(pbp(inoise) * pbp(inoise+1:knoise))
     enddo
     psibarpsi = psibarpsi / knoise
     susclsing = 2 * kvol * susclsing / (knoise * (knoise-1))
@@ -1508,25 +1501,18 @@ contains
 !
   subroutine sread
     use random
-    implicit none
-    common/gauge/ theta(ksize, ksize, ksizet, 3)
-!     common/ranseed/ idum
-    real :: theta
-!      integer(k4b) :: idum
+    use gauge
+
     open(unit=10, file='con', status='unknown', form='unformatted')
     read (10) theta, seed
-!      idum = -idum
     close(10)
     return
   end subroutine sread
 !
   subroutine swrite
     use random
-    implicit none
-    common/gauge/ theta(ksize, ksize, ksizet, 3)
-!      common/ranseed/ idum
-    real :: theta
-!      integer(k4b) :: idum
+    use gauge
+
     open(unit=31, file='con', status='unknown', form='unformatted')
     write (31) theta, seed
     close(31)
@@ -1535,29 +1521,21 @@ contains
 !
   subroutine init(nc)
     use random
+    use gauge
+    use dirac
 !*******************************************************************
 !     sets initial values
 !     nc=0 cold start
 !     nc=1 hot start
 !     nc<0 no initialization
 !*******************************************************************
-    implicit none
     integer, intent(in) :: nc
-    common/gauge/theta(ksize, ksize, ksizet, 3), seed
-    common/dirac/gamval(6,4),gamin(6,4)
-!      common/ranseed/idum
-!     complex gamval,one,zi
-    complex(dp) :: gamval,one,zi
-    real :: theta
+!     complex one,zi
+    complex(dp), parameter :: one=(1.0, 0.0), zi=(0.0, 1.0)
     real(dp) :: seed
-    integer :: gamin
-!      integer(k4b) :: idum
     integer :: ix, iy, it, mu
     real :: g
 !
-!
-    one=(1.0,0.0)
-    zi=(0.0,1.0)
 !*******************************************************************
 !  calculate constants
 !*******************************************************************
@@ -1666,14 +1644,10 @@ contains
 !******************************************************************
 !   calculate compact links from non-compact links
 !******************************************************************
-  pure subroutine coef(u,theta)
-    implicit none
-    common/para/beta,am3,ibound
+  pure subroutine coef(u, theta)
 !
-    complex(dp), intent(inout) :: u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
+    complex(dp), intent(out) :: u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
     real, intent(in) :: theta(ksize, ksize, ksizet, 3)
-    real :: beta, am3
-    integer :: ibound
     integer :: ix, iy, it, mu
 !
 !     u(1:ksize, 1:ksize, 1:ksizet, :) = exp(cmplx(0.0, theta))
@@ -1694,13 +1668,8 @@ contains
 !**********************************************************************
   subroutine gaussp(ps)
     use random
-    implicit none
-    common/trans/tpi 
-!      common/ranseed/idum
     real, intent(out) :: ps(0:ksize+1, 0:ksize+1, 0:ksizet+1, 2)
-    real :: tpi
     integer ix, iy, it
-!      integer(k4b) :: idum
     real :: theta
 !     write(6,1)
 1   format(' Hi from gaussp')
@@ -1731,11 +1700,6 @@ contains
 !**********************************************************************
   subroutine gauss0(ps)
     use random
-    implicit none
-    common/trans/tpi 
-!      common/ranseed/idum
-    real :: tpi
-!      integer(k4b) :: idum
     real, intent(out) :: ps(0:ksize+1, 0:ksize+1, 0:ksizet+1, 2)
     integer :: ix, iy, it
     real :: theta
@@ -1761,54 +1725,23 @@ contains
     return
   end subroutine gauss0
 
-!*****************************************
-!  Random number generator Numerical recipes B7
-!
-  real function ran(idum)
-    implicit none
-
-    integer, parameter :: k4b=selected_int_kind(9)
-    integer(k4b), intent(inout) :: idum
-    integer(k4b), parameter :: IA=16807, IM=2147483647, IQ=127773, IR=2836
-    real, save :: am
-    integer(k4b), save :: ix=-1, iy=-1, k
-    if (idum <= 0 .or. iy < 0) then
-       am = nearest(1.0,-1.0) / IM
-       iy = ior(ieor(888889999, abs(idum)), 1)
-       ix = ieor(777755555, abs(idum))
-       idum = abs(idum) + 1
-    end if
-    ix = ieor(ix, ishft(ix, 13))
-    ix = ieor(ix, ishft(ix, -17))
-    ix = ieor(ix, ishft(ix, 5))
-    k = iy / IQ
-    iy = IA * (iy - k * IQ) - IR * k
-    if (iy < 0) iy = iy + IM
-    ran = am * ior(iand(IM, ieor(ix, iy)), 1)
-  end function ran
 !***********************************************************************
   pure subroutine dslash(Phi,R,u,am,imass)
+    use dirac
 !
 !     calculates Phi = M*R
 !
-    implicit none
-    common/para/beta,am3,ibound
-    common/dirac/gamval(6,4),gamin(6,4)
 !     complex, intent(in) :: u(0:ksize+1,0:ksize+1,0:ksizet+1,3)
 !     complex, intent(in) :: Phi(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
 !     complex, intent(in) :: R(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
-!     complex gamval
-!     complex zkappa
+!     complex :: zkappa
     complex(dp), intent(in) :: u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
     complex(dp), intent(out) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
     integer, intent(in) :: imass
     real, intent(in) :: am
-    complex(dp) :: gamval
     complex(dp) :: zkappa
-    integer :: gamin
-    real :: beta, am3, diag
-    integer :: ibound
+    real :: diag
     integer :: ixup, iyup, itup, ix, iy, it, ithird, idirac, mu, igork
 !     write(6,*) 'hi from dslash'
 !
@@ -1878,27 +1811,21 @@ contains
   end subroutine dslash
 !***********************************************************************
   pure subroutine dslashd(Phi,R,u,am,imass)
+    use dirac
 !
 !     calculates Phi = Mdagger*R
 !
-    implicit none
-    common/para/beta,am3,ibound
-    common/dirac/gamval(6,4),gamin(6,4)
 !     complex, intent(in) ::  u(0:ksize+1,0:ksize+1,0:ksizet+1,3)
 !     complex, intent(out) :: Phi(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
-!     complex, intent(in) R(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
-!     complex gamval
-!     complex zkappa
+!     complex, intent(in) :: R(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
+!     complex :: zkappa
     complex(dp), intent(in) :: u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
     complex(dp), intent(out) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
     integer, intent(in) :: imass
     real, intent(in) :: am
-    complex(dp) :: gamval
     complex(dp) :: zkappa
-    integer :: gamin
-    real :: beta, am3, diag
-    integer :: ibound
+    real :: diag
     integer :: ixup, iyup, itup, ix, iy, it, ithird, idirac, mu, igork
 !     write(6,*) 'hi from dslashd'
 !
@@ -1960,20 +1887,15 @@ contains
 
 !***********************************************************************
   pure subroutine dslash2d(Phi,R,u)
+    use dirac
 !
 !     calculates Phi = M*R
 !
-    implicit none
-!      integer :: kdelta
-    common/dirac/gamval(6,4),gamin(6,4)
-!     complex u(ksize,ksize,ksizet,3)
-!     complex Phi(ksize,ksize,ksizet,4),R(ksize,ksize,ksizet,4)
-!     complex gamval
+!     complex, intent(in) :: u(ksize,ksize,ksizet,3)
+!     complex, intent(out) :: Phi(ksize,ksize,ksizet,4),R(ksize,ksize,ksizet,4)
     complex(dp), intent(in) ::  u(0:ksize+1,0:ksize+1,0:ksizet+1,3)
     complex(dp), intent(out) :: Phi(0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
     complex(dp), intent(in) :: R(0:ksize+1,0:ksize+1,0:ksizet+1,4)
-    complex(dp) :: gamval
-    integer :: gamin
     integer :: ix, iy, it, idirac, mu, ixup, iyup, itup, igork
     real :: diag
 
@@ -2019,8 +1941,6 @@ contains
 !***********************************************************************
   pure subroutine update_halo_4(size4, Array)
 !     
-    implicit none
-!
     integer, intent(in) :: size4
     complex(dp), intent(inout) :: Array(0:ksize+1, 0:ksize+1, 0:ksizet+1, size4)
 !
@@ -2037,8 +1957,6 @@ contains
 !***********************************************************************
   pure subroutine update_halo_4_real(size4, Array)
 !     
-    implicit none
-!
     integer, intent(in) :: size4
     real, intent(inout) :: Array(0:ksize+1, 0:ksize+1, 0:ksizet+1, size4)
 !
@@ -2055,8 +1973,6 @@ contains
 !***********************************************************************
   pure subroutine update_halo_5(size5, Array)
 !     
-    implicit none
-!
     integer, intent(in) :: size5
     complex(dp), intent(inout) :: Array(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, size5)
 !
@@ -2073,8 +1989,6 @@ contains
 !***********************************************************************
   pure subroutine update_halo_6(size5, size6, Array)
 !     
-    implicit none
-!
     integer, intent(in) :: size5, size6
     complex(dp), intent(inout) :: Array(kthird, 0:ksize+1, 0:ksize+1, &
          &                              0:ksizet+1, size5, size6)
@@ -2095,7 +2009,6 @@ contains
 !   Useful for calculating coordinate offsets
 !***********************************************************************
   pure integer function kdelta(nu, mu)
-    implicit none
     integer, intent(in) :: nu
     integer, intent(in) :: mu
 
@@ -2103,5 +2016,3 @@ contains
   end function kdelta
 
 end module dwf3d_lib
-
-
