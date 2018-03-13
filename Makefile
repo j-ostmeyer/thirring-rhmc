@@ -11,7 +11,10 @@ clean:
 %.o: %.f90
 	$(FC) $(FCFLAGS) -c -o $@ $^
 
-bulk_rhmc: random.o bulk_rhmc_lib.o bulk_rhmc.f90
+%.o: %.F90
+	$(FC) $(FCFLAGS) -c -o $@ $^
+
+bulk_rhmc: random.o bulk_rhmc_lib.o bulk_rhmc.F90
 	$(FC) $(FCFLAGS) -o $@ $^
 
 compile_flags:
