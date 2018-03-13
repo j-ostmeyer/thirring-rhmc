@@ -1785,25 +1785,39 @@ contains
 !  Mass term (couples the two walls unless imass=5)
     if (imass.eq.1) then
        zkappa=cmplx(am,0.0)
-       Phi(kthird, :, :, :, 3:4) = Phi(kthird, :, :, :, 3:4) + zkappa * R(1, :, :, :, 3:4)
-       Phi(1, :, :, :, 1:2) = Phi(1, :, :, :, 1:2) + zkappa * R(kthird, :, :, :, 1:2)
+       Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4) = &
+            & Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4) &
+            & + zkappa * R(1, 1:ksize, 1:ksize, 1:ksizet, 3:4)
+       Phi(1, 1:ksize, 1:ksize, 1:ksizet, 1:2) = &
+            & Phi(1, 1:ksize, 1:ksize, 1:ksizet, 1:2) + &
+            & zkappa * R(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2)
     elseif (imass.eq.3) then
        zkappa=cmplx(0.0,-am)
-       Phi(kthird,:, :, :, 3:4) = Phi(kthird, :, :, :, 3:4) - zkappa * R(1, :, :, :, 3:4)
-       Phi(1, :, :, :, 1:2) = Phi(1, :, :, :, 1:2) + zkappa * R(kthird, :, :, :, 1:2)
+       Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4) = &
+            & Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4) &
+            & - zkappa * R(1, 1:ksize, 1:ksize, 1:ksizet, 3:4)
+       Phi(1, 1:ksize, 1:ksize, 1:ksizet, 1:2) = &
+            & Phi(1, 1:ksize, 1:ksize, 1:ksizet, 1:2) &
+            & + zkappa * R(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2)
     elseif (imass.eq.5) then
        zkappa=cmplx(0.0,-am)
 !         do idirac=3,4
 !         igork=gamin(5,idirac)
-       Phi(kthird, :, :, :, 3:4) = Phi(kthird, :, :, :, 3:4) &
-            &     - zkappa * R(kthird, :, :, :, 1:2)
-!        Phi(kthird,:,:,:,idirac)=Phi(kthird,:,:,:,idirac) &
-!           &     + 2 * zkappa*gamval(5,idirac)*R(kthird,:,:,:,igork)
+       Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4) = &
+            & Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4) &
+            & - zkappa * R(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2)
+!        Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, idirac) = &
+!            & Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, idirac) &
+!            & + 2 * zkappa * gamval(5,idirac) * R(kthird, 1:ksize, 1:ksize, 1:ksizet, igork)
 !         enddo
 !         do idirac=1,2
 !         igork=gamin(5,idirac)
-       Phi(1, :, :, :, 1:2) = Phi(1, :, :, :, 1:2) - zkappa * R(1, :, :, :, 3:4)
-!        Phi(1,:,:,:,idirac)=Phi(1,:,:,:,idirac)+2*zkappa*gamval(5,idirac)*R(1,:,:,:,igork)
+       Phi(1, 1:ksize, 1:ksize, 1:ksizet, 1:2) = &
+            & Phi(1, 1:ksize, 1:ksize, 1:ksizet, 1:2) &
+            & - zkappa * R(1, 1:ksize, 1:ksize, 1:ksizet, 3:4)
+!        Phi(1, 1:ksize, 1:ksize, 1:ksizet, idirac) = &
+!            & Phi(1, 1:ksize, 1:ksize, 1:ksizet, idirac) 
+!            & + 2 * zkappa * gamval(5,idirac) * R(1, 1:ksize, 1:ksize, 1:ksizet, igork)
 !         enddo
     endif
 !
@@ -1869,16 +1883,28 @@ contains
 !  Mass term (couples the two walls unless imass=5) 
     if(imass.eq.1)then
        zkappa=cmplx(am,0.0)
-       Phi(kthird,:,:,:,1:2) = Phi(kthird,:,:,:,1:2) + zkappa * R(1,:,:,:,1:2)
-       Phi(1,:,:,:,3:4) = Phi(1,:,:,:,3:4) + zkappa * R(kthird,:,:,:,3:4)
+       Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2) = &
+            & Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2) &
+            & + zkappa * R(1, 1:ksize, 1:ksize, 1:ksizet, 1:2)
+       Phi(1, 1:ksize, 1:ksize, 1:ksizet, 3:4) = &
+            & Phi(1, 1:ksize, 1:ksize, 1:ksizet, 3:4) &
+            & + zkappa * R(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4)
     elseif(imass.eq.3)then
        zkappa = cmplx(0.0,am)
-       Phi(kthird,:,:,:,1:2) = Phi(kthird,:,:,:,1:2) + zkappa * R(1,:,:,:,1:2)
-       Phi(1,:,:,:,3:4) = Phi(1,:,:,:,3:4) - zkappa * R(kthird,:,:,:,3:4)
+       Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2) = &
+            & Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2) &
+            & + zkappa * R(1, 1:ksize, 1:ksize, 1:ksizet, 1:2)
+       Phi(1, 1:ksize, 1:ksize, 1:ksizet, 3:4) = &
+            & Phi(1, 1:ksize, 1:ksize, 1:ksizet, 3:4) &
+            & - zkappa * R(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4)
     elseif(imass.eq.5)then
        zkappa = cmplx(0.0,am)
-       Phi(kthird,:,:,:,1:2) = Phi(kthird,:,:,:,1:2) - zkappa * R(kthird,:,:,:,3:4)
-       Phi(1,:,:,:,3:4) = Phi(1,:,:,:,3:4) - zkappa * R(1,:,:,:,1:2)
+       Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2) = &
+            & Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2) &
+            & - zkappa * R(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4)
+       Phi(1, 1:ksize, 1:ksize, 1:ksizet, 3:4) = &
+            & Phi(1,1:ksize, 1:ksize, 1:ksizet, 3:4) &
+            & - zkappa * R(1, 1:ksize, 1:ksize, 1:ksizet, 1:2)
     endif
 !      call update_halo_5(4, Phi)
 !
