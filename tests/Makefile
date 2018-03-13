@@ -10,10 +10,13 @@ EXES = test_dslash test_dslashd test_dslash2d test_load test_save test_derivs te
 default: $(EXES)
 
 clean:
-	rm bulk_rhmc_lib.o random.o $(EXES) *.mod
+	rm -f bulk_rhmc_lib.o random.o $(EXES) *.mod
 
-%.o: ../%.f90
-	$(FC) $(FCFLAGS) -c -o $@ $^
+%.o: ../%.f90 Makefile
+	$(FC) $(FCFLAGS) -c -o $@ $<
+
+%.o: ../%.F90 Makefile
+	$(FC) $(FCFLAGS) -c -o $@ $<
 
 $(EXES) : % : %.f90 bulk_rhmc_lib.o random.o
 	$(FC) $(FCFLAGS) -o $@ $^
