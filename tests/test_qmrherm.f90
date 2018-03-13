@@ -1,36 +1,24 @@
 program test_qmrherm
       use dwf3d_lib
+      use trial
+      use vector
+      use phizero
+      use dirac
+      use gforce
       implicit none
 
 ! general parameters
       logical :: generate = .false.
       integer :: timing_loops = 100
-      integer, parameter :: ksize=12, ksizet=12, kthird=24
-      integer, parameter :: ndiag = 25
       complex, parameter :: iunit = cmplx(0, 1)
       real*8, parameter :: tau = 8 * atan(1.0_8)
       complex*16 :: acc_sum = 0.
       real*8 :: acc_max = 0.
 
 ! common blocks to function
-      common/trial/u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3), &
-           theta(kthird, ksize, ksize, ksizet, 3), &
-           pp(kthird, ksize, ksize, ksizet, 3)
-      common/para/beta,am3,ibound
-      common/vector/x(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-      common/phi0/Phi0(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, 25)
-      common/dirac/gamval(6,4),gamin(6,4)
-      common/gforce/dSdpi(ksize, ksize, ksizet, 3)
-      real :: beta, am3
-      integer :: ibound, istart
-      complex*16 :: gamval, x, Phi0
-      integer :: gamin
-      integer :: iu, id
-      real :: dSdpi
-      real :: theta, pp
+      integer :: istart
 
 ! initialise function parameters
-      complex*16 :: u
       complex*16 Phi(kthird,0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
       complex*16 X2(kthird,0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
       complex*16 :: Phi0_ref(kthird, ksize, ksize, ksizet, 4, 25)

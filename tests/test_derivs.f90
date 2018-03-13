@@ -1,26 +1,19 @@
 program test_dslash
       use dwf3d_lib
+      use dirac
+      use gforce
       implicit none
 
 ! general parameters
       logical :: generate = .false.
       integer :: timing_loops = 1000
-      integer, parameter :: ksize=12, ksizet=12, kthird=24
       complex, parameter :: iunit = cmplx(0, 1)
       real*8, parameter :: tau = 8 * atan(1.0_8)
       complex*16 :: acc_sum = 0.
       real*8 :: acc_max = 0.
 
 ! common blocks to function
-      common/para/beta,am3,ibound
-      common/dirac/gamval(6,4),gamin(6,4)
-      common/gforce/dSdpi(ksize, ksize, ksizet, 3)
-      real :: beta, am3
-      integer :: ibound, istart
-      complex*16 :: gamval
-      integer :: gamin
-      integer :: iu, id
-      real :: dSdpi
+      integer :: istart
 
 ! initialise function parameters
       complex*16 u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)

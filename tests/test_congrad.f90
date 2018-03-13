@@ -1,40 +1,25 @@
 program test_congrad
       use dwf3d_lib
+      use trial
+      use para
+      use vector
+      use dirac
+      use gforce
+      use remezg
+      use param
       implicit none
 
 ! general parameters
       logical :: generate = .false.
       integer :: timing_loops = 1
-      integer, parameter :: ndiag = 12
       complex, parameter :: iunit = cmplx(0, 1)
       real*8, parameter :: tau = 8 * atan(1.0_8)
       complex(dp) :: acc_sum = 0.
       real*8 :: acc_max = 0.
 
 ! common blocks to function
-      common/trial/u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3), &
-           theta(ksize, ksize, ksizet, 3), &
-           pp(ksize, ksize, ksizet, 3)
-      common/para/beta,am3,ibound
-      common/vector/x(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-      common/dirac/gamval(6,4),gamin(6,4)
-      common/gforce/dSdpi(ksize, ksize, ksizet, 3)
-      common/remez2g/anum2(0:ndiag),aden2(ndiag),bnum2(0:ndiag),bden2(ndiag)
-      common/remez4g/anum4(0:ndiag),aden4(ndiag),bnum4(0:ndiag),bden4(ndiag)
-      common/param/ancg,ancgh,ancgf,ancgpf
-      common/parampv/ancgpv,ancghpv,ancgfpv,ancgpfpv
-      real :: beta, am3
-      integer :: ibound, istart
-      complex(dp) :: gamval, x
-      integer :: gamin
-      integer :: iu, id
-      real :: dSdpi
+      integer :: istart
       real :: dSdpi_ref(ksize, ksize, ksizet, 3)
-      real :: theta, pp
-      real :: ancg,ancgh,ancgf,ancgpf
-      real :: ancgpv,ancghpv,ancgfpv,ancgpfpv
-      real*8 :: anum2, aden2, bnum2, bden2, anum4, aden4, bnum4, bden4
-      complex(dp) :: u
 
 ! initialise function parameters
       complex(dp) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
@@ -46,7 +31,6 @@ program test_congrad
       real :: diff(ksize, ksize, ksizet, 3)
 
       integer :: imass, iflag, isweep, iter
-      real(dp) :: anum(0:ndiag), aden(ndiag), coeff
       real :: res, am
       real(dp) :: h, hg, hp, s
       integer :: itercg
@@ -66,15 +50,15 @@ program test_congrad
       isweep = 1
       iter = 0
 
-      anum2(0) = 0.5
-      anum4(0) = 0.51
-      bnum2(0) = 0.49
-      bnum4(0) = 0.53
-      do i = 1, ndiag
-         anum2(i) = 0.4 * exp(iunit * i * tau / ndiag)
-         aden2(i) = 0.4 * exp(-iunit * 0.5 * i * tau / ndiag)
-         anum4(i) = 0.41 * exp(iunit * i * tau / ndiag)
-         aden4(i) = 0.41 * exp(-iunit * 0.5 * i * tau / ndiag)
+      anum2g(0) = 0.5
+      anum4g(0) = 0.51
+      bnum2g(0) = 0.49
+      bnum4g(0) = 0.53
+      do i = 1, ndiagg
+         anum2g(i) = 0.4 * exp(iunit * i * tau / ndiagg)
+         aden2g(i) = 0.4 * exp(-iunit * 0.5 * i * tau / ndiagg)
+         anum4g(i) = 0.41 * exp(iunit * i * tau / ndiagg)
+         aden4g(i) = 0.41 * exp(-iunit * 0.5 * i * tau / ndiagg)
       enddo
       do j = 1,4
          do it = 1,ksizet
