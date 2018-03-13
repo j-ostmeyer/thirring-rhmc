@@ -1,14 +1,40 @@
 module params
+  implicit none
+  save
+
   ! Type definitions
   integer, parameter :: k4b=selected_int_kind(9)
   integer, parameter :: dp=kind(1.d0)
 
   ! Lattice parameters
-  integer, parameter :: ksize=12, ksizet=12, kthird=24
+#define ksize 12
+#define ksizet 12
+  integer, parameter :: kthird=24
   integer, parameter :: kvol=ksize*ksize*ksizet
   integer, parameter :: ndiag=25, ndiagg=12
   integer, parameter :: Nf=1
   real, parameter :: akappa = 0.5
+#ifndef mpi
+  integer, parameter :: ksizex_l=ksize, ksizey_l=ksize, ksizet_l=ksizet
+  integer, parameter :: kvol_l = kvol
+  integer, parameter :: NP_X=1, NP_Y=1, NP_T=1, IP_X=1, IP_Y=1, IP_T=1
+#else
+#if not (defined(NP_X) && defined(NP_Y) && defined(NP_T))
+#error "NP_X, NP_Y, and NP_T must be defined for MPI compilation."
+#endif
+#if (ksize / NP_X) * NP_X != ksize
+#error "ksize must be divisible by NP_X"
+#elif (ksize / NP_Y) * NP_Y != ksize
+#error "ksize must be divisible by NP_Y"
+#elif (ksizet / NP_T) * NP_T != ksizet
+#error "ksizet must be divisible by NP_T"
+#endif
+  integer, parameter :: ksizex_l = ksize / NP_X
+  integer, parameter :: ksizey_l = ksize / NP_Y
+  integer, parameter :: ksizet_l = ksizet / NP_T
+  integer :: ip_x, ip_y, ip_t, ip_global, np_global
+  integer :: comm, mpi_error
+#endif
   
   ! Runtime parameters
   real :: beta
@@ -43,9 +69,9 @@ module trial
   implicit none
   save
 
-  complex(dp) :: u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
-  real :: theta(ksize, ksize, ksizet, 3)
-  real :: pp(ksize, ksize, ksizet, 3)
+  complex(dp) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
+  real :: theta(ksizex_l, ksizey_l, ksizet_l, 3)
+  real :: pp(ksizex_l, ksizey_l, ksizet_l, 3)
 end module trial
 
 module gauge
@@ -53,7 +79,7 @@ module gauge
   implicit none
   save
   
-  real :: theta(ksize, ksize, ksizet, 3)
+  real :: theta(ksizex_l, ksizey_l, ksizet_l, 3)
 end module gauge
 
 module vector
@@ -61,7 +87,7 @@ module vector
   implicit none
   save
 
-  complex(dp) :: X(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+  complex(dp) :: X(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 end module vector
 
 module gforce
@@ -69,7 +95,7 @@ module gforce
   implicit none
   save
 
-  real :: dSdpi(ksize, ksize, ksizet, 3)
+  real :: dSdpi(ksizex_l, ksizey_l, ksizet_l, 3)
 end module 
 
   
@@ -87,8 +113,8 @@ module dum1
   implicit none
   save
 
-  complex(dp) :: R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-  real :: ps(0:ksize+1, 0:ksize+1, 0:ksizet+1, 2)
+  complex(dp) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  real :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
 end module dum1
 
 module phizero
@@ -96,7 +122,7 @@ module phizero
   implicit none
   save
 
-  complex(dp) :: Phi0(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, 25)
+  complex(dp) :: Phi0(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 25)
 end module phizero
 
 module dirac
@@ -112,24 +138,24 @@ module qmrherm_scratch
   use params
   implicit none
 
-!   complex :: vtild(kthird, ksize, ksize, ksizet, 4)
-!   complex :: q(kthird, ksize, ksize, ksizet, 4)
-!   complex :: pm1(kthird, ksize, ksize, ksizet, 4,ndiagq)
-!   complex :: qm1(kthird, ksize, ksize, ksizet, 4)
-!   complex :: p(kthird, ksize, ksize, ksizet, 4,ndiagq)
-!   complex :: x3(kthird, ksize, ksize, ksizet, 4)
-!   complex :: R(kthird, ksize, ksize, ksizet, 4)
-!   complex x1(kthird, ksize, ksize, ksizet, 4,ndiagq)
-!   complex :: x2(kthird, ksize, ksize, ksizet, 4)
-  complex(dp) :: vtild(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-  complex(dp) :: q(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-  complex(dp) :: pm1(kthird, ksize, ksize, ksizet, 4, ndiag)
-  complex(dp) :: qm1(kthird, ksize, ksize, ksizet, 4)
-  complex(dp) :: p(kthird, ksize, ksize, ksizet, 4, ndiag)
-  complex(dp) :: x3(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-  complex(dp) :: R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-  complex(dp) :: x1(kthird, ksize, ksize, ksizet, 4, ndiag)
-  complex(dp) :: x2(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+!   complex :: vtild(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
+!   complex :: q(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
+!   complex :: pm1(kthird, ksizex_l, ksizey_l, ksizet_l, 4,ndiagq)
+!   complex :: qm1(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
+!   complex :: p(kthird, ksizex_l, ksizey_l, ksizet_l, 4,ndiagq)
+!   complex :: x3(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
+!   complex :: R(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
+!   complex x1(kthird, ksizex_l, ksizey_l, ksizet_l, 4,ndiagq)
+!   complex :: x2(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
+  complex(dp) :: vtild(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) :: q(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) :: pm1(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
+  complex(dp) :: qm1(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
+  complex(dp) :: p(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
+  complex(dp) :: x3(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) :: x1(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
+  complex(dp) :: x2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 end module qmrherm_scratch
 
 module dwf3d_lib
@@ -194,11 +220,11 @@ contains
     real, parameter :: rescga=0.000000001
     real, parameter :: rescgm=0.000000001
     integer, parameter :: itermax=1000
-!     complex :: Phi(kthird,0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, Nf)
+!     complex :: Phi(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, Nf)
 !     complex qq,qbqb
 !     complex u
 !     complex a,b
-    complex(dp) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)!
+    complex(dp) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)!
     complex(dp) :: qq,qbqb
     complex(dp) :: u
     complex(dp) :: a,b
@@ -222,6 +248,9 @@ contains
     integer, parameter :: icheck=100
     complex(dp), parameter :: zi=(0.0,1.0)
     ibound=-1
+#ifdef MPI
+    call init_MPI
+#endif
 !*******************************************************************
 !     end of input
 !*******************************************************************
@@ -229,7 +258,7 @@ contains
 !     check qmrherm is going to be OK
 !*******************************************************************
     if (ndiagg.gt.ndiag) then
-       print *, 'The qmrherm_scratch module requires ndiag be greater than ndiagg.'
+       print *, 'The qmrherm_scratch module currently requires ndiag be greater than ndiagg.'
        print *, 'Please adjust it and recompile.'
        call exit(1)
     endif
@@ -303,6 +332,10 @@ contains
          ,' # trajectories=',i6,' beta=',f9.6,/ &
          ,' am3=',f6.4,' am=',f6.4/ &
          ,' imass=',i2)
+#ifdef MPI
+    print 7, " NP_X=", NP_X, " NP_Y=", NP_Y, " NP_T=", NP_T, &
+         & " ksizex_l=", ksizex_l, " ksizey_l=", ksizey_l, " ksizet_l=", ksizet_l
+#endif
 !     write(6,9004) rescgg,rescga,respbp
     write(7,9004) rescgg,rescga,respbp
 9004 format(' Stopping residuals: guidance: ',e11.4,' acceptance: ', &
@@ -379,7 +412,7 @@ contains
 !     write(98,*) idum
        do mu=1,3
           call gaussp(ps)
-          pp(:,:,:,mu) = ps(1:ksize, 1:ksize, 1:ksize, 1)
+          pp(:,:,:,mu) = ps(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1)
        enddo
 !     write(6,*) idum
 !*******************************************************************
@@ -548,12 +581,12 @@ contains
     use vector, X1=>X
     use gforce
     use param
-    complex(dp), intent(in) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, Nf)
+    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, Nf)
     real, intent(in) :: res1, am
     integer, intent(in) :: imass, isweep, iter
 !     complex Phi(kferm,Nf),X2(kferm)
 !     complex X1,u
-    complex(dp) :: X2(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+    complex(dp) :: X2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     integer :: ia, itercg
 !
 !     write(6,111)
@@ -592,7 +625,7 @@ contains
     enddo
 !
     if(ibound.eq.-1)then
-       dSdpi(:, :, ksizet, 3) = -dSdpi(:, :, ksizet, 3)
+       dSdpi(:, :, ksizet_l, 3) = -dSdpi(:, :, ksizet_l, 3)
     endif
 !
     dSdpi = dSdpi + beta * Nf * theta
@@ -608,11 +641,11 @@ contains
     use vector, X1=>X
     use dum1
     use param
-    complex(dp), intent(in) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, Nf)
+    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, Nf)
     real(dp), intent(out) :: h, hg, hp, s
     real, intent(in) :: res2, am
     integer, intent(in) :: isweep, iflag, imass
-!     complex, intent(in) :: Phi(kthird, ksize, ksize, ksizet, 4, Nf)
+!     complex, intent(in) :: Phi(kthird, ksizex_l, ksizey_l, ksizet_l, 4, Nf)
 !     complex X1,R
     real(dp) :: hf
     integer :: itercg, ia
@@ -647,8 +680,8 @@ contains
        call qmrherm(R, res2, itercg, am, imass, bnum2, bden2, ndiag, 0, isweep, iflag)
        ancgh=ancgh+float(itercg)
 !
-       hf = hf + sum(real(conjg(R(:, 1:ksize, 1:ksize, 1:ksizet, :)) &
-       &        * X1(:, 1:ksize, 1:ksize, 1:ksizet, :)))
+       hf = hf + sum(real(conjg(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
+       &        * X1(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 !
     enddo
 !
@@ -675,8 +708,8 @@ contains
     use gforce
     use phizero
     use qmrherm_scratch
-!     complex, intent(in) :: Phi(kthird, ksize, ksize, ksizet, 4)
-    complex(dp), intent(in) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+!     complex, intent(in) :: Phi(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
+    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     integer, intent(in) :: imass, ndiagq, iflag, isweep, iter
     real(dp), intent(in) :: anum(0:ndiagq), aden(ndiagq)
     real, intent(in) :: res, am
@@ -709,7 +742,7 @@ contains
     qm1 = cmplx(0.0, 0.0)
     x = anum(0) * Phi
 
-    betaq = sqrt(sum(abs(R(:,1:ksize,1:ksize,1:ksizet,:)) ** 2))
+    betaq = sqrt(sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2))
     phimod=betaq
 !     write(6,*) '|| Phi || = ', phimod
 !
@@ -726,17 +759,17 @@ contains
        call dslashd(x3,vtild,u,am,imass)
 !       call update_halo_5(4, x3)
 !
-       alphatild = sum(real(conjg(q(:,1:ksize,1:ksize,1:ksizet,:)) & 
-       &                * x3(:,1:ksize,1:ksize,1:ksizet,:)))
+       alphatild = sum(real(conjg(q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
+       &                * x3(:,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 !
-       R(:, 1:ksize, 1:ksize, 1:ksize, :) = &
-            & x3(:, 1:ksize, 1:ksize, 1:ksize, :) &
-            & - alphatild * q(:, 1:ksize, 1:ksize, 1:ksize, :) &
+       R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = &
+            & x3(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
+            & - alphatild * q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
             & - betaq * qm1
-       qm1 = q(:, 1:ksize, 1:ksize, 1:ksize, :)
+       qm1 = q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
 !
        betaq0 = betaq
-       betaq = sqrt(sum(abs(R(:,1:ksize,1:ksize,1:ksizet,:)) ** 2))
+       betaq = sqrt(sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:)) ** 2))
 !
        alpha = alphatild + aden
 !
@@ -745,7 +778,7 @@ contains
           rho = betaq0 / alpha
           rhom1 = rho
           do idiag = 1, ndiagq
-             p(:, :, :, :, :, idiag) = q(:, 1:ksize, 1:ksize, 1:ksize, :)
+             p(:, :, :, :, :, idiag) = q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
              x1(:, :, :, :, :, idiag) = rho(idiag) * p(:, :, :, :, :, idiag)
           enddo
           pm1 = p
@@ -755,7 +788,7 @@ contains
           d = alpha - betaq0 * amu
           rho = -amu * dm1 * rhom1 / d
           do idiag = 1, ndiagq
-             p(:, :, :, :, :, idiag) = q(:, 1:ksize, 1:ksize, 1:ksize, :) &
+             p(:, :, :, :, :, idiag) = q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
                   & - amu(idiag) * pm1(:, :, :, :, :, idiag)
           enddo
           pm1 = p
@@ -791,14 +824,14 @@ contains
     if(iflag.lt.2)then
 !     Now evaluate solution x=(MdaggerM)^p * Phi
        do idiag=1,ndiagq
-          x(:, 1:ksize, 1:ksize, 1:ksizet, :) = &
-               & x(:, 1:ksize, 1:ksize, 1:ksizet, :) &
+          x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = &
+               & x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
                & + anum(idiag) * x1(:, :, :, :, :, idiag)
        enddo
 !     
 !  update phi0 block if required...
        if(iflag.eq.1) then
-          Phi0(:, 1:ksize, 1:ksize, 1:ksizet, :, 1:ndiagq) = X1(:, :, :, :, :, 1:ndiagq)
+          Phi0(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :, 1:ndiagq) = X1(:, :, :, :, :, 1:ndiagq)
        endif
        call update_halo_6(4, ndiagq, Phi0)
 !     
@@ -807,7 +840,7 @@ contains
        do idiag=1, ndiagq
 !
 !  X2 = M*X1
-          R(:, 1:ksize, 1:ksize, 1:ksizet, :) = X1(:, :, :, :, :, idiag)
+          R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = X1(:, :, :, :, :, idiag)
           call update_halo_5(4, R)
           call dslash(X2, R, u, am, imass)
           call update_halo_5(4, X2)
@@ -823,7 +856,7 @@ contains
              call dslash(X2, R, u, am, imass)
              call update_halo_5(4, X2)
 !
-             R(:, 1:ksize, 1:ksize, 1:ksizet, :) = x1(: ,:, :, :, :, idiag)
+             R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(: ,:, :, :, :, idiag)
              call update_halo_5(4, R)
              call derivs(X2, R, coeff, 1)
           endif
@@ -841,11 +874,11 @@ contains
   subroutine derivs(R,X2,anum,iflag)
     use gforce
     use dirac
-!      complex, intent(in) :: R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-!      complex, intent(in) :: X2(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+!      complex, intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+!      complex, intent(in) :: X2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 
-    complex(dp), intent(in) :: R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    complex(dp), intent(in) :: X2(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+    complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: X2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real(dp), intent(in) :: anum
     integer, intent(in) :: iflag
 
@@ -869,9 +902,9 @@ contains
        itup = kdelta(3, mu)
 
        do idirac=1,4
-          do it = 1,ksizet
-             do iy = 1,ksize
-                do ix = 1,ksize
+          do it = 1,ksizet_l
+             do iy = 1,ksizey_l
+                do ix = 1,ksizex_l
                    dSdpi(ix,iy,it,mu) = &
                    &     dSdpi(ix,iy,it,mu) + tzi_real * akappa * sum(dimag( &
                    &       conjg(R(:,ix,iy,it,idirac)) * &
@@ -884,9 +917,9 @@ contains
 !
           igork1=gamin(mu,idirac)
           if(iflag.eq.0)then
-             do it = 1,ksizet
-                do iy = 1,ksize
-                   do ix = 1,ksize
+             do it = 1,ksizet_l
+                do iy = 1,ksizey_l
+                   do ix = 1,ksizex_l
                       dSdpi(ix,iy,it,mu) = &
                       &     dSdpi(ix,iy,it,mu)+ tzi_real * sum(dimag(gamval(mu,idirac)* &
                       &(conjg(R(:,ix,iy,it,idirac)) * &
@@ -897,9 +930,9 @@ contains
                 enddo
              enddo
           else
-             do it = 1,ksizet
-                do iy = 1,ksize
-                   do ix = 1,ksize
+             do it = 1,ksizet_l
+                do iy = 1,ksizey_l
+                   do ix = 1,ksizex_l
                       dSdpi(ix,iy,it,mu) = &
                       &     dSdpi(ix,iy,it,mu)- tzi_real * sum(dimag(gamval(mu,idirac)* &
                       &(conjg(R(:,ix,iy,it,idirac)) * &
@@ -971,8 +1004,8 @@ contains
   subroutine congrad(Phi,res,itercg,am,imass)
     use trial, only: u
     use vector
-    complex(dp), intent(in) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-!     complex, intent(in) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+!     complex, intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real, intent(in) :: res, am
     integer, intent(out) :: itercg
     integer, intent(in) :: imass
@@ -980,10 +1013,10 @@ contains
     integer, parameter :: niterc=kthird*kvol
 !     complex x,u
 !     complex x1(kferm),x2(kferm),p(kferm),r(kferm)
-    complex(dp) :: x1(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    complex(dp) :: x2(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    complex(dp) :: p(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    complex(dp) :: r(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+    complex(dp) :: x1(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp) :: x2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp) :: p(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp) :: r(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real :: resid
     real :: betacg, betacgn, betacgd, alpha, alphan, alphad
     integer :: nx
@@ -1013,7 +1046,7 @@ contains
        if(nx.ne.1)then
 !
 !   alpha=(r,r)/(p,(Mdagger)Mp)
-          alphad = sum(abs(x1(:, 1:ksize, 1:ksize, 1:ksize, :)) ** 2)
+          alphad = sum(abs(x1(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
           alpha = alphan / alphad
 !     
 !   x=x+alpha*p
@@ -1028,7 +1061,7 @@ contains
        r = r - alpha * x2
 !
 !   betacg=(r_k+1,r_k+1)/(r_k,r_k)
-       betacgn = sum(abs(r(:, 1:ksize, 1:ksize, 1:ksizet, :)) ** 2)
+       betacgn = sum(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
        betacg = betacgn / betacgd
        betacgd = betacgn
        alphan = betacgn
@@ -1061,15 +1094,15 @@ contains
     real, intent(in) :: res, am
     integer, intent(in) :: imass
     integer, parameter :: knoise = 10
-!     complex :: x(0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-!     complex :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+!     complex :: x(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+!     complex :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 !     complex :: psibarpsi1,psibarpsi2
-    complex(dp) :: x(0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    complex(dp) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+    complex(dp) :: x(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp) :: psibarpsi1,psibarpsi2
     real(dp) :: cnum(0:1),cden(1)
-    real :: ps(0:ksize+1, 0:ksize+1, 0:ksizet+1, 2)
-    real :: pt(0:ksize+1, 0:ksize+1, 0:ksizet+1, 2)
+    real :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
+    real :: pt(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
     real(dp) :: pbp(knoise)
     integer :: idsource, idsource2, idirac, inoise, jnoise, ithird
     integer :: iter, itercg
@@ -1123,13 +1156,13 @@ contains
           if(imass.ne.5)then
 !     pbp1 = x^dagger (0.5(1+gamma_4)) xi(kthird)
              psibarpsi1=psibarpsi1 &
-             &           + sum(conjg(x(1:ksize, 1:ksize, 1:ksizet, idsource)) * &
-             &               xi(kthird, 1:ksize, 1:ksize, 1:ksizet, idsource))
+             &           + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource)) * &
+             &               xi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource))
           else
 !     pbp1 = x^dagger (0.5(1-gamma_4)) xi(1)
              psibarpsi1=psibarpsi1 &
-             &           + sum(conjg(x(1:ksize, 1:ksize, 1:ksize, idsource+2)) &
-             &                 * xi(1, 1:ksize, 1:ksize, 1:ksize, idsource+2))
+             &           + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource+2)) &
+             &                 * xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource+2))
           endif
 !
 !
@@ -1166,13 +1199,13 @@ contains
           if(imass.ne.5)then
 ! pbp2= - x^dagger (0.5(1-gamma_4)) xi(1)
              psibarpsi2=psibarpsi2 &
-             &           +sum(conjg(x(1:ksize, 1:ksize, 1:ksizet, idsource2)) &
-             &                * xi(1, 1:ksize, 1:ksize, 1:ksizet, idsource2))
+             &           +sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource2)) &
+             &                * xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource2))
           else
 ! pbp2= - x^dagger (0.5(1-gamma_4)) xi(kthird)
              psibarpsi2=psibarpsi2 &
-             &           +sum(conjg(x(1:ksize, 1:ksize, 1:ksizet, idsource)) &
-             &           * xi(kthird, 1:ksize, 1:ksize, 1:ksizet, idsource))
+             &           +sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource)) &
+             &           * xi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource))
           endif
 !
 !  end trace on Dirac indices....
@@ -1654,9 +1687,9 @@ contains
 40  continue
     g=0.05
     do mu=1,3
-       do it = 1, ksizet
-          do iy = 1, ksize
-             do ix = 1, ksize
+       do it = 1, ksizet_l
+          do iy = 1, ksizey_l
+             do ix = 1, ksizex_l
                 theta(ix, iy, it, mu) = 2.0 * g * rranf() - 1.0
 !              theta(ix, iy, it, mu) = 2.0 * g * rano(yran,idum) - 1.0
              enddo
@@ -1670,16 +1703,16 @@ contains
 !******************************************************************
   pure subroutine coef(u, theta)
 !
-    complex(dp), intent(out) :: u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
-    real, intent(in) :: theta(ksize, ksize, ksizet, 3)
+    complex(dp), intent(out) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
+    real, intent(in) :: theta(ksizex_l, ksizey_l, ksizet_l, 3)
     integer :: ix, iy, it, mu
 !
-!     u(1:ksize, 1:ksize, 1:ksizet, :) = exp(cmplx(0.0, theta))
-    u(1:ksize, 1:ksize, 1:ksizet, :) = (1.0 + cmplx(0.0, theta))
+!     u(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = exp(cmplx(0.0, theta))
+    u(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = (1.0 + cmplx(0.0, theta))
 !
 !  anti-p.b.c. in timelike direction
-    if(ibound.eq.-1)then
-       u(:, :, ksizet, 3) = -u(:, :, ksizet, 3)
+    if(ibound.eq.-1 .and. ip_t .eq. NP_T)then
+       u(:, :, ksizet_l, 3) = -u(:, :, ksizet_l, 3)
     end if
 !      
     call update_halo_4(3, u)
@@ -1692,21 +1725,21 @@ contains
 !**********************************************************************
   subroutine gaussp(ps)
     use random
-    real, intent(out) :: ps(0:ksize+1, 0:ksize+1, 0:ksizet+1, 2)
+    real, intent(out) :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
     integer ix, iy, it
     real :: theta
 !     write(6,1)
 1   format(' Hi from gaussp')
-    do it = 1, ksizet
-       do iy = 1, ksize
-          do ix = 1, ksize
+    do it = 1, ksizet_l
+       do iy = 1, ksizey_l
+          do ix = 1, ksizex_l
              ps(ix, iy, it, 2) = sqrt(-2.0 * log(rano(yran,idum)))
           end do
        end do
     end do
-    do it = 1, ksizet
-       do iy = 1, ksize
-          do ix = 1, ksize
+    do it = 1, ksizet_l
+       do iy = 1, ksizey_l
+          do ix = 1, ksizex_l
              theta = tpi * rano(yran,idum)
              ps(ix, iy, it, 1) = ps(ix, iy, it, 2) * sin(theta)
              ps(ix, iy, it, 2) = ps(ix, iy, it, 2) * cos(theta)
@@ -1724,21 +1757,21 @@ contains
 !**********************************************************************
   subroutine gauss0(ps)
     use random
-    real, intent(out) :: ps(0:ksize+1, 0:ksize+1, 0:ksizet+1, 2)
+    real, intent(out) :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
     integer :: ix, iy, it
     real :: theta
 !     write(6,1)
 1   format(' Hi from gauss0')
-    do it = 1, ksizet
-       do iy = 1, ksize
-          do ix = 1, ksize
+    do it = 1, ksizet_l
+       do iy = 1, ksizey_l
+          do ix = 1, ksizex_l
              ps(ix, iy, it, 2) = sqrt(-log(rano(yran,idum)))
           end do
        end do
     end do
-    do it = 1, ksizet
-       do iy = 1, ksize
-          do ix = 1, ksize
+    do it = 1, ksizet_l
+       do iy = 1, ksizey_l
+          do ix = 1, ksizex_l
              theta = tpi * rano(yran,idum)
              ps(ix, iy, it, 1) = ps(ix, iy, it, 2) * sin(theta)
              ps(ix, iy, it, 2) = ps(ix, iy, it, 2) * cos(theta)
@@ -1759,9 +1792,9 @@ contains
 !     complex, intent(in) :: Phi(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
 !     complex, intent(in) :: R(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
 !     complex :: zkappa
-    complex(dp), intent(in) :: u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
-    complex(dp), intent(out) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    complex(dp), intent(in) :: R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+    complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
+    complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     integer, intent(in) :: imass
     real, intent(in) :: am
     complex(dp) :: zkappa
@@ -1781,9 +1814,9 @@ contains
 
        do idirac=1,4
           igork=gamin(mu,idirac)
-          do it = 1,ksizet
-             do iy = 1,ksize
-                do ix = 1,ksize
+          do it = 1,ksizet_l
+             do iy = 1,ksizey_l
+                do ix = 1,ksizex_l
                    Phi(:,ix,iy,it,idirac)=Phi(:,ix,iy,it,idirac) &
 ! Wilson term (hermitian)
                    &    -akappa*(u(ix,iy,it,mu) &
@@ -1809,39 +1842,39 @@ contains
 !  Mass term (couples the two walls unless imass=5)
     if (imass.eq.1) then
        zkappa=cmplx(am,0.0)
-       Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4) = &
-            & Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4) &
-            & + zkappa * R(1, 1:ksize, 1:ksize, 1:ksizet, 3:4)
-       Phi(1, 1:ksize, 1:ksize, 1:ksizet, 1:2) = &
-            & Phi(1, 1:ksize, 1:ksize, 1:ksizet, 1:2) + &
-            & zkappa * R(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2)
+       Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+            & Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+            & + zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+       Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+            & Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) + &
+            & zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
     elseif (imass.eq.3) then
        zkappa=cmplx(0.0,-am)
-       Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4) = &
-            & Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4) &
-            & - zkappa * R(1, 1:ksize, 1:ksize, 1:ksizet, 3:4)
-       Phi(1, 1:ksize, 1:ksize, 1:ksizet, 1:2) = &
-            & Phi(1, 1:ksize, 1:ksize, 1:ksizet, 1:2) &
-            & + zkappa * R(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2)
+       Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+            & Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+            & - zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+       Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+            & Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+            & + zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
     elseif (imass.eq.5) then
        zkappa=cmplx(0.0,-am)
 !         do idirac=3,4
 !         igork=gamin(5,idirac)
-       Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4) = &
-            & Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4) &
-            & - zkappa * R(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2)
-!        Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, idirac) = &
-!            & Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, idirac) &
-!            & + 2 * zkappa * gamval(5,idirac) * R(kthird, 1:ksize, 1:ksize, 1:ksizet, igork)
+       Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+            & Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+            & - zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+!        Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac) = &
+!            & Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac) &
+!            & + 2 * zkappa * gamval(5,idirac) * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, igork)
 !         enddo
 !         do idirac=1,2
 !         igork=gamin(5,idirac)
-       Phi(1, 1:ksize, 1:ksize, 1:ksizet, 1:2) = &
-            & Phi(1, 1:ksize, 1:ksize, 1:ksizet, 1:2) &
-            & - zkappa * R(1, 1:ksize, 1:ksize, 1:ksizet, 3:4)
-!        Phi(1, 1:ksize, 1:ksize, 1:ksizet, idirac) = &
-!            & Phi(1, 1:ksize, 1:ksize, 1:ksizet, idirac) 
-!            & + 2 * zkappa * gamval(5,idirac) * R(1, 1:ksize, 1:ksize, 1:ksizet, igork)
+       Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+            & Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+            & - zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+!        Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac) = &
+!            & Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac) 
+!            & + 2 * zkappa * gamval(5,idirac) * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, igork)
 !         enddo
     endif
 !
@@ -1857,9 +1890,9 @@ contains
 !     complex, intent(out) :: Phi(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
 !     complex, intent(in) :: R(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
 !     complex :: zkappa
-    complex(dp), intent(in) :: u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
-    complex(dp), intent(out) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    complex(dp), intent(in) :: R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+    complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
+    complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     integer, intent(in) :: imass
     real, intent(in) :: am
     complex(dp) :: zkappa
@@ -1879,9 +1912,9 @@ contains
 
        do idirac=1,4
           igork=gamin(mu,idirac)
-          do it = 1,ksizet
-             do iy = 1,ksize
-                do ix = 1,ksize
+          do it = 1,ksizet_l
+             do iy = 1,ksizey_l
+                do ix = 1,ksizex_l
                    Phi(:,ix,iy,it,idirac)=Phi(:,ix,iy,it,idirac) &
 ! Wilson term (hermitian)
                    &    - akappa * (u(ix,iy,it,mu) &
@@ -1907,28 +1940,28 @@ contains
 !  Mass term (couples the two walls unless imass=5) 
     if(imass.eq.1)then
        zkappa=cmplx(am,0.0)
-       Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2) = &
-            & Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2) &
-            & + zkappa * R(1, 1:ksize, 1:ksize, 1:ksizet, 1:2)
-       Phi(1, 1:ksize, 1:ksize, 1:ksizet, 3:4) = &
-            & Phi(1, 1:ksize, 1:ksize, 1:ksizet, 3:4) &
-            & + zkappa * R(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4)
+       Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+            & Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+            & + zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+       Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+            & Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+            & + zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
     elseif(imass.eq.3)then
        zkappa = cmplx(0.0,am)
-       Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2) = &
-            & Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2) &
-            & + zkappa * R(1, 1:ksize, 1:ksize, 1:ksizet, 1:2)
-       Phi(1, 1:ksize, 1:ksize, 1:ksizet, 3:4) = &
-            & Phi(1, 1:ksize, 1:ksize, 1:ksizet, 3:4) &
-            & - zkappa * R(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4)
+       Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+            & Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+            & + zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+       Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+            & Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+            & - zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
     elseif(imass.eq.5)then
        zkappa = cmplx(0.0,am)
-       Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2) = &
-            & Phi(kthird, 1:ksize, 1:ksize, 1:ksizet, 1:2) &
-            & - zkappa * R(kthird, 1:ksize, 1:ksize, 1:ksizet, 3:4)
-       Phi(1, 1:ksize, 1:ksize, 1:ksizet, 3:4) = &
-            & Phi(1,1:ksize, 1:ksize, 1:ksizet, 3:4) &
-            & - zkappa * R(1, 1:ksize, 1:ksize, 1:ksizet, 1:2)
+       Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+            & Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+            & - zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+       Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+            & Phi(1,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+            & - zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
     endif
 !      call update_halo_5(4, Phi)
 !
@@ -1941,11 +1974,12 @@ contains
 !
 !     calculates Phi = M*R
 !
-!     complex, intent(in) :: u(ksize,ksize,ksizet,3)
-!     complex, intent(out) :: Phi(ksize,ksize,ksizet,4),R(ksize,ksize,ksizet,4)
-    complex(dp), intent(in) ::  u(0:ksize+1,0:ksize+1,0:ksizet+1,3)
-    complex(dp), intent(out) :: Phi(0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    complex(dp), intent(in) :: R(0:ksize+1,0:ksize+1,0:ksizet+1,4)
+!     complex, intent(in) :: u(ksizex_l, ksizey_l, ksizet_l, 3)
+!     complex, intent(out) :: Phi(ksizex_l,ksizey_l,ksizet_l, 4)
+!     complex, intent(in) :: R(ksizex_l,ksizey_l,ksizet_l,4)
+    complex(dp), intent(in) ::  u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
+    complex(dp), intent(out) :: Phi(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: R(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     integer :: ix, iy, it, idirac, mu, ixup, iyup, itup, igork
     real :: diag
 
@@ -1962,9 +1996,9 @@ contains
 !
        do idirac=1,4
           igork=gamin(mu,idirac)
-          do it=1,ksizet
-             do iy=1,ksize
-                do ix=1,ksize
+          do it=1,ksizet_l
+             do iy=1,ksizey_l
+                do ix=1,ksizex_l
                    Phi(ix,iy,it,idirac) = &
 ! Wilson term
                    &    Phi(ix,iy,it,idirac) &
@@ -1992,14 +2026,18 @@ contains
   pure subroutine update_halo_4(size4, Array)
 !     
     integer, intent(in) :: size4
-    complex(dp), intent(inout) :: Array(0:ksize+1, 0:ksize+1, 0:ksizet+1, size4)
+    complex(dp), intent(inout) :: Array(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, size4)
 !
-    Array(0,:,:,:) = Array(ksize,:,:,:)
-    Array(ksize+1,:,:,:) = Array(1,:,:,:)
-    Array(:,0,:,:) = Array(:,ksize,:,:)
-    Array(:,ksize+1,:,:) = Array(:,1,:,:)
-    Array(:,:,0,:) = Array(:,:,ksize,:)
-    Array(:,:,ksize+1,:) = Array(:,:,1,:)
+#ifndef MPI
+    Array(0,:,:,:) = Array(ksizex_l,:,:,:)
+    Array(ksizex_l+1,:,:,:) = Array(1,:,:,:)
+    Array(:,0,:,:) = Array(:,ksizey_l,:,:)
+    Array(:,ksizey_l+1,:,:) = Array(:,1,:,:)
+    Array(:,:,0,:) = Array(:,:,ksizet_l,:)
+    Array(:,:,ksizet_l+1,:) = Array(:,:,1,:)
+#else
+#error "Not implemented"
+#endif
 !      
     return
 !      
@@ -2008,14 +2046,18 @@ contains
   pure subroutine update_halo_4_real(size4, Array)
 !     
     integer, intent(in) :: size4
-    real, intent(inout) :: Array(0:ksize+1, 0:ksize+1, 0:ksizet+1, size4)
+    real, intent(inout) :: Array(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, size4)
 !
-    Array(0,:,:,:) = Array(ksize,:,:,:)
-    Array(ksize+1,:,:,:) = Array(1,:,:,:)
-    Array(:,0,:,:) = Array(:,ksize,:,:)
-    Array(:,ksize+1,:,:) = Array(:,1,:,:)
-    Array(:,:,0,:) = Array(:,:,ksize,:)
-    Array(:,:,ksize+1,:) = Array(:,:,1,:)
+#ifndef MPI
+    Array(0,:,:,:) = Array(ksizex_l,:,:,:)
+    Array(ksizex_l+1,:,:,:) = Array(1,:,:,:)
+    Array(:,0,:,:) = Array(:,ksizey_l,:,:)
+    Array(:,ksizey_l+1,:,:) = Array(:,1,:,:)
+    Array(:,:,0,:) = Array(:,:,ksizet_l,:)
+    Array(:,:,ksizet_l+1,:) = Array(:,:,1,:)
+#else
+#error "Not implemented"
+#endif
 !      
     return
 !      
@@ -2024,14 +2066,18 @@ contains
   pure subroutine update_halo_5(size5, Array)
 !     
     integer, intent(in) :: size5
-    complex(dp), intent(inout) :: Array(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, size5)
+    complex(dp), intent(inout) :: Array(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, size5)
 !
-    Array(:,0,:,:,:) = Array(:,ksize,:,:,:)
-    Array(:,ksize+1,:,:,:) = Array(:,1,:,:,:)
-    Array(:,:,0,:,:) = Array(:,:,ksize,:,:)
-    Array(:,:,ksize+1,:,:) = Array(:,:,1,:,:)
-    Array(:,:,:,0,:) = Array(:,:,:,ksize,:)
-    Array(:,:,:,ksize+1,:) = Array(:,:,:,1,:)
+#ifndef MPI
+    Array(:,0,:,:,:) = Array(:,ksizex_l,:,:,:)
+    Array(:,ksizex_l+1,:,:,:) = Array(:,1,:,:,:)
+    Array(:,:,0,:,:) = Array(:,:,ksizey_l,:,:)
+    Array(:,:,ksizey_l+1,:,:) = Array(:,:,1,:,:)
+    Array(:,:,:,0,:) = Array(:,:,:,ksizet_l,:)
+    Array(:,:,:,ksizet_l+1,:) = Array(:,:,:,1,:)
+#else
+#error "Not implemented"
+#endif
 !      
     return
 !      
@@ -2043,12 +2089,16 @@ contains
     complex(dp), intent(inout) :: Array(kthird, 0:ksize+1, 0:ksize+1, &
          &                              0:ksizet+1, size5, size6)
 !
-    Array(:,0,:,:,:,:) = Array(:,ksize,:,:,:,:)
-    Array(:,ksize+1,:,:,:,:) = Array(:,1,:,:,:,:)
-    Array(:,:,0,:,:,:) = Array(:,:,ksize,:,:,:)
-    Array(:,:,ksize+1,:,:,:) = Array(:,:,1,:,:,:)
-    Array(:,:,:,0,:,:) = Array(:,:,:,ksize,:,:)
-    Array(:,:,:,ksize+1,:,:) = Array(:,:,:,1,:,:)
+#ifndef MPI
+    Array(:,0,:,:,:,:) = Array(:,ksizex_l,:,:,:,:)
+    Array(:,ksizex_l+1,:,:,:,:) = Array(:,1,:,:,:,:)
+    Array(:,:,0,:,:,:) = Array(:,:,ksizey_l,:,:,:)
+    Array(:,:,ksizey_l+1,:,:,:) = Array(:,:,1,:,:,:)
+    Array(:,:,:,0,:,:) = Array(:,:,:,ksizet_l,:,:)
+    Array(:,:,:,ksizet_l+1,:,:) = Array(:,:,:,1,:,:)
+#else
+#error "Not implemented"
+#endif
 !      
     return
 !      
@@ -2064,5 +2114,36 @@ contains
 
     kdelta=merge(1,0,nu==mu)
   end function kdelta
+
+#ifdef MPI
+!***********************************************************************
+!   Initialise MPI variables
+!***********************************************************************
+  subroutine init_MPI()
+    integer :: coords(3)
+
+    call MPI_init(mpi_error)
+
+! Check that we have the right number of processes
+    call MPI_comm_size(MPI_COMM_WORLD, np_global, mpi_error)
+    call MPI_comm_rank(MPI_COMM_WORLD, ip_global, mpi_error)
+    if (np_global .ne. NP_X * NP_Y * NP_T) then
+       print *,"MPI dimensionality mismatch: ", NP_X, "*", NP_Y, "*", NP_T, "!=", np_global
+       call MPI_finalize(mpi_error)
+       call exit(2)
+    end if
+
+! Set up a Cartesian communicator; periodic boundaries, allow reordering
+    call MPI_cart_create(MPI_COMM_WORLD, 3, (NP_X, NP_Y, NP_T), &
+         & (.true., .true., .true.), .true., comm, mpi_error)
+
+! Know where I am
+    call MPI_cart_coords(comm, ip_global, 3, coords, mpi_error)
+    ip_x = coords(1)
+    ip_y = coords(2)
+    ip_t = coords(3)
+
+  end subroutine init_MPI
+#endif
 
 end module dwf3d_lib
