@@ -108,6 +108,30 @@ module dirac
   integer :: gamin(6,4)
 end module dirac
 
+module qmrherm_scratch
+  use params
+  implicit none
+
+!   complex :: vtild(kthird, ksize, ksize, ksizet, 4)
+!   complex :: q(kthird, ksize, ksize, ksizet, 4)
+!   complex :: pm1(kthird, ksize, ksize, ksizet, 4,ndiagq)
+!   complex :: qm1(kthird, ksize, ksize, ksizet, 4)
+!   complex :: p(kthird, ksize, ksize, ksizet, 4,ndiagq)
+!   complex :: x3(kthird, ksize, ksize, ksizet, 4)
+!   complex :: R(kthird, ksize, ksize, ksizet, 4)
+!   complex x1(kthird, ksize, ksize, ksizet, 4,ndiagq)
+!   complex :: x2(kthird, ksize, ksize, ksizet, 4)
+  complex(dp) :: vtild(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+  complex(dp) :: q(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+  complex(dp) :: pm1(kthird, ksize, ksize, ksizet, 4, ndiag)
+  complex(dp) :: qm1(kthird, ksize, ksize, ksizet, 4)
+  complex(dp) :: p(kthird, ksize, ksize, ksizet, 4, ndiag)
+  complex(dp) :: x3(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+  complex(dp) :: R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+  complex(dp) :: x1(kthird, ksize, ksize, ksizet, 4, ndiag)
+  complex(dp) :: x2(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+end module qmrherm_scratch
+
 module dwf3d_lib
   use params
   implicit none
@@ -201,6 +225,14 @@ contains
 !*******************************************************************
 !     end of input
 !*******************************************************************
+!*******************************************************************
+!     check qmrherm is going to be OK
+!*******************************************************************
+    if (ndiagg.gt.ndiag) then
+       print *, 'The qmrherm_scratch module requires ndiag be greater than ndiagg.'
+       print *, 'Please adjust it and recompile.'
+       call exit(1)
+    endif
     open(unit=7,file='output',status='unknown')
     open(unit=25,file='midout',status='unknown')
     open(unit=98,file='control',status='unknown')
@@ -642,6 +674,8 @@ contains
     use vector
     use gforce
     use phizero
+    use qmrherm_scratch
+!     complex, intent(in) :: Phi(kthird, ksize, ksize, ksizet, 4)
     complex(dp), intent(in) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
     integer, intent(in) :: imass, ndiagq, iflag, isweep, iter
     real(dp), intent(in) :: anum(0:ndiagq), aden(ndiagq)
@@ -649,34 +683,16 @@ contains
     integer, intent(out) :: itercg
 !
     integer, parameter :: niterc=7500
-!     complex, intent(in) :: Phi(kthird, ksize, ksize, ksizet, 4)
     real :: alphatild
     real(dp) :: coeff
 !      
-!     complex :: vtild(kthird, ksize, ksize, ksizet, 4)
-!     complex :: q(kthird, ksize, ksize, ksizet, 4)
-!     complex :: pm1(kthird, ksize, ksize, ksizet, 4,ndiagq)
-!     complex :: qm1(kthird, ksize, ksize, ksizet, 4)
-!     complex :: p(kthird, ksize, ksize, ksizet, 4,ndiagq)
-!     complex :: x3(kthird, ksize, ksize, ksizet, 4)
-!     complex :: R(kthird, ksize, ksize, ksizet, 4)
-!     complex x1(kthird, ksize, ksize, ksizet, 4,ndiagq)
-!     complex :: x2(kthird, ksize, ksize, ksizet, 4)
 !     real alpha(ndiagq),beta
 !     real amu(ndiagq),d(ndiagq),dm1(ndiagq),rho(ndiagq),rhom1(ndiagq)
-    complex(dp) :: vtild(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    complex(dp) :: q(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    complex(dp) :: pm1(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, ndiagq)
-    complex(dp) :: qm1(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    complex(dp) :: p(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1,4, ndiagq)
-    complex(dp) :: x3(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    complex(dp) :: R(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    complex(dp) :: x1(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, ndiagq)
-    complex(dp) :: x2(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-    real(dp) :: alpha(ndiagq), betaq, betaq0, phimod
+!      
+    real(dp) :: alpha(ndiagq)
     real(dp) :: amu(ndiagq), d(ndiagq), dm1(ndiagq)
     real(dp) :: rho(ndiagq), rhom1(ndiagq)
-!      
+    real(dp) :: betaq, betaq0, phimod
     real :: resid, rhomax, arelax
     integer :: niter, idiag, ix, iy, it
 !
@@ -702,20 +718,24 @@ contains
 !
 !  Lanczos steps
 !
+       call update_halo_5(4, R)
        q = R / betaq
 
        call dslash(vtild,q,u,am,imass)
        call update_halo_5(4, vtild)
        call dslashd(x3,vtild,u,am,imass)
-       call update_halo_5(4, x3)
+!       call update_halo_5(4, x3)
 !
        alphatild = sum(real(conjg(q(:,1:ksize,1:ksize,1:ksizet,:)) & 
        &                * x3(:,1:ksize,1:ksize,1:ksizet,:)))
 !
-       R = x3 - alphatild * q - betaq * qm1
-       qm1 = q
+       R(:, 1:ksize, 1:ksize, 1:ksize, :) = &
+            & x3(:, 1:ksize, 1:ksize, 1:ksize, :) &
+            & - alphatild * q(:, 1:ksize, 1:ksize, 1:ksize, :) &
+            & - betaq * qm1
+       qm1 = q(:, 1:ksize, 1:ksize, 1:ksize, :)
 !
-       betaq0=betaq
+       betaq0 = betaq
        betaq = sqrt(sum(abs(R(:,1:ksize,1:ksize,1:ksizet,:)) ** 2))
 !
        alpha = alphatild + aden
@@ -725,25 +745,27 @@ contains
           rho = betaq0 / alpha
           rhom1 = rho
           do idiag = 1, ndiagq
-             p(:, :, :, :, :, idiag) = q
-             pm1(:, :, :, :, :, idiag) = q
-             x1(:, :, :, :, :, idiag) = rho(idiag) * q
+             p(:, :, :, :, :, idiag) = q(:, 1:ksize, 1:ksize, 1:ksize, :)
+             x1(:, :, :, :, :, idiag) = rho(idiag) * p(:, :, :, :, :, idiag)
           enddo
+          pm1 = p
        else
           amu = betaq0 / d
           dm1 = d
           d = alpha - betaq0 * amu
           rho = -amu * dm1 * rhom1 / d
           do idiag = 1, ndiagq
-             p(:, :, :, :, :, idiag) = q - amu(idiag) * pm1(:, :, :, :, :, idiag)
+             p(:, :, :, :, :, idiag) = q(:, 1:ksize, 1:ksize, 1:ksize, :) &
+                  & - amu(idiag) * pm1(:, :, :, :, :, idiag)
           enddo
           pm1 = p
 !     Convergence criterion (a bit ad hoc for now...)
           rhomax = maxval(abs(phimod * rho))
           rhom1 = rho
           do idiag = 1, ndiagq
-             x1(:, :, :, :, :, idiag) = x1(:, :, :, :, :, idiag) &
-             &           + rho(idiag) * p(:, :, :, :, :, idiag)
+             x1(:, :, :, :, :, idiag) = &
+                  & x1(:, :, :, :, :, idiag) &
+                  & + rho(idiag) * p(:, :, :, :, :, idiag)
           enddo
 
 !     check to see whether the residual is acceptable for all ndiagq....
@@ -769,20 +791,24 @@ contains
     if(iflag.lt.2)then
 !     Now evaluate solution x=(MdaggerM)^p * Phi
        do idiag=1,ndiagq
-          x = x + anum(idiag) * x1(:, :, :, :, :, idiag)
+          x(:, 1:ksize, 1:ksize, 1:ksizet, :) = &
+               & x(:, 1:ksize, 1:ksize, 1:ksizet, :) &
+               & + anum(idiag) * x1(:, :, :, :, :, idiag)
        enddo
 !     
 !  update phi0 block if required...
        if(iflag.eq.1) then
-          Phi0(:, :, :, :, :, 1:ndiagq) = X1(:, :, :, :, :, 1:ndiagq)
+          Phi0(:, 1:ksize, 1:ksize, 1:ksizet, :, 1:ndiagq) = X1(:, :, :, :, :, 1:ndiagq)
        endif
+       call update_halo_6(4, ndiagq, Phi0)
 !     
     else
 !
        do idiag=1, ndiagq
 !
 !  X2 = M*X1
-          R = X1(:, :, :, :, :, idiag)
+          R(:, 1:ksize, 1:ksize, 1:ksizet, :) = X1(:, :, :, :, :, idiag)
+          call update_halo_5(4, R)
           call dslash(X2, R, u, am, imass)
           call update_halo_5(4, X2)
 !
@@ -797,7 +823,8 @@ contains
              call dslash(X2, R, u, am, imass)
              call update_halo_5(4, X2)
 !
-             R = x1(: ,:, :, :, :, idiag)
+             R(:, 1:ksize, 1:ksize, 1:ksizet, :) = x1(: ,:, :, :, :, idiag)
+             call update_halo_5(4, R)
              call derivs(X2, R, coeff, 1)
           endif
 !
@@ -842,8 +869,6 @@ contains
        itup = kdelta(3, mu)
 
        do idirac=1,4
-!      do ithird=1,kthird
-!
           do it = 1,ksizet
              do iy = 1,ksize
                 do ix = 1,ksize
@@ -887,7 +912,6 @@ contains
           endif
 !
        enddo
-!      enddo
     enddo
 !
     return
