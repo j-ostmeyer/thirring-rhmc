@@ -14,12 +14,12 @@ module params
   integer, parameter :: ndiag=25, ndiagg=12
   integer, parameter :: Nf=1
   real, parameter :: akappa = 0.5
-#ifndef mpi
+#ifndef MPI
   integer, parameter :: ksizex_l=ksize, ksizey_l=ksize, ksizet_l=ksizet
   integer, parameter :: kvol_l = kvol
-  integer, parameter :: NP_X=1, NP_Y=1, NP_T=1, IP_X=1, IP_Y=1, IP_T=1
+  integer, parameter :: NP_X=1, NP_Y=1, NP_T=1, ip_x=1, ip_y=1, ip_t=1, ip_global=1
 #else
-#if not (defined(NP_X) && defined(NP_Y) && defined(NP_T))
+#if !(defined(NP_X) && defined(NP_Y) && defined(NP_T))
 #error "NP_X, NP_Y, and NP_T must be defined for MPI compilation."
 #endif
 #if (ksize / NP_X) * NP_X != ksize
@@ -32,8 +32,6 @@ module params
   integer, parameter :: ksizex_l = ksize / NP_X
   integer, parameter :: ksizey_l = ksize / NP_Y
   integer, parameter :: ksizet_l = ksizet / NP_T
-  integer :: ip_x, ip_y, ip_t, ip_global, np_global
-  integer :: comm, mpi_error
 #endif
   
   ! Runtime parameters
@@ -41,6 +39,17 @@ module params
   real :: am3
   integer :: ibound
 end module params
+
+#ifdef MPI
+module mpi_variables
+  implicit none
+  save
+
+  integer :: ip_x, ip_y, ip_t, ip_global, np_global
+  integer :: comm, ierr
+  integer :: mpiio_type
+end module mpi_variables
+#endif
 
 module remez
   use params
@@ -160,6 +169,10 @@ end module qmrherm_scratch
 
 module dwf3d_lib
   use params
+#ifdef MPI
+  use mpi
+  use mpi_variables
+#endif
   implicit none
 
   ! Random numbers
@@ -333,8 +346,9 @@ contains
          ,' am3=',f6.4,' am=',f6.4/ &
          ,' imass=',i2)
 #ifdef MPI
-    print 7, " NP_X=", NP_X, " NP_Y=", NP_Y, " NP_T=", NP_T, &
-         & " ksizex_l=", ksizex_l, " ksizey_l=", ksizey_l, " ksizet_l=", ksizet_l
+    write(7, 9002) NP_X, NP_Y, NP_T, ksizex_l, ksizey_l, ksizet_l
+9002 format(" NP_X=", i3, " NP_Y=", i3, " NP_T=", i3,/ &
+          & " ksizex_l=", i3, " ksizey_l=", i3, " ksizet_l=", i3)
 #endif
 !     write(6,9004) rescgg,rescga,respbp
     write(7,9004) rescgg,rescga,respbp
@@ -1559,20 +1573,44 @@ contains
   subroutine sread
     use random
     use gauge
-
+#ifdef MPI
+    integer :: mpi_fh
+    integer, dimension(MPI_status_size) :: status
+    
+    call MPI_File_Open(comm, 'con', MPI_Mode_Wronly + MPI_Mode_Create, &
+         & MPI_Info_Null, mpi_fh, ierr)
+    call MPI_File_Set_View(mpi_fh, 0, MPI_Real, mpiio_type, "native", &
+         & MPI_Info_Null, ierr)
+    call MPI_File_Read_All(mpi_fh, theta, 4 * ksizex_l * ksizey_l * ksizet_l, &
+         & MPI_Real, status, ierr)
+    call MPI_File_Close(mpi_fh)
+#else
     open(unit=10, file='con', status='unknown', form='unformatted')
     read (10) theta, seed
     close(10)
+#endif
     return
   end subroutine sread
 !
   subroutine swrite
     use random
     use gauge
-
+#ifdef MPI
+    integer :: mpi_fh
+    integer, dimension(MPI_status_size) :: status
+    
+    call MPI_File_Open(comm, 'con', MPI_Mode_Rdonly, &
+         & MPI_Info_Null, mpi_fh, ierr)
+    call MPI_File_Set_View(mpi_fh, 0, MPI_Real, mpiio_type, "native", &
+         & MPI_Info_Null, ierr)
+    call MPI_File_Write_All(mpi_fh, theta, 4 * ksizex_l * ksizey_l * ksizet_l, &
+         & MPI_Real, status, ierr)
+    call MPI_File_Close(mpi_fh)
+#else
     open(unit=31, file='con', status='unknown', form='unformatted')
     write (31) theta, seed
     close(31)
+#endif
     return
   end subroutine swrite
 !
@@ -2036,7 +2074,7 @@ contains
     Array(:,:,0,:) = Array(:,:,ksizet_l,:)
     Array(:,:,ksizet_l+1,:) = Array(:,:,1,:)
 #else
-#error "Not implemented"
+#warning "Not implemented"
 #endif
 !      
     return
@@ -2056,7 +2094,7 @@ contains
     Array(:,:,0,:) = Array(:,:,ksizet_l,:)
     Array(:,:,ksizet_l+1,:) = Array(:,:,1,:)
 #else
-#error "Not implemented"
+#warning "Not implemented"
 #endif
 !      
     return
@@ -2076,7 +2114,7 @@ contains
     Array(:,:,:,0,:) = Array(:,:,:,ksizet_l,:)
     Array(:,:,:,ksizet_l+1,:) = Array(:,:,:,1,:)
 #else
-#error "Not implemented"
+#warning "Not implemented"
 #endif
 !      
     return
@@ -2097,7 +2135,7 @@ contains
     Array(:,:,:,0,:,:) = Array(:,:,:,ksizet_l,:,:)
     Array(:,:,:,ksizet_l+1,:,:) = Array(:,:,:,1,:,:)
 #else
-#error "Not implemented"
+#warning "Not implemented"
 #endif
 !      
     return
@@ -2122,27 +2160,38 @@ contains
   subroutine init_MPI()
     integer :: coords(3)
 
-    call MPI_init(mpi_error)
+    call MPI_init(ierr)
 
 ! Check that we have the right number of processes
-    call MPI_comm_size(MPI_COMM_WORLD, np_global, mpi_error)
-    call MPI_comm_rank(MPI_COMM_WORLD, ip_global, mpi_error)
+    call MPI_comm_size(MPI_COMM_WORLD, np_global, ierr)
+    call MPI_comm_rank(MPI_COMM_WORLD, ip_global, ierr)
     if (np_global .ne. NP_X * NP_Y * NP_T) then
        print *,"MPI dimensionality mismatch: ", NP_X, "*", NP_Y, "*", NP_T, "!=", np_global
-       call MPI_finalize(mpi_error)
+       call MPI_finalize(ierr)
        call exit(2)
     end if
 
 ! Set up a Cartesian communicator; periodic boundaries, allow reordering
-    call MPI_cart_create(MPI_COMM_WORLD, 3, (NP_X, NP_Y, NP_T), &
-         & (.true., .true., .true.), .true., comm, mpi_error)
+    call MPI_cart_create(MPI_COMM_WORLD, 3, (/ NP_X, NP_Y, NP_T /), &
+         & (/ .true., .true., .true. /), .true., comm, ierr)
 
 ! Know where I am
-    call MPI_cart_coords(comm, ip_global, 3, coords, mpi_error)
+    call MPI_cart_coords(comm, ip_global, 3, coords, ierr)
     ip_x = coords(1)
     ip_y = coords(2)
     ip_t = coords(3)
 
+! Prepare file format for MPI-IO
+    call MPI_Type_Create_Subarray(4, &! dimensionality
+         (/ ksize, ksize, ksizet, 4 /), &! global volume
+         (/ ksizex_l, ksizey_l, ksizet_l, 4 /), &! local volume
+         (/ ip_x * ksizex_l, ip_y * ksizey_l, ip_t * ksizet_l, 0 /), &! start location
+         MPI_Order_Fortran, &! array ordering
+         MPI_Real, &! datatype to store
+         mpiio_type, &! type descriptor for this subarray type
+         ierr) ! dummy status variable
+
+    return
   end subroutine init_MPI
 #endif
 
