@@ -1842,8 +1842,12 @@ contains
     enddo
 !
 !  s-like term exploiting projection
-    Phi(1:kthird-1,:,:,:,3:4) = Phi(1:kthird-1,:,:,:,3:4) - R(2:kthird,:,:,:,3:4)
-    Phi(2:kthird,:,:,:,1:2) = Phi(2:kthird,:,:,:,1:2) - R(1:kthird-1,:,:,:,1:2)
+    Phi(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+         & = Phi(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+         & - R(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+    Phi(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+         & = Phi(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+         & - R(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
 !
 !  Mass term (couples the two walls unless imass=5)
     if (imass.eq.1) then
@@ -1940,8 +1944,12 @@ contains
     enddo
 !
 !  s-like term exploiting projection
-    Phi(1:kthird-1,:,:,:,1:2) = Phi(1:kthird-1,:,:,:,1:2) - R(2:kthird,:,:,:,1:2)
-    Phi(2:kthird,:,:,:,3:4) = Phi(2:kthird,:,:,:,3:4) - R(1:kthird-1,:,:,:,3:4)
+    Phi(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+         & = Phi(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+         & - R(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+    Phi(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+         & = Phi(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+         & - R(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
 !
 !  Mass term (couples the two walls unless imass=5) 
     if(imass.eq.1)then
