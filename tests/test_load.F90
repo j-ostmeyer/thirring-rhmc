@@ -31,4 +31,8 @@ program test_load
          print *, 'max = ', maxtheta
          print *, 'min = ', mintheta
       end if
+      print *, 'Seed: ', seed
+#ifdef MPI
+      call MPI_Finalize(ierr)
+#endif
 end program

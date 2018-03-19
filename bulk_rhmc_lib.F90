@@ -1,56 +1,3 @@
-module params
-  implicit none
-  save
-
-  ! Type definitions
-  integer, parameter :: k4b=selected_int_kind(9)
-  integer, parameter :: dp=kind(1.d0)
-
-  ! Lattice parameters
-#define ksize 12
-#define ksizet 12
-  integer, parameter :: kthird=24
-  integer, parameter :: kvol=ksize*ksize*ksizet
-  integer, parameter :: ndiag=25, ndiagg=12
-  integer, parameter :: Nf=1
-  real, parameter :: akappa = 0.5
-#ifndef MPI
-  integer, parameter :: ksizex_l=ksize, ksizey_l=ksize, ksizet_l=ksizet
-  integer, parameter :: kvol_l = kvol
-  integer, parameter :: NP_X=1, NP_Y=1, NP_T=1, ip_x=1, ip_y=1, ip_t=1, ip_global=1
-#else
-#if !(defined(NP_X) && defined(NP_Y) && defined(NP_T))
-#error "NP_X, NP_Y, and NP_T must be defined for MPI compilation."
-#endif
-#if (ksize / NP_X) * NP_X != ksize
-#error "ksize must be divisible by NP_X"
-#elif (ksize / NP_Y) * NP_Y != ksize
-#error "ksize must be divisible by NP_Y"
-#elif (ksizet / NP_T) * NP_T != ksizet
-#error "ksizet must be divisible by NP_T"
-#endif
-  integer, parameter :: ksizex_l = ksize / NP_X
-  integer, parameter :: ksizey_l = ksize / NP_Y
-  integer, parameter :: ksizet_l = ksizet / NP_T
-#endif
-  
-  ! Runtime parameters
-  real :: beta
-  real :: am3
-  integer :: ibound
-end module params
-
-#ifdef MPI
-module mpi_variables
-  implicit none
-  save
-
-  integer :: ip_x, ip_y, ip_t, ip_global, np_global
-  integer :: comm, ierr
-  integer :: mpiio_type
-end module mpi_variables
-#endif
-
 module remez
   use params
   implicit none
@@ -238,9 +185,10 @@ contains
 !     complex u
 !     complex a,b
     complex(dp) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)!
-    complex(dp) :: qq,qbqb
-    complex(dp) :: u
-    complex(dp) :: a,b
+! Currently unused
+!    complex(dp) :: qq,qbqb
+!    complex(dp) :: u
+!    complex(dp) :: a,b
     real(dp) :: H0,H1,S0,S1,dH,dS,hg,hp
     real :: action, paction, gaction
     real :: vel2, x, ytest, atraj
@@ -434,9 +382,9 @@ contains
 !     
        call hamilton(Phi, H0, hg, hp, S0, rescga, isweep, 0, am, imass)
        if(isweep.eq.1) then
-          action = S0 / kvol
-          gaction = hg / kvol
-          paction = hp / kvol
+          action = real(S0) / kvol
+          gaction = real(hg) / kvol
+          paction = real(hp) / kvol
        endif
 !     goto 501
 !*******************************************************************
@@ -479,7 +427,7 @@ contains
        dH = H0 - H1
        dS = S0 - S1
        write(98,*) dH,dS
-       y = exp(dH)      
+       y = exp(real(dH))      
        yav = yav + y 
        yyav = yyav + y*y 
        if(dH.lt.0.0)then
@@ -491,9 +439,9 @@ contains
 !
        theta = thetat
        naccp = naccp+1
-       action = S1/kvol
-       gaction = hg/kvol
-       paction = hp/kvol
+       action = real(S1) / kvol
+       gaction = real(hg) /kvol
+       paction = real(hp) /kvol
 600    continue
        write(11,*) isweep,gaction,paction
        actiona=actiona+action 
@@ -502,7 +450,8 @@ contains
 !
 !     uncomment to disable measurements
 !     goto 601
-666    if((isweep/iprint)*iprint.eq.isweep)then
+!666    continue
+       if((isweep/iprint)*iprint.eq.isweep)then
           thetat = theta
           call coef(ut,thetat)
           call measure(pbp,respbp,ancgm,am,imass)
@@ -604,7 +553,7 @@ contains
     integer :: ia, itercg
 !
 !     write(6,111)
-111 format(' Hi from force')
+!111 format(' Hi from force')
 !
     dSdpi = 0.0
 !
@@ -664,7 +613,7 @@ contains
     real(dp) :: hf
     integer :: itercg, ia
 !     write(6,111)
-111 format(' Hi from hamilton')
+!111 format(' Hi from hamilton')
 !
     hf=0.0
 !
@@ -741,10 +690,10 @@ contains
     real(dp) :: rho(ndiagq), rhom1(ndiagq)
     real(dp) :: betaq, betaq0, phimod
     real :: resid, rhomax, arelax
-    integer :: niter, idiag, ix, iy, it
+    integer :: niter, idiag
 !
 !     write(6,111)
-111 format(' Hi from qmrherm')
+!111 format(' Hi from qmrherm')
 !
     resid=sqrt(kthird*ksize*ksize*ksizet*4*res*res)
 !     write(6,*) iflag, resid
@@ -765,13 +714,13 @@ contains
 !
 !  Lanczos steps
 !
-       call update_halo_5(4, R)
+       call complete_halo_update_5(4, R)
        q = R / betaq
 
        call dslash(vtild,q,u,am,imass)
-       call update_halo_5(4, vtild)
+       call complete_halo_update_5(4, vtild)
        call dslashd(x3,vtild,u,am,imass)
-!       call update_halo_5(4, x3)
+!       call complete_halo_update_5(4, x3)
 !
        alphatild = sum(real(conjg(q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
        &                * x3(:,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
@@ -807,7 +756,7 @@ contains
           enddo
           pm1 = p
 !     Convergence criterion (a bit ad hoc for now...)
-          rhomax = maxval(abs(phimod * rho))
+          rhomax = real(maxval(abs(phimod * rho)))
           rhom1 = rho
           do idiag = 1, ndiagq
              x1(:, :, :, :, :, idiag) = &
@@ -847,7 +796,7 @@ contains
        if(iflag.eq.1) then
           Phi0(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :, 1:ndiagq) = X1(:, :, :, :, :, 1:ndiagq)
        endif
-       call update_halo_6(4, ndiagq, Phi0)
+       call complete_halo_update_6(4, ndiagq, Phi0)
 !     
     else
 !
@@ -855,9 +804,9 @@ contains
 !
 !  X2 = M*X1
           R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = X1(:, :, :, :, :, idiag)
-          call update_halo_5(4, R)
+          call complete_halo_update_5(4, R)
           call dslash(X2, R, u, am, imass)
-          call update_halo_5(4, X2)
+          call complete_halo_update_5(4, X2)
 !
           if(iflag.eq.2)then
              coeff=anum(idiag)
@@ -868,10 +817,10 @@ contains
              call derivs(R, X2, coeff, 0)
 !
              call dslash(X2, R, u, am, imass)
-             call update_halo_5(4, X2)
+             call complete_halo_update_5(4, X2)
 !
              R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(: ,:, :, :, :, idiag)
-             call update_halo_5(4, R)
+             call complete_halo_update_5(4, R)
              call derivs(X2, R, coeff, 1)
           endif
 !
@@ -897,17 +846,17 @@ contains
     integer, intent(in) :: iflag
 
 !      complex(dp) :: tzi
-    real(dp) :: tzi_real
-    integer :: ix, iy, it, ixup, iyup, itup, idirac, ithird, mu
+    real :: tzi_real
+    integer :: ix, iy, it, ixup, iyup, itup, idirac, mu
     integer :: igork1
 !
 !     write(6,111)
-111 format(' Hi from derivs')
+!111 format(' Hi from derivs')
 
 !     dSdpi=dSdpi-Re(Rdagger *(d(Mdagger)dp)* X2)
 !     Cf. Montvay & Muenster (7.215)
 !      tzi=cmplx(0.0,2*anum)
-    tzi_real = 2 * anum
+    tzi_real = 2 * real(anum)
 !     factor of 2 picks up second term in M&M (7.215)
 !
     do mu = 1,3
@@ -920,10 +869,10 @@ contains
              do iy = 1,ksizey_l
                 do ix = 1,ksizex_l
                    dSdpi(ix,iy,it,mu) = &
-                   &     dSdpi(ix,iy,it,mu) + tzi_real * akappa * sum(dimag( &
+                   &     dSdpi(ix,iy,it,mu) + tzi_real * real(akappa) * sum(aimag( &
                    &       conjg(R(:,ix,iy,it,idirac)) * &
                    &         X2(:,ix+ixup,iy+iyup,it+itup,idirac)) &
-                   &     - dimag(conjg(R(:,ix+ixup,iy+iyup,it+itup,idirac)) * &
+                   &     - aimag(conjg(R(:,ix+ixup,iy+iyup,it+itup,idirac)) * &
                    &         X2(:,ix,iy,it,idirac)))
                 enddo
              enddo
@@ -935,7 +884,7 @@ contains
                 do iy = 1,ksizey_l
                    do ix = 1,ksizex_l
                       dSdpi(ix,iy,it,mu) = &
-                      &     dSdpi(ix,iy,it,mu)+ tzi_real * sum(dimag(gamval(mu,idirac)* &
+                      &     dSdpi(ix,iy,it,mu)+ tzi_real * sum(aimag(gamval(mu,idirac)* &
                       &(conjg(R(:,ix,iy,it,idirac)) * &
                       &        X2(:, ix+ixup,iy+iyup,it+itup,igork1) &
                       &+conjg(R(:,ix+ixup,iy+iyup,it+itup,idirac))* &
@@ -948,7 +897,7 @@ contains
                 do iy = 1,ksizey_l
                    do ix = 1,ksizex_l
                       dSdpi(ix,iy,it,mu) = &
-                      &     dSdpi(ix,iy,it,mu)- tzi_real * sum(dimag(gamval(mu,idirac)* &
+                      &     dSdpi(ix,iy,it,mu)- tzi_real * sum(aimag(gamval(mu,idirac)* &
                       &(conjg(R(:,ix,iy,it,idirac)) * &
                       &        X2(:,ix+ixup,iy+iyup,it+itup,igork1) &
                       &+conjg(R(:,ix+ixup,iy+iyup,it+itup,idirac)) * &
@@ -1035,7 +984,7 @@ contains
     real :: betacg, betacgn, betacgd, alpha, alphan, alphad
     integer :: nx
 !     write(6,111)
-111 format(' Hi from congrad')
+!111 format(' Hi from congrad')
 !
     resid = 4 * ksize * ksize * ksizet * kthird * res * res
     itercg = 0
@@ -1055,12 +1004,12 @@ contains
 !
 !  x1=Mp
        call dslash(x1,p,u,am,imass)
-       call update_halo_5(4, x1)
+       call complete_halo_update_5(4, x1)
 !
        if(nx.ne.1)then
 !
 !   alpha=(r,r)/(p,(Mdagger)Mp)
-          alphad = sum(abs(x1(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
+          alphad = real(sum(abs(x1(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2))
           alpha = alphan / alphad
 !     
 !   x=x+alpha*p
@@ -1069,13 +1018,13 @@ contains
 !     
 !   x2=(Mdagger)x1=(Mdagger)Mp
        call dslashd(x2, x1, u, am, imass)
-       call update_halo_5(4, x2)
+       call complete_halo_update_5(4, x2)
 !
 !   r=r-alpha*(Mdagger)Mp
        r = r - alpha * x2
 !
 !   betacg=(r_k+1,r_k+1)/(r_k,r_k)
-       betacgn = sum(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
+       betacgn = real(sum(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2))
        betacg = betacgn / betacgd
        betacgd = betacgn
        alphan = betacgn
@@ -1118,7 +1067,7 @@ contains
     real :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
     real :: pt(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
     real(dp) :: pbp(knoise)
-    integer :: idsource, idsource2, idirac, inoise, jnoise, ithird
+    integer :: idsource, idsource2, idirac, inoise
     integer :: iter, itercg
     real :: susclsing
 !     write(6,*) 'hi from measure'
@@ -1162,7 +1111,7 @@ contains
 ! Phi= Mdagger*xi
 !
           call dslashd(Phi, xi, u, am, imass)
-          call update_halo_5(4, Phi)
+          call complete_halo_update_5(4, Phi)
 !     call qmrherm(Phi,res,itercg,am,imass,cnum,cden,1,0)
           call congrad(Phi, res, itercg, am, imass)
           iter = iter + itercg
@@ -1202,7 +1151,7 @@ contains
 ! Phi= Mdagger*xi
 !
           call dslashd(Phi,xi,u,am,imass)
-          call update_halo_5(4, Phi)
+          call complete_halo_update_5(4, Phi)
 !
 ! xi= (M)**-1 * Phi
 !
@@ -1247,9 +1196,9 @@ contains
     psibarpsi=0.0
     susclsing=0.0
 !
-    psibarpsi = sum(pbp)
+    psibarpsi = real(sum(pbp))
     do inoise=1,knoise
-       susclsing = susclsing + sum(pbp(inoise) * pbp(inoise+1:knoise))
+       susclsing = susclsing + real(sum(pbp(inoise) * pbp(inoise+1:knoise)))
     enddo
     psibarpsi = psibarpsi / knoise
     susclsing = 2 * kvol * susclsing / (knoise * (knoise-1))
@@ -1577,15 +1526,26 @@ contains
     integer :: mpi_fh
     integer, dimension(MPI_status_size) :: status
     
-    call MPI_File_Open(comm, 'con', MPI_Mode_Wronly + MPI_Mode_Create, &
+    call MPI_File_Open(comm, 'con', MPI_Mode_Rdonly, &
          & MPI_Info_Null, mpi_fh, ierr)
-    call MPI_File_Set_View(mpi_fh, 0, MPI_Real, mpiio_type, "native", &
+! Get the configuration
+    call MPI_File_Set_View(mpi_fh, 0_8, MPI_Real, mpiio_type, "native", &
          & MPI_Info_Null, ierr)
-    call MPI_File_Read_All(mpi_fh, theta, 4 * ksizex_l * ksizey_l * ksizet_l, &
+    call MPI_File_Read_All(mpi_fh, theta, 3 * ksizex_l * ksizey_l * ksizet_l, &
          & MPI_Real, status, ierr)
-    call MPI_File_Close(mpi_fh)
+    call MPI_File_Close(mpi_fh, ierr)
+! Get the seed
+    if (ip_global.eq.0) then
+       open(unit=10, file='con', status='old', form='unformatted', access='stream')
+       call fseek(10, 3 * ksize * ksize * ksizet * 4 + 4, 0)
+       read (10) seed
+       close(10)
+    end if
+    call MPI_Bcast(seed, 1, MPI_Double_Precision, 0, MPI_COMM_WORLD)
+! Make seed unique between ranks
+    seed = seed + ip_global
 #else
-    open(unit=10, file='con', status='unknown', form='unformatted')
+    open(unit=10, file='con', status='old', form='unformatted')
     read (10) theta, seed
     close(10)
 #endif
@@ -1599,13 +1559,23 @@ contains
     integer :: mpi_fh
     integer, dimension(MPI_status_size) :: status
     
-    call MPI_File_Open(comm, 'con', MPI_Mode_Rdonly, &
+! Write theta
+    call MPI_File_Open(comm, 'con', MPI_Mode_Wronly + MPI_Mode_Create, &
          & MPI_Info_Null, mpi_fh, ierr)
-    call MPI_File_Set_View(mpi_fh, 0, MPI_Real, mpiio_type, "native", &
+    call MPI_File_Set_View(mpi_fh, 0_8, MPI_Real, mpiio_type, "native", &
          & MPI_Info_Null, ierr)
-    call MPI_File_Write_All(mpi_fh, theta, 4 * ksizex_l * ksizey_l * ksizet_l, &
+    call MPI_File_Write_All(mpi_fh, theta, 3 * ksizex_l * ksizey_l * ksizet_l, &
          & MPI_Real, status, ierr)
-    call MPI_File_Close(mpi_fh)
+    call MPI_File_Close(mpi_fh, ierr)
+
+! Write seed in serial
+    if (ip_global.eq.0) then
+       open(unit=31, file='con', status='old', form='unformatted', access='stream')
+       call fseek(31, 3 * ksize * ksize * ksizet * 4 + 4, 0)
+! Manually compute the effective record length to be compatible with serial Fortran
+       write (31), seed, 3 * ksize * ksize * ksizet * 4 + 8
+       close(31)
+    end if
 #else
     open(unit=31, file='con', status='unknown', form='unformatted')
     write (31) theta, seed
@@ -1627,7 +1597,6 @@ contains
     integer, intent(in) :: nc
 !     complex one,zi
     complex(dp), parameter :: one=(1.0, 0.0), zi=(0.0, 1.0)
-    real(dp) :: seed
     integer :: ix, iy, it, mu
     real :: g
 !
@@ -1743,7 +1712,6 @@ contains
 !
     complex(dp), intent(out) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
     real, intent(in) :: theta(ksizex_l, ksizey_l, ksizet_l, 3)
-    integer :: ix, iy, it, mu
 !
 !     u(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = exp(cmplx(0.0, theta))
     u(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = (1.0 + cmplx(0.0, theta))
@@ -1753,7 +1721,7 @@ contains
        u(:, :, ksizet_l, 3) = -u(:, :, ksizet_l, 3)
     end if
 !      
-    call update_halo_4(3, u)
+    call complete_halo_update_4(3, u)
     return
   end subroutine coef
 !**********************************************************************
@@ -1767,7 +1735,7 @@ contains
     integer ix, iy, it
     real :: theta
 !     write(6,1)
-1   format(' Hi from gaussp')
+!1   format(' Hi from gaussp')
     do it = 1, ksizet_l
        do iy = 1, ksizey_l
           do ix = 1, ksizex_l
@@ -1784,7 +1752,7 @@ contains
           end do
        end do
     end do
-    call update_halo_4_real(2, ps)
+    call complete_halo_update_4_real(2, ps)
 
     return
   end subroutine gaussp
@@ -1799,7 +1767,7 @@ contains
     integer :: ix, iy, it
     real :: theta
 !     write(6,1)
-1   format(' Hi from gauss0')
+!1   format(' Hi from gauss0')
     do it = 1, ksizet_l
        do iy = 1, ksizey_l
           do ix = 1, ksizex_l
@@ -1816,7 +1784,7 @@ contains
           end do
        end do
     end do
-    call update_halo_4_real(2, ps)
+    call complete_halo_update_4_real(2, ps)
     return
   end subroutine gauss0
 
@@ -1837,7 +1805,7 @@ contains
     real, intent(in) :: am
     complex(dp) :: zkappa
     real :: diag
-    integer :: ixup, iyup, itup, ix, iy, it, ithird, idirac, mu, igork
+    integer :: ixup, iyup, itup, ix, iy, it, idirac, mu, igork
 !     write(6,*) 'hi from dslash'
 !
 !     diagonal term
@@ -1935,7 +1903,7 @@ contains
     real, intent(in) :: am
     complex(dp) :: zkappa
     real :: diag
-    integer :: ixup, iyup, itup, ix, iy, it, ithird, idirac, mu, igork
+    integer :: ixup, iyup, itup, ix, iy, it, idirac, mu, igork
 !     write(6,*) 'hi from dslashd'
 !
 !     diagonal term (hermitian)
@@ -2001,7 +1969,7 @@ contains
             & Phi(1,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
             & - zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
     endif
-!      call update_halo_5(4, Phi)
+!      call complete_halo_update_5(4, Phi)
 !
     return
   end subroutine dslashd
@@ -2018,7 +1986,7 @@ contains
     complex(dp), intent(in) ::  u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
     complex(dp), intent(out) :: Phi(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    integer :: ix, iy, it, idirac, mu, ixup, iyup, itup, igork
+    integer :: ix, iy, it, idirac, mu, ixup, iyup, igork
     real :: diag
 
 !     write(6,*) 'hi from dslash2d'
@@ -2053,94 +2021,11 @@ contains
           enddo
        enddo
     enddo
-    call update_halo_4(4, Phi)
+    call complete_halo_update_4(4, Phi)
 !
     return
   end subroutine dslash2d
 !
-!***********************************************************************
-!   Update boundary terms
-!***********************************************************************
-  pure subroutine update_halo_4(size4, Array)
-!     
-    integer, intent(in) :: size4
-    complex(dp), intent(inout) :: Array(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, size4)
-!
-#ifndef MPI
-    Array(0,:,:,:) = Array(ksizex_l,:,:,:)
-    Array(ksizex_l+1,:,:,:) = Array(1,:,:,:)
-    Array(:,0,:,:) = Array(:,ksizey_l,:,:)
-    Array(:,ksizey_l+1,:,:) = Array(:,1,:,:)
-    Array(:,:,0,:) = Array(:,:,ksizet_l,:)
-    Array(:,:,ksizet_l+1,:) = Array(:,:,1,:)
-#else
-#warning "Not implemented"
-#endif
-!      
-    return
-!      
-  end subroutine update_halo_4
-!***********************************************************************
-  pure subroutine update_halo_4_real(size4, Array)
-!     
-    integer, intent(in) :: size4
-    real, intent(inout) :: Array(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, size4)
-!
-#ifndef MPI
-    Array(0,:,:,:) = Array(ksizex_l,:,:,:)
-    Array(ksizex_l+1,:,:,:) = Array(1,:,:,:)
-    Array(:,0,:,:) = Array(:,ksizey_l,:,:)
-    Array(:,ksizey_l+1,:,:) = Array(:,1,:,:)
-    Array(:,:,0,:) = Array(:,:,ksizet_l,:)
-    Array(:,:,ksizet_l+1,:) = Array(:,:,1,:)
-#else
-#warning "Not implemented"
-#endif
-!      
-    return
-!      
-  end subroutine update_halo_4_real
-!***********************************************************************
-  pure subroutine update_halo_5(size5, Array)
-!     
-    integer, intent(in) :: size5
-    complex(dp), intent(inout) :: Array(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, size5)
-!
-#ifndef MPI
-    Array(:,0,:,:,:) = Array(:,ksizex_l,:,:,:)
-    Array(:,ksizex_l+1,:,:,:) = Array(:,1,:,:,:)
-    Array(:,:,0,:,:) = Array(:,:,ksizey_l,:,:)
-    Array(:,:,ksizey_l+1,:,:) = Array(:,:,1,:,:)
-    Array(:,:,:,0,:) = Array(:,:,:,ksizet_l,:)
-    Array(:,:,:,ksizet_l+1,:) = Array(:,:,:,1,:)
-#else
-#warning "Not implemented"
-#endif
-!      
-    return
-!      
-  end subroutine update_halo_5
-!***********************************************************************
-  pure subroutine update_halo_6(size5, size6, Array)
-!     
-    integer, intent(in) :: size5, size6
-    complex(dp), intent(inout) :: Array(kthird, 0:ksize+1, 0:ksize+1, &
-         &                              0:ksizet+1, size5, size6)
-!
-#ifndef MPI
-    Array(:,0,:,:,:,:) = Array(:,ksizex_l,:,:,:,:)
-    Array(:,ksizex_l+1,:,:,:,:) = Array(:,1,:,:,:,:)
-    Array(:,:,0,:,:,:) = Array(:,:,ksizey_l,:,:,:)
-    Array(:,:,ksizey_l+1,:,:,:) = Array(:,:,1,:,:,:)
-    Array(:,:,:,0,:,:) = Array(:,:,:,ksizet_l,:,:)
-    Array(:,:,:,ksizet_l+1,:,:) = Array(:,:,:,1,:,:)
-#else
-#warning "Not implemented"
-#endif
-!      
-    return
-!      
-  end subroutine update_halo_6
 
 !***********************************************************************
 !   A Kronecker delta function
@@ -2152,47 +2037,5 @@ contains
 
     kdelta=merge(1,0,nu==mu)
   end function kdelta
-
-#ifdef MPI
-!***********************************************************************
-!   Initialise MPI variables
-!***********************************************************************
-  subroutine init_MPI()
-    integer :: coords(3)
-
-    call MPI_init(ierr)
-
-! Check that we have the right number of processes
-    call MPI_comm_size(MPI_COMM_WORLD, np_global, ierr)
-    call MPI_comm_rank(MPI_COMM_WORLD, ip_global, ierr)
-    if (np_global .ne. NP_X * NP_Y * NP_T) then
-       print *,"MPI dimensionality mismatch: ", NP_X, "*", NP_Y, "*", NP_T, "!=", np_global
-       call MPI_finalize(ierr)
-       call exit(2)
-    end if
-
-! Set up a Cartesian communicator; periodic boundaries, allow reordering
-    call MPI_cart_create(MPI_COMM_WORLD, 3, (/ NP_X, NP_Y, NP_T /), &
-         & (/ .true., .true., .true. /), .true., comm, ierr)
-
-! Know where I am
-    call MPI_cart_coords(comm, ip_global, 3, coords, ierr)
-    ip_x = coords(1)
-    ip_y = coords(2)
-    ip_t = coords(3)
-
-! Prepare file format for MPI-IO
-    call MPI_Type_Create_Subarray(4, &! dimensionality
-         (/ ksize, ksize, ksizet, 4 /), &! global volume
-         (/ ksizex_l, ksizey_l, ksizet_l, 4 /), &! local volume
-         (/ ip_x * ksizex_l, ip_y * ksizey_l, ip_t * ksizet_l, 0 /), &! start location
-         MPI_Order_Fortran, &! array ordering
-         MPI_Real, &! datatype to store
-         mpiio_type, &! type descriptor for this subarray type
-         ierr) ! dummy status variable
-
-    return
-  end subroutine init_MPI
-#endif
 
 end module dwf3d_lib

@@ -1,22 +1,22 @@
-program test_dslash
+program test_save
+      use dwf3d_lib
+      use gauge
+#ifdef MPI
+      use mpi
+      use mpi_variables
+#endif
       implicit none
-! function to test
-      external :: swrite
-
-! supporting functions
-      external :: sread
-
-! general parameters
-      integer, parameter :: ksize=12, ksizet=12
-
-! common blocks to function
-      common/gauge/ theta(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3), seed
-      real :: theta
-      real*8 :: seed
 
 ! setup
+#ifdef MPI
+      call init_MPI
+#endif
       call sread
 
 ! call function
       call swrite
+
+#ifdef MPI
+      call MPI_Finalize(ierr)
+#endif
 end program
