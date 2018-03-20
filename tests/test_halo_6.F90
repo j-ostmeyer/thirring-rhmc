@@ -22,6 +22,7 @@ program test_halo_6
   implicit none
   integer :: ithird, ix, iy, it, i5, i6, i=0
   integer :: pid
+  integer :: passed_basic = 0
 #ifdef MPI
   integer :: reqs(12)
 
@@ -89,6 +90,20 @@ program test_halo_6
        nint(aimag(test_array(1,1,1,0,1,1))) &
        .ne. pid(ip_x, ip_y, modulo(ip_t-1, np_t))) then
      print *, "Positive t update failed on process", ip_x, ip_y, ip_t
+  else
+     passed_basic = 1
+  end if
+  if (passed_basic.eq.1 .and. &
+       (real(test_array(1,1,1,ksizet_l,4,1)) .ne. real(test_array(1,1,1,0,4,1)) .or. &
+       nint(aimag(test_array(1,1,1,0,4,1))) &
+       .ne. pid(ip_x, ip_y, modulo(ip_t-1, np_t)))) then
+     print *, "Extent is wrong in size5 direction; process", ip_x, ip_y, ip_t
+  end if
+  if (passed_basic.eq.1 .and. &
+       (real(test_array(1,1,1,ksizet_l,1,12)) .ne. real(test_array(1,1,1,0,1,12)) .or. &
+       nint(aimag(test_array(1,1,1,0,1,12))) &
+       .ne. pid(ip_x, ip_y, modulo(ip_t-1, np_t)))) then
+     print *, "Extent is wrong in size6 direction; process", ip_x, ip_y, ip_t
   end if
 
 

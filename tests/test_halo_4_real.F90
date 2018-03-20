@@ -23,6 +23,7 @@ program test_halo_4_real
   implicit none
   integer :: ix, iy, it, i5, i=0
   integer :: pid
+  integer :: passed_basic = 0
 #ifdef MPI
   integer, dimension(12) :: reqs, reqs2
 
@@ -89,6 +90,14 @@ program test_halo_4_real
        nint(test_array_2(1,1,0,1)) &
        .ne. pid(ip_x, ip_y, modulo(ip_t-1, np_t))) then
      print *, "Positive t update failed on process", ip_x, ip_y, ip_t
+  else
+     passed_basic = 1
+  end if
+  if (passed_basic.eq.1 .and. &
+       (test_array(1,1,ksizet_l,2) .ne. test_array(1,1,0,2) .or. &
+       nint(test_array_2(1,1,0,2)) &
+       .ne. pid(ip_x, ip_y, modulo(ip_t-1, np_t)))) then
+     print *, "Extent is wrong in size4 direction; process", ip_x, ip_y, ip_t
   end if
 
 
