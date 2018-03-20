@@ -7,8 +7,8 @@ module params
   integer, parameter :: dp=kind(1.d0)
 
   ! Lattice parameters
-#define KSIZE 4
-#define KSIZET 4
+#define KSIZE 12
+#define KSIZET 12
   integer, parameter :: ksize=KSIZE, ksizet=KSIZET
   integer, parameter :: kthird=4
   integer, parameter :: kvol=ksize*ksize*ksizet
@@ -18,7 +18,8 @@ module params
 #ifndef MPI
   integer, parameter :: ksizex_l=ksize, ksizey_l=ksize, ksizet_l=ksizet
   integer, parameter :: kvol_l = kvol
-  integer, parameter :: NP_X=1, NP_Y=1, NP_T=1, ip_x=0, ip_y=0, ip_t=0, ip_global=0
+  integer, parameter :: np_x=1, np_y=1, np_t=1, np_global=1
+  integer, parameter :: ip_x=0, ip_y=0, ip_t=0, ip_global=0
 #else
 #if !(defined(NP_X) && defined(NP_Y) && defined(NP_T))
 #error "NP_X, NP_Y, and NP_T must be defined for MPI compilation."
