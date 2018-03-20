@@ -10,7 +10,7 @@ module params
 #define KSIZE 12
 #define KSIZET 12
   integer, parameter :: ksize=KSIZE, ksizet=KSIZET
-  integer, parameter :: kthird=4
+  integer, parameter :: kthird=24
   integer, parameter :: kvol=ksize*ksize*ksizet
   integer, parameter :: ndiag=25, ndiagg=12
   integer, parameter :: Nf=1
