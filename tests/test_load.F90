@@ -3,8 +3,8 @@ program test_load
       use gauge
 #ifdef MPI
       use mpi
-      use mpi_variables
 #endif
+      use comms
       implicit none
 
       real :: sumtheta, maxtheta, mintheta
