@@ -118,7 +118,6 @@ module dwf3d_lib
   use params
 #ifdef MPI
   use mpi
-  use mpi_variables
 #endif
   implicit none
 
@@ -140,6 +139,7 @@ contains
     use gforce
     use param
     use dum1
+    use comms
 !*******************************************************************
 !    Rational Hybrid Monte Carlo algorithm for bulk Thirring Model with Domain Wall
 !         fermions
@@ -714,11 +714,11 @@ contains
 !
 !  Lanczos steps
 !
-       call complete_halo_update_5(4, R)
+!!!!       call complete_halo_update_5(4, R)
        q = R / betaq
 
        call dslash(vtild,q,u,am,imass)
-       call complete_halo_update_5(4, vtild)
+!!!!       call complete_halo_update_5(4, vtild)
        call dslashd(x3,vtild,u,am,imass)
 !       call complete_halo_update_5(4, x3)
 !
@@ -796,7 +796,7 @@ contains
        if(iflag.eq.1) then
           Phi0(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :, 1:ndiagq) = X1(:, :, :, :, :, 1:ndiagq)
        endif
-       call complete_halo_update_6(4, ndiagq, Phi0)
+!!!!       call complete_halo_update_6(4, ndiagq, Phi0)
 !     
     else
 !
@@ -804,9 +804,9 @@ contains
 !
 !  X2 = M*X1
           R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = X1(:, :, :, :, :, idiag)
-          call complete_halo_update_5(4, R)
+!!!!          call complete_halo_update_5(4, R)
           call dslash(X2, R, u, am, imass)
-          call complete_halo_update_5(4, X2)
+!!!!          call complete_halo_update_5(4, X2)
 !
           if(iflag.eq.2)then
              coeff=anum(idiag)
@@ -817,10 +817,10 @@ contains
              call derivs(R, X2, coeff, 0)
 !
              call dslash(X2, R, u, am, imass)
-             call complete_halo_update_5(4, X2)
+!!!!             call complete_halo_update_5(4, X2)
 !
              R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(: ,:, :, :, :, idiag)
-             call complete_halo_update_5(4, R)
+!!!!             call complete_halo_update_5(4, R)
              call derivs(X2, R, coeff, 1)
           endif
 !
@@ -1004,7 +1004,7 @@ contains
 !
 !  x1=Mp
        call dslash(x1,p,u,am,imass)
-       call complete_halo_update_5(4, x1)
+!!!!       call complete_halo_update_5(4, x1)
 !
        if(nx.ne.1)then
 !
@@ -1018,7 +1018,7 @@ contains
 !     
 !   x2=(Mdagger)x1=(Mdagger)Mp
        call dslashd(x2, x1, u, am, imass)
-       call complete_halo_update_5(4, x2)
+!!!!       call complete_halo_update_5(4, x2)
 !
 !   r=r-alpha*(Mdagger)Mp
        r = r - alpha * x2
@@ -1111,7 +1111,7 @@ contains
 ! Phi= Mdagger*xi
 !
           call dslashd(Phi, xi, u, am, imass)
-          call complete_halo_update_5(4, Phi)
+!!!!          call complete_halo_update_5(4, Phi)
 !     call qmrherm(Phi,res,itercg,am,imass,cnum,cden,1,0)
           call congrad(Phi, res, itercg, am, imass)
           iter = iter + itercg
@@ -1151,7 +1151,7 @@ contains
 ! Phi= Mdagger*xi
 !
           call dslashd(Phi,xi,u,am,imass)
-          call complete_halo_update_5(4, Phi)
+!!!!          call complete_halo_update_5(4, Phi)
 !
 ! xi= (M)**-1 * Phi
 !
@@ -1523,6 +1523,7 @@ contains
     use random
     use gauge
 #ifdef MPI
+    use comms
     integer :: mpi_fh
     integer, dimension(MPI_status_size) :: status
     
@@ -1541,7 +1542,7 @@ contains
        read (10) seed
        close(10)
     end if
-    call MPI_Bcast(seed, 1, MPI_Double_Precision, 0, MPI_COMM_WORLD)
+    call MPI_Bcast(seed, 1, MPI_Double_Precision, 0, comm, ierr)
 ! Make seed unique between ranks
     seed = seed + ip_global
 #else
@@ -1556,6 +1557,7 @@ contains
     use random
     use gauge
 #ifdef MPI
+    use comms
     integer :: mpi_fh
     integer, dimension(MPI_status_size) :: status
     
@@ -1708,7 +1710,8 @@ contains
 !******************************************************************
 !   calculate compact links from non-compact links
 !******************************************************************
-  pure subroutine coef(u, theta)
+  subroutine coef(u, theta)
+    use comms
 !
     complex(dp), intent(out) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
     real, intent(in) :: theta(ksizex_l, ksizey_l, ksizet_l, 3)
@@ -1717,11 +1720,11 @@ contains
     u(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = (1.0 + cmplx(0.0, theta))
 !
 !  anti-p.b.c. in timelike direction
-    if(ibound.eq.-1 .and. ip_t .eq. NP_T)then
+    if(ibound.eq.-1 .and. ip_t .eq. np_t)then
        u(:, :, ksizet_l, 3) = -u(:, :, ksizet_l, 3)
     end if
 !      
-    call complete_halo_update_4(3, u)
+!!!!    call complete_halo_update_4(3, u)
     return
   end subroutine coef
 !**********************************************************************
@@ -1752,7 +1755,7 @@ contains
           end do
        end do
     end do
-    call complete_halo_update_4_real(2, ps)
+!!!!    call complete_halo_update_4_real(2, ps)
 
     return
   end subroutine gaussp
@@ -1784,7 +1787,7 @@ contains
           end do
        end do
     end do
-    call complete_halo_update_4_real(2, ps)
+!!!!    call complete_halo_update_4_real(2, ps)
     return
   end subroutine gauss0
 
@@ -2029,7 +2032,7 @@ contains
           enddo
        enddo
     enddo
-    call complete_halo_update_4(4, Phi)
+!    call complete_halo_update_4(4, Phi)
 !
     return
   end subroutine dslash2d
