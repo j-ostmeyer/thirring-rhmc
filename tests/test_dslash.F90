@@ -38,10 +38,10 @@ program test_dslash
             do iy = 1,ksizey_l
                do ix = 1,ksizex_l
                   do ithird = 1,kthird
-                     idx = ithird + (ip_x * ksizex_l + ix) * kthird &
-                          & + (ip_y * ksizey_l + iy) * kthird * ksize &
-                          & + (ip_t * ksizet_l + it) * kthird * ksize * ksize &
-                          & + j * kthird * ksize * ksize * ksizet
+                     idx = ithird + (ip_x * ksizex_l + ix - 1) * kthird &
+                          & + (ip_y * ksizey_l + iy - 1) * kthird * ksize &
+                          & + (ip_t * ksizet_l + it - 1) * kthird * ksize * ksize &
+                          & + (j - 1) * kthird * ksize * ksize * ksizet
                      Phi(ithird, ix, iy, it, j) = 1.1 * exp(iunit * idx * tau / idxmax)
                      R(ithird, ix, iy, it, j) = 1.3 * exp(iunit * idx * tau / idxmax)
                   enddo
@@ -57,9 +57,9 @@ program test_dslash
             do iy = 1,ksize
                do ix = 1,ksize
                   idx = ip_x * ksizex_l + ix &
-                       & + (ip_y * ksizey_l + iy) * ksize &
-                       & + (ip_t * ksizet_l + it) * ksize * ksize &
-                       & + j * ksize * ksize * ksizet
+                       & + (ip_y * ksizey_l + iy - 1) * ksize &
+                       & + (ip_t * ksizet_l + it - 1) * ksize * ksize &
+                       & + (j - 1) * ksize * ksize * ksizet
                   u(ix, iy, it, j) = exp(iunit * idx * tau / idxmax)
                enddo
             enddo
@@ -85,7 +85,7 @@ program test_dslash
       do i = 1,timing_loops
          call dslash(Phi, R, u, am, imass)
 #ifdef MPI
-         call start_halo_update_5(4, Phi, 1, reqs_Phi)
+         call start_halo_update_5(4, Phi, 2, reqs_Phi)
          call complete_halo_update(reqs_Phi)
 #else
          call update_halo_5(4, Phi)
