@@ -9,19 +9,19 @@ program test_dslash2d
       logical :: generate = .false.
       integer :: timing_loops = 1
       complex, parameter :: iunit = cmplx(0, 1)
-      real*8, parameter :: tau = 8 * atan(1.0_8)
-      complex*16 :: acc_sum = 0.
-      real*8 :: acc_max = 0.
+      real(dp), parameter :: tau = 8 * atan(1.0_8)
+      complex(dp) :: acc_sum = 0.
+      real(dp) :: acc_max = 0.
 
 ! common blocks to function
       integer :: istart
 
 ! initialise function parameters
-      complex*16 u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
-      complex*16 Phi(0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-      complex*16 Phiref(ksize, ksize, ksizet, 4)
-      complex*16 R(0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-      complex*16 diff(ksize, ksize, ksizet, 4)
+      complex(dp) u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
+      complex(dp) Phi(0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+      complex(dp) Phiref(ksize, ksize, ksizet, 4)
+      complex(dp) R(0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+      complex(dp) diff(ksize, ksize, ksizet, 4)
 
       real, parameter :: am = 0.05
       integer, parameter :: imass = 3
