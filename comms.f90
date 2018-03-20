@@ -114,19 +114,19 @@ contains
     type = MPI_Double_Complex
 
     do i4 = 1,nsize4
-       call init_single_halo_type_4(0, 1, i4, type, halo_4_xdn_send(size4(i4)))
-       call init_single_halo_type_4(0, 0, i4, type, halo_4_xdn_recv(size4(i4)))
-       call init_single_halo_type_4(0, ksizex_l, i4, type, halo_4_xup_send(size4(i4)))
+       call init_single_halo_type_4(0, 1,          i4, type, halo_4_xdn_send(size4(i4)))
+       call init_single_halo_type_4(0, 0,          i4, type, halo_4_xdn_recv(size4(i4)))
+       call init_single_halo_type_4(0, ksizex_l,   i4, type, halo_4_xup_send(size4(i4)))
        call init_single_halo_type_4(0, ksizex_l+1, i4, type, halo_4_xup_recv(size4(i4)))
        
-       call init_single_halo_type_4(1, 1, i4, type, halo_4_ydn_send(size4(i4)))
-       call init_single_halo_type_4(1, 0, i4, type, halo_4_ydn_recv(size4(i4)))
-       call init_single_halo_type_4(1, ksizey_l, i4, type, halo_4_yup_send(size4(i4)))
+       call init_single_halo_type_4(1, 1,          i4, type, halo_4_ydn_send(size4(i4)))
+       call init_single_halo_type_4(1, 0,          i4, type, halo_4_ydn_recv(size4(i4)))
+       call init_single_halo_type_4(1, ksizey_l,   i4, type, halo_4_yup_send(size4(i4)))
        call init_single_halo_type_4(1, ksizey_l+1, i4, type, halo_4_yup_recv(size4(i4)))
        
-       call init_single_halo_type_4(2, 1, i4, type, halo_4_tdn_send(size4(i4)))
-       call init_single_halo_type_4(2, 0, i4, type, halo_4_tdn_recv(size4(i4)))
-       call init_single_halo_type_4(2, ksizet_l, i4, type, halo_4_tup_send(size4(i4)))
+       call init_single_halo_type_4(2, 1,          i4, type, halo_4_tdn_send(size4(i4)))
+       call init_single_halo_type_4(2, 0,          i4, type, halo_4_tdn_recv(size4(i4)))
+       call init_single_halo_type_4(2, ksizet_l,   i4, type, halo_4_tup_send(size4(i4)))
        call init_single_halo_type_4(2, ksizet_l+1, i4, type, halo_4_tup_recv(size4(i4)))
     end do
   end subroutine init_halo_types_4
@@ -139,19 +139,19 @@ contains
     type = MPI_Real
 
     do i4 = 1,nsize4
-       call init_single_halo_type_4(0, 1, i4, type, halo_4_real_xdn_send(size4(i4)))
-       call init_single_halo_type_4(0, 0, i4, type, halo_4_real_xdn_recv(size4(i4)))
-       call init_single_halo_type_4(0, ksizex_l, i4, type, halo_4_real_xup_send(size4(i4)))
+       call init_single_halo_type_4(0, 1,          i4, type, halo_4_real_xdn_send(size4(i4)))
+       call init_single_halo_type_4(0, 0,          i4, type, halo_4_real_xdn_recv(size4(i4)))
+       call init_single_halo_type_4(0, ksizex_l,   i4, type, halo_4_real_xup_send(size4(i4)))
        call init_single_halo_type_4(0, ksizex_l+1, i4, type, halo_4_real_xup_recv(size4(i4)))
        
-       call init_single_halo_type_4(1, 1, i4, type, halo_4_real_ydn_send(size4(i4)))
-       call init_single_halo_type_4(1, 0, i4, type, halo_4_real_ydn_recv(size4(i4)))
-       call init_single_halo_type_4(1, ksizey_l, i4, type, halo_4_real_yup_send(size4(i4)))
+       call init_single_halo_type_4(1, 1,          i4, type, halo_4_real_ydn_send(size4(i4)))
+       call init_single_halo_type_4(1, 0,          i4, type, halo_4_real_ydn_recv(size4(i4)))
+       call init_single_halo_type_4(1, ksizey_l,   i4, type, halo_4_real_yup_send(size4(i4)))
        call init_single_halo_type_4(1, ksizey_l+1, i4, type, halo_4_real_yup_recv(size4(i4)))
        
-       call init_single_halo_type_4(2, 1, i4, type, halo_4_real_tdn_send(size4(i4)))
-       call init_single_halo_type_4(2, 0, i4, type, halo_4_real_tdn_recv(size4(i4)))
-       call init_single_halo_type_4(2, ksizet_l, i4, type, halo_4_real_tup_send(size4(i4)))
+       call init_single_halo_type_4(2, 1,          i4, type, halo_4_real_tdn_send(size4(i4)))
+       call init_single_halo_type_4(2, 0,          i4, type, halo_4_real_tdn_recv(size4(i4)))
+       call init_single_halo_type_4(2, ksizet_l,   i4, type, halo_4_real_tup_send(size4(i4)))
        call init_single_halo_type_4(2, ksizet_l+1, i4, type, halo_4_real_tup_recv(size4(i4)))
     end do
   end subroutine init_halo_types_4_real
@@ -162,19 +162,19 @@ contains
     integer :: i5
 
     do i5 = 1,nsize5
-       call init_single_halo_type_5(0, 1, i5, halo_5_xdn_send(size5(i5)))
-       call init_single_halo_type_5(0, 0, i5, halo_5_xdn_recv(size5(i5)))
-       call init_single_halo_type_5(0, ksizex_l, i5, halo_5_xup_send(size5(i5)))
+       call init_single_halo_type_5(0, 1,          i5, halo_5_xdn_send(size5(i5)))
+       call init_single_halo_type_5(0, 0,          i5, halo_5_xdn_recv(size5(i5)))
+       call init_single_halo_type_5(0, ksizex_l,   i5, halo_5_xup_send(size5(i5)))
        call init_single_halo_type_5(0, ksizex_l+1, i5, halo_5_xup_recv(size5(i5)))
        
-       call init_single_halo_type_5(1, 1, i5, halo_5_ydn_send(size5(i5)))
-       call init_single_halo_type_5(1, 0, i5, halo_5_ydn_recv(size5(i5)))
-       call init_single_halo_type_5(1, ksizey_l, i5, halo_5_yup_send(size5(i5)))
+       call init_single_halo_type_5(1, 1,          i5, halo_5_ydn_send(size5(i5)))
+       call init_single_halo_type_5(1, 0,          i5, halo_5_ydn_recv(size5(i5)))
+       call init_single_halo_type_5(1, ksizey_l,   i5, halo_5_yup_send(size5(i5)))
        call init_single_halo_type_5(1, ksizey_l+1, i5, halo_5_yup_recv(size5(i5)))
        
-       call init_single_halo_type_5(2, 1, i5, halo_5_tdn_send(size5(i5)))
-       call init_single_halo_type_5(2, 0, i5, halo_5_tdn_recv(size5(i5)))
-       call init_single_halo_type_5(2, ksizet_l, i5, halo_5_tup_send(size5(i5)))
+       call init_single_halo_type_5(2, 1,          i5, halo_5_tdn_send(size5(i5)))
+       call init_single_halo_type_5(2, 0,          i5, halo_5_tdn_recv(size5(i5)))
+       call init_single_halo_type_5(2, ksizet_l,   i5, halo_5_tup_send(size5(i5)))
        call init_single_halo_type_5(2, ksizet_l+1, i5, halo_5_tup_recv(size5(i5)))
     end do
   end subroutine init_halo_types_5
@@ -405,6 +405,7 @@ contains
 !***********************************************************************
   subroutine init_MPI()
     integer :: coords(3)
+    integer :: starts(4)
 
     call MPI_init(ierr)
 
@@ -436,6 +437,7 @@ contains
          MPI_Real, &! datatype to store
          mpiio_type, &! type descriptor for this subarray type
          ierr) ! dummy status variable
+    call MPI_Type_Commit(mpiio_type, ierr)
 
 ! Prepare all of the halo types
     call init_halo_types
