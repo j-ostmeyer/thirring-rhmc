@@ -6,7 +6,7 @@ contains
 !***********************************************************************
 !   Update boundary terms
 !***********************************************************************
-  pure subroutine complete_halo_update_4(size4, Array)
+  pure subroutine update_halo_4(size4, Array)
 !     
     integer, intent(in) :: size4
     complex(dp), intent(inout) :: Array(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, size4)
@@ -20,9 +20,9 @@ contains
 !
     return
 !      
-  end subroutine complete_halo_update_4
+  end subroutine update_halo_4
 !***********************************************************************
-  pure subroutine complete_halo_update_4_real(size4, Array)
+  pure subroutine update_halo_4_real(size4, Array)
 !     
     integer, intent(in) :: size4
     real, intent(inout) :: Array(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, size4)
@@ -36,9 +36,9 @@ contains
 !      
     return
 !      
-  end subroutine complete_halo_update_4_real
+  end subroutine update_halo_4_real
 !***********************************************************************
-  pure subroutine complete_halo_update_5(size5, Array)
+  pure subroutine update_halo_5(size5, Array)
 !     
     integer, intent(in) :: size5
     complex(dp), intent(inout) :: Array(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, size5)
@@ -52,9 +52,9 @@ contains
 !      
     return
 !      
-  end subroutine complete_halo_update_5
+  end subroutine update_halo_5
 !***********************************************************************
-  pure subroutine complete_halo_update_6(size5, size6, Array)
+  pure subroutine update_halo_6(size5, size6, Array)
 !     
     integer, intent(in) :: size5, size6
     complex(dp), intent(inout) :: Array(kthird, 0:ksizex_l+1, 0:ksizey_l+1, &
@@ -69,5 +69,5 @@ contains
 !      
     return
 !      
-  end subroutine complete_halo_update_6
+  end subroutine update_halo_6
 end module comms
