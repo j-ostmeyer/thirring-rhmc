@@ -197,6 +197,10 @@ contains
     real :: ancgm, ancgma
     integer :: imass, iter, iterl, iter2, i, ia, idirac, ithird
     integer :: naccp, ipbp, itot, isweep, itercg, mu
+!*******************************************************************
+!     variables to keep track of MPI requests
+!*******************************************************************
+    integer :: reqs_ps(12)
 !
 !*******************************************************************
 !     input
@@ -348,7 +352,10 @@ contains
 !
           do idirac=1,4
              do ithird=1,kthird
-                call gauss0(ps)
+                call gauss0(ps, reqs_ps)
+#ifdef MPI
+                call complete_halo_update(reqs_ps)
+#endif
                 R(ithird,:,:,:,idirac) = cmplx(ps(:,:,:,1), ps(:,:,:,2))
              enddo
           enddo
@@ -373,7 +380,10 @@ contains
 !     write(6,*) idum
 !     write(98,*) idum
        do mu=1,3
-          call gaussp(ps)
+          call gaussp(ps, reqs_ps)
+#ifdef MPI
+          call complete_halo_update(reqs_ps)
+#endif
           pp(:,:,:,mu) = ps(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1)
        enddo
 !     write(6,*) idum
@@ -1070,6 +1080,7 @@ contains
     integer :: idsource, idsource2, idirac, inoise
     integer :: iter, itercg
     real :: susclsing
+    integer :: reqs_ps(12), reqs_pt(12)
 !     write(6,*) 'hi from measure'
 !
     iter=0
@@ -1081,9 +1092,9 @@ contains
     do inoise=1,knoise
 !
 !     set up noise
-       call gauss0(ps)
+       call gauss0(ps, reqs_ps)
        psibarpsi1=(0.0,0.0)
-       call gauss0(pt)
+       call gauss0(pt, reqs_pt)
        psibarpsi2=(0.0,0.0)
 !
        do idsource=1,2
@@ -1091,6 +1102,11 @@ contains
 !  source on domain wall at ithird=1
 !   
           x = cmplx(0.0, 0.0)
+#ifdef MPI
+          if (idsource .eq. 1) then
+             call complete_halo_update(reqs_ps)
+          end if
+#endif
           if(imass.ne.5)then
              x(:, :, :, idsource) = cmplx(ps(:,:,:,1), ps(:,:,:,2))
           else
@@ -1133,6 +1149,11 @@ contains
           idsource2=idsource+2
 !
           x = cmplx(0.0, 0.0)
+#ifdef MPI
+          if (idsource .eq. 1) then
+             call complete_halo_update(reqs_pt)
+          end if
+#endif
           if(imass.ne.5)then
              x(:, :, :, idsource2) = cmplx(pt(:,:,:,1), pt(:,:,:,2))
           else
@@ -1732,9 +1753,11 @@ contains
 ! to refresh momenta
 !   Numerical Recipes pp.203
 !**********************************************************************
-  subroutine gaussp(ps)
+  subroutine gaussp(ps, reqs)
     use random
     real, intent(out) :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
+    integer, intent(out) :: reqs(12)
+    integer :: reqs(12)
     integer ix, iy, it
     real :: theta
 !     write(6,1)
@@ -1755,8 +1778,11 @@ contains
           end do
        end do
     end do
-!!!!    call complete_halo_update_4_real(2, ps)
-
+#ifdef MPI
+    call start_halo_update_4_real(2, ps, 0, reqs)
+#else
+    call complete_halo_update_4_real(2, ps)
+#endif
     return
   end subroutine gaussp
 !**********************************************************************
@@ -1764,9 +1790,10 @@ contains
 ! to generate pseudofermion fields R
 !   Numerical Recipes pp.203
 !**********************************************************************
-  subroutine gauss0(ps)
+  subroutine gauss0(ps, reqs)
     use random
     real, intent(out) :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
+    integer, intent(out) :: reqs(12)
     integer :: ix, iy, it
     real :: theta
 !     write(6,1)
@@ -1787,7 +1814,11 @@ contains
           end do
        end do
     end do
-!!!!    call complete_halo_update_4_real(2, ps)
+#ifdef MPI
+    call start_halo_update_4_real(2, ps, 0, reqs)
+#else
+    call complete_halo_update_4_real(2, ps)
+#endif
     return
   end subroutine gauss0
 
@@ -1830,7 +1861,7 @@ contains
 ! Wilson term (hermitian)
                    &    -akappa*(u(ix,iy,it,mu) &
                    &              * R(:, ix+ixup, iy+iyup, it+itup, idirac) &
-                   &             + conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
+                   &             + conjg(u(ix-ixup, iby-iyup, it-itup, mu)) &
                    &              * R(:, ix-ixup, iy-iyup, it-itup, idirac)) &
 ! Dirac term (antihermitian)
                    &     + gamval(mu,idirac) * &
