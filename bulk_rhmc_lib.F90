@@ -1569,10 +1569,6 @@ contains
        close(10)
     end if
     call MPI_Bcast(seed, 1, MPI_Double_Precision, 0, comm, ierr)
-#ifndef SITE_RANDOM
-! Make seed unique between ranks
-    seed = seed + ip_global
-#endif
 #else
     open(unit=10, file='con', status='old', form='unformatted')
     read (10) theta, seed

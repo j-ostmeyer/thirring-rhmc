@@ -1,4 +1,6 @@
 module random
+  use comms
+  implicit none
 ! Random numbers
   real :: yran
   integer :: idum
@@ -97,7 +99,7 @@ contains
     real, intent(in) :: seed
     real :: y
 
-    call rranset(seed)
+    call rranset(seed + ip_global)
     idum=-1
     y=rano(yran,idum)
   end subroutine init_random
