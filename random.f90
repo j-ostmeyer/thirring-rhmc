@@ -4,12 +4,11 @@ module random
   integer :: idum
   real :: v(97)
 
-  DOUBLE PRECISION, PRIVATE :: DS(2),    DM(2)
-  DOUBLE PRECISION, PRIVATE :: DX24,     DX48
+  DOUBLE PRECISION, PRIVATE :: DS(2)
+  DOUBLE PRECISION, PRIVATE, PARAMETER :: DM(2) = (/ 15184245.D0, 2651554.D0 /)
+  DOUBLE PRECISION, PRIVATE, PARAMETER :: DX24 = 16777216.D0
+  DOUBLE PRECISION, PRIVATE, PARAMETER :: DX48 = 281474976710656.D0
   DATA      DS     /  16651885.D0, 2868876.D0  /
-  DATA      DM     /  15184245.D0, 2651554.D0  /
-  DATA      DX24   /  16777216.D0  /
-  DATA      DX48   /  281474976710656.D0  /
 
 contains
 
@@ -94,5 +93,13 @@ contains
     RETURN
   END FUNCTION G900ST
 !***********************************************************************
+  subroutine init_random(seed)
+    real, intent(in) :: seed
+    real :: y
+
+    call rranset(seed)
+    idum=-1
+    y=rano(yran,idum)
+  end subroutine init_random
 
 end module random

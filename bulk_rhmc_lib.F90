@@ -120,6 +120,7 @@ module dwf3d_lib
   use mpi
 #endif
   implicit none
+  save
 
   ! Random numbers
   real(dp) :: seed
@@ -197,6 +198,7 @@ contains
     real :: ancgm, ancgma
     integer :: imass, iter, iterl, iter2, i, ia, idirac, ithird
     integer :: naccp, ipbp, itot, isweep, itercg, mu
+    integer :: ix, iy, it
 !*******************************************************************
 !     variables to keep track of MPI requests
 !*******************************************************************
@@ -244,9 +246,7 @@ contains
        seed=4139764973254.0
     endif
     write(7,*) 'seed: ', seed
-    call rranset(seed)
-    idum=-1
-    y=rano(yran,idum)
+    call init_random(seed)
 !     write(6,*) 'ran: ', y,idum
 !*******************************************************************
 !     initialization
@@ -309,7 +309,8 @@ contains
 !     write(6,9044) rescgm
     write(7,9044) rescgm
 9044 format(' Stopping residuals: meson: ',e11.4)
-    call rranget(seed)
+!!!!FIXME: understand this call to rranget
+!    call rranget(seed)
 ! c     write(6,*) 'seed: ', seed
     write(7,*) 'seed: ', seed
 !*******************************************************************
@@ -418,14 +419,15 @@ contains
 !
 ! test for end of random trajectory
 ! 
-          ytest=rano(yran,idum)
-          if(ytest.lt.proby)then
-             pp = pp - 0.5 * dt * dSdpi
-             itot = itot + iter 
-             goto 501
-          else
-             pp = pp - dt * dSdpi
-          endif
+!!!!FIXME - parallel RNG breaks here
+!          ytest=rano(yran,idum)
+!          if(ytest.lt.proby)then
+!             pp = pp - 0.5 * dt * dSdpi
+!             itot = itot + iter 
+!             goto 501
+!          else
+!             pp = pp - dt * dSdpi
+!          endif
 ! 
        end do
 !**********************************************************************
@@ -440,10 +442,11 @@ contains
        y = exp(real(dH))      
        yav = yav + y 
        yyav = yyav + y*y 
-       if(dH.lt.0.0)then
-          x=rano(yran,idum)
-          if(x.gt.y)goto 600
-       endif
+!!!!FIXME - parallel RNG
+!       if(dH.lt.0.0)then
+!          x=rano(yran,idum)
+!          if(x.gt.y)goto 600
+!       endif
 !
 !     step accepted: set s=st
 !
@@ -474,7 +477,8 @@ contains
        endif
 !
        if((isweep/icheck)*icheck.eq.isweep)then
-          call rranget(seed)
+!!!!FIXME: understand why rranget is called here
+!          call rranget(seed)
           if(iwrite.eq.1) then
              call swrite
           endif
@@ -538,7 +542,8 @@ contains
     close(11)
 !
     if(iwrite.eq.1) then
-       call rranget(seed)
+!!!!FIXME: understand this rranget call
+!       call rranget(seed)
        call swrite
        write(7,*) 'seed: ', idum
     endif
@@ -1564,8 +1569,10 @@ contains
        close(10)
     end if
     call MPI_Bcast(seed, 1, MPI_Double_Precision, 0, comm, ierr)
+#ifndef SITE_RANDOM
 ! Make seed unique between ranks
     seed = seed + ip_global
+#endif
 #else
     open(unit=10, file='con', status='old', form='unformatted')
     read (10) theta, seed
@@ -1720,7 +1727,7 @@ contains
        do it = 1, ksizet_l
           do iy = 1, ksizey_l
              do ix = 1, ksizex_l
-                theta(ix, iy, it, mu) = 2.0 * g * rranf() - 1.0
+                theta(ix, iy, it, mu) = 2.0 * g * rranf(ix, iy, it) - 1.0
 !              theta(ix, iy, it, mu) = 2.0 * g * rano(yran,idum) - 1.0
              enddo
           enddo
@@ -1765,14 +1772,14 @@ contains
     do it = 1, ksizet_l
        do iy = 1, ksizey_l
           do ix = 1, ksizex_l
-             ps(ix, iy, it, 2) = sqrt(-2.0 * log(rano(yran,idum)))
+             ps(ix, iy, it, 2) = sqrt(-2.0 * log(rano(yran, idum, ix, iy, it)))
           end do
        end do
     end do
     do it = 1, ksizet_l
        do iy = 1, ksizey_l
           do ix = 1, ksizex_l
-             theta = tpi * rano(yran,idum)
+             theta = tpi * rano(yran, idum, ix, iy, it)
              ps(ix, iy, it, 1) = ps(ix, iy, it, 2) * sin(theta)
              ps(ix, iy, it, 2) = ps(ix, iy, it, 2) * cos(theta)
           end do
@@ -1792,6 +1799,7 @@ contains
 !**********************************************************************
   subroutine gauss0(ps, reqs)
     use random
+    use comms
     real, intent(out) :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
     integer, intent(out) :: reqs(12)
     integer :: ix, iy, it
@@ -1801,14 +1809,14 @@ contains
     do it = 1, ksizet_l
        do iy = 1, ksizey_l
           do ix = 1, ksizex_l
-             ps(ix, iy, it, 2) = sqrt(-log(rano(yran,idum)))
+             ps(ix, iy, it, 2) = sqrt(-log(rano(yran, idum, ix, iy, it)))
           end do
        end do
     end do
     do it = 1, ksizet_l
        do iy = 1, ksizey_l
           do ix = 1, ksizex_l
-             theta = tpi * rano(yran,idum)
+             theta = tpi * rano(yran, idum, ix, iy, it)
              ps(ix, iy, it, 1) = ps(ix, iy, it, 2) * sin(theta)
              ps(ix, iy, it, 2) = ps(ix, iy, it, 2) * cos(theta)
           end do
