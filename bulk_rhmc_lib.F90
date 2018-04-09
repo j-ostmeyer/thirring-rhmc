@@ -649,6 +649,7 @@ contains
     use vector, X1=>X
     use dum1
     use param
+    use comms
     complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, Nf)
     real(dp), intent(out) :: h, hg, hp, s
     real, intent(in) :: res2, am
@@ -668,10 +669,15 @@ contains
     hf=0.0
 !
     hp = 0.5 * sum(pp ** 2)
-
+#ifdef MPI
+    call MPI_AllReduce(MPI_In_Place, hp, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
+#endif
 !      print *, pp, theta
 
     hg = 0.5 * Nf * beta * sum(theta ** 2)
+#ifdef MPI
+    call MPI_AllReduce(MPI_In_Place, hg, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
+#endif
     h = hg + hp
 ! 
 ! uncomment these lines to quench the fermions!
@@ -699,6 +705,11 @@ contains
        &        * X1(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 !
     enddo
+#ifdef MPI
+! hf is built up from zero during the loop so only needs to be summed across
+! all partitions at this point
+    call MPI_AllReduce(MPI_In_Place, hf, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
+#endif
 !
     h = hg + hp + hf
 !     write(6,*) isweep,':  hg', hg,'   hp', hp,'   hf', hf, '   h',h
