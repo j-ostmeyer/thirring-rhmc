@@ -1111,6 +1111,7 @@ contains
   subroutine congrad(Phi,res,itercg,am,imass)
     use trial, only: u
     use vector
+    use comms
     complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 !     complex, intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real, intent(in) :: res, am
@@ -1118,7 +1119,6 @@ contains
     integer, intent(in) :: imass
 
     integer, parameter :: niterc=kthird*kvol
-!     complex x,u
 !     complex x1(kferm),x2(kferm),p(kferm),r(kferm)
     complex(dp) :: x1(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp) :: x2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -1127,48 +1127,69 @@ contains
     real :: resid
     real :: betacg, betacgn, betacgd, alpha, alphan, alphad
     integer :: nx
+#ifdef MPI
+    integer, dimension(12) :: reqs_x1, reqs_r
+#endif
 !     write(6,111)
 !111 format(' Hi from congrad')
 !
     resid = 4 * ksize * ksize * ksizet * kthird * res * res
     itercg = 0
     alphan = 0.0
+!   initialise p=x, r=Phi(na)
+    p = x
+    r = Phi
+!
+    betacgd=1.0
+    alpha=1.0
 !
     do nx=1,niterc
        itercg=itercg+1
-       if(nx.gt.1) goto 51
-!
-!   initialise p=x, r=Phi(na)
-       p = x
-       r = Phi
-!
-       betacgd=1.0
-       alpha=1.0
-51     alphad=0.0
 !
 !  x1=Mp
        call dslash(x1,p,u,am,imass)
-!!!!       call complete_halo_update_5(4, x1)
+#ifdef MPI
+       call start_halo_update_5(4, x1, 1, reqs_x1)
+#endif
 !
        if(nx.ne.1)then
 !
 !   alpha=(r,r)/(p,(Mdagger)Mp)
           alphad = real(sum(abs(x1(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2))
+#ifdef MPI
+          call MPI_AllReduce(MPI_In_Place, alphad, 1, MPI_Real, MPI_Sum, comm, ierr)
+#endif       
           alpha = alphan / alphad
 !     
 !   x=x+alpha*p
           x = x + alpha * p
        end if
+
+!   Now we need x1's halo, so ensure communication is finished
+#ifdef MPI
+       call complete_halo_update(reqs_x1)
+#else
+       call update_halo_5(4, x1)
+#endif
 !     
 !   x2=(Mdagger)x1=(Mdagger)Mp
        call dslashd(x2, x1, u, am, imass)
-!!!!       call complete_halo_update_5(4, x2)
 !
 !   r=r-alpha*(Mdagger)Mp
+!   Use x2 with wrong halo since we can't hide communications here
        r = r - alpha * x2
-!
+
+!   Now update halo for r instead since we can hide communication during the summation
+!   x2 is discarded so we no longer care about its halo
+#ifdef MPI
+       call start_halo_update_5(4, r, 2, reqs_r)
+#endif
+
 !   betacg=(r_k+1,r_k+1)/(r_k,r_k)
        betacgn = real(sum(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2))
+#ifdef MPI
+       call MPI_AllReduce(MPI_In_Place, betacgn, 1, MPI_Real, MPI_Sum, comm, ierr)
+#endif       
        betacg = betacgn / betacgd
        betacgd = betacgn
        alphan = betacgn
@@ -1176,6 +1197,12 @@ contains
        if(nx.eq.1) betacg=0.0
 !
 !   p=r+betacg*p
+!   Now the correct value of r is needed to avoid having to communicate p as well
+#ifdef MPI
+       call complete_halo_update(reqs_r)
+#else
+       call update_halo_5(4, r)
+#endif
        p = r + betacg * p
        if(betacgn.lt.resid) exit
     end do
