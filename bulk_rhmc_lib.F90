@@ -1224,6 +1224,7 @@ contains
   subroutine measure(psibarpsi, res, aviter, am, imass)
     use trial, only: u
     use vector, xi=>x
+    use comms
     real, intent(out) :: psibarpsi, aviter
     real, intent(in) :: res, am
     integer, intent(in) :: imass
@@ -1241,7 +1242,7 @@ contains
     integer :: idsource, idsource2, inoise
     integer :: iter, itercg
     real :: susclsing
-    integer :: reqs_ps(12), reqs_pt(12)
+    integer :: reqs_ps(12), reqs_pt(12), reqs_Phi(12)
 !     write(6,*) 'hi from measure'
 !
     iter=0
@@ -1264,6 +1265,8 @@ contains
 !   
           x = cmplx(0.0, 0.0)
 #ifdef MPI
+!  We started a halo update in the gauss0 call;
+!  Now we need it to be complete if it isn't already
           if (idsource .eq. 1) then
              call complete_halo_update(reqs_ps)
           end if
@@ -1271,7 +1274,7 @@ contains
           if(imass.ne.5)then
              x(:, :, :, idsource) = cmplx(ps(:,:,:,1), ps(:,:,:,2))
           else
-             x(:, :, :, idsource) = cmplx(ps(:,:,:,1), ps(:,:,:,2))
+             x(:, :, :, idsource+2) = cmplx(ps(:,:,:,1), ps(:,:,:,2))
           endif
 !
           xi = cmplx(0.0, 0.0)
@@ -1279,16 +1282,20 @@ contains
              xi(1, :, :, :, :) = x
           else
 !     xi = 0.5(1+gamma_4)*gamma_5*eta on DW at ithird=1
-             do idirac=1,2
-                xi(1, :, :, :, idirac) = -x(:, :, :, idirac+2)
-             enddo
+             xi(1, :, :, :, 1:2) = -x(:, :, :, 3:4)
 !     xi = 0.5(1+gamma_4)*eta on DW at ithird=1
           endif
 !
 ! Phi= Mdagger*xi
 !
           call dslashd(Phi, xi, u, am, imass)
-!!!!          call complete_halo_update_5(4, Phi)
+#ifdef MPI
+! No way to hide communications here unfortunately
+          call start_halo_update_5(4, Phi, 0, reqs_Phi)
+          call complete_halo_update(reqs_Phi)
+#else
+          call update_halo_5(4, Phi)
+#endif
 !     call qmrherm(Phi,res,itercg,am,imass,cnum,cden,1,0)
           call congrad(Phi, res, itercg, am, imass)
           iter = iter + itercg
@@ -1298,6 +1305,7 @@ contains
              psibarpsi1=psibarpsi1 &
              &           + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource)) * &
              &               xi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource))
+!             print *, ip_x, psibarpsi1
           else
 !     pbp1 = x^dagger (0.5(1-gamma_4)) xi(1)
              psibarpsi1=psibarpsi1 &
@@ -1311,6 +1319,7 @@ contains
 !
           x = cmplx(0.0, 0.0)
 #ifdef MPI
+!  Again, if this isn't finished by now we have to wait for it
           if (idsource .eq. 1) then
              call complete_halo_update(reqs_pt)
           end if
@@ -1333,7 +1342,13 @@ contains
 ! Phi= Mdagger*xi
 !
           call dslashd(Phi,xi,u,am,imass)
-!!!!          call complete_halo_update_5(4, Phi)
+#ifdef MPI
+! No way to hide communications here unfortunately
+          call start_halo_update_5(4, Phi, 0, reqs_Phi)
+          call complete_halo_update(reqs_Phi)
+#else
+          call update_halo_5(4, Phi)
+#endif
 !
 ! xi= (M)**-1 * Phi
 !
@@ -1355,6 +1370,14 @@ contains
 !
 !  end trace on Dirac indices....
        enddo
+#ifdef MPI
+!  The sums psibarpsi1 and psibarpsi2 are initialised to 0 outside the loop
+!  So can be summed up per process, then collected here at the end
+       call MPI_AllReduce(MPI_In_Place, psibarpsi1, 1, MPI_Double_Complex, &
+            & MPI_Sum, comm, ierr)
+       call MPI_AllReduce(MPI_In_Place, psibarpsi2, 1, MPI_Double_Complex, &
+            & MPI_Sum, comm, ierr)
+#endif
 !
        if(imass.eq.1)then
           psibarpsi1 = psibarpsi1 / kvol
@@ -1378,7 +1401,6 @@ contains
 ! end loop on noise
     enddo
 !
-    psibarpsi=0.0
     susclsing=0.0
 !
     psibarpsi = real(sum(pbp))
