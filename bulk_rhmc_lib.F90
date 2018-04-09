@@ -473,7 +473,11 @@ contains
           write(11,*) isweep,gaction,paction
        end if
        actiona=actiona+action 
-       vel2 = sum(pp * pp) / (3 * kvol)
+       vel2 = sum(pp * pp)
+#ifdef MPI
+       call MPI_AllReduce(MPI_In_Place, vel2, 1, MPI_Real, MPI_Sum, comm, ierr)
+#endif
+       vel2 = vel2 / (3 * kvol)
        vel2a = vel2a + vel2
 !
 !     uncomment to disable measurements
