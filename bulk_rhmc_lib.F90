@@ -572,19 +572,26 @@ contains
 !******************************************************************
 !   calculate dSds for gauge fields at each intermediate time
 !******************************************************************
-  subroutine force(Phi,res1,am,imass,isweep,iter)
+  subroutine force(Phi,res1,am,imass,isweep,iter, max_qmr_iter)
     use remezg
     use trial
     use vector, X1=>X
     use gforce
     use param
+    use comms
+
     complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, Nf)
     real, intent(in) :: res1, am
     integer, intent(in) :: imass, isweep, iter
+    integer, intent(in), optional :: max_qmr_iter
 !     complex Phi(kferm,Nf),X2(kferm)
 !     complex X1,u
     complex(dp) :: X2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     integer :: ia, itercg
+    integer :: max_iter = 7500
+    if (present(max_qmr_iter)) then
+       max_iter = max_qmr_iter
+    end if
 !
 !     write(6,111)
 !111 format(' Hi from force')
@@ -600,28 +607,32 @@ contains
 !
        X2 = Phi(:, :, :, :, :, ia)
 
-       call qmrherm(X2,res1,itercg,One,1,anum4g,aden4g,ndiagg,1,isweep,iter)
+       call qmrherm(X2, res1, itercg, One, 1, anum4g, aden4g, ndiagg, 1, &
+            & isweep, iter, max_iter=max_iter)
        ancgpv=ancgpv+float(itercg)
 
        X2 = X1
 !
-       call qmrherm(X2,res1,itercg,am,imass,bnum2g,bden2g,ndiagg,0,isweep,iter)
+       call qmrherm(X2, res1, itercg, am, imass, bnum2g, bden2g, ndiagg, 0, &
+            & isweep, iter, max_iter=max_iter)
        ancg=ancg+float(itercg)
 !     write(111,*) itercg
        X2 = X1
 !
 !  evaluates -X2dagger * d/dpi[{MdaggerM(m)}^1/2] * X2
-       call qmrherm(X2,res1,itercg,am,imass,anum2g,aden2g,ndiagg,2,isweep,iter)
+       call qmrherm(X2, res1, itercg, am, imass, anum2g, aden2g, ndiagg, 2, &
+            & isweep, iter, max_iter=max_iter)
        ancgf=ancgf+float(itercg)
 
 !     write(113,*) itercg
 !  evaluates +2Re{Phidagger * d/dpi[{MdaggerM(1)}^1/4] * X2}
-       call qmrherm(X2,res1,itercg,One,1,anum4g,aden4g,ndiagg,3,isweep,iter)
+       call qmrherm(X2, res1, itercg, One, 1, anum4g, aden4g, ndiagg, 3, &
+            & isweep, iter, max_iter=max_iter)
        ancgfpv=ancgfpv+float(itercg)
 !
     enddo
 !
-    if(ibound.eq.-1)then
+    if (ibound.eq.-1 .and. ip_t.eq.(np_t - 1)) then
        dSdpi(:, :, ksizet_l, 3) = -dSdpi(:, :, ksizet_l, 3)
     endif
 !
@@ -632,7 +643,7 @@ contains
 !******************************************************************
 !   Evaluation of Hamiltonian function
 !******************************************************************
-  subroutine hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass)
+  subroutine hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass, max_qmr_iter)
     use remez
     use trial, only: theta, pp
     use vector, X1=>X
@@ -642,10 +653,15 @@ contains
     real(dp), intent(out) :: h, hg, hp, s
     real, intent(in) :: res2, am
     integer, intent(in) :: isweep, iflag, imass
+    integer, intent(in), optional :: max_qmr_iter
+    integer :: max_iter = 7500
 !     complex, intent(in) :: Phi(kthird, ksizex_l, ksizey_l, ksizet_l, 4, Nf)
 !     complex X1,R
     real(dp) :: hf
     integer :: itercg, ia
+    if (present(max_qmr_iter)) then
+       max_iter = max_qmr_iter
+    end if
 !     write(6,111)
 !111 format(' Hi from hamilton')
 !
@@ -669,12 +685,14 @@ contains
 !
        R = Phi(:, :, :, :, :, ia)
 
-       call qmrherm(R, res2, itercg, One, 1, anum4, aden4, ndiag, 0, isweep, iflag)
+       call qmrherm(R, res2, itercg, One, 1, anum4, aden4, ndiag, 0, isweep, iflag, &
+            & max_iter=max_iter)
        ancghpv=ancghpv+float(itercg)
 !
        R = X1
 !
-       call qmrherm(R, res2, itercg, am, imass, bnum2, bden2, ndiag, 0, isweep, iflag)
+       call qmrherm(R, res2, itercg, am, imass, bnum2, bden2, ndiag, 0, isweep, iflag, &
+            & max_iter=max_iter)
        ancgh=ancgh+float(itercg)
 !
        hf = hf + sum(real(conjg(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
@@ -699,7 +717,8 @@ contains
 !   iflag=2: evaluates DWF force term
 !   iflag=3: evaluates PV force term
 !*****************************************************************m
-  subroutine qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, iter)
+  subroutine qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, &
+       & iter, max_iter)
     use trial, only: u
     use vector
     use gforce
@@ -711,8 +730,9 @@ contains
     real(dp), intent(in) :: anum(0:ndiagq), aden(ndiagq)
     real, intent(in) :: res, am
     integer, intent(out) :: itercg
+    integer, intent(in), optional :: max_iter
 !
-    integer, parameter :: niterc=7500
+    integer :: niterc=7500
     real :: alphatild
     real(dp) :: coeff
 !      
@@ -729,6 +749,10 @@ contains
 !     write(6,111)
 !111 format(' Hi from qmrherm')
 !
+    if (present(max_iter)) then
+       niterc = max_iter
+    end if
+
     resid=sqrt(kthird*ksize*ksize*ksizet*4*res*res)
 !     write(6,*) iflag, resid
     itercg=0
