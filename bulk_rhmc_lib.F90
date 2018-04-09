@@ -1941,9 +1941,9 @@ contains
 !**********************************************************************
   subroutine gaussp(ps, reqs)
     use random
+    use comms
     real, intent(out) :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
     integer, intent(out) :: reqs(12)
-    integer :: reqs(12)
     integer ix, iy, it
     real :: theta
 !     write(6,1)
@@ -1967,7 +1967,7 @@ contains
 #ifdef MPI
     call start_halo_update_4_real(2, ps, 0, reqs)
 #else
-    call complete_halo_update_4_real(2, ps)
+    call update_halo_4_real(2, ps)
 #endif
     return
   end subroutine gaussp
@@ -2004,7 +2004,7 @@ contains
 #ifdef MPI
     call start_halo_update_4_real(2, ps, 0, reqs)
 #else
-    call complete_halo_update_4_real(2, ps)
+    call update_halo_4_real(2, ps)
 #endif
     return
   end subroutine gauss0
