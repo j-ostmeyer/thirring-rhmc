@@ -672,7 +672,6 @@ contains
 #ifdef MPI
     call MPI_AllReduce(MPI_In_Place, hp, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
 #endif
-!      print *, pp, theta
 
     hg = 0.5 * Nf * beta * sum(theta ** 2)
 #ifdef MPI
@@ -1305,7 +1304,6 @@ contains
              psibarpsi1=psibarpsi1 &
              &           + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource)) * &
              &               xi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource))
-!             print *, ip_x, psibarpsi1
           else
 !     pbp1 = x^dagger (0.5(1-gamma_4)) xi(1)
              psibarpsi1=psibarpsi1 &
