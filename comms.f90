@@ -8,12 +8,12 @@ module comms
   integer :: comm, ierr
   integer :: mpiio_type
 
-  integer :: halo_6_xup_send(4:4, 12:25), halo_6_xdn_send(4:4, 12:25)
-  integer :: halo_6_xup_recv(4:4, 12:25), halo_6_xdn_recv(4:4, 12:25)
-  integer :: halo_6_yup_send(4:4, 12:25), halo_6_ydn_send(4:4, 12:25)
-  integer :: halo_6_yup_recv(4:4, 12:25), halo_6_ydn_recv(4:4, 12:25)
-  integer :: halo_6_tup_send(4:4, 12:25), halo_6_tdn_send(4:4, 12:25)
-  integer :: halo_6_tup_recv(4:4, 12:25), halo_6_tdn_recv(4:4, 12:25)
+  integer :: halo_6_xup_send(4:4, 1:25), halo_6_xdn_send(4:4, 1:25)
+  integer :: halo_6_xup_recv(4:4, 1:25), halo_6_xdn_recv(4:4, 1:25)
+  integer :: halo_6_yup_send(4:4, 1:25), halo_6_ydn_send(4:4, 1:25)
+  integer :: halo_6_yup_recv(4:4, 1:25), halo_6_ydn_recv(4:4, 1:25)
+  integer :: halo_6_tup_send(4:4, 1:25), halo_6_tdn_send(4:4, 1:25)
+  integer :: halo_6_tup_recv(4:4, 1:25), halo_6_tdn_recv(4:4, 1:25)
 
   integer :: halo_5_xup_send(4:4), halo_5_xdn_send(4:4)
   integer :: halo_5_xup_recv(4:4), halo_5_xdn_recv(4:4)
@@ -204,9 +204,9 @@ contains
   end subroutine init_halo_types_5
 
   subroutine init_halo_types_6()
-     integer, parameter :: nsize5=1, nsize6=2
+     integer, parameter :: nsize5=1, nsize6=3
     integer :: size5(nsize5) = (/ 4 /)
-    integer :: size6(nsize6) = (/ ndiag, ndiagg /)
+    integer :: size6(nsize6) = (/ Nf, ndiag, ndiagg /)
     integer :: i5, i6
 
     do i5 = 1,nsize5
@@ -435,7 +435,6 @@ contains
 !***********************************************************************
   subroutine init_MPI()
     integer :: coords(3)
-    integer :: starts(4)
 
     call MPI_init(ierr)
 
