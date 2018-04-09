@@ -2048,7 +2048,7 @@ contains
 ! Wilson term (hermitian)
                    &    -akappa*(u(ix,iy,it,mu) &
                    &              * R(:, ix+ixup, iy+iyup, it+itup, idirac) &
-                   &             + conjg(u(ix-ixup, iby-iyup, it-itup, mu)) &
+                   &             + conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
                    &              * R(:, ix-ixup, iy-iyup, it-itup, idirac)) &
 ! Dirac term (antihermitian)
                    &     + gamval(mu,idirac) * &
