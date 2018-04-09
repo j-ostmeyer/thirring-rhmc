@@ -198,7 +198,6 @@ contains
     real :: ancgm, ancgma
     integer :: imass, iter, iterl, iter2, i, ia, idirac, ithird
     integer :: naccp, ipbp, itot, isweep, itercg, mu
-    integer :: ix, iy, it
 !*******************************************************************
 !     variables to keep track of MPI requests
 !*******************************************************************
@@ -1082,7 +1081,7 @@ contains
     real :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
     real :: pt(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
     real(dp) :: pbp(knoise)
-    integer :: idsource, idsource2, idirac, inoise
+    integer :: idsource, idsource2, inoise
     integer :: iter, itercg
     real :: susclsing
     integer :: reqs_ps(12), reqs_pt(12)
