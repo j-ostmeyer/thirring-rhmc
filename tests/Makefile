@@ -6,7 +6,7 @@ FC = ifort
 #FCFLAGS = -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g
 #FCFLAGS = -g -ipo -O3 -no-prec-div -fp-model fast=2 -xHost -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1 #-heap-arrays -CB -traceback
 #FCFLAGS = -g -O3 -march=native -mtune=native -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1
-FCFLAGS = -g -O0 -CB
+FCFLAGS = -g -O0 -CB -heap-arrays -warn all
 
 MPI=yes
 NP_X=1
@@ -31,7 +31,7 @@ else
 	RANDOM_FLAGS = 
 endif
 
-EXES = test_dslash test_dslashd test_dslash2d test_load test_save test_derivs test_qmrherm test_hamilton test_force test_congrad test_measure test_gauss0 test_gaussp
+EXES = test_dslash_1 test_dslash_3 test_dslash_5 test_dslashd test_dslash2d test_load test_save test_derivs test_qmrherm_0 test_qmrherm_1 test_qmrherm_2 test_qmrherm_3 test_hamilton test_force test_congrad test_measure test_gauss0 test_gaussp
 
 default: $(EXES)
 

@@ -98,7 +98,7 @@ program test_dslash
 !         print *,'Phi(', j, ',', l, ') = ', Phi(j, l)
 !      enddo
       if (np_global .eq. 1) then
-         open(3, file='test_dslash.dat', form="unformatted", access="sequential")
+         open(3, file='test_dslash_3.dat', form="unformatted", access="sequential")
          if (generate) then
             write(3) Phi(:,1:ksize,1:ksize,1:ksizet,:)
          else

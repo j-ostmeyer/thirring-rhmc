@@ -1,12 +1,10 @@
-program test_hamilton
+program test_qmrherm
       use dwf3d_lib
       use trial
+      use vector
       use phizero
       use dirac
       use gforce
-      use remez
-      use remezg
-      use param
       use params
       use comms
       implicit none
@@ -16,15 +14,12 @@ program test_hamilton
       integer :: timing_loops = 1
       complex, parameter :: iunit = cmplx(0, 1)
       real(dp), parameter :: tau = 8 * atan(1.0_8)
-      complex(dp) :: acc_sum = 0.
-      real(dp) :: acc_max = 0.
 
 ! common blocks to function
       integer :: istart
 
 ! initialise function parameters
       complex(dp) Phi(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-      complex(dp) X2(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
       complex(dp), allocatable :: Phi0_ref(:, :, :, :, :, :)
       complex(dp), allocatable :: Phi0_orig(:, :, :, :, :, :)
       complex(dp) :: x_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
@@ -32,19 +27,18 @@ program test_hamilton
       complex(dp) :: ratio_x(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
       complex(dp), allocatable :: delta_Phi0(:, :, :, :, :, :)
       complex(dp) :: R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-      real :: diff(ksizex_l, ksizey_l, ksizet_l, 3)
 
       integer :: imass, iflag, isweep, iter
-      real(dp) :: anum(0:ndiag), aden(ndiag), coeff
-      real :: res2, am
-      real(dp) :: h, hg, hp, s
+      real(dp) :: anum(0:ndiag), aden(ndiag)
+      real :: res, am
+      integer :: itercg
       
       integer :: i, j, l, ix, iy, it, ithird
       integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
       integer :: idx = 0
 
 #ifdef MPI
-      integer, dimension(12) :: reqs_R, reqs_X, reqs_U, reqs_Phi, reqs_Phi0
+      integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
       call init_MPI
 #endif
 
@@ -52,27 +46,17 @@ program test_hamilton
       allocate(Phi0_orig(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 25))
       allocate(delta_Phi0(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
 
-      hg = 0.
-      hp = 0.
-      h = 0.
-      s = 0.
-      
-      res2 = 0.1
+      res = 0.1
       am = 0.05
       imass = 3
-      iflag = 0
+      iflag = 1
       isweep = 1
       iter = 0
 
-      anum2(0) = 0.5
-      anum4(0) = 0.51
-      bnum2(0) = 0.49
-      bnum4(0) = 0.53
+      anum(0) = 0.5
       do i = 1, ndiag
-         anum2(i) = 0.4 * exp(iunit * i * tau / ndiag)
-         aden2(i) = 0.4 * exp(-iunit * 0.5 * i * tau / ndiag)
-         anum4(i) = 0.41 * exp(iunit * i * tau / ndiag)
-         aden4(i) = 0.41 * exp(-iunit * 0.5 * i * tau / ndiag)
+         anum(i) = exp(iunit * i * tau / ndiag)
+         aden(i) = exp(-iunit * 0.5 * i * tau / ndiag)
       enddo
       do j = 1,4
          do it = 1,ksizet_l
@@ -103,13 +87,11 @@ program test_hamilton
          do it = 1,ksizet_l
             do iy = 1,ksizey_l
                do ix = 1,ksizex_l
-                  idx = ip_x * ksizex_l + ix &
+                  idx = ip_x * ksizex_l + ix - 1 &
                        & + (ip_y * ksizey_l + iy - 1) * ksize &
                        & + (ip_t * ksizet_l + it - 1) * ksize * ksize &
                        & + (j - 1) * ksize * ksize * ksizet
                   u(ix, iy, it, j) = exp(iunit * idx * tau / idxmax)
-                  theta(ix, iy, it, j) = 1.9 * exp(iunit * idx * tau / idxmax)
-                  pp(ix, iy, it, j) = -1.1 * exp(iunit * idx * tau / idxmax)
                   dSdpi(ix, iy, it, j) = tau * exp(iunit * idx * tau / idxmax)
                enddo
             enddo
@@ -122,7 +104,7 @@ program test_hamilton
       call complete_halo_update(reqs_Phi0)
       call complete_halo_update(reqs_u)
 #else
-      call update_halo_6(4, 25, Phi0)
+      call update_halo_6(4, 25, Phi0_orig)
       call update_halo_5(4, Phi)
       call update_halo_5(4, R)
       call update_halo_4(3, u)
@@ -136,31 +118,28 @@ program test_hamilton
 ! call function
       do i = 1,timing_loops
          Phi0 = Phi0_orig
-         h = 0
-         hg = 0
-         hp = 0
-         s = 0
-         call hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass, max_qmr_iter=2)
+         call qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter, &
+              & max_iter=2)
       end do
-! check output
       if (ip_global .eq. 0) then
-         if (ancghpv .ne. 2.0) then
-            print *, "ancghpv looks wrong:", ancghpv
-         end if
-         if (ancgh .ne. 2.0) then
-            print *, "ancgh looks wrong:", ancgh
-         end if
-         if (hg .lt. 3695.10 .or. hg .gt. 3695.11) then
-            print *, "hg looks wrong:", hg
-         end if
-         if (hp .lt. 3096.31 .or. hp .gt. 3096.32) then
-            print *, "hp looks wrong:", hp
-         end if
-! Changes to summation in calculation of alphatild inside qmrherm mean that this
-! test gives a slightly different value to in the original code, hence the looser check.
-! In principle using sum() rather than direct iterative summation gives a more precise answer
-         if (s .lt. 144000. .or. s .gt. 145000.) then
-            print *, "s looks wrong:", s
-         end if
+         print *, "CG iterations:", itercg
       end if
+! check output
+      if (np_global .eq. 1) then
+         open(3, file='test_qmrherm_1_x.dat', form="unformatted", access="sequential")
+         open(4, file='test_qmrherm_1_Phi0.dat', form="unformatted", access="sequential")
+         if (generate) then
+            write(3) x(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:)
+            write(4) Phi0(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:,:)
+         else
+            read(3) x_ref
+            read(4) Phi0_ref
+            delta_x = x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - x_ref
+            delta_Phi0 = Phi0(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :, :) - Phi0_ref
+            ratio_x = x_ref / x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
+            print *, 'sum delta = ', sum(delta_x), sum(delta_Phi0)
+            print *, 'max delta = ', maxval(abs(delta_x)), maxval(abs(delta_Phi0))
+            print *, 'sum ratio = ', sum(ratio_x), 'max = ', maxval(abs(ratio_x))
+         end if
+   end if
 end program
