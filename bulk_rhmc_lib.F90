@@ -228,13 +228,15 @@ contains
        print *, 'Please adjust it and recompile.'
        call exit(1)
     endif
-    open(unit=7,file='output',status='unknown')
-    open(unit=25,file='midout',status='unknown')
-    open(unit=98,file='control',status='unknown')
-    open(unit=36,file='remez2',status='unknown')
-    open(unit=37,file='remez4',status='unknown')
-    open(unit=38,file='remez2g',status='unknown')
-    open(unit=39,file='remez4g',status='unknown')
+    if (ip_global .eq. 0) then
+       open(unit=7,file='output',status='unknown')
+       open(unit=25,file='midout',status='unknown')
+       open(unit=98,file='control',status='unknown')
+       open(unit=36,file='remez2',status='unknown')
+       open(unit=37,file='remez4',status='unknown')
+       open(unit=38,file='remez2g',status='unknown')
+       open(unit=39,file='remez4g',status='unknown')
+    end if
     if(iread.eq.1) then
        call sread
     endif
@@ -244,7 +246,9 @@ contains
     if(iseed.ne.0)then
        seed=4139764973254.0
     endif
-    write(7,*) 'seed: ', seed
+    if (ip_global .eq. 0) then
+       write(7,*) 'seed: ', seed
+    end if
     call init_random(seed)
 !     write(6,*) 'ran: ', y,idum
 !*******************************************************************
@@ -284,34 +288,35 @@ contains
 !*******************************************************************
     traj=iterl*dt
     proby=1.0/float(iterl)
-!     write(6, 9001)ksize,ksizet,kthird,Nf,dt,traj,ndiag,ndiagg, &
-!    & iter2,beta,am3,am,imass
-    write(7, 9001)ksize,ksizet,kthird,Nf,dt,traj,ndiag,ndiagg, &
-         & iter2,beta,am3,am,imass
-9001 format(' ksize=',i3,' ksizet=',i3,/ &
-         ,' kthird=',i3,/ &
-         ,' Nf =',i3,/ &
-         ,' time step: dt=',f6.4,' trajectory length=',f9.6,/ &
-         ,' Remez ndiag: action =',i3,' guidance=',i3,/ &
-         ,' # trajectories=',i6,' beta=',f9.6,/ &
-         ,' am3=',f6.4,' am=',f6.4/ &
-         ,' imass=',i2)
+    if (ip_global .eq. 0) then
+!       write(6, 9001)ksize,ksizet,kthird,Nf,dt,traj,ndiag,ndiagg, &
+!      & iter2,beta,am3,am,imass
+       write(7, 9001)ksize,ksizet,kthird,Nf,dt,traj,ndiag,ndiagg, &
+            & iter2,beta,am3,am,imass
+9001   format(' ksize=',i3,' ksizet=',i3,/ &
+          ,' kthird=',i3,/ &
+          ,' Nf =',i3,/ &
+          ,' time step: dt=',f6.4,' trajectory length=',f9.6,/ &
+          ,' Remez ndiag: action =',i3,' guidance=',i3,/ &
+          ,' # trajectories=',i6,' beta=',f9.6,/ &
+          ,' am3=',f6.4,' am=',f6.4/ &
+          ,' imass=',i2)
 #ifdef MPI
-    write(7, 9002) NP_X, NP_Y, NP_T, ksizex_l, ksizey_l, ksizet_l
-9002 format(" NP_X=", i3, " NP_Y=", i3, " NP_T=", i3,/ &
-          & " ksizex_l=", i3, " ksizey_l=", i3, " ksizet_l=", i3)
+       write(7, 9002) NP_X, NP_Y, NP_T, ksizex_l, ksizey_l, ksizet_l
+9002   format(" NP_X=", i3, " NP_Y=", i3, " NP_T=", i3,/ &
+            & " ksizex_l=", i3, " ksizey_l=", i3, " ksizet_l=", i3)
 #endif
 !     write(6,9004) rescgg,rescga,respbp
-    write(7,9004) rescgg,rescga,respbp
-9004 format(' Stopping residuals: guidance: ',e11.4,' acceptance: ', &
-         &     e11.4,' estimator: ',e11.4)
+       write(7,9004) rescgg,rescga,respbp
+9004   format(' Stopping residuals: guidance: ',e11.4,' acceptance: ', &
+            &     e11.4,' estimator: ',e11.4)
 !     write(6,9044) rescgm
-    write(7,9044) rescgm
-9044 format(' Stopping residuals: meson: ',e11.4)
-!!!!FIXME: understand this call to rranget
-!    call rranget(seed)
+       write(7,9044) rescgm
+9044   format(' Stopping residuals: meson: ',e11.4)
+       call rranget(seed, 1, 1, 1)
 ! c     write(6,*) 'seed: ', seed
-    write(7,*) 'seed: ', seed
+       write(7,*) 'seed: ', seed
+    end if
 !*******************************************************************
 !       initialize for averages
 !*******************************************************************
@@ -418,15 +423,19 @@ contains
 !
 ! test for end of random trajectory
 ! 
-!!!!FIXME - parallel RNG breaks here
-!          ytest=rano(yran,idum)
-!          if(ytest.lt.proby)then
-!             pp = pp - 0.5 * dt * dSdpi
-!             itot = itot + iter 
-!             goto 501
-!          else
-!             pp = pp - dt * dSdpi
-!          endif
+          if (ip_global .eq. 0) then
+             ytest = rano(yran, idum, 1, 1, 1)
+#ifdef MPI
+             call MPI_Bcast(ytest, 1, MPI_Real, 0, comm, ierr)
+#endif
+          end if
+          if(ytest.lt.proby)then
+             pp = pp - 0.5 * dt * dSdpi
+             itot = itot + iter 
+             goto 501
+          else
+             pp = pp - dt * dSdpi
+          endif
 ! 
        end do
 !**********************************************************************
@@ -437,15 +446,20 @@ contains
        call hamilton(Phi, H1, hg, hp, S1, rescga, isweep, -1, am, imass)
        dH = H0 - H1
        dS = S0 - S1
-       write(98,*) dH,dS
+       if (ip_global .eq. 0) then
+          write(98,*) dH,dS
+       end if
        y = exp(real(dH))      
        yav = yav + y 
        yyav = yyav + y*y 
-!!!!FIXME - parallel RNG
-!       if(dH.lt.0.0)then
-!          x=rano(yran,idum)
-!          if(x.gt.y)goto 600
-!       endif
+!
+       if(dH.lt.0.0)then
+          x = rano(yran, idum, 1, 1, 1)
+#ifdef MPI
+          call MPI_Bcast(x, 1, MPI_Real, 0, comm, ierr)
+#endif
+          if(x.gt.y)goto 600
+       endif
 !
 !     step accepted: set s=st
 !
@@ -455,7 +469,9 @@ contains
        gaction = real(hg) /kvol
        paction = real(hp) /kvol
 600    continue
-       write(11,*) isweep,gaction,paction
+       if (ip_global .eq. 0) then
+          write(11,*) isweep,gaction,paction
+       end if
        actiona=actiona+action 
        vel2 = sum(pp * pp) / (3 * kvol)
        vel2a = vel2a + vel2
@@ -476,8 +492,7 @@ contains
        endif
 !
        if((isweep/icheck)*icheck.eq.isweep)then
-!!!!FIXME: understand why rranget is called here
-!          call rranget(seed)
+          call rranget(seed, 1, 1, 1)
           if(iwrite.eq.1) then
              call swrite
           endif
@@ -518,31 +533,32 @@ contains
 !*******************************************************************
 !     print global averages
 !*******************************************************************
+    if (ip_global .eq. 0) then
 !     write(6, 9022) iter2,naccp,atraj,yav,yyav,ancg,ancgpv,ancgh,ancghpv,ancgf,
 !    & ancgfpv,ancgpf,ancgpfpv,pbpa,vel2a,actiona
-    write(7, 9022) iter2,naccp,atraj,yav,yyav, &
-         & ancg,ancgpv,ancgh,ancghpv,ancgf,ancgfpv,ancgpf,ancgpfpv, &
-         & pbpa,ancgma,vel2a,actiona
-9022 format(' averages for last ',i6,' trajectories',/  &
-         & 1x,' # of acceptances: ',i6,' average trajectory length= ',f8.3/ &
-         & 1x,' <exp-dH>=',e11.4,' +/-',e10.3/ &
-         & 1x,' av. # QMR itr.'/ &
-         & 1x,'     guidance: DWF  ',f9.3,'; PV  ',f9.3/ &
-         & 1x,'   acceptance: DWF  ',f9.3,'; PV  ',f9.3/ &
-         & 1x,'        force: DWF  ',f9.3,'; PV  ',f9.3/ &
-         & 1x,'pseudofermion: DWF  ',f9.3,'; PV  ',f9.3/ &
-         & 1x,' psibarpsi=',e11.3/ &
-         & 1x,' av. # QMR itr.',f9.3// &
-         & 1x,' mean square velocity=',e10.3,'; action per site=',e10.3//)
-    write(7, 9024)
-    write(7, 9024)
-9024 format(1x)
+       write(7, 9022) iter2,naccp,atraj,yav,yyav, &
+            & ancg,ancgpv,ancgh,ancghpv,ancgf,ancgfpv,ancgpf,ancgpfpv, &
+            & pbpa,ancgma,vel2a,actiona
+9022   format(' averages for last ',i6,' trajectories',/  &
+            & 1x,' # of acceptances: ',i6,' average trajectory length= ',f8.3/ &
+            & 1x,' <exp-dH>=',e11.4,' +/-',e10.3/ &
+            & 1x,' av. # QMR itr.'/ &
+            & 1x,'     guidance: DWF  ',f9.3,'; PV  ',f9.3/ &
+            & 1x,'   acceptance: DWF  ',f9.3,'; PV  ',f9.3/ &
+            & 1x,'        force: DWF  ',f9.3,'; PV  ',f9.3/ &
+            & 1x,'pseudofermion: DWF  ',f9.3,'; PV  ',f9.3/ &
+            & 1x,' psibarpsi=',e11.3/ &
+            & 1x,' av. # QMR itr.',f9.3// &
+            & 1x,' mean square velocity=',e10.3,'; action per site=',e10.3//)
+       write(7, 9024)
+       write(7, 9024)
+9024   format(1x)
 !
-    close(11)
+       close(11)
+    end if
 !
     if(iwrite.eq.1) then
-!!!!FIXME: understand this rranget call
-!       call rranget(seed)
+       call rranget(seed, 1, 1, 1)
        call swrite
        write(7,*) 'seed: ', idum
     endif
@@ -793,7 +809,7 @@ contains
 !     
 !     end of loop over iter
     enddo
-    if (niter .gt. niterc) then
+    if (niter .gt. niterc .and. ip_global .eq. 0) then
        write(7,*) 'QMRniterc!, isweep,iter,iflag,imass,anum,ndiagq = ' &
        &        ,isweep, iter, iflag, imass, anum(0), ndiagq
     end if
@@ -1050,7 +1066,7 @@ contains
        if(betacgn.lt.resid) exit
     end do
 !     write(6,1000)
-    if (nx.gt.niterc) then
+    if (nx.gt.niterc .and. ip_global.eq.0) then
        write(7,1000)
 1000   format(' # iterations of congrad exceeds niterc')
     end if
@@ -1213,7 +1229,10 @@ contains
           pbp(inoise) = psibarpsi1 + psibarpsi2
        endif
 !        write(6,*) real(psibarpsi1),aimag(psibarpsi1), real(psibarpsi2),aimag(psibarpsi2)
-       write(100,*) real(psibarpsi1), aimag(psibarpsi1), real(psibarpsi2), aimag(psibarpsi2)
+       if (ip_global .eq. 0) then
+          write(100,*) real(psibarpsi1), aimag(psibarpsi1), &
+               & real(psibarpsi2), aimag(psibarpsi2)
+       end if
 !
 ! end loop on noise
     enddo
@@ -1227,7 +1246,9 @@ contains
     enddo
     psibarpsi = psibarpsi / knoise
     susclsing = 2 * kvol * susclsing / (knoise * (knoise-1))
-    write(200,*) psibarpsi, susclsing
+    if (ip_global .eq. 0) then
+       write(200,*) psibarpsi, susclsing
+    end if
     aviter = float(iter) / (4*knoise)
     return
   end subroutine measure
