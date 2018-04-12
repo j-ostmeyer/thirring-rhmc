@@ -1,8 +1,10 @@
+#include "test_utils.fh"
 program test_dslash
       use params
       use dwf3d_lib
       use dirac
       use comms
+      use test_utils
       implicit none
 
 ! general parameters
@@ -10,27 +12,27 @@ program test_dslash
       integer :: timing_loops = 1
       complex, parameter :: iunit = cmplx(0, 1)
       real(dp), parameter :: tau = 8 * atan(1.0_8)
-      complex(dp) :: acc_sum = 0.
-      real(dp) :: acc_max = 0.
 
 ! common blocks to function
       integer :: istart
 
 ! initialise function parameters
-      complex(dp) u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
-      complex(dp) Phi(kthird,0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-      complex(dp) Phiref(kthird,ksize, ksize, ksizet, 4)
-      complex(dp) R(kthird,0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
-      complex(dp) diff(kthird,ksize, ksize, ksizet, 4)
+      complex(dp) u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
+      complex(dp) Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+      complex(dp) Phiref(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
+      complex(dp) R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+      complex(dp) diff(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
+      complex(dp) sum_diff
+      real(dp) max_diff
 
       real, parameter :: am = 0.05
       integer, parameter :: imass = 3
 
-      integer :: i, j, l, ix, iy, it, ithird
+      integer :: i, j, ix, iy, it, ithird
       integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
       integer :: idx
 #ifdef MPI
-      integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi
+      type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi
       call init_MPI
 #endif
       do j = 1,4
@@ -53,9 +55,9 @@ program test_dslash
       call start_halo_update_5(4, R, 0, reqs_R)
 #endif
       do j = 1,3
-         do it = 1,ksizet
-            do iy = 1,ksize
-               do ix = 1,ksize
+         do it = 1,ksizet_l
+            do iy = 1,ksizey_l
+               do ix = 1,ksizex_l
                   idx = ip_x * ksizex_l + ix &
                        & + (ip_y * ksizey_l + iy - 1) * ksize &
                        & + (ip_t * ksizet_l + it - 1) * ksize * ksize &
@@ -92,21 +94,23 @@ program test_dslash
 #endif
       end do
 ! check output
-!      do i = 1,10
-!         j = 1 + i * (kvol - 1) / 10
-!         l = 1 + i * (4 - 1) / 10
-!         print *,'Phi(', j, ',', l, ') = ', Phi(j, l)
-!      enddo
-      if (np_global .eq. 1) then
-         open(3, file='test_dslash_3.dat', form="unformatted", access="sequential")
-         if (generate) then
-            write(3) Phi(:,1:ksize,1:ksize,1:ksizet,:)
-         else
-            read(3) Phiref
-            
-            diff = Phi(:,1:ksize,1:ksize,1:ksizet,:) - Phiref
-            print *, 'sum delta = ', sum(diff)
-            print *, 'max delta = ', maxval(abs(diff))
+      if (generate) then
+         write_file(Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_dslash_3.dat', MPI_Double_Complex)
+      else
+         read_file(Phiref, 'test_dslash_3.dat', MPI_Double_Complex)
+
+         diff = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - Phiref
+         sum_diff = sum(diff)
+         max_diff = maxval(abs(diff))
+#ifdef MPI
+         call MPI_AllReduce(MPI_IN_PLACE, sum_diff, 1, MPI_Double_Complex, MPI_Sum, &
+              & comm, ierr)
+         call MPI_AllReduce(MPI_IN_PLACE, max_diff, 1, MPI_Double_Precision, MPI_Max, &
+              & comm, ierr)
+#endif
+         if (ip_global .eq. 0) then
+            print *, 'sum delta = ', sum_diff
+            print *, 'max delta = ', max_diff
          end if
       end if
 #ifdef MPI

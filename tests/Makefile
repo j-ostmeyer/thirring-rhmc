@@ -1,17 +1,18 @@
 #FC = /usr/lib64/mpi/gcc/mvapich2/bin/mpif90
 #FC = /usr/lib64/mvapich2/bin/mpif90
 MPIFC = mpiifort
-FC = ifort
-#FC = gfortran
+#FC = ifort
+FC = gfortran
 #FCFLAGS = -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g
 #FCFLAGS = -g -ipo -O3 -no-prec-div -fp-model fast=2 -xHost -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1 #-heap-arrays -CB -traceback
 #FCFLAGS = -g -O3 -march=native -mtune=native -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1
-FCFLAGS = -g -O0 -CB -heap-arrays -warn all
+#FCFLAGS = -g -O0 -CB -heap-arrays -warn all
+FCFLAGS = -g -O0 -Wall
 
-MPI=yes
-NP_X=1
-NP_Y=1
-NP_T=1
+MPI=no
+NP_X=2
+NP_Y=2
+NP_T=2
 
 SITE_RANDOM=yes
 
@@ -44,10 +45,16 @@ clean:
 %.o: ../%.F90 Makefile
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -c -o $@ $<
 
-test_halo_%: params.o ${COMMS_LIB} test_halo_%.F90
+test_%.o: test_%.f90 Makefile
+	$(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -c -o $@ $<
+
+test_%.o: test_%.F90 Makefile
+	$(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -c -o $@ $<
+
+test_halo_%: test_params.o ${COMMS_LIB} test_halo_%.F90
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -o $@ $^
 
-$(EXES) : % : params.o ${COMMS_LIB} ${RANDOM} bulk_rhmc_lib.o %.F90
+$(EXES) : % : test_params.o ${COMMS_LIB} ${RANDOM} bulk_rhmc_lib.o test_utils.o %.F90
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -o $@ $^
 
 compile_flags:

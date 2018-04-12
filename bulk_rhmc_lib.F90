@@ -116,9 +116,6 @@ end module qmrherm_scratch
 
 module dwf3d_lib
   use params
-#ifdef MPI
-  use mpi
-#endif
   implicit none
   save
 
@@ -201,7 +198,11 @@ contains
 !*******************************************************************
 !     variables to keep track of MPI requests
 !*******************************************************************
-    integer :: reqs_ps(12)
+#ifdef MPI
+    type(MPI_Request) :: reqs_ps(12)
+#else
+    integer :: reqs_ps
+#endif
 !
 !*******************************************************************
 !     input
@@ -752,7 +753,11 @@ contains
     real(dp) :: betaq, betaq0, phimod
     real :: resid, rhomax, arelax
     integer :: niter, idiag
-    integer, dimension(12) :: reqs_X2, reqs_vtild, reqs_Phi0, reqs_R, reqs_x
+#ifdef MPI
+    type(MPI_Request), dimension(12) :: reqs_X2, reqs_vtild, reqs_Phi0, reqs_R, reqs_x
+#else
+    integer :: reqs_X2, reqs_vtild, reqs_Phi0, reqs_R, reqs_x
+#endif
 !
 !     write(6,111)
 !111 format(' Hi from qmrherm')
@@ -1127,7 +1132,9 @@ contains
     real :: betacg, betacgn, betacgd, alpha, alphan, alphad
     integer :: nx
 #ifdef MPI
-    integer, dimension(12) :: reqs_x1, reqs_r
+    type(MPI_Request), dimension(12) :: reqs_x1, reqs_r
+#else
+    integer :: reqs_x1, reqs_r
 #endif
 !     write(6,111)
 !111 format(' Hi from congrad')
@@ -1241,7 +1248,11 @@ contains
     integer :: idsource, idsource2, inoise
     integer :: iter, itercg
     real :: susclsing
-    integer :: reqs_ps(12), reqs_pt(12), reqs_Phi(12)
+#ifdef MPI
+    type(MPI_Request), dimension(12) :: reqs_ps, reqs_pt, reqs_Phi
+#else
+    integer :: reqs_ps, reqs_pt, reqs_Phi
+#endif
 !     write(6,*) 'hi from measure'
 !
     iter=0
@@ -1731,8 +1742,8 @@ contains
     use gauge
 #ifdef MPI
     use comms
-    integer :: mpi_fh
-    integer, dimension(MPI_status_size) :: status
+    type(MPI_File) :: mpi_fh
+    type(MPI_Status) :: status
     
     call MPI_File_Open(comm, 'con', MPI_Mode_Rdonly, &
          & MPI_Info_Null, mpi_fh, ierr)
@@ -1763,8 +1774,8 @@ contains
     use gauge
 #ifdef MPI
     use comms
-    integer :: mpi_fh
-    integer, dimension(MPI_status_size) :: status
+    type(MPI_File) :: mpi_fh
+    type(MPI_Status) :: status
     
 ! Write theta
     call MPI_File_Open(comm, 'con', MPI_Mode_Wronly + MPI_Mode_Create, &
@@ -1941,7 +1952,11 @@ contains
     use random
     use comms
     real, intent(out) :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
-    integer, intent(out) :: reqs(12)
+#ifdef MPI
+    type(MPI_Request), intent(out) :: reqs(12)
+#else
+    integer, intent(out), optional :: reqs
+#endif
     integer ix, iy, it
     real :: theta
 !     write(6,1)
@@ -1978,7 +1993,11 @@ contains
     use random
     use comms
     real, intent(out) :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
-    integer, intent(out) :: reqs(12)
+#ifdef MPI
+    type(MPI_Request), intent(out) :: reqs(12)
+#else
+    integer, intent(out), optional :: reqs
+#endif
     integer :: ix, iy, it
     real :: theta
 !     write(6,1)

@@ -1,40 +1,41 @@
 module comms
   use params
-  use mpi
+  use mpi_f08
   implicit none
 
   save
   integer :: ip_x, ip_y, ip_t, ip_global, np_global
-  integer :: comm, ierr
-  integer :: mpiio_type
+  type(MPI_Comm) :: comm
+  integer :: ierr
+  type(MPI_Datatype) :: mpiio_type
 
-  integer :: halo_6_xup_send(4:4, 1:25), halo_6_xdn_send(4:4, 1:25)
-  integer :: halo_6_xup_recv(4:4, 1:25), halo_6_xdn_recv(4:4, 1:25)
-  integer :: halo_6_yup_send(4:4, 1:25), halo_6_ydn_send(4:4, 1:25)
-  integer :: halo_6_yup_recv(4:4, 1:25), halo_6_ydn_recv(4:4, 1:25)
-  integer :: halo_6_tup_send(4:4, 1:25), halo_6_tdn_send(4:4, 1:25)
-  integer :: halo_6_tup_recv(4:4, 1:25), halo_6_tdn_recv(4:4, 1:25)
+  type(MPI_Datatype) :: halo_6_xup_send(4:4, 1:25), halo_6_xdn_send(4:4, 1:25)
+  type(MPI_Datatype) :: halo_6_xup_recv(4:4, 1:25), halo_6_xdn_recv(4:4, 1:25)
+  type(MPI_Datatype) :: halo_6_yup_send(4:4, 1:25), halo_6_ydn_send(4:4, 1:25)
+  type(MPI_Datatype) :: halo_6_yup_recv(4:4, 1:25), halo_6_ydn_recv(4:4, 1:25)
+  type(MPI_Datatype) :: halo_6_tup_send(4:4, 1:25), halo_6_tdn_send(4:4, 1:25)
+  type(MPI_Datatype) :: halo_6_tup_recv(4:4, 1:25), halo_6_tdn_recv(4:4, 1:25)
 
-  integer :: halo_5_xup_send(4:4), halo_5_xdn_send(4:4)
-  integer :: halo_5_xup_recv(4:4), halo_5_xdn_recv(4:4)
-  integer :: halo_5_yup_send(4:4), halo_5_ydn_send(4:4)
-  integer :: halo_5_yup_recv(4:4), halo_5_ydn_recv(4:4)
-  integer :: halo_5_tup_send(4:4), halo_5_tdn_send(4:4)
-  integer :: halo_5_tup_recv(4:4), halo_5_tdn_recv(4:4)
+  type(MPI_Datatype) :: halo_5_xup_send(4:4), halo_5_xdn_send(4:4)
+  type(MPI_Datatype) :: halo_5_xup_recv(4:4), halo_5_xdn_recv(4:4)
+  type(MPI_Datatype) :: halo_5_yup_send(4:4), halo_5_ydn_send(4:4)
+  type(MPI_Datatype) :: halo_5_yup_recv(4:4), halo_5_ydn_recv(4:4)
+  type(MPI_Datatype) :: halo_5_tup_send(4:4), halo_5_tdn_send(4:4)
+  type(MPI_Datatype) :: halo_5_tup_recv(4:4), halo_5_tdn_recv(4:4)
 
-  integer :: halo_4_xup_send(3:4), halo_4_xdn_send(3:4)
-  integer :: halo_4_xup_recv(3:4), halo_4_xdn_recv(3:4)
-  integer :: halo_4_yup_send(3:4), halo_4_ydn_send(3:4)
-  integer :: halo_4_yup_recv(3:4), halo_4_ydn_recv(3:4)
-  integer :: halo_4_tup_send(3:4), halo_4_tdn_send(3:4)
-  integer :: halo_4_tup_recv(3:4), halo_4_tdn_recv(3:4)
+  type(MPI_Datatype) :: halo_4_xup_send(3:4), halo_4_xdn_send(3:4)
+  type(MPI_Datatype) :: halo_4_xup_recv(3:4), halo_4_xdn_recv(3:4)
+  type(MPI_Datatype) :: halo_4_yup_send(3:4), halo_4_ydn_send(3:4)
+  type(MPI_Datatype) :: halo_4_yup_recv(3:4), halo_4_ydn_recv(3:4)
+  type(MPI_Datatype) :: halo_4_tup_send(3:4), halo_4_tdn_send(3:4)
+  type(MPI_Datatype) :: halo_4_tup_recv(3:4), halo_4_tdn_recv(3:4)
 
-  integer :: halo_4_real_xup_send(2:2), halo_4_real_xdn_send(2:2)
-  integer :: halo_4_real_xup_recv(2:2), halo_4_real_xdn_recv(2:2)
-  integer :: halo_4_real_yup_send(2:2), halo_4_real_ydn_send(2:2)
-  integer :: halo_4_real_yup_recv(2:2), halo_4_real_ydn_recv(2:2)
-  integer :: halo_4_real_tup_send(2:2), halo_4_real_tdn_send(2:2)
-  integer :: halo_4_real_tup_recv(2:2), halo_4_real_tdn_recv(2:2)
+  type(MPI_Datatype) :: halo_4_real_xup_send(2:2), halo_4_real_xdn_send(2:2)
+  type(MPI_Datatype) :: halo_4_real_xup_recv(2:2), halo_4_real_xdn_recv(2:2)
+  type(MPI_Datatype) :: halo_4_real_yup_send(2:2), halo_4_real_ydn_send(2:2)
+  type(MPI_Datatype) :: halo_4_real_yup_recv(2:2), halo_4_real_ydn_recv(2:2)
+  type(MPI_Datatype) :: halo_4_real_tup_send(2:2), halo_4_real_tdn_send(2:2)
+  type(MPI_Datatype) :: halo_4_real_tup_recv(2:2), halo_4_real_tdn_recv(2:2)
 
 
 contains
@@ -56,8 +57,9 @@ contains
 ! typetarget: array element to put type into;
 !   should be halo_{4,4_real,5,6}_{x,y,t}{up,dn}_{send,recv}(size{4,5}[, size6])
   subroutine init_single_halo_type_4(direction, position, size4, datatype, typetarget)
-    integer, intent(in) :: direction, position, size4, datatype
-    integer, intent(out) :: typetarget
+    integer, intent(in) :: direction, position, size4
+    type(MPI_Datatype), intent(in) :: datatype
+    type(MPI_Datatype), intent(out) :: typetarget
     integer, dimension(4) :: sizes, subsizes, starts
 
     sizes = (/ ksizex_l + 2, ksizey_l + 2, ksizet_l + 2, size4 /)
@@ -74,7 +76,7 @@ contains
 
   subroutine init_single_halo_type_5(direction, position, size5, typetarget)
     integer, intent(in) :: direction, position, size5
-    integer, intent(out) :: typetarget
+    type(MPI_Datatype), intent(out) :: typetarget
     integer, dimension(5) :: sizes, subsizes, starts
 
     sizes = (/ kthird, ksizex_l + 2, ksizey_l + 2, ksizet_l + 2, size5 /)
@@ -91,7 +93,7 @@ contains
 
   subroutine init_single_halo_type_6(direction, position, size5, size6, typetarget)
     integer, intent(in) :: direction, position, size5, size6
-    integer, intent(out) :: typetarget
+    type(MPI_Datatype), intent(out) :: typetarget
     integer, dimension(6) :: sizes, subsizes, starts
 
     sizes = (/ kthird, ksizex_l + 2, ksizey_l + 2, ksizet_l + 2, size5, size6 /)
@@ -110,7 +112,7 @@ contains
     integer, parameter :: nsize4=2
     integer :: size4(nsize4) = (/ 3, 4 /)
     integer :: i4
-    integer :: type
+    type(MPI_Datatype) :: type
     type = MPI_Double_Complex
 
     do i4 = 1,nsize4
@@ -147,7 +149,7 @@ contains
     integer, parameter :: nsize4=1
     integer :: size4(nsize4) = (/ 2 /)
     integer :: i4
-    integer :: type
+    type(MPI_Datatype) :: type
     type = MPI_Real
 
     do i4 = 1,nsize4
@@ -247,7 +249,7 @@ contains
 !     
     integer, intent(in) :: size4, tag
     complex(dp), intent(inout) :: Array(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, size4)
-    integer, intent(out) :: reqs(12)
+    type(MPI_Request), intent(out) :: reqs(12)
     integer :: ip_xup, ip_xdn, ip_yup, ip_ydn, ip_tup, ip_tdn
     integer :: tag_offset 
 
@@ -292,7 +294,7 @@ contains
 !     
     integer, intent(in) :: size4, tag
     real, intent(inout) :: Array(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, size4)
-    integer, intent(out) :: reqs(12)
+    type(MPI_Request), intent(out) :: reqs(12)
     integer :: ip_xup, ip_xdn, ip_yup, ip_ydn, ip_tup, ip_tdn
     integer :: tag_offset 
 
@@ -338,7 +340,7 @@ contains
     integer, intent(in) :: size5, tag
     complex(dp), intent(inout) :: Array(kthird, 0:ksizex_l+1, 0:ksizey_l+1, &
          &                              0:ksizet_l+1, size5)
-    integer, intent(out) :: reqs(12)
+    type(MPI_Request), intent(out) :: reqs(12)
     integer :: ip_xup, ip_xdn, ip_yup, ip_ydn, ip_tup, ip_tdn
     integer :: tag_offset 
 
@@ -384,7 +386,7 @@ contains
     integer, intent(in) :: size5, size6, tag
     complex(dp), intent(inout) :: Array(kthird, 0:ksizex_l+1, 0:ksizey_l+1, &
          &                              0:ksizet_l+1, size5, size6)
-    integer, intent(out) :: reqs(12)
+    type(MPI_Request), intent(out) :: reqs(12)
     integer :: ip_xup, ip_xdn, ip_yup, ip_ydn, ip_tup, ip_tdn
     integer :: tag_offset 
 
@@ -426,7 +428,7 @@ contains
   end subroutine start_halo_update_6
   
   subroutine complete_halo_update(reqs)
-    integer, intent(in) :: reqs(12)
+    type(MPI_Request), intent(inout) :: reqs(12)
     call MPI_Waitall(12, reqs, MPI_Statuses_Ignore, ierr)
   end subroutine complete_halo_update
 

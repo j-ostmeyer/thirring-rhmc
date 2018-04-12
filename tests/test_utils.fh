@@ -1,0 +1,21 @@
+#ifdef MPI
+#define read_file(_a, _fn, _dt) \
+    call rw_file_mpi(_a, shape(_a), rank(_a), _fn, _dt, .false.)
+#define write_file(_a, _fn, _dt) \
+    call rw_file_mpi(_a, shape(_a), rank(_a), _fn, _dt, .true.)
+#else
+#define MPI_Double_Complex 0
+#define MPI_Double_Complex 0
+#define MPI_Real 0
+#define MPI_Complex 0
+#define MPI_Integer 0
+#define read_file(_a, _fn, _dt) \
+    open(unit=10, file=_fn, status='old', form='unformatted'); \
+    read(10) _a; \
+    close(10)
+
+#define write_file(_a, _fn, _dt) \
+    open(unit=10, file=_fn, status='unknown', form='unformatted'); \
+    write(10) _a; \
+    close(10)
+#endif
