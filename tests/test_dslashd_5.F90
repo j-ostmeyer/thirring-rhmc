@@ -1,5 +1,5 @@
 #include "test_utils.fh"
-program test_dslash
+program test_dslashd
       use params
       use dwf3d_lib
       use dirac
@@ -26,7 +26,7 @@ program test_dslash
       real(dp) max_diff
 
       real, parameter :: am = 0.05
-      integer, parameter :: imass = 3
+      integer, parameter :: imass = 5
 
       integer :: i, j, ix, iy, it, ithird
       integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
@@ -87,7 +87,7 @@ program test_dslash
       call init(istart)
 ! call function
       do i = 1,timing_loops
-         call dslash(Phi, R, u, am, imass)
+         call dslashd(Phi, R, u, am, imass)
 #ifdef MPI
          call start_halo_update_5(4, Phi, 2, reqs_Phi)
          call complete_halo_update(reqs_Phi)
@@ -97,13 +97,13 @@ program test_dslash
       end do
 ! check output
       if (generate) then
-         write_file(Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_dslash_3.dat', MPI_Double_Complex)
+         write_file(Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_dslashd_5.dat', MPI_Double_Complex)
       else
-         read_file(Phiref, 'test_dslash_3.dat', MPI_Double_Complex)
+         read_file(Phiref, 'test_dslashd_5.dat', MPI_Double_Complex)
 
          diff = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - Phiref
-         check_max(diff, 1e-11, 'Phi', max_diff, MPI_Double_Precision, 'test_dslash_3')
-         check_sum(diff, 1e-11, 'Phi', sum_diff, MPI_Double_Complex, 'test_dslash_3')
+         check_max(diff, 1e-11, 'Phi', max_diff, MPI_Double_Precision, 'test_dslashd_5')
+         check_sum(diff, 1e-11, 'Phi', sum_diff, MPI_Double_Complex, 'test_dslashd_5')
       end if
 #ifdef MPI
       call MPI_Finalize

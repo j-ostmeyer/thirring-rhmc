@@ -427,7 +427,7 @@ contains
           if (ip_global .eq. 0) then
              ytest = rano(yran, idum, 1, 1, 1)
 #ifdef MPI
-             call MPI_Bcast(ytest, 1, MPI_Real, 0, comm, ierr)
+             call MPI_Bcast(ytest, 1, MPI_Real, 0, comm)
 #endif
           end if
           if(ytest.lt.proby)then
@@ -457,7 +457,7 @@ contains
        if(dH.lt.0.0)then
           x = rano(yran, idum, 1, 1, 1)
 #ifdef MPI
-          call MPI_Bcast(x, 1, MPI_Real, 0, comm, ierr)
+          call MPI_Bcast(x, 1, MPI_Real, 0, comm)
 #endif
           if(x.gt.y)goto 600
        endif
@@ -476,7 +476,7 @@ contains
        actiona=actiona+action 
        vel2 = sum(pp * pp)
 #ifdef MPI
-       call MPI_AllReduce(MPI_In_Place, vel2, 1, MPI_Real, MPI_Sum, comm, ierr)
+       call MPI_AllReduce(MPI_In_Place, vel2, 1, MPI_Real, MPI_Sum, comm)
 #endif
        vel2 = vel2 / (3 * kvol)
        vel2a = vel2a + vel2
@@ -671,12 +671,12 @@ contains
 !
     hp = 0.5 * sum(pp ** 2)
 #ifdef MPI
-    call MPI_AllReduce(MPI_In_Place, hp, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
+    call MPI_AllReduce(MPI_In_Place, hp, 1, MPI_Double_Precision, MPI_Sum, comm)
 #endif
 
     hg = 0.5 * Nf * beta * sum(theta ** 2)
 #ifdef MPI
-    call MPI_AllReduce(MPI_In_Place, hg, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
+    call MPI_AllReduce(MPI_In_Place, hg, 1, MPI_Double_Precision, MPI_Sum, comm)
 #endif
     h = hg + hp
 ! 
@@ -708,7 +708,7 @@ contains
 #ifdef MPI
 ! hf is built up from zero during the loop so only needs to be summed across
 ! all partitions at this point
-    call MPI_AllReduce(MPI_In_Place, hf, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
+    call MPI_AllReduce(MPI_In_Place, hf, 1, MPI_Double_Precision, MPI_Sum, comm)
 #endif
 !
     h = hg + hp + hf
@@ -778,7 +778,7 @@ contains
 
     betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
 #ifdef MPI
-    call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
+    call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm)
 #endif
     betaq = sqrt(betaq)
     phimod=betaq
@@ -805,7 +805,7 @@ contains
        alphatild = sum(real(conjg(q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
        &                * x3(:,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 #ifdef MPI
-       call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Real, MPI_Sum, comm, ierr)
+       call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Real, MPI_Sum, comm)
 #endif
 !
        R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = &
@@ -824,7 +824,7 @@ contains
        betaq0 = betaq
        betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:)) ** 2)
 #ifdef MPI
-       call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
+       call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm)
 #endif
        betaq = sqrt(betaq)
 !
@@ -1161,9 +1161,10 @@ contains
        if(nx.ne.1)then
 !
 !   alpha=(r,r)/(p,(Mdagger)Mp)
+!   Don't need x1's halo at this point
           alphad = real(sum(abs(x1(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2))
 #ifdef MPI
-          call MPI_AllReduce(MPI_In_Place, alphad, 1, MPI_Real, MPI_Sum, comm, ierr)
+          call MPI_AllReduce(MPI_In_Place, alphad, 1, MPI_Real, MPI_Sum, comm)
 #endif       
           alpha = alphan / alphad
 !     
@@ -1194,7 +1195,7 @@ contains
 !   betacg=(r_k+1,r_k+1)/(r_k,r_k)
        betacgn = real(sum(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2))
 #ifdef MPI
-       call MPI_AllReduce(MPI_In_Place, betacgn, 1, MPI_Real, MPI_Sum, comm, ierr)
+       call MPI_AllReduce(MPI_In_Place, betacgn, 1, MPI_Real, MPI_Sum, comm)
 #endif       
        betacg = betacgn / betacgd
        betacgd = betacgn
@@ -1383,9 +1384,9 @@ contains
 !  The sums psibarpsi1 and psibarpsi2 are initialised to 0 outside the loop
 !  So can be summed up per process, then collected here at the end
        call MPI_AllReduce(MPI_In_Place, psibarpsi1, 1, MPI_Double_Complex, &
-            & MPI_Sum, comm, ierr)
+            & MPI_Sum, comm)
        call MPI_AllReduce(MPI_In_Place, psibarpsi2, 1, MPI_Double_Complex, &
-            & MPI_Sum, comm, ierr)
+            & MPI_Sum, comm)
 #endif
 !
        if(imass.eq.1)then
@@ -1746,13 +1747,13 @@ contains
     type(MPI_Status) :: status
     
     call MPI_File_Open(comm, 'con', MPI_Mode_Rdonly, &
-         & MPI_Info_Null, mpi_fh, ierr)
+         & MPI_Info_Null, mpi_fh)
 ! Get the configuration
     call MPI_File_Set_View(mpi_fh, 0_8, MPI_Real, mpiio_type, "native", &
-         & MPI_Info_Null, ierr)
+         & MPI_Info_Null)
     call MPI_File_Read_All(mpi_fh, theta, 3 * ksizex_l * ksizey_l * ksizet_l, &
-         & MPI_Real, status, ierr)
-    call MPI_File_Close(mpi_fh, ierr)
+         & MPI_Real, status)
+    call MPI_File_Close(mpi_fh)
 ! Get the seed
     if (ip_global.eq.0) then
        open(unit=10, file='con', status='old', form='unformatted', access='stream')
@@ -1760,7 +1761,7 @@ contains
        read (10) seed
        close(10)
     end if
-    call MPI_Bcast(seed, 1, MPI_Double_Precision, 0, comm, ierr)
+    call MPI_Bcast(seed, 1, MPI_Double_Precision, 0, comm)
 #else
     open(unit=10, file='con', status='old', form='unformatted')
     read (10) theta, seed
@@ -1779,12 +1780,12 @@ contains
     
 ! Write theta
     call MPI_File_Open(comm, 'con', MPI_Mode_Wronly + MPI_Mode_Create, &
-         & MPI_Info_Null, mpi_fh, ierr)
+         & MPI_Info_Null, mpi_fh)
     call MPI_File_Set_View(mpi_fh, 0_8, MPI_Real, mpiio_type, "native", &
-         & MPI_Info_Null, ierr)
+         & MPI_Info_Null)
     call MPI_File_Write_All(mpi_fh, theta, 3 * ksizex_l * ksizey_l * ksizet_l, &
-         & MPI_Real, status, ierr)
-    call MPI_File_Close(mpi_fh, ierr)
+         & MPI_Real, status)
+    call MPI_File_Close(mpi_fh)
 
 ! Write seed in serial
     if (ip_global.eq.0) then

@@ -1,3 +1,4 @@
+#include "test_utils.fh"
 program test_force
       use dwf3d_lib
       use trial
@@ -8,22 +9,24 @@ program test_force
       use param
       use comms
       use phizero
+      use test_utils
       implicit none
 
 ! general parameters
       logical :: generate = .false.
       integer :: timing_loops = 1
       complex, parameter :: iunit = cmplx(0, 1)
-      real*8, parameter :: tau = 8 * atan(1.0_8)
+      real(dp), parameter :: tau = 8 * atan(1.0_8)
 
       integer :: istart
-      real :: dSdpi_ref(ksize, ksize, ksizet, 3)
+      real :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
 
 ! initialise function parameters
-      complex(dp) :: Phi(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, 1)
-      complex(dp) :: Phi0_orig(kthird, 0:ksize+1, 0:ksize+1, 0:ksizet+1, 4, 25)
-      complex(dp) :: delta(ksize, ksize, ksizet, 3)
-      complex(dp) :: R(kthird,0:ksize+1, 0:ksize+1, 0:ksizet+1, 4)
+      complex(dp) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 1)
+      complex(dp) :: Phi0_orig(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 25)
+      real :: diff(ksizex_l, ksizey_l, ksizet_l, 3)
+      complex(dp) :: R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+      real :: sum_diff, max_diff
 
       integer :: imass, iflag, isweep, iter
       real :: res1, am
@@ -34,7 +37,7 @@ program test_force
       integer :: idx = 0
 
 #ifdef MPI
-      integer, dimension(12) :: reqs_R, reqs_X, reqs_U, reqs_Phi, reqs_Phi0
+      type(MPI_Request), dimension(12) :: reqs_R, reqs_X, reqs_U, reqs_Phi, reqs_Phi0
       call init_MPI
 #endif
 
@@ -54,10 +57,10 @@ program test_force
       bnum2g(0) = 0.49
       bnum4g(0) = 0.53
       do i = 1, ndiagg
-         anum2g(i) = 0.4 * exp(iunit * i * tau / ndiagg)
-         aden2g(i) = 0.4 * exp(-iunit * 0.5 * i * tau / ndiagg)
-         anum4g(i) = 0.41 * exp(iunit * i * tau / ndiagg)
-         aden4g(i) = 0.41 * exp(-iunit * 0.5 * i * tau / ndiagg)
+         anum2g(i) = 0.4 * real(exp(iunit * i * tau / ndiagg))
+         aden2g(i) = 0.4 * real(exp(-iunit * 0.5 * i * tau / ndiagg))
+         anum4g(i) = 0.41 * real(exp(iunit * i * tau / ndiagg))
+         aden4g(i) = 0.41 * real(exp(-iunit * 0.5 * i * tau / ndiagg))
       enddo
       do j = 1,4
          do it = 1,ksizet_l
@@ -86,17 +89,17 @@ program test_force
       call start_halo_update_6(4, 25, Phi0_orig, 2, reqs_Phi0)
 #endif
       do j = 1,3
-         do it = 1,ksizet
-            do iy = 1,ksize
-               do ix = 1,ksize
+         do it = 1,ksizet_l
+            do iy = 1,ksizey_l
+               do ix = 1,ksizex_l
                   idx = ip_x * ksizex_l + ix &
                        & + (ip_y * ksizey_l + iy - 1) * ksize &
                        & + (ip_t * ksizet_l + it - 1) * ksize * ksize &
                        & + (j - 1) * ksize * ksize * ksizet
                   u(ix, iy, it, j) = exp(iunit * idx * tau / idxmax)
-                  theta(ix, iy, it, j) = 1.9 * exp(iunit * idx * tau / idxmax)
-                  pp(ix, iy, it, j) = -1.1 * exp(iunit * idx * tau / idxmax)
-                  dSdpi(ix, iy, it, j) = tau * exp(iunit * idx * tau / idxmax)
+                  theta(ix, iy, it, j) = 1.9 * real(exp(iunit * idx * tau / idxmax), sp)
+                  pp(ix, iy, it, j) = -1.1 * real(exp(iunit * idx * tau / idxmax), sp)
+                  dSdpi(ix, iy, it, j) = real(tau * exp(iunit * idx * tau / idxmax), sp)
                enddo
             enddo
          enddo
@@ -131,15 +134,18 @@ program test_force
          s = 0
          call force(Phi, res1, am, imass, isweep, iter, max_qmr_iter=2)
       end do
-      print *, ancgpv, ancg, ancgf, ancgfpv
 ! check output
-      open(3, file='test_force.dat', form="unformatted", access="sequential")
       if (generate) then
-         write(3) dSdpi
+         write_file(dSdpi, 'test_force.dat', MPI_Real)
       else
-         read(3) dSdpi_ref
-         delta = dSdpi_ref - dSdpi
-         print *, 'sum delta = ', sum(delta)
-         print *, 'max delta = ', maxval(abs(delta))
+         read_file(dSdpi_ref, 'test_force.dat', MPI_Real)
+         diff = dSdpi_ref - dSdpi
+
+         check_equality(ancgpv, 2, 'ancgpv', 'test_force')
+         check_equality(ancg, 2, 'ancg', 'test_force')
+         check_equality(ancgf, 2, 'ancgf', 'test_force')
+         check_equality(ancgfpv, 2, 'ancgfpv', 'test_force')
+         check_max(diff, 1.3, 'dSdpi', max_diff, MPI_Real, 'test_force')
+         check_sum(diff, 2450, 'dSdpi', sum_diff, MPI_Real, 'test_force')
    end if
 end program

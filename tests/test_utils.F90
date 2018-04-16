@@ -1,15 +1,14 @@
 module test_utils
   use params
   use random
-  use gauge
 #ifdef MPI
   use comms
 #endif
   implicit none
   
-#ifdef MPI
   contains
 
+#ifdef MPI
   subroutine rw_file_mpi(array, array_shape, rank, filename, mpi_dtype, write_out)
     integer, intent(in) :: array_shape(:), rank
     type(*), dimension(..), intent(inout) :: array
@@ -18,8 +17,8 @@ module test_utils
     logical, intent(in) :: write_out
     integer, dimension(rank) :: global_size, local_size, start  
     integer :: size_index
-    integer :: count = 1
-    integer :: offset = 1
+    integer :: count
+    integer :: offset
     type(MPI_File) :: mpi_fh
     type(MPI_Datatype) :: local_mpiio_type
     type(MPI_Status) :: status
@@ -35,10 +34,15 @@ module test_utils
     local_size = array_shape
     start = 0
 
+    ! Work out which elements of local_size will differ from global_size
     if (rank .eq. 4) then
        offset = 0
+    else
+       offset = 1
     end if
 
+    ! Work out how many elements to transfer
+    count = 1
     do size_index = 1, rank
        count = count * local_size(size_index)
     end do
@@ -64,9 +68,8 @@ module test_utils
        call MPI_File_Read_All(mpi_fh, array, count, mpi_dtype, status)
     end if
     call MPI_File_Close(mpi_fh)
+    call MPI_Type_Free(local_mpiio_type)
     return
   end subroutine rw_file_mpi
 #endif
-
-
 end module

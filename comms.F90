@@ -6,7 +6,6 @@ module comms
   save
   integer :: ip_x, ip_y, ip_t, ip_global, np_global
   type(MPI_Comm) :: comm
-  integer :: ierr
   type(MPI_Datatype) :: mpiio_type
 
   type(MPI_Datatype) :: halo_6_xup_send(4:4, 1:25), halo_6_xdn_send(4:4, 1:25)
@@ -69,8 +68,8 @@ contains
     starts(direction+1) = position
 
     call MPI_Type_Create_Subarray(4, sizes, subsizes, starts, MPI_Order_Fortran, &
-         & datatype, typetarget, ierr)
-    call MPI_Type_Commit(typetarget, ierr)
+         & datatype, typetarget)
+    call MPI_Type_Commit(typetarget)
     return
   end subroutine init_single_halo_type_4
 
@@ -86,8 +85,8 @@ contains
     starts(direction+2) = position
 
     call MPI_Type_Create_Subarray(5, sizes, subsizes, starts, MPI_Order_Fortran, &
-         & MPI_Double_Complex, typetarget, ierr)
-    call MPI_Type_Commit(typetarget, ierr)
+         & MPI_Double_Complex, typetarget)
+    call MPI_Type_Commit(typetarget)
     return
   end subroutine init_single_halo_type_5
 
@@ -103,8 +102,8 @@ contains
     starts(direction+2) = position
 
     call MPI_Type_Create_Subarray(6, sizes, subsizes, starts, MPI_Order_Fortran, &
-         & MPI_Double_Complex, typetarget, ierr)
-    call MPI_Type_Commit(typetarget, ierr)
+         & MPI_Double_Complex, typetarget)
+    call MPI_Type_Commit(typetarget)
     return
   end subroutine init_single_halo_type_6
 
@@ -256,37 +255,37 @@ contains
     tag_offset = 6 * tag
 
 ! Start send and receive in x direction
-    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup, ierr)
+    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup)
     call MPI_Isend(Array, 1, halo_4_xup_send(size4), ip_xup, 0 + tag_offset, comm, &
-         & reqs(1), ierr)
+         & reqs(1))
     call MPI_Irecv(Array, 1, halo_4_xdn_recv(size4), ip_xdn, 0 + tag_offset, comm, &
-         & reqs(2), ierr)
+         & reqs(2))
     call MPI_Isend(Array, 1, halo_4_xdn_send(size4), ip_xdn, 1 + tag_offset, comm, &
-         & reqs(3), ierr)
+         & reqs(3))
     call MPI_Irecv(Array, 1, halo_4_xup_recv(size4), ip_xup, 1 + tag_offset, comm, &
-         & reqs(4), ierr)
+         & reqs(4))
 
 ! Start send and receive in y direction
-    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup, ierr)
+    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup)
     call MPI_Isend(Array, 1, halo_4_yup_send(size4), ip_yup, 2 + tag_offset, comm, &
-         & reqs(5), ierr)
+         & reqs(5))
     call MPI_Irecv(Array, 1, halo_4_ydn_recv(size4), ip_ydn, 2 + tag_offset, comm, &
-         & reqs(6), ierr)
+         & reqs(6))
     call MPI_Isend(Array, 1, halo_4_ydn_send(size4), ip_ydn, 3 + tag_offset, comm, &
-         & reqs(7), ierr)
+         & reqs(7))
     call MPI_Irecv(Array, 1, halo_4_yup_recv(size4), ip_yup, 3 + tag_offset, comm, &
-         & reqs(8), ierr)
+         & reqs(8))
 
 ! Start send and receive in t direction
-    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup, ierr)
+    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup)
     call MPI_Isend(Array, 1, halo_4_tup_send(size4), ip_tup, 4 + tag_offset, comm, &
-         & reqs(9), ierr)
+         & reqs(9))
     call MPI_Irecv(Array, 1, halo_4_tdn_recv(size4), ip_tdn, 4 + tag_offset, comm, &
-         & reqs(10), ierr)
+         & reqs(10))
     call MPI_Isend(Array, 1, halo_4_tdn_send(size4), ip_tdn, 5 + tag_offset, comm, &
-         & reqs(11), ierr)
+         & reqs(11))
     call MPI_Irecv(Array, 1, halo_4_tup_recv(size4), ip_tup, 5 + tag_offset, comm, &
-         & reqs(12), ierr)
+         & reqs(12))
 !      
   end subroutine start_halo_update_4
 
@@ -301,37 +300,37 @@ contains
     tag_offset = 6 * tag
 
 ! Start send and receive in x direction
-    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup, ierr)
+    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup)
     call MPI_Isend(Array, 1, halo_4_real_xup_send(size4), ip_xup, 0 + tag_offset, comm, &
-         & reqs(1), ierr)
+         & reqs(1))
     call MPI_Irecv(Array, 1, halo_4_real_xdn_recv(size4), ip_xdn, 0 + tag_offset, comm, &
-         & reqs(2), ierr)
+         & reqs(2))
     call MPI_Isend(Array, 1, halo_4_real_xdn_send(size4), ip_xdn, 1 + tag_offset, comm, &
-         & reqs(3), ierr)
+         & reqs(3))
     call MPI_Irecv(Array, 1, halo_4_real_xup_recv(size4), ip_xup, 1 + tag_offset, comm, &
-         & reqs(4), ierr)
+         & reqs(4))
 
 ! Start send and receive in y direction
-    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup, ierr)
+    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup)
     call MPI_Isend(Array, 1, halo_4_real_yup_send(size4), ip_yup, 2 + tag_offset, comm, &
-         & reqs(5), ierr)
+         & reqs(5))
     call MPI_Irecv(Array, 1, halo_4_real_ydn_recv(size4), ip_ydn, 2 + tag_offset, comm, &
-         & reqs(6), ierr)
+         & reqs(6))
     call MPI_Isend(Array, 1, halo_4_real_ydn_send(size4), ip_ydn, 3 + tag_offset, comm, &
-         & reqs(7), ierr)
+         & reqs(7))
     call MPI_Irecv(Array, 1, halo_4_real_yup_recv(size4), ip_yup, 3 + tag_offset, comm, &
-         & reqs(8), ierr)
+         & reqs(8))
 
 ! Start send and receive in t direction
-    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup, ierr)
+    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup)
     call MPI_Isend(Array, 1, halo_4_real_tup_send(size4), ip_tup, 4 + tag_offset, comm, &
-         & reqs(9), ierr)
+         & reqs(9))
     call MPI_Irecv(Array, 1, halo_4_real_tdn_recv(size4), ip_tdn, 4 + tag_offset, comm, &
-         & reqs(10), ierr)
+         & reqs(10))
     call MPI_Isend(Array, 1, halo_4_real_tdn_send(size4), ip_tdn, 5 + tag_offset, comm, &
-         & reqs(11), ierr)
+         & reqs(11))
     call MPI_Irecv(Array, 1, halo_4_real_tup_recv(size4), ip_tup, 5 + tag_offset, comm, &
-         & reqs(12), ierr)
+         & reqs(12))
 !      
   end subroutine start_halo_update_4_real
 
@@ -347,37 +346,37 @@ contains
     tag_offset = 6 * tag
 
 ! Start send and receive in x direction
-    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup, ierr)
+    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup)
     call MPI_Isend(Array, 1, halo_5_xup_send(size5), ip_xup, 0 + tag_offset, comm, &
-         & reqs(1), ierr)
+         & reqs(1))
     call MPI_Irecv(Array, 1, halo_5_xdn_recv(size5), ip_xdn, 0 + tag_offset, comm, &
-         & reqs(2), ierr)
+         & reqs(2))
     call MPI_Isend(Array, 1, halo_5_xdn_send(size5), ip_xdn, 1 + tag_offset, comm, &
-         & reqs(3), ierr)
+         & reqs(3))
     call MPI_Irecv(Array, 1, halo_5_xup_recv(size5), ip_xup, 1 + tag_offset, comm, &
-         & reqs(4), ierr)
+         & reqs(4))
 
 ! Start send and receive in y direction
-    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup, ierr)
+    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup)
     call MPI_Isend(Array, 1, halo_5_yup_send(size5), ip_yup, 2 + tag_offset, comm, &
-         & reqs(5), ierr)
+         & reqs(5))
     call MPI_Irecv(Array, 1, halo_5_ydn_recv(size5), ip_ydn, 2 + tag_offset, comm, &
-         & reqs(6), ierr)
+         & reqs(6))
     call MPI_Isend(Array, 1, halo_5_ydn_send(size5), ip_ydn, 3 + tag_offset, comm, &
-         & reqs(7), ierr)
+         & reqs(7))
     call MPI_Irecv(Array, 1, halo_5_yup_recv(size5), ip_yup, 3 + tag_offset, comm, &
-         & reqs(8), ierr)
+         & reqs(8))
 
 ! Start send and receive in t direction
-    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup, ierr)
+    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup)
     call MPI_Isend(Array, 1, halo_5_tup_send(size5), ip_tup, 4 + tag_offset, comm, &
-         & reqs(9), ierr)
+         & reqs(9))
     call MPI_Irecv(Array, 1, halo_5_tdn_recv(size5), ip_tdn, 4 + tag_offset, comm, &
-         & reqs(10), ierr)
+         & reqs(10))
     call MPI_Isend(Array, 1, halo_5_tdn_send(size5), ip_tdn, 5 + tag_offset, comm, &
-         & reqs(11), ierr)
+         & reqs(11))
     call MPI_Irecv(Array, 1, halo_5_tup_recv(size5), ip_tup, 5 + tag_offset, comm, &
-         & reqs(12), ierr)
+         & reqs(12))
 !      
   end subroutine start_halo_update_5
 
@@ -393,43 +392,43 @@ contains
     tag_offset = 6 * tag
 
 ! Start send and receive in x direction
-    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup, ierr)
+    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup)
     call MPI_Isend(Array, 1, halo_6_xup_send(size5, size6), ip_xup, 0 + tag_offset, comm, &
-         & reqs(1), ierr)
+         & reqs(1))
     call MPI_Irecv(Array, 1, halo_6_xdn_recv(size5, size6), ip_xdn, 0 + tag_offset, comm, &
-         & reqs(2), ierr)
+         & reqs(2))
     call MPI_Isend(Array, 1, halo_6_xdn_send(size5, size6), ip_xdn, 1 + tag_offset, comm, &
-         & reqs(3), ierr)
+         & reqs(3))
     call MPI_Irecv(Array, 1, halo_6_xup_recv(size5, size6), ip_xup, 1 + tag_offset, comm, &
-         & reqs(4), ierr)
+         & reqs(4))
 
 ! Start send and receive in y direction
-    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup, ierr)
+    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup)
     call MPI_Isend(Array, 1, halo_6_yup_send(size5, size6), ip_yup, 2 + tag_offset, comm, &
-         & reqs(5), ierr)
+         & reqs(5))
     call MPI_Irecv(Array, 1, halo_6_ydn_recv(size5, size6), ip_ydn, 2 + tag_offset, comm, &
-         & reqs(6), ierr)
+         & reqs(6))
     call MPI_Isend(Array, 1, halo_6_ydn_send(size5, size6), ip_ydn, 3 + tag_offset, comm, &
-         & reqs(7), ierr)
+         & reqs(7))
     call MPI_Irecv(Array, 1, halo_6_yup_recv(size5, size6), ip_yup, 3 + tag_offset, comm, &
-         & reqs(8), ierr)
+         & reqs(8))
 
 ! Start send and receive in t direction
-    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup, ierr)
+    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup)
     call MPI_Isend(Array, 1, halo_6_tup_send(size5, size6), ip_tup, 4 + tag_offset, comm, &
-         & reqs(9), ierr)
+         & reqs(9))
     call MPI_Irecv(Array, 1, halo_6_tdn_recv(size5, size6), ip_tdn, 4 + tag_offset, comm, &
-         & reqs(10), ierr)
+         & reqs(10))
     call MPI_Isend(Array, 1, halo_6_tdn_send(size5, size6), ip_tdn, 5 + tag_offset, comm, &
-         & reqs(11), ierr)
+         & reqs(11))
     call MPI_Irecv(Array, 1, halo_6_tup_recv(size5, size6), ip_tup, 5 + tag_offset, comm, &
-         & reqs(12), ierr)
+         & reqs(12))
 !      
   end subroutine start_halo_update_6
   
   subroutine complete_halo_update(reqs)
     type(MPI_Request), intent(inout) :: reqs(12)
-    call MPI_Waitall(12, reqs, MPI_Statuses_Ignore, ierr)
+    call MPI_Waitall(12, reqs, MPI_Statuses_Ignore)
   end subroutine complete_halo_update
 
 !***********************************************************************
@@ -437,24 +436,29 @@ contains
 !***********************************************************************
   subroutine init_MPI()
     integer :: coords(3)
+#ifdef WITH_MUST
+    integer, parameter :: must_rank = 1
+#else
+    integer, parameter :: must_rank = 0
+#endif
 
-    call MPI_init(ierr)
+    call MPI_init
 
 ! Check that we have the right number of processes
-    call MPI_comm_size(MPI_COMM_WORLD, np_global, ierr)
-    call MPI_comm_rank(MPI_COMM_WORLD, ip_global, ierr)
-    if (np_global .ne. NP_X * NP_Y * NP_T) then
+    call MPI_comm_size(MPI_COMM_WORLD, np_global)
+    call MPI_comm_rank(MPI_COMM_WORLD, ip_global)
+    if (np_global .ne. NP_X * NP_Y * NP_T + must_rank) then
        print *,"MPI dimensionality mismatch: ", NP_X, "*", NP_Y, "*", NP_T, "!=", np_global
-       call MPI_finalize(ierr)
+       call MPI_finalize
        call exit(2)
     end if
 
 ! Set up a Cartesian communicator; periodic boundaries, allow reordering
     call MPI_cart_create(MPI_COMM_WORLD, 3, (/ NP_X, NP_Y, NP_T /), &
-         & (/ .true., .true., .true. /), .true., comm, ierr)
+         & (/ .true., .true., .true. /), .true., comm)
 
 ! Know where I am
-    call MPI_cart_coords(comm, ip_global, 3, coords, ierr)
+    call MPI_cart_coords(comm, ip_global, 3, coords)
     ip_x = coords(1)
     ip_y = coords(2)
     ip_t = coords(3)
@@ -466,9 +470,8 @@ contains
          (/ ip_x * ksizex_l, ip_y * ksizey_l, ip_t * ksizet_l, 0 /), &! start location
          MPI_Order_Fortran, &! array ordering
          MPI_Real, &! datatype to store
-         mpiio_type, &! type descriptor for this subarray type
-         ierr) ! dummy status variable
-    call MPI_Type_Commit(mpiio_type, ierr)
+         mpiio_type ) ! type descriptor for this subarray type
+    call MPI_Type_Commit(mpiio_type)
 
 ! Prepare all of the halo types
     call init_halo_types

@@ -1,26 +1,26 @@
+#include 'test_utils.fh'
 program test_gaussp
       use dwf3d_lib
       use gauge
-#ifdef MPI
-      use mpi
-#endif
       use comms
       use random
       implicit none
 
       real :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
-      integer :: reqs(12), ix, iy, it, ix2, iy2, it2, i, j
+      integer :: ix, iy, it, ix2, iy2, it2, i, j
       integer, dimension(4) :: duplicate_position1, duplicate_position2
       logical :: has_duplicates = .false.
-      real :: y, sumps, maxps, minps
-
-      seed = 1.0
+      real :: sumps, maxps, minps
 
 ! initialise MPI
 #ifdef MPI
+      type(MPI_Request) :: reqs(12)
       call init_MPI
+#else
+      integer :: reqs
 #endif
       
+      seed = 1.0
       call init_random(seed)
 
 ! call function
@@ -59,29 +59,41 @@ program test_gaussp
       end do outer
       
 #ifdef MPI
-      call MPI_AllReduce(MPI_IN_PLACE, sumps, 1, MPI_REAL, MPI_SUM, comm, ierr)
-      call MPI_AllReduce(MPI_IN_PLACE, maxps, 1, MPI_REAL, MPI_MAX, comm, ierr)
-      call MPI_AllReduce(MPI_IN_PLACE, minps, 1, MPI_REAL, MPI_MIN, comm, ierr)
-      call MPI_AllReduce(MPI_IN_PLACE, has_duplicates, 1, MPI_LOGICAL, MPI_LOR, comm, ierr)
+      call MPI_AllReduce(MPI_IN_PLACE, sumps, 1, MPI_REAL, MPI_SUM, comm)
+      call MPI_AllReduce(MPI_IN_PLACE, maxps, 1, MPI_REAL, MPI_MAX, comm)
+      call MPI_AllReduce(MPI_IN_PLACE, minps, 1, MPI_REAL, MPI_MIN, comm)
+      call MPI_AllReduce(MPI_IN_PLACE, has_duplicates, 1, MPI_LOGICAL, MPI_LOR, comm)
 #endif
+#ifndef SITE_RANDOM
+#if defined(MPI) && NP_T > 1 && NP_X > 1 && NP_Y > 1
       if (ip_global .eq. 0) then
-         if (sumps .lt. 20.4506 .or. sumps .gt. 20.4507) then
-            print *, 'sum looks wrong:', sumps
-         end if
-         if (maxps .lt. 3.67040 .or. maxps .gt. 3.67041) then
-            print *, 'max looks wrong:', maxps
-         end if
-         if (minps .lt. -3.452905 .or. minps .gt. -3.452895) then
-            print *, 'min looks wrong:', minps
-         end if
+         print *, 'Unable to check results in parallel without using site_random'
+      end if
+#else
+      check_float_equality(sumps, -22.13475, 0.001, 'sum', 'test_gaussp')
+      check_float_equality(maxps, 3.914956, 0.001, 'max', 'test_gaussp')
+      check_float_equality(minps, -3.558903, 0.001, 'min', 'test_gaussp')
+#endif
+#else
+      check_float_equality(sumps, 20.4506, 0.001, 'sum', 'test_gaussp')
+      check_float_equality(maxps, 3.67040, 0.001, 'max', 'test_gaussp')
+      check_float_equality(minps, -3.452905, 0.001, 'min', 'test_gaussp')
+      if (ip_global .eq. 0) then
          if (has_duplicates) then
             print *, 'duplicate random numbers observed at:'
             write(*, '(4i3)') duplicate_position1
             write(*, '(4i3)') duplicate_position2
          end if
       end if
-!      print *, 'Seed: ', seed
+#endif
+      if (ip_global .eq. 0) then
+         if (has_duplicates) then
+            print *, 'duplicate random numbers observed at:'
+            write(*, '(4i3)') duplicate_position1
+            write(*, '(4i3)') duplicate_position2
+         end if
+      end if
 #ifdef MPI
-      call MPI_Finalize(ierr)
+      call MPI_Finalize
 #endif
 end program

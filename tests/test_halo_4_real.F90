@@ -102,7 +102,7 @@ program test_halo_4_real
 
 
 #ifdef MPI
-  call MPI_Finalize(ierr)
+  call MPI_Finalize
 #endif
 end program test_halo_4_real
   

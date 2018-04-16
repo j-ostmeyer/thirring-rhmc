@@ -12,30 +12,18 @@ program test_hamilton
       implicit none
 
 ! general parameters
-      logical :: generate = .false.
       integer :: timing_loops = 1
       complex, parameter :: iunit = cmplx(0, 1)
       real(dp), parameter :: tau = 8 * atan(1.0_8)
-      complex(dp) :: acc_sum = 0.
-      real(dp) :: acc_max = 0.
-
-! common blocks to function
       integer :: istart
 
 ! initialise function parameters
       complex(dp) Phi(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-      complex(dp) X2(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
       complex(dp), allocatable :: Phi0_ref(:, :, :, :, :, :)
       complex(dp), allocatable :: Phi0_orig(:, :, :, :, :, :)
-      complex(dp) :: x_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-      complex(dp) :: delta_x(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-      complex(dp) :: ratio_x(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-      complex(dp), allocatable :: delta_Phi0(:, :, :, :, :, :)
       complex(dp) :: R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-      real :: diff(ksizex_l, ksizey_l, ksizet_l, 3)
 
       integer :: imass, iflag, isweep, iter
-      real(dp) :: anum(0:ndiag), aden(ndiag), coeff
       real :: res2, am
       real(dp) :: h, hg, hp, s
       
@@ -44,13 +32,12 @@ program test_hamilton
       integer :: idx = 0
 
 #ifdef MPI
-      integer, dimension(12) :: reqs_R, reqs_X, reqs_U, reqs_Phi, reqs_Phi0
+      type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
       call init_MPI
 #endif
 
       allocate(Phi0_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
       allocate(Phi0_orig(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 25))
-      allocate(delta_Phi0(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
 
       hg = 0.
       hp = 0.

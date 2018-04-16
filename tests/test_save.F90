@@ -1,10 +1,7 @@
 program test_save
       use dwf3d_lib
       use gauge
-#ifdef MPI
-      use mpi
-      use mpi_variables
-#endif
+      use comms
       implicit none
 
 ! setup
@@ -17,6 +14,6 @@ program test_save
       call swrite
 
 #ifdef MPI
-      call MPI_Finalize(ierr)
+      call MPI_Finalize
 #endif
 end program

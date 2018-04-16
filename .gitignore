@@ -2,3 +2,7 @@
 *.o
 *.mod
 fort.*
+**.makefile.uptodate
+**#*#
+**control
+**output

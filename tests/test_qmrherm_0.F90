@@ -1,4 +1,5 @@
-program test_qmrherm
+#include "test_utils.fh"
+program test_qmrherm_0
       use dwf3d_lib
       use trial
       use vector
@@ -7,6 +8,7 @@ program test_qmrherm
       use gforce
       use params
       use comms
+      use test_utils
       implicit none
 
 ! general parameters
@@ -24,9 +26,11 @@ program test_qmrherm
       complex(dp), allocatable :: Phi0_orig(:, :, :, :, :, :)
       complex(dp) :: x_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
       complex(dp) :: delta_x(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-      complex(dp) :: ratio_x(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
       complex(dp), allocatable :: delta_Phi0(:, :, :, :, :, :)
       complex(dp) :: R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+
+      complex(dp) :: sum_delta_x, sum_delta_Phi0
+      real(dp) :: max_delta_x, max_delta_Phi0
 
       integer :: imass, iflag, isweep, iter
       real(dp) :: anum(0:ndiag), aden(ndiag)
@@ -38,7 +42,7 @@ program test_qmrherm
       integer :: idx = 0
 
 #ifdef MPI
-      integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
+      type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
       call init_MPI
 #endif
 
@@ -55,8 +59,8 @@ program test_qmrherm
 
       anum(0) = 0.5
       do i = 1, ndiag
-         anum(i) = exp(iunit * i * tau / ndiag)
-         aden(i) = exp(-iunit * 0.5 * i * tau / ndiag)
+         anum(i) = real(exp(iunit * i * tau / ndiag))
+         aden(i) = real(exp(-iunit * 0.5 * i * tau / ndiag))
       enddo
       do j = 1,4
          do it = 1,ksizet_l
@@ -92,7 +96,7 @@ program test_qmrherm
                        & + (ip_t * ksizet_l + it - 1) * ksize * ksize &
                        & + (j - 1) * ksize * ksize * ksizet
                   u(ix, iy, it, j) = exp(iunit * idx * tau / idxmax)
-                  dSdpi(ix, iy, it, j) = tau * exp(iunit * idx * tau / idxmax)
+                  dSdpi(ix, iy, it, j) = real(tau * exp(iunit * idx * tau / idxmax), sp)
                enddo
             enddo
          enddo
@@ -121,25 +125,24 @@ program test_qmrherm
          call qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter, &
               & max_iter=2)
       end do
-      if (ip_global .eq. 0) then
-         print *, "CG iterations:", itercg
-      end if
 ! check output
-      if (np_global .eq. 1) then
-         open(3, file='test_qmrherm_0_x.dat', form="unformatted", access="sequential")
-         open(4, file='test_qmrherm_0_Phi0.dat', form="unformatted", access="sequential")
-         if (generate) then
-            write(3) x(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:)
-            write(4) Phi0(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:,:)
-         else
-            read(3) x_ref
-            read(4) Phi0_ref
-            delta_x = x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - x_ref
-            delta_Phi0 = Phi0(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :, :) - Phi0_ref
-            ratio_x = x_ref / x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
-            print *, 'sum delta = ', sum(delta_x), sum(delta_Phi0)
-            print *, 'max delta = ', maxval(abs(delta_x)), maxval(abs(delta_Phi0))
-            print *, 'sum ratio = ', sum(ratio_x), 'max = ', maxval(abs(ratio_x))
-         end if
-   end if
-end program
+      if (generate) then
+         write_file(x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_qmrherm_0_x.dat', MPI_Double_Complex)
+         write_file(Phi0(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :, :), 'test_qmrherm_0_Phi0.dat', MPI_Double_Complex)
+      else
+         read_file(x_ref, 'test_qmrherm_0_x.dat', MPI_Double_Complex)
+         read_file(Phi0_ref, 'test_qmrherm_0_Phi0.dat', MPI_Double_Complex)
+         
+         delta_x = x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - x_ref
+         delta_Phi0 = Phi0(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :, :) - Phi0_ref
+
+         check_equality(itercg, 2, 'itercg', 'test_qmrherm_0')
+         check_sum(delta_x, 50, 'x', sum_delta_x, MPI_Double_Complex, 'test_qmrherm_0')
+         check_max(delta_x, 0.5, 'x', max_delta_x, MPI_Double_Precision, 'test_qmrherm_0')
+         check_sum(delta_Phi0, 1e-12, 'Phi0', sum_delta_Phi0, MPI_Double_Complex, 'test_qmrherm_0')
+         check_max(delta_Phi0, 1e-14, 'Phi0', max_delta_Phi0, MPI_Double_Precision, 'test_qmrherm_0')
+      end if
+#ifdef MPI
+      call MPI_Finalize
+#endif
+end program test_qmrherm_0

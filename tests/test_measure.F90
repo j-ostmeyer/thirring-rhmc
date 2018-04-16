@@ -1,31 +1,29 @@
+#include "test_utils.fh"
 program test_measure
       use dwf3d_lib
       use trial, only: u
       use vector
       use comms
       use random
+      use test_utils
       implicit none
 
 ! general parameters
       integer :: timing_loops = 1
       complex, parameter :: iunit = cmplx(0, 1)
       real*8, parameter :: tau = 8 * atan(1.0_8)
-      complex(dp) :: acc_sum = 0.
-      real*8 :: acc_max = 0.
       integer :: istart
 
 ! initialise function parameters
       real psibarpsi, aviter
       integer :: imass, iflag, isweep, iter
       real :: res, am
-      real(dp) :: h, hg, hp, s
-      integer :: itercg
       
-      integer :: i, j, l, ix, iy, it, ithird
+      integer :: i, j, ix, iy, it, ithird
       integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
       integer :: idx = 0
 #ifdef MPI
-      integer, dimension(12) :: reqs_x, reqs_u
+      type(MPI_Request), dimension(12) :: reqs_x, reqs_u
 
       call init_MPI
 #endif
@@ -86,10 +84,14 @@ program test_measure
       do i = 1,timing_loops
          call measure(psibarpsi, res, aviter, am, imass)
       end do
-      if (ip_global .eq. 0) then
-         print *, psibarpsi, aviter
-      end if
+#ifdef SITE_RANDOM
+! differing random numbers will throw off stochastic estimates like these
+      check_float_equality(psibarpsi, 2.504295e-4, 0.001, 'psibarpsi', 'test_measure')
+#else
+      check_float_equality(psibarpsi, 2.504295e-4, 0.05, 'psibarpsi', 'test_measure')
+#endif
+      check_equality(aviter, 5, 'aviter', 'test_measure')
 #ifdef MPI
-      call MPI_Finalize(ierr)
+      call MPI_Finalize
 #endif
 end program

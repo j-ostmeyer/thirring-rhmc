@@ -110,6 +110,6 @@ program test_dslashd
          end if
       end if
 #ifdef MPI
-      call MPI_Finalize(ierr)
+      call MPI_Finalize
 #endif
 end program

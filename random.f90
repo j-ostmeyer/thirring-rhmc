@@ -17,8 +17,9 @@ contains
 !*****************************************
 !  Random number generator Numerical recipes 7.1
 !
-  real function rano(y,i)
+  real function rano(y, i, ix, iy, it)
     real, intent(out) :: y
+    integer, optional, intent(in) :: ix, iy, it
     integer, intent(inout) :: i
     integer :: j
     real :: dum
@@ -49,13 +50,15 @@ contains
   end function rano
 !========================================================================
 !     
-  SUBROUTINE RRANGET(LSEED)
+  SUBROUTINE RRANGET(LSEED, ix, iy, it)
+    integer, optional, intent(in) :: ix, iy, it
     DOUBLE PRECISION, INTENT(OUT) :: LSEED
     LSEED  =  G900GT()
     RETURN
   END SUBROUTINE RRANGET
 
-  SUBROUTINE RRANSET(LSEED)
+  SUBROUTINE RRANSET(LSEED, ix, iy, it)
+    integer, optional, intent(in) :: ix, iy, it
     DOUBLE PRECISION, INTENT(IN) :: LSEED
     DOUBLE PRECISION DUMMY
     DUMMY  =  G900ST(LSEED)
@@ -64,12 +67,14 @@ contains
 
 
 
-  REAL FUNCTION RRANF()
+  REAL FUNCTION RRANF(ix, iy, it)
+    integer, optional, intent(in) :: ix, iy, it
     RRANF = SNGL(DRANF())
     RETURN
   END FUNCTION RRANF
 
-  DOUBLE PRECISION FUNCTION DRANF()
+  DOUBLE PRECISION FUNCTION DRANF(ix, iy, it)
+    integer, optional, intent(in) :: ix, iy, it
     DOUBLE PRECISION    DL,       DC,       DU,       DR
     DL  =  DS(1) * DM(1)
     DC  =  DINT(DL/DX24)
@@ -82,12 +87,14 @@ contains
     RETURN
   END FUNCTION DRANF
 
-  DOUBLE PRECISION FUNCTION G900GT()
+  DOUBLE PRECISION FUNCTION G900GT(ix, iy, it)
+    integer, optional, intent(in) :: ix, iy, it
     G900GT  =  DS(2)*DX24 + DS(1)
     RETURN
   END FUNCTION G900GT
 
-  DOUBLE PRECISION FUNCTION G900ST(DSEED)
+  DOUBLE PRECISION FUNCTION G900ST(DSEED, ix, iy, it)
+    integer, optional, intent(in) :: ix, iy, it
     DOUBLE PRECISION, INTENT(IN) :: DSEED
     DS(2)  =  DINT(DSEED/DX24)
     DS(1)  =  DSEED - DS(2)*DX24
@@ -96,7 +103,7 @@ contains
   END FUNCTION G900ST
 !***********************************************************************
   subroutine init_random(seed)
-    real, intent(in) :: seed
+    real(dp), intent(in) :: seed
     real :: y
 
     call rranset(seed + ip_global)
