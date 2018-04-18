@@ -47,8 +47,15 @@ default: $(TESTS)
 tests: $(TESTS)
 
 runtests: $(TESTS)
-	for test in $(TESTS); do \
-	    $(MPI_RUNNER) ./$$test; \
+	@for test in $(TESTS); do \
+	    printf "$$test: "; \
+	    OUTPUT=$$($(MPI_RUNNER) ./$$test); \
+	    if [ -z "$$OUTPUT" ]; then \
+	        echo "OK"; \
+	    else \
+	        echo; \
+	        echo $$OUTPUT; \
+	    fi; \
 	done
 
 clean:
