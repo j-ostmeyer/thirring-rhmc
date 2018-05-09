@@ -225,13 +225,13 @@ contains
     endif
     if (ip_global .eq. 0) then
        open(unit=7,file='output',status='unknown')
-       open(unit=25,file='midout',status='unknown')
        open(unit=98,file='control',status='unknown')
-       open(unit=36,file='remez2',status='unknown')
-       open(unit=37,file='remez4',status='unknown')
-       open(unit=38,file='remez2g',status='unknown')
-       open(unit=39,file='remez4g',status='unknown')
     end if
+    open(unit=25,file='midout',status='old')
+    open(unit=36,file='remez2',status='old')
+    open(unit=37,file='remez4',status='old')
+    open(unit=38,file='remez2g',status='old')
+    open(unit=39,file='remez4g',status='old')
     if(iread.eq.1) then
        call sread
     endif
