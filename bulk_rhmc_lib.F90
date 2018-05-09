@@ -420,10 +420,10 @@ contains
 ! 
           if (ip_global .eq. 0) then
              ytest = rano(yran, idum, 1, 1, 1)
-#ifdef MPI
-             call MPI_Bcast(ytest, 1, MPI_Real, 0, comm)
-#endif
           end if
+#ifdef MPI
+          call MPI_Bcast(ytest, 1, MPI_Real, 0, comm)
+#endif
           if(ytest.lt.proby)then
              pp = pp - 0.5 * dt * dSdpi
              itot = itot + iter 
