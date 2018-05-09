@@ -1,23 +1,23 @@
-#FC = /usr/lib64/mpi/gcc/mvapich2/bin/mpif90
+#FC = /usr/lib64/mpi/gcc/mvapich2/bin/mpif90B
 #FC = /usr/lib64/mvapich2/bin/mpif90
 MPIFC = mpiifort
 FC = ifort
 #FC = gfortran
-FCFLAGS = -ipo -no-prec-div -fp-model fast=2 -xHost -O3
+#FCFLAGS = -no-prec-div -fp-model fast=2 -xHost -O3 -check_mpi -g
 #FCFLAGS = -g -ipo -O3 -no-prec-div -fp-model fast=2 -xHost -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1 #-heap-arrays -CB -traceback
 #FCFLAGS = -g -O3 -march=native -mtune=native -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1
-#FCFLAGS = -g -O0 -CB -heap-arrays -warn all
+FCFLAGS = -g -O0 -CB -warn all
 #FCFLAGS = -g -O0 -Wall -ffree-line-length-none
 
-MPI=yes
-NP_X=3
+MPI=no
+NP_X=2
 NP_Y=3
-NP_T=3
+NP_T=4
 
 # Do we need an extra rank for the MUST debugger?
 WITH_MUST=no
 
-SITE_RANDOM=no
+SITE_RANDOM=yes
 
 ifeq ($(MPI), yes)
 	COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T)
