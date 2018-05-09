@@ -25,11 +25,11 @@ module params
 #if !(defined(NP_X) && defined(NP_Y) && defined(NP_T))
 #error "NP_X, NP_Y, and NP_T must be defined for MPI compilation."
 #endif
-#if (ksize / NP_X) * NP_X != ksize
+#if (KSIZE / NP_X) * NP_X != KSIZE
 #error "ksize must be divisible by NP_X"
-#elif (ksize / NP_Y) * NP_Y != ksize
+#elif (KSIZE / NP_Y) * NP_Y != KSIZE
 #error "ksize must be divisible by NP_Y"
-#elif (ksizet / NP_T) * NP_T != ksizet
+#elif (KSIZET / NP_T) * NP_T != KSIZET
 #error "ksizet must be divisible by NP_T"
 #endif
   integer, parameter :: np_x=NP_X, np_y=NP_Y, np_t=NP_T
@@ -37,6 +37,17 @@ module params
   integer, parameter :: ksizey_l = ksize / np_y
   integer, parameter :: ksizet_l = ksizet / np_t
 #endif
+  
+  ! Control parameters
+  integer, parameter :: istart=-1
+  integer, parameter :: iread=1
+  integer, parameter :: iwrite=0
+  integer, parameter :: iprint=5
+  integer, parameter :: iseed=1
+  integer, parameter :: icheck=100
+
+  ! Inverter
+  integer :: max_qmr_iters=7500
   
   ! Runtime parameters
   real :: beta

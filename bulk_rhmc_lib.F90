@@ -207,12 +207,6 @@ contains
 !*******************************************************************
 !     input
 !*******************************************************************
-    integer, parameter :: istart=-1
-    integer, parameter :: iread=1
-    integer, parameter :: iwrite=0
-    integer, parameter :: iprint=5
-    integer, parameter :: iseed=1
-    integer, parameter :: icheck=100
     complex(dp), parameter :: zi=(0.0,1.0)
     ibound=-1
 #ifdef MPI
