@@ -1400,318 +1400,261 @@ contains
     aviter = float(iter) / (4*knoise)
     return
   end subroutine measure
-! c******************************************************************
-! c   Calculate meson correlators using point sources on domain walls
-! c   -matrix inversion via conjugate gradient algorithm
-! c       solves Mx=x1
-! c     (Numerical Recipes section 2.10 pp.70-73)   
-! c*******************************************************************
-!       subroutine meson(res,itercg,aviter,am,imass)
-!       use random
-!       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-!       parameter(ksize2=ksize*ksize)
-!       parameter(akappa=0.5)
-!       common/trial/u(kvol,3),theta(kvol,3),pp(kvol,3)
-!       common/para/beta,am3,ibound
-!       common/dirac/gamval(6,4),gamin(6,4)
-!       common /neighb/id(kvol,3),iu(kvol,3)
-!       common/vector/xi(kthird,kvol,4)
-!       common/ranseed/idum
-!       common/v/v(97)
-! c     complex x(kvol,4),x0(kvol,4),Phi(kthird,kvol,4)
-! c     complex xi,gamval
-! c     complex prop00(kvol,3:4,1:2),prop0L(kvol,3:4,3:4)
-!       complex(dp) x(kvol,4),x0(kvol,4),Phi(kthird,kvol,4)
-!       complex(dp) xi,gamval
-!       complex(dp) prop00(kvol,3:4,1:2),prop0L(kvol,3:4,3:4)
-! c     complex prop00n(kvol,3:4,1:2),prop0Ln(kvol,3:4,3:4)
-!       real cpm(0:ksizet-1),cmm(0:ksizet-1)
-! c     complex cpmn(0:ksizet-1),cmmn(0:ksizet-1)
-! c     complex cferm1(0:ksizet-1), cferm2(0:ksizet-1)
-! c     complex u
-!       complex(dp) cferm1(0:ksizet-1), cferm2(0:ksizet-1)
-!       complex(dp) u
-!       real ps(kvol,2)
-!       real ran
-!       integer gamin
-! c     write(6,*) 'hi from meson'
-! c      
-!       nsource=5
-!       nsmear=10
-!       c=0.25
-!       iter=0
-! c
-!       do it=0,ksizet-1
-!       cpm(it)=(0.0,0.0)
-!       cmm(it)=(0.0,0.0)
-! c     cpmn(it)=(0.0,0.0)
-! c     cmmn(it)=(0.0,0.0)
-!       cferm1(it)=(0.0,0.0)
-!       cferm2(it)=(0.0,0.0)
-!       enddo
-! c
-! c      susceptibility
-!       chim=0.0
-!       chip=0.0
-! c
-!       do ksource=1,nsource
-! c
-! c   random location for +m source
-!       ixxx=int(ksize*rano(yran,idum))+1
-!       iyyy=int(ksize*rano(yran,idum))+1
-!       ittt=int(ksizet*rano(yran,idum))+1
-!       isource=ixxx+ksize*((iyyy-1)+ksize*(ittt-1))
-! c     write(6,*) ixxx,iyyy,ittt, isource
-! c
-! c  loop over Dirac index of source...   
-!       do idsource=3,4
-! c
-! c  source on domain wall at ithird=1
-!       do 300 ithird=1,kthird
-!       if(ithird.eq.1)then
-!       do idirac=1,4
-!       do i=1,kvol
-!       x(i,idirac)=(0.0,0.0)
-!       enddo
-! c  wall source
-! c     ioff=(ittt-1)*ksize2
-! c     do i=1,ksize2
-! c     x(i+ioff,idirac)=(1.0,0.0)/ksize2
-! c     enddo
-! c
-!       enddo
-! c  point source at fixed site, spin...
-!       x(isource,idsource)=(1.0,0.0)
-! c
-! c now smear it.....
-! c
-!       do ismear=1,nsmear
-!       call dslash2d(x0,x,u)
-!       do idirac=1,4
-!       do i=1,kvol
-!       x(i,idirac)=(1.0-c)*x(i,idirac)+c*x0(i,idirac)
-!       enddo
-!       enddo
-!       enddo
-! c
-!       else
-!       do idirac=1,4
-!       do i=1,kvol
-!       xi(ithird,i,idirac)=(0.0,0.0)
-!       enddo
-!       enddo
-!       endif
-! 300   continue
-! c
-! c   xi = x  on DW at ithird=1
-! c
-!       do idirac=1,4
-!       do i=1,kvol
-!       xi(1,i,idirac)=x(i,idirac)
-!       enddo
-!       enddo
-! c
-! c Phi= Mdagger*xi
-! c
-!       call dslashd(Phi,xi,u,am,imass)
-! c
-! c  preconditioning (no,really)
-!       call dslashd(xi,Phi,u,am,imass)
-! c  
-! c xi= (MdaggerM)**-1 * Phi 
-! c
-! c     call congrad(Phi,res,itercg,am,imass) 
-!       iter=iter+itercg
-! c
-!       do idsink=1,2
-!       idsink2=idsink+2
-!       do i=1,kvol
-!       prop00(i,idsource,idsink)=xi(1,i,idsink)
-!       prop0L(i,idsource,idsink2)=xi(kthird,i,idsink2)
-!       enddo
-!       enddo
-! c
-! c     if(imass.ne.1)then
-! c  now evaluate with sign of mass reversed (not needed for hermitian mass term)
-! c     am=-am
-! c  source on domain wall at ithird=1
-! c     do 400 ithird=1,kthird
-! c     if(ithird.eq.1)then
-! c     do idirac=1,4
-! c     do i=1,kvol
-! c     xi(1,i,idirac)=x(i,idirac)
-! c     enddo
-! c     enddo
-! c     else
-! c     do idirac=1,4
-! c     do i=1,kvol
-! c     xi(ithird,i,idirac)=(0.0,0.0)
-! c     enddo
-! c     enddo
-! c     endif
-! 400   continue
-! c
-! c Phi= Mdagger*xi
-! c
-! c     call dslashd(Phi,xi,u,am,imass)
-! c
-! c     call dslashd(xi,Phi,u,am,imass)
-! c  
-! c xi= (MdaggerM)**-1 * Phi 
-! c
-! c     call congrad(Phi,res,itercg,am,imass) 
-! c     iter=iter+itercg
-! c
-! c     do idsink=1,2
-! c     idsink2=idsink+2
-! c     do i=1,kvol
-! c     prop00n(i,idsource,idsink)=xi(1,i,idsink)
-! c     prop0Ln(i,idsource,idsink2)=xi(kthird,i,idsink2)
-! c     enddo
-! c     enddo
-! c
-! c     am=-am
-! c     endif
-! c
-! c  end loop on source Dirac index....
-!       enddo
-! c
-! c  Now tie up the ends....
-! c
-! c  First C+-
-! c
-! c  now evaluate the trace (exploiting projection)
-!       do id1=3,4
-!       do id2=1,2
-!       do it=0,ksizet-1
-!       itt=mod((ittt+it-1),ksizet)+1
-!       ioff=(itt-1)*ksize2
-!       do i=1,ksize2
-!       cpm(it)=cpm(it)
-!      &        +prop00(i+ioff,id1,id2)*conjg(prop00(i+ioff,id1,id2))
-!       enddo
-!       enddo
-!       enddo
-!       enddo
-! c
-! c     if(imass.ne.1)then
-! c     do id1=3,4
-! c     do id2=1,2
-! c     do it=0,ksizet-1
-! c     itt=mod((ittt+it-1),ksizet)+1
-! c     ioff=(itt-1)*ksize2
-! c     do i=1,ksize2
-! c     cpmn(it)=cpmn(it)
-! c    &        +prop00(i+ioff,id1,id2)*conjg(prop00n(i+ioff,id1,id2))
-! c     enddo
-! c     enddo
-! c     enddo
-! c     enddo
-! c     endif
-! c
-! c  next C--
-! c  now evaluate the trace exploiting projection
-!       do id1=3,4
-!       do id2=3,4
-!       do it=0,ksizet-1
-!       itt=mod((ittt+it-1),ksizet)+1
-!       ioff=(itt-1)*ksize2
-!       do i=1,ksize2
-!       cmm(it)=cmm(it)
-!      &   +prop0L(i+ioff,id1,id2)*conjg(prop0L(i+ioff,id1,id2))
-!       enddo
-!       enddo
-!       enddo
-!       enddo
-! c
-! c     if(imass.ne.1)then
-! c     do id1=3,4
-! c     do id2=3,4
-! c     do it=0,ksizet-1
-! c     itt=mod((ittt+it-1),ksizet)+1
-! c     ioff=(itt-1)*ksize2
-! c     do i=1,ksize2
-! c     cmmn(it)=cmmn(it)
-! c    &   +prop0L(i+ioff,id1,id2)*conjg(prop0Ln(i+ioff,id1,id2))
-! c     enddo
-! c     enddo
-! c     enddo
-! c     enddo
-! c     endif
-! c
-! c    now the fermion propagator
-! c  = tr{ P_-*Psi(0,1)Psibar(x,Ls) + gamma_0*P_-*Psi(0,1)Psibar(x,1) }
-!       do idd=3,4
-!       do it=0,ksizet-1
-!       itt=mod((ittt+it-1),ksizet)+1
-! c correct for apbc
-!       if(itt.ge.ittt)then
-!         isign=1
-!       else
-!         isign=ibound
-!       endif
-! c
-!       ioff=(itt-1)*ksize2
-!       do i=1,ksize2
-!       cferm1(it)=cferm1(it)
-!      & +isign*akappa*prop0L(i+ioff,idd,idd)
-!       cferm2(it)=cferm2(it)
-!      & +isign*gamval(3,idd)*prop00(i+ioff,idd,gamin(3,idd))
-!       enddo
-!       enddo
-!       enddo
-! c
-! c  finish loop over sources
-!       enddo
-! c
-!       do it=0,ksizet-1
-!       cpm(it)=cpm(it)/nsource
-!       cmm(it)=cmm(it)/nsource
-! c  Cf. (54) of 1507.07717
-!       chim=chim+2*(cpm(it)+cmm(it))
-!       enddo
-! c     if(imass.ne.1)then
-! c       if(imass.eq.3)then
-! c         do it=0,ksizet-1
-! c           cpmn(it)=cpmn(it)/nsource
-! c           cmmn(it)=cmmn(it)/nsource
-! c  Cf. (54),(61) of 1507.07717
-! c           chip=chip-2*(cpmn(it)-cmmn(it))
-! c         enddo
-! c       else
-! c         do it=0,ksizet-1
-! c           cpmn(it)=cpmn(it)/nsource
-! c           cmmn(it)=cmmn(it)/nsource
-! c  Cf. (64),(65) of 1507.07717
-! c           chip=chip-2*(cpm(it)-cmm(it))
-! c         enddo
-! c       endif
-! c     endif
-! c
-!       do it=0,ksizet-1
-!       write(302,*) it, cpm(it), cmm(it)
-!       write(500,*) it, real(cferm1(it)), aimag(cferm1(it))
-!       write(501,*) it, real(cferm2(it)), aimag(cferm2(it))
-!       enddo
-! c     write(6,*) chim
-!       write(400,*) chim
-! c     if(imass.ne.1)then
-! c     do it=0,ksizet-1
-! c     write(402,*) it, real(cpmn(it)), real(cmmn(it))
-! c     write(403,*) it, aimag(cpmn(it)), aimag(cmmn(it))
-! c     enddo
-! c     write(401,*) chip
-! c     endif
-! c
-! c     if(imass.eq.1)then
-!       aviter=float(iter)/(2*nsource)
-! c     else
-! c     aviter=float(iter)/(4*nsource)
-! c     endif
-! c
-!       return
-!       end
+
+!******************************************************************
+!   Calculate meson correlators using point sources on domain walls
+!   -matrix inversion via conjugate gradient algorithm
+!       solves Mx=x1
+!     (Numerical Recipes section 2.10 pp.70-73)   
 !*******************************************************************
+  subroutine meson(res,itercg,aviter,am,imass)
+    use random
+    use vector, xi=>x
+    use dirac
+    use trial
+    
+    real, intent(in) :: res, am
+    integer, intent(out) :: itercg
+    real, intent(out) :: aviter
+    integer, intent(in) :: imass
+    !     complex x(kvol,4),x0(kvol,4),Phi(kthird,kvol,4)
+    !     complex xi,gamval
+    !     complex prop00(kvol,3:4,1:2),prop0L(kvol,3:4,3:4)
+    complex(dp) :: x(ksizex_l, ksizey_l, ksizet_l, 4),
+    complex(dp) :: x0(ksizex_l, ksizey_l, ksizet_l, 4)
+    complex(dp) :: Phi(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
+    complex(dp) :: prop00(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
+    complex(dp) :: prop0L(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
+!    complex :: prop00n(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
+!    complex :: prop0Ln(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
+    real :: cpm(0:ksizet-1), cmm(0:ksizet-1)
+!    complex :: cpmn(0:ksizet-1),cmmn(0:ksizet-1)
+!    complex :: cferm1(0:ksizet-1), cferm2(0:ksizet-1)
+    complex(dp) :: cferm1(0:ksizet-1), cferm2(0:ksizet-1)
+    real :: ps(ksizex_l, ksizey_l, ksizet_l, 2)
+    real :: c, chim, chip
+    real :: ix, iy, it
+    integer :: ip_xxx, ip_yyy, ip_ttt, ixxx_l, iyyy_l, ittt_l
+    !     write(6,*) 'hi from meson'
+    !      
+    nsource=5
+    nsmear=10
+    c=0.25
+    iter=0
+!
+    cpm = (0.0,0.0)
+    cmm = (0.0,0.0)
+!    cpmn = (0.0,0.0)
+!    cmmn = (0.0,0.0)
+    cferm1 = (0.0,0.0)
+    cferm2 = (0.0,0.0)
+    !
+    !      susceptibility
+    chim = 0.0
+    chip = 0.0
+    !
+    do ksource=1,nsource
+       !
+       !   random location for +m source
+       ip_xxx = int(np_x * rano(yran, idum, 1, 1, 1))
+       ip_yyy = int(np_y * rano(yran, idum, 1, 1, 1))
+       ip_ttt = int(np_t * rano(yran, idum, 1, 1, 1))
+       ixxx_l = int(ksizex_l * rano(yran, idum, 1, 1, 1)) + 1
+       iyyy_l = int(ksizey_l * rano(yran, idum, 1, 1, 1)) + 1
+       ittt_l = int(ksizet_l * rano(yran, idum, 1, 1, 1)) + 1
+!!!! COMMUNICATE
+!       write(6,*) ixxx,iyyy,ittt, isource
+       !
+       do idsource=3,4
+          !  source on domain wall at ithird=1
+          xi = (0.0, 0.0)
+          x = (0.0,0.0)
+          !  wall source
+          !  if (ip_t .eq. np_t) then
+          !    x(:, :, ksizet_l, :) = cmplx(1.0,0.0) / ksize2
+          !  end if
+          !  point source at fixed site, spin...
+          if (ip_xxx .eq. ip_x .and. ip_yyy .eq. ip_y .and. ip_ttt .eq. ip_t) then
+             x(ixxx_l, iyyy_l, ittt_l, idsource) = cmplx(1.0,0.0)
+          end if
+          !
+          ! now smear it.....
+          !
+          do ismear=1,nsmear
+             call dslash2d(x0, x, u)
+!!!! comms
+             x = (1.0-c) * x + c * x0
+          enddo
+          !
+          !
+          !   xi = x  on DW at ithird=1
+          !
+          xi(1, :, :, :, :) = x
+          !
+          ! Phi= Mdagger*xi
+          !
+          call dslashd(Phi, xi, u, am, imass)
+!!!! comms
+          !
+          !  preconditioning (no,really)
+          call dslashd(xi, Phi, u, am, imass)
+!!!! comms
+          !  
+          ! xi= (MdaggerM)**-1 * Phi 
+          !
+          ! call congrad(Phi,res,itercg,am,imass) 
+          iter=iter+itercg
+          !
+          prop00(:, :, :, idsource, 1:2) = xi(1, :, :, :, 1:2)
+          prop0L(:, :, :, idsource, 3:4) = xi(kthird, :, :, :, 3:4)
+          !
+          ! if(imass.ne.1)then
+          !  now evaluate with sign of mass reversed (not needed for hermitian mass term)
+          ! am=-am
+          !  source on domain wall at ithird=1
+          ! xi = (0.0,0.0)
+          ! if (ip_t .eq. np_t) then
+          !   xi(1, :, :, :, :) = x
+          ! end if
+          !
+          ! Phi= Mdagger*xi
+          !
+          ! call dslashd(Phi,xi,u,am,imass)
+!!!!COMMS
+          !
+          ! call dslashd(xi,Phi,u,am,imass)
+          !  
+!!!! COMMS
+          ! xi= (MdaggerM)**-1 * Phi 
+          !
+          ! call congrad(Phi,res,itercg,am,imass) 
+          ! iter=iter+itercg
+          !
+          ! prop00n(:, :, :, idsource, 1:2) = xi(1, :, :, :, 1:2)
+          ! prop0Ln(:, :, :, idsource, 3:4) = xi(kthird, :, :, :, 3:4)
+          !
+          ! am=-am
+          !
+          !  end loop on source Dirac index....
+       enddo
+       !
+       !  Now tie up the ends....
+       !
+       !  First C+-
+       !
+       !  now evaluate the trace (exploiting projection)
+!!!! SOME MESSY COMMS HERE
+       do it=0,ksizet-1
+          itt=mod((ittt+it-1),ksizet)+1
+          cpm(it) = cpm(it) + &
+               & sum(prop00(:, :, itt, 3:4, 1:2) * conjg(prop00(:, :, itt, 3:4, 1:2)))
+       enddo
+       !
+       ! if(imass.ne.1)then
+       !     do it=0,ksizet-1
+       !         itt=mod((ittt+it-1),ksizet)+1
+       !         cpmn(it)=cpmn(it) &
+       !        & + sum(prop00(:, :, itt, 3:4, 1:2)*conjg(prop00n(:, :, itt, 3:4, 1:2)))
+       !     enddo
+       ! endif
+       !
+       !  next C--
+       !  now evaluate the trace exploiting projection
+       do it=0,ksizet-1
+          itt=mod((ittt+it-1),ksizet)+1
+          cmm(it) = cmm(it) + &
+               & sum(prop0L(:, :, itt, 3:4, 3:4) * conjg(prop0L(:, :, itt, 3:4, 3:4)))
+       enddo
+          !
+          !     if(imass.ne.1)then
+          !     do id1=3,4
+          !     do id2=3,4
+          !     do it=0,ksizet-1
+          !     itt=mod((ittt+it-1),ksizet)+1
+          !     ioff=(itt-1)*ksize2
+          !     do i=1,ksize2
+          !     cmmn(it)=cmmn(it) &
+          !    &   +prop0L(i+ioff,id1,id2)*conjg(prop0Ln(i+ioff,id1,id2))
+          !     enddo
+          !     enddo
+          !     enddo
+          !     enddo
+          !     endif
+          !
+          !    now the fermion propagator
+          !  = tr{ P_-*Psi(0,1)Psibar(x,Ls) + gamma_0*P_-*Psi(0,1)Psibar(x,1) }
+          do idd=3,4
+             do it=0,ksizet-1
+                itt=mod((ittt+it-1),ksizet)+1
+                ! correct for apbc
+                if(itt.ge.ittt)then
+                   isign=1
+                else
+                   isign=ibound
+                endif
+                !
+                ioff=(itt-1)*ksize2
+                do i=1,ksize2
+                   cferm1(it)=cferm1(it) + &
+                        & + isign * akappa * prop0L(i+ioff,idd,idd)
+                   cferm2(it) = cferm2(it) + &
+                        & isign * gamval(3,idd) * prop00(i+ioff,idd,gamin(3,idd))
+                enddo
+             enddo
+          enddo
+          !
+          !  finish loop over sources
+       enddo
+       !
+       do it=0,ksizet-1
+          cpm(it)=cpm(it)/nsource
+          cmm(it)=cmm(it)/nsource
+          !  Cf. (54) of 1507.07717
+          chim=chim+2*(cpm(it)+cmm(it))
+       enddo
+       !     if(imass.ne.1)then
+       !       if(imass.eq.3)then
+       !         do it=0,ksizet-1
+       !           cpmn(it)=cpmn(it)/nsource
+       !           cmmn(it)=cmmn(it)/nsource
+       !  Cf. (54),(61) of 1507.07717
+       !           chip=chip-2*(cpmn(it)-cmmn(it))
+       !         enddo
+       !       else
+       !         do it=0,ksizet-1
+       !           cpmn(it)=cpmn(it)/nsource
+       !           cmmn(it)=cmmn(it)/nsource
+       !  Cf. (64),(65) of 1507.07717
+       !           chip=chip-2*(cpm(it)-cmm(it))
+       !         enddo
+       !       endif
+       !     endif
+       !
+       do it=0,ksizet-1
+          write(302,*) it, cpm(it), cmm(it)
+          write(500,*) it, real(cferm1(it)), aimag(cferm1(it))
+          write(501,*) it, real(cferm2(it)), aimag(cferm2(it))
+       enddo
+       !     write(6,*) chim
+       write(400,*) chim
+       !     if(imass.ne.1)then
+       !     do it=0,ksizet-1
+       !     write(402,*) it, real(cpmn(it)), real(cmmn(it))
+       !     write(403,*) it, aimag(cpmn(it)), aimag(cmmn(it))
+       !     enddo
+       !     write(401,*) chip
+       !     endif
+       !
+       !     if(imass.eq.1)then
+       aviter=float(iter)/(2*nsource)
+       !     else
+       !     aviter=float(iter)/(4*nsource)
+       !     endif
+       !
+       return
+    end do
+  end subroutine meson
+!******************************************************************
 !
   subroutine sread
     use random
