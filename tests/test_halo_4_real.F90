@@ -25,7 +25,7 @@ program test_halo_4_real
   integer :: pid
   integer :: passed_basic = 0
 #ifdef MPI
-  integer, dimension(12) :: reqs, reqs2
+  type(MPI_Request), dimension(12) :: reqs, reqs2
 
   call init_MPI
 #endif
@@ -57,7 +57,8 @@ program test_halo_4_real
   call complete_halo_update(reqs)
   call complete_halo_update(reqs2)
 #else
-  call complete_halo_update_4_real(2, test_array)
+  call update_halo_4_real(2, test_array)
+  call update_halo_4_real(2, test_array_2)
 #endif
 
 ! Check output

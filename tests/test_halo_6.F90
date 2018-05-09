@@ -6,13 +6,13 @@ module data
   complex(dp) :: test_array(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 12)
 end module data
 
-pure function pid(ip_x, ip_y, ip_t) result(id)
+pure function pid(ix, iy, it) result(id)
   use params
   implicit none
-  integer, intent(in) :: ip_x, ip_y, ip_t
+  integer, intent(in) :: ix, iy, it
   integer :: id
 
-  id = ip_x + ip_y * np_x + ip_t * np_x * np_y
+  id = ix + iy * np_x + it * np_x * np_y
 end function pid
 
 program test_halo_6
@@ -24,7 +24,7 @@ program test_halo_6
   integer :: pid
   integer :: passed_basic = 0
 #ifdef MPI
-  integer :: reqs(12)
+  type(MPI_Request) :: reqs(12)
 
   call init_MPI
 #endif
@@ -57,9 +57,8 @@ program test_halo_6
   call start_halo_update_6(4, 12, test_array, 0, reqs)
   call complete_halo_update(reqs)
 #else
-  call complete_halo_update_6(4, 12, test_array)
+  call update_halo_6(4, 12, test_array)
 #endif
-
 ! Check output
   if (real(test_array(1,1,1,1,1,1)) .ne. real(test_array(1,ksizex_l+1,1,1,1,1)) .or. &
        nint(aimag(test_array(1,ksizex_l+1,1,1,1,1))) &
