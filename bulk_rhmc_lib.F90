@@ -769,7 +769,7 @@ contains
        call dslash(vtild,q,u,am,imass)
 #ifdef MPI
 ! No way to hide communications here unfortunately
-       call start_halo_update_5(4, vtild, 0, reqs_vtild)
+       call start_halo_update_5(4, vtild, 1, reqs_vtild)
        call complete_halo_update(reqs_vtild)
 #else
        call update_halo_5(4, vtild)
@@ -789,8 +789,8 @@ contains
             & - betaq * qm1
 #ifdef MPI
 ! R will be needed at the start of the next iteration to compute q
-! so start updating the bounddary
-       call start_halo_update_5(4, R, 0, reqs_R)
+! so start updating the boundary
+       call start_halo_update_5(4, R, 2, reqs_R)
 #else
        call update_halo_5(4, R)
 #endif
@@ -869,7 +869,7 @@ contains
 ! x is a saved module variable, so must be updated to avoid polluting the parent function
 ! could this in principle be moved outside the function so we don't do it unnecessarily?
 ! but in that case we wouldn't be able to hide the communications
-       call start_halo_update_5(4, x, 0, reqs_x)
+       call start_halo_update_5(4, x, 3, reqs_x)
 #else
        call update_halo_5(4, x)
 #endif
@@ -882,7 +882,7 @@ contains
 ! No way to hide communications here unfortunately
 ! In principle this could be better interleaved with the x update
 ! but that would add extra branching, and this section is messy enough already
-          call start_halo_update_6(4, ndiagq, Phi0, 0, reqs_Phi0)
+          call start_halo_update_6(4, ndiagq, Phi0, 4, reqs_Phi0)
           call complete_halo_update(reqs_Phi0)
 #else
           call update_halo_6(4, ndiagq, Phi0)
@@ -900,7 +900,7 @@ contains
           R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = X1(:, :, :, :, :, idiag)
 #ifdef MPI
 ! No way to hide communications here unfortunately
-          call start_halo_update_5(4, R, 0, reqs_R)
+          call start_halo_update_5(4, R, 5, reqs_R)
           call complete_halo_update(reqs_R)
 #else
           call update_halo_5(4, R)
@@ -909,7 +909,7 @@ contains
 ! Communication of X2 generated here can be hidden if iflag isn't 2, while R is updated
           call dslash(X2, R, u, am, imass)
 #ifdef MPI
-          call start_halo_update_5(4, X2, 0, reqs_X2)
+          call start_halo_update_5(4, X2, 6, reqs_X2)
 #else
           call update_halo_5(4, X2)
 #endif
@@ -931,14 +931,14 @@ contains
 ! Communication of X2 generated here can be hidden while R is updated
              call dslash(X2, R, u, am, imass)
 #ifdef MPI
-             call start_halo_update_5(4, X2, 0, reqs_X2)
+             call start_halo_update_5(4, X2, 7, reqs_X2)
 #else
              call update_halo_5(4, X2)
 #endif
 !
              R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(: ,:, :, :, :, idiag)
 #ifdef MPI
-             call start_halo_update_5(4, R, 0, reqs_R)
+             call start_halo_update_5(4, R, 8, reqs_R)
              call complete_halo_update(reqs_X2)
              call complete_halo_update(reqs_R)
 #else
@@ -1130,7 +1130,7 @@ contains
 !  x1=Mp
        call dslash(x1,p,u,am,imass)
 #ifdef MPI
-       call start_halo_update_5(4, x1, 1, reqs_x1)
+       call start_halo_update_5(4, x1, 8, reqs_x1)
 #endif
 !
        if(nx.ne.1)then
@@ -1164,7 +1164,7 @@ contains
 !   Now update halo for r instead since we can hide communication during the summation
 !   x2 is discarded so we no longer care about its halo
 #ifdef MPI
-       call start_halo_update_5(4, r, 2, reqs_r)
+       call start_halo_update_5(4, r, 10, reqs_r)
 #endif
 
 !   betacg=(r_k+1,r_k+1)/(r_k,r_k)
@@ -1277,7 +1277,7 @@ contains
           call dslashd(Phi, xi, u, am, imass)
 #ifdef MPI
 ! No way to hide communications here unfortunately
-          call start_halo_update_5(4, Phi, 0, reqs_Phi)
+          call start_halo_update_5(4, Phi, 11, reqs_Phi)
           call complete_halo_update(reqs_Phi)
 #else
           call update_halo_5(4, Phi)
@@ -1329,7 +1329,7 @@ contains
           call dslashd(Phi,xi,u,am,imass)
 #ifdef MPI
 ! No way to hide communications here unfortunately
-          call start_halo_update_5(4, Phi, 0, reqs_Phi)
+          call start_halo_update_5(4, Phi, 12, reqs_Phi)
           call complete_halo_update(reqs_Phi)
 #else
           call update_halo_5(4, Phi)
@@ -1954,7 +1954,7 @@ contains
        end do
     end do
 #ifdef MPI
-    call start_halo_update_4_real(2, ps, 0, reqs)
+    call start_halo_update_4_real(2, ps, 13, reqs)
 #else
     call update_halo_4_real(2, ps)
 #endif
@@ -1995,7 +1995,7 @@ contains
        end do
     end do
 #ifdef MPI
-    call start_halo_update_4_real(2, ps, 0, reqs)
+    call start_halo_update_4_real(2, ps, 14, reqs)
 #else
     call update_halo_4_real(2, ps)
 #endif
