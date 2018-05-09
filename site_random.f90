@@ -2,6 +2,7 @@ module random
   use params
   use comms
   implicit none
+  save
 
 ! Random numbers
   real :: yran(ksizex_l, ksizey_l, ksizet_l)

@@ -1834,8 +1834,8 @@ contains
        do it = 1, ksizet_l
           do iy = 1, ksizey_l
              do ix = 1, ksizex_l
-                theta(ix, iy, it, mu) = 2.0 * g * rranf(ix, iy, it) - 1.0
-!              theta(ix, iy, it, mu) = 2.0 * g * rano(yran,idum) - 1.0
+!               theta(ix, iy, it, mu) = 2.0 * g * rranf(ix, iy, it) - 1.0
+                theta(ix, iy, it, mu) = 2.0 * g * rano(yran,idum, ix, iy, it) - 1.0
              enddo
           enddo
        enddo
