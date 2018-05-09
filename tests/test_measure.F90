@@ -88,7 +88,7 @@ program test_measure
 ! differing random numbers will throw off stochastic estimates like these
       check_float_equality(psibarpsi, 2.504295e-4, 0.001, 'psibarpsi', 'test_measure')
 #else
-      check_float_equality(psibarpsi, 2.504295e-4, 0.05, 'psibarpsi', 'test_measure')
+      check_float_equality(psibarpsi, 2.504295e-4, 0.001, 'psibarpsi', 'test_measure')
 #endif
       check_equality(aviter, 5, 'aviter', 'test_measure')
 #ifdef MPI
