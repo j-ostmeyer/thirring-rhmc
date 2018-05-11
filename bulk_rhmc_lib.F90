@@ -1193,6 +1193,7 @@ contains
        write(7,1000)
 1000   format(' # iterations of congrad exceeds niterc')
     end if
+!    print *, nx
 !     write(6,*) itercg
     return
   end subroutine congrad
