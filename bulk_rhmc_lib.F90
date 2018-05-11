@@ -1408,7 +1408,8 @@ contains
 !       solves Mx=x1
 !     (Numerical Recipes section 2.10 pp.70-73)   
 !*******************************************************************
-  subroutine meson(res,itercg,aviter,am,imass)
+! TODO: adjust calls to meson to supply output arrays
+  subroutine meson(cpm, cmm, cferm1, cferm2, res, itercg, aviter, am, imass)
     use random
     use vector, xi=>x
     use dirac
@@ -1418,30 +1419,33 @@ contains
     integer, intent(out) :: itercg
     real, intent(out) :: aviter
     integer, intent(in) :: imass
+    real, intent(out) :: cpm(0:ksizet-1), cmm(0:ksizet-1)
+!    complex, intent(out) :: cferm1(0:ksizet-1), cferm2(0:ksizet-1)
+    complex(dp), intent(out) :: cferm1(0:ksizet-1), cferm2(0:ksizet-1)
     !     complex x(kvol,4),x0(kvol,4),Phi(kthird,kvol,4)
     !     complex xi,gamval
     !     complex prop00(kvol,3:4,1:2),prop0L(kvol,3:4,3:4)
-    complex(dp) :: x(ksizex_l, ksizey_l, ksizet_l, 4),
-    complex(dp) :: x0(ksizex_l, ksizey_l, ksizet_l, 4)
-    complex(dp) :: Phi(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
+    complex(dp) :: x(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp) :: x0(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp) :: prop00(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
     complex(dp) :: prop0L(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
 !    complex :: prop00n(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
 !    complex :: prop0Ln(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
-    real :: cpm(0:ksizet-1), cmm(0:ksizet-1)
 !    complex :: cpmn(0:ksizet-1),cmmn(0:ksizet-1)
-!    complex :: cferm1(0:ksizet-1), cferm2(0:ksizet-1)
-    complex(dp) :: cferm1(0:ksizet-1), cferm2(0:ksizet-1)
-    real :: ps(ksizex_l, ksizey_l, ksizet_l, 2)
-    real :: c, chim, chip
-    real :: ix, iy, it
+!    real :: ps(ksizex_l, ksizey_l, ksizet_l, 2)
+    real :: chim, chip
     integer :: ip_xxx, ip_yyy, ip_ttt, ixxx_l, iyyy_l, ittt_l
     !     write(6,*) 'hi from meson'
     !      
-    nsource=5
-    nsmear=10
-    c=0.25
-    iter=0
+    integer, parameter :: nsource=5
+    integer, parameter :: nsmear=10
+    real, parameter :: c=0.25
+    integer :: iter, idsource, ksource, ismear, isign
+    integer :: it, itt, ittt, idd
+
+    iter = 0
+    itercg = 0
 !
     cpm = (0.0,0.0)
     cmm = (0.0,0.0)
@@ -1506,8 +1510,8 @@ contains
           ! call congrad(Phi,res,itercg,am,imass) 
           iter=iter+itercg
           !
-          prop00(:, :, :, idsource, 1:2) = xi(1, :, :, :, 1:2)
-          prop0L(:, :, :, idsource, 3:4) = xi(kthird, :, :, :, 3:4)
+          prop00(:, :, :, idsource, 1:2) = xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+          prop0L(:, :, :, idsource, 3:4) = xi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
           !
           ! if(imass.ne.1)then
           !  now evaluate with sign of mass reversed (not needed for hermitian mass term)
@@ -1566,94 +1570,90 @@ contains
           cmm(it) = cmm(it) + &
                & sum(prop0L(:, :, itt, 3:4, 3:4) * conjg(prop0L(:, :, itt, 3:4, 3:4)))
        enddo
-          !
-          !     if(imass.ne.1)then
-          !     do id1=3,4
-          !     do id2=3,4
-          !     do it=0,ksizet-1
-          !     itt=mod((ittt+it-1),ksizet)+1
-          !     ioff=(itt-1)*ksize2
-          !     do i=1,ksize2
-          !     cmmn(it)=cmmn(it) &
-          !    &   +prop0L(i+ioff,id1,id2)*conjg(prop0Ln(i+ioff,id1,id2))
-          !     enddo
-          !     enddo
-          !     enddo
-          !     enddo
-          !     endif
-          !
-          !    now the fermion propagator
-          !  = tr{ P_-*Psi(0,1)Psibar(x,Ls) + gamma_0*P_-*Psi(0,1)Psibar(x,1) }
-          do idd=3,4
-             do it=0,ksizet-1
-                itt=mod((ittt+it-1),ksizet)+1
-                ! correct for apbc
-                if(itt.ge.ittt)then
-                   isign=1
-                else
-                   isign=ibound
-                endif
-                !
-                ioff=(itt-1)*ksize2
-                do i=1,ksize2
-                   cferm1(it)=cferm1(it) + &
-                        & + isign * akappa * prop0L(i+ioff,idd,idd)
-                   cferm2(it) = cferm2(it) + &
-                        & isign * gamval(3,idd) * prop00(i+ioff,idd,gamin(3,idd))
-                enddo
-             enddo
-          enddo
-          !
-          !  finish loop over sources
-       enddo
        !
-       do it=0,ksizet-1
-          cpm(it)=cpm(it)/nsource
-          cmm(it)=cmm(it)/nsource
-          !  Cf. (54) of 1507.07717
-          chim=chim+2*(cpm(it)+cmm(it))
-       enddo
        !     if(imass.ne.1)then
-       !       if(imass.eq.3)then
-       !         do it=0,ksizet-1
-       !           cpmn(it)=cpmn(it)/nsource
-       !           cmmn(it)=cmmn(it)/nsource
-       !  Cf. (54),(61) of 1507.07717
-       !           chip=chip-2*(cpmn(it)-cmmn(it))
-       !         enddo
-       !       else
-       !         do it=0,ksizet-1
-       !           cpmn(it)=cpmn(it)/nsource
-       !           cmmn(it)=cmmn(it)/nsource
-       !  Cf. (64),(65) of 1507.07717
-       !           chip=chip-2*(cpm(it)-cmm(it))
-       !         enddo
-       !       endif
-       !     endif
-       !
-       do it=0,ksizet-1
-          write(302,*) it, cpm(it), cmm(it)
-          write(500,*) it, real(cferm1(it)), aimag(cferm1(it))
-          write(501,*) it, real(cferm2(it)), aimag(cferm2(it))
-       enddo
-       !     write(6,*) chim
-       write(400,*) chim
-       !     if(imass.ne.1)then
+       !     do id1=3,4
+       !     do id2=3,4
        !     do it=0,ksizet-1
-       !     write(402,*) it, real(cpmn(it)), real(cmmn(it))
-       !     write(403,*) it, aimag(cpmn(it)), aimag(cmmn(it))
+       !     itt=mod((ittt+it-1),ksizet)+1
+       !     ioff=(itt-1)*ksize2
+       !     do i=1,ksize2
+       !     cmmn(it)=cmmn(it) &
+       !    &   +prop0L(i+ioff,id1,id2)*conjg(prop0Ln(i+ioff,id1,id2))
        !     enddo
-       !     write(401,*) chip
+       !     enddo
+       !     enddo
+       !     enddo
        !     endif
        !
-       !     if(imass.eq.1)then
-       aviter=float(iter)/(2*nsource)
-       !     else
-       !     aviter=float(iter)/(4*nsource)
-       !     endif
+       !    now the fermion propagator
+       !  = tr{ P_-*Psi(0,1)Psibar(x,Ls) + gamma_0*P_-*Psi(0,1)Psibar(x,1) }
+       do idd=3,4
+          do it=0,ksizet-1
+             itt=mod((ittt+it-1),ksizet)+1
+             ! correct for apbc
+             if(itt.ge.ittt)then
+                isign=1
+             else
+                isign=ibound
+             endif
+             !
+             cferm1(it)=cferm1(it) + &
+                  & + isign * akappa * sum(prop0L(:, :, itt, idd, idd))
+             cferm2(it) = cferm2(it) + &
+                  & isign * gamval(3,idd) * sum(prop00(:, :, itt, idd, gamin(3,idd)))
+          enddo
+       enddo
        !
-       return
-    end do
+       !  finish loop over sources
+    enddo
+    !
+    do it=0,ksizet-1
+       cpm(it)=cpm(it)/nsource
+       cmm(it)=cmm(it)/nsource
+       !  Cf. (54) of 1507.07717
+       chim=chim+2*(cpm(it)+cmm(it))
+    enddo
+    !     if(imass.ne.1)then
+    !       if(imass.eq.3)then
+    !         do it=0,ksizet-1
+    !           cpmn(it)=cpmn(it)/nsource
+    !           cmmn(it)=cmmn(it)/nsource
+    !  Cf. (54),(61) of 1507.07717
+    !           chip=chip-2*(cpmn(it)-cmmn(it))
+    !         enddo
+    !       else
+    !         do it=0,ksizet-1
+    !           cpmn(it)=cpmn(it)/nsource
+    !           cmmn(it)=cmmn(it)/nsource
+    !  Cf. (64),(65) of 1507.07717
+    !           chip=chip-2*(cpm(it)-cmm(it))
+    !         enddo
+    !       endif
+    !     endif
+    !
+    do it=0,ksizet-1
+       write(302,*) it, cpm(it), cmm(it)
+       write(500,*) it, real(cferm1(it)), aimag(cferm1(it))
+       write(501,*) it, real(cferm2(it)), aimag(cferm2(it))
+    enddo
+    !     write(6,*) chim
+    write(400,*) chim
+    !     if(imass.ne.1)then
+    !     do it=0,ksizet-1
+    !     write(402,*) it, real(cpmn(it)), real(cmmn(it))
+    !     write(403,*) it, aimag(cpmn(it)), aimag(cmmn(it))
+    !     enddo
+    !     write(401,*) chip
+    !     endif
+    !
+    !     if(imass.eq.1)then
+    aviter=float(iter)/(2*nsource)
+    !     else
+    !     aviter=float(iter)/(4*nsource)
+    !     endif
+    !
+    return
   end subroutine meson
 !******************************************************************
 !
