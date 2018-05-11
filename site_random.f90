@@ -1,14 +1,20 @@
+! This module matches the original abstracted-out random module in terms of
+! its interface, but allows a specific random number chain to be generated
+! for each site, allowing identical results to be obtained on disparate
+! parallelisations.
+
 module random
   use params
   use comms
   implicit none
   save
 
-! Random numbers
+! Shared externally-visible state, previously held as common blocks
   real :: yran(ksizex_l, ksizey_l, ksizet_l)
   integer :: idum(ksizex_l, ksizey_l, ksizet_l)
   real :: v(97, ksizex_l, ksizey_l, ksizet_l)
 
+! Internal parameters and state of the generator
   DOUBLE PRECISION, PRIVATE :: DS(2, ksizex_l, ksizey_l, ksizet_l) = 0.0
   DOUBLE PRECISION, PRIVATE, PARAMETER :: DM(2) = (/ 15184245.D0, 2651554.D0 /)
   DOUBLE PRECISION, PRIVATE, PARAMETER :: DX24 = 16777216.D0
@@ -22,6 +28,7 @@ contains
 !*****************************************
 !  Random number generator Numerical recipes 7.1
 !
+! Generate a random number with good entropy from a generator with bad entropy.
   real function rano(y, i, ix, iy, it)
     real, intent(out) :: y(ksizex_l, ksizey_l, ksizet_l)
     integer, intent(inout) :: i(ksizex_l, ksizey_l, ksizet_l)
@@ -55,6 +62,7 @@ contains
   end function rano
 !========================================================================
 !     
+! Calculate an offset for the random seed based on the site location
   function seed_offset(ix, iy, it)
     integer :: seed_offset
     integer, intent(in) :: ix, iy, it
@@ -64,6 +72,7 @@ contains
     return
   end function seed_offset
 
+! Get the state of the generator
   SUBROUTINE RRANGET(LSEED, ix, iy, it)
     DOUBLE PRECISION, INTENT(OUT) :: LSEED
     integer, intent(in) :: ix, iy, it
@@ -71,6 +80,7 @@ contains
     RETURN
   END SUBROUTINE RRANGET
 
+! Set the state of the generator
   SUBROUTINE RRANSET(LSEED, ix, iy, it)
     DOUBLE PRECISION, INTENT(IN) :: LSEED
     DOUBLE PRECISION DUMMY
@@ -81,13 +91,16 @@ contains
 
 
 
+! Get a random single-precision real number
   REAL FUNCTION RRANF(ix, iy, it)
     integer, intent(in) :: ix, iy, it
     RRANF = SNGL(DRANF(ix, iy, it))
     RETURN
   END FUNCTION RRANF
 
-  DOUBLE PRECISION FUNCTION DRANF(ix, iy, it)
+! Get a random double-precision real number
+! Has less entropy than rano
+ DOUBLE PRECISION FUNCTION DRANF(ix, iy, it)
     integer, intent(in) :: ix, iy, it
     DOUBLE PRECISION    DL,       DC,       DU,       DR
     DL  =  DS(1, ix, iy, it) * DM(1)
@@ -101,12 +114,14 @@ contains
     RETURN
   END FUNCTION DRANF
 
+ ! Actually get the state of the generator
   DOUBLE PRECISION FUNCTION G900GT(ix, iy, it)
     integer, intent(in) :: ix, iy, it
     G900GT  =  DS(2, ix, iy, it)*DX24 + DS(1, ix, iy, it)
     RETURN
   END FUNCTION G900GT
 
+! Actually set the state of the generator
   DOUBLE PRECISION FUNCTION G900ST(DSEED, ix, iy, it)
     DOUBLE PRECISION, INTENT(IN) :: DSEED
     integer, intent(in) :: ix, iy, it
@@ -116,6 +131,7 @@ contains
     RETURN
   END FUNCTION G900ST
 !***********************************************************************
+! Seed the generator and call rano to initialise its state
   subroutine init_random(seed)
     real(dp), intent(in) :: seed
     integer :: ix, iy, it
