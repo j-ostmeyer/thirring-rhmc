@@ -5,6 +5,7 @@
 module random
   use comms
   implicit none
+  save
 
 ! Shared externally-visible state, previously held as common blocks
   real :: yran
