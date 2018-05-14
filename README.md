@@ -44,3 +44,8 @@ Tests are found in the `tests` folder. They have their own `Makefile` that
 works in exactly the same way as the one for the main code. Tests can be run
 individually; no output means that they pass. Alternatively, `make runtests`
 runs all tests.
+
+The `.dat` files can be generated from the pre-MPI version of the code (or,
+if you want, from the current version, but this should only be done when the
+current version is known good), by setting the `generate` parameter to
+`.true.`.
