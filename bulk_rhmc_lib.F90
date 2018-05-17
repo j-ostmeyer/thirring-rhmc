@@ -702,6 +702,7 @@ contains
 !******************************************************************
 !    multisolver matrix inversion via Lanczos technique
 !  eg. Golub & van Loan "Matrix Computations" 9.3.1
+! http://web.mit.edu/ehliu/Public/sclark/Golub%20G.H.,%20Van%20Loan%20C.F.-%20Matrix%20Computations.pdf
 !       solves (MdaggerM+diag)*x=Phi for ndiag different values of diag
 !   iflag=0: simply evaluates X = {MdaggerM}^p * Phi
 !   can be interchanged with congrad for p=-1
@@ -846,7 +847,6 @@ contains
           endif
        endif
 !     
-!     end of loop over iter
 #ifdef MPI
 ! R will be needed at the start of the next iteration to compute q
 ! so start updating the bounddary
