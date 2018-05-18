@@ -13,9 +13,6 @@ program test_dslash
       complex, parameter :: iunit = cmplx(0, 1)
       real(dp), parameter :: tau = 8 * atan(1.0_8)
 
-! common blocks to function
-      integer :: istart
-
 ! initialise function parameters
       complex(dp) u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
       complex(dp) Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -28,6 +25,7 @@ program test_dslash
       real, parameter :: am = 0.05
       integer, parameter :: imass = 1
 
+      
       integer :: i, j, ix, iy, it, ithird
       integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
       integer :: idx
@@ -83,7 +81,7 @@ program test_dslash
       beta = 0.4
       am3 = 1.0
       ibound = -1
-      istart = -1
+       
       call init(istart)
 ! call function
       do i = 1,timing_loops

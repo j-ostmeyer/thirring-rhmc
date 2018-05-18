@@ -47,7 +47,7 @@ module params
   integer, parameter :: icheck=100
   
   ! Inverter
-  integer :: max_qmr_iters=2
+  integer :: max_qmr_iters=150
   
   ! Runtime parameters
   real :: beta

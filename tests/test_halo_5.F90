@@ -6,14 +6,15 @@ module data
   complex(dp) :: test_array(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 end module data
 
-pure function pid(ip_x, ip_y, ip_t) result(id)
+pure function pid(fip_x, fip_y, fip_t) result(id)
   use params
   implicit none
-  integer, intent(in) :: ip_x, ip_y, ip_t
+  integer, intent(in) :: fip_x, fip_y, fip_t
   integer :: id
 
-  id = ip_x + ip_y * np_x + ip_t * np_x * np_y
+  id = fip_x + fip_y * np_x + fip_t * np_x * np_y
 end function pid
+
 
 program test_halo_5
   use params

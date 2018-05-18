@@ -18,7 +18,7 @@ program test_force
       complex, parameter :: iunit = cmplx(0, 1)
       real(dp), parameter :: tau = 8 * atan(1.0_8)
 
-      integer :: istart
+      
       real :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
 
 ! initialise function parameters
@@ -123,7 +123,7 @@ program test_force
       beta = 0.4
       am3 = 1.0
       ibound = -1
-      istart = -1
+      
       call init(istart)
 ! call function
       do i = 1,timing_loops
@@ -132,7 +132,7 @@ program test_force
          hg = 0
          hp = 0
          s = 0
-         call force(Phi, res1, am, imass, isweep, iter, max_qmr_iter=2)
+         call force(Phi, res1, am, imass, isweep, iter)
       end do
 ! check output
       if (generate) then

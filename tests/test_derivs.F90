@@ -14,7 +14,7 @@ program test_derivs
       real(dp), parameter :: tau = 8 * atan(1.0_8)
 
 ! common blocks to function
-      integer :: istart
+      
 
 ! initialise function parameters
       complex(dp) u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
@@ -83,7 +83,7 @@ program test_derivs
       beta = 0.4
       am3 = 1.0
       ibound = -1
-      istart = -1
+      
       call init(istart)
 ! call function
       do i = 1,timing_loops

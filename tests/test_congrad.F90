@@ -14,7 +14,7 @@ program test_congrad
       complex, parameter :: iunit = cmplx(0, 1)
       real*8, parameter :: tau = 8 * atan(1.0_8)
 
-      integer :: istart
+      
 
 ! initialise function parameters
       complex(dp) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -41,8 +41,8 @@ program test_congrad
       hg = 0
       hp = 0
       s = 0
-      res = 0.1
-      am = 0.05
+      res = 0.001
+      am = 0.2
       imass = 3
       iflag = 0
       isweep = 1
@@ -96,7 +96,7 @@ program test_congrad
       beta = 0.4
       am3 = 1.0
       ibound = -1
-      istart = -1
+      
       call init(istart)
 ! call function
       do i = 1,timing_loops

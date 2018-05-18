@@ -12,7 +12,7 @@ program test_measure
       integer :: timing_loops = 1
       complex, parameter :: iunit = cmplx(0, 1)
       real*8, parameter :: tau = 8 * atan(1.0_8)
-      integer :: istart
+      
 
 ! initialise function parameters
       real psibarpsi, aviter
@@ -78,7 +78,7 @@ program test_measure
 #endif
 
 ! initialise common variables
-      istart = -1
+      
       call init(istart)
 ! call function
       do i = 1,timing_loops

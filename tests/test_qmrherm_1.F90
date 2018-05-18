@@ -18,7 +18,7 @@ program test_qmrherm_1
       real(dp), parameter :: tau = 8 * atan(1.0_8)
 
 ! common blocks to function
-      integer :: istart
+      
 
 ! initialise function parameters
       complex(dp) Phi(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -117,13 +117,12 @@ program test_qmrherm_1
       beta = 0.4
       am3 = 1.0
       ibound = -1
-      istart = -1
+      
       call init(istart)
 ! call function
       do i = 1,timing_loops
          Phi0 = Phi0_orig
-         call qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter, &
-              & max_iter=2)
+         call qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter)
       end do
 ! check output
       if (generate) then
