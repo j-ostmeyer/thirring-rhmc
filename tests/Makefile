@@ -6,7 +6,7 @@ FC = ifort
 #FCFLAGS = -no-prec-div -fp-model fast=2 -xHost -O3 -check_mpi -g
 #FCFLAGS = -g -ipo -O3 -no-prec-div -fp-model fast=2 -xHost -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1 #-heap-arrays -CB -traceback
 #FCFLAGS = -g -O3 -march=native -mtune=native -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1
-FCFLAGS = -g -O0 -C -warn all -traceback
+FCFLAGS = -g -O0 -CB -warn all #-traceback
 #FCFLAGS = -g -O0 -Wall -ffree-line-length-none
 
 MPI=yes

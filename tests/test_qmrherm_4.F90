@@ -116,6 +116,7 @@ program test_qmrherm_4
       call init(istart)
 ! call function
       Phi0 = Phi0_orig
+      max_qmr_iters = 180
       call qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter)
 ! check output
       do idiag=1,ndiag

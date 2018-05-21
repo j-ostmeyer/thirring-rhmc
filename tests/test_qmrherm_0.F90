@@ -8,7 +8,7 @@ program test_qmrherm_0
       use gforce
       use params
       use comms
-      !use test_utils
+      use test_utils
       implicit none
 
 ! general parameters
