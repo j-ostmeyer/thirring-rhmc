@@ -41,8 +41,8 @@ program test_congrad
       hg = 0
       hp = 0
       s = 0
-      res = 0.001
-      am = 0.2
+      res = 0.1
+      am = 0.05
       imass = 3
       iflag = 0
       isweep = 1

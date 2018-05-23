@@ -39,7 +39,7 @@ program test_congrad_1
       hg = 0
       hp = 0
       s = 0
-      res = 0.001
+      res = 1.0e-6
       am = 0.2
       imass = 3
       iflag = 0

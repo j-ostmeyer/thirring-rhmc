@@ -44,7 +44,7 @@ program test_qmrherm_4
       allocate(Phi0_orig(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 25))
       allocate(delta_Phi(kthird, ksizex_l, ksizey_l, ksizet_l, 4))
 
-      res = 1e-4
+      res = 1e-5
       am = 0.05
       imass = 3
       iflag = 0
