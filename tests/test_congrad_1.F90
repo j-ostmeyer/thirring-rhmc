@@ -17,7 +17,8 @@ program test_congrad_1
 
 ! initialise function parameters
       complex(dp) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-      real(dp) :: diffnorm2
+      complex(dp), allocatable :: delta_Phi(:, :, :, :, :)
+      real(dp) :: sum_delta_Phi
       
       integer :: imass, iflag, isweep, iter
       real :: res, am
@@ -32,6 +33,7 @@ program test_congrad_1
 
       call init_MPI
 #endif
+      allocate(delta_Phi(kthird, ksizex_l, ksizey_l, ksizet_l, 4))
 
       h = 0
       hg = 0
@@ -98,9 +100,11 @@ program test_congrad_1
       call congrad(Phi, res, itercg, am, imass) ! results are in vector.x
 ! check convergence
       call dirac_operator(xout,x,am,imass)
-      call check_diff(diffnorm2,xout,Phi)
-      write(6,*) "Diffnorm2" , diffnorm2
-
+      delta_Phi = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
+     &                xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
+      delta_Phi = abs(delta_Phi)**2
+ 
+      check_sum(delta_Phi, 1e-6, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_congrad_1')
       
 end program
 

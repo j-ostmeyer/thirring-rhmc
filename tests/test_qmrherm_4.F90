@@ -21,12 +21,12 @@ program test_qmrherm_4
       complex(dp) Phi(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
       complex(dp), allocatable :: Phi0_ref(:, :, :, :, :, :)
       complex(dp), allocatable :: Phi0_orig(:, :, :, :, :, :)
-      complex(dp), allocatable :: delta_Phi0(:, :, :, :, :, :)
+      complex(dp), allocatable :: delta_Phi(:, :, :, :, :)
       complex(dp) :: xin(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
       !complex(dp) :: R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 
       integer :: imass, iflag, isweep, iter
-      real(dp) :: anum(0:ndiag), aden(ndiag), diffnorm2
+      real(dp) :: anum(0:ndiag), aden(ndiag), sum_delta_Phi
       real :: res, am, anumf, adenf
       integer :: itercg
       
@@ -42,7 +42,7 @@ program test_qmrherm_4
 
       allocate(Phi0_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
       allocate(Phi0_orig(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 25))
-      allocate(delta_Phi0(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
+      allocate(delta_Phi(kthird, ksizex_l, ksizey_l, ksizet_l, 4))
 
       res = 1e-4
       am = 0.05
@@ -130,9 +130,11 @@ program test_qmrherm_4
           adenf = aden(idiag)
           anumf = anum(idiag)
           call dirac_op_shifted(xout,xin,am,imass,adenf,anumf)
-          call check_diff(diffnorm2,xout,Phi) 
-          write(6,*) "Diffnorm2 - shift " ,idiag,"=", diffnorm2
-
+          
+          delta_Phi = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
+     &                xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
+          delta_Phi = abs(delta_Phi)**2
+          check_sum(delta_Phi, 1e-6, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4')
 
       enddo
 #ifdef MPI

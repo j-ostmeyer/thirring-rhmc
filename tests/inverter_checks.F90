@@ -48,22 +48,4 @@ subroutine dirac_operator(xout,xin,am,imass)
 
 end subroutine dirac_operator 
 
-subroutine check_diff(diffnorm2,x1,x2)
-    use param
-    use comms
-    complex(dp),intent(in) :: x1(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp),intent(in) :: x2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    real(dp), intent(out) :: diffnorm2
-    !real(dp) ::  diffnorm2tmp
-    
-    diffnorm2 = sum(abs(x1(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
-     &  x2(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
-
-#ifdef MPI
-    call MPI_AllReduce(MPI_In_Place,diffnorm2, 1, MPI_Real, MPI_Sum, comm)
-#else
-    !diffnorm2 = diffnorm2tmp
-#endif
-
-end subroutine check_diff
 end module
