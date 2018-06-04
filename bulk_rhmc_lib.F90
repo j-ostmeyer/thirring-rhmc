@@ -174,6 +174,7 @@ contains
 !
 !                                               SJH February 2017
 !*******************************************************************
+    implicit none
     real, parameter :: respbp=0.000001, rescgg=0.000001
     real, parameter :: rescga=0.000000001
     real, parameter :: rescgm=0.000000001
@@ -239,7 +240,7 @@ contains
     close(25)
 ! set a new seed by hand...
     if(iseed.ne.0)then
-       seed=4139764973254.0
+       seed=4139764973254
     endif
     if (ip_global .eq. 0) then
        write(7,*) 'seed: ', seed
@@ -738,6 +739,10 @@ contains
     integer :: reqs_X2, reqs_vtild, reqs_Phi0, reqs_R, reqs_x
 #endif
 !
+    if(ip_global.eq.0) then
+      write(6,*) "aden:", aden
+      write(6,*) "anum:", anum
+    endif
 !     write(6,111)
 !111 format(' Hi from qmrherm')
 !
@@ -826,6 +831,9 @@ contains
           pm1 = p
 !     Convergence criterion (a bit ad hoc for now...)
           rhomax = real(maxval(abs(phimod * rho)))
+          if(ip_global.eq.0) then
+              write(6,*) "niter, rhomax:", niter, rhomax,abs(phimod * rho)
+          endif
           rhom1 = rho
           do idiag = 1, ndiagq
              x1(:, :, :, :, :, idiag) = &

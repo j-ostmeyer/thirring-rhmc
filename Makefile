@@ -6,14 +6,14 @@ FC = ifort
 #FCFLAGS = -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g
 #FCFLAGS = -g -ipo -O3 -no-prec-div -fp-model fast=2 -xHost -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1 #-heap-arrays -CB -traceback
 #FCFLAGS = -g -O3 -march=native -mtune=native -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1
-FCFLAGS = -g -O0 -CB -heap-arrays -warn all
+FCFLAGS = -O0 -heap-arrays -warn all -C -traceback
 
-MPI=yes
+MPI=no
 NP_X=1
 NP_Y=1
 NP_T=1
 
-SITE_RANDOM=yes
+SITE_RANDOM=no
 
 ifeq ($(MPI), yes)
 	COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T)
