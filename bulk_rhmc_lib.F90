@@ -724,7 +724,7 @@ contains
     real, intent(in) :: res, am
     integer, intent(out) :: itercg
 !
-    real :: alphatild
+    real(dp) :: alphatild
     real(dp) :: coeff
 !      
     real(dp) :: alpha(ndiagq)
@@ -785,7 +785,7 @@ contains
        alphatild = sum(real(conjg(q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
        &                * x3(:,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 #ifdef MPI
-       call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Real, MPI_Sum, comm)
+       call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm)
 #endif
 !
        R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = &
