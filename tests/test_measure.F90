@@ -88,6 +88,9 @@ program test_measure
 ! differing random numbers will throw off stochastic estimates like these
       check_float_equality(psibarpsi, 2.504295e-4, 0.001, 'psibarpsi', 'test_measure')
 #else
+      if(ip_global .eq. 0 ) then 
+        write(6,*) "This test is not supposed to work if SITE_RANDOM is not defined"
+      endif
       check_float_equality(psibarpsi, 2.504295e-4, 0.001, 'psibarpsi', 'test_measure')
 #endif
       check_equality(aviter, 5, 'aviter', 'test_measure')
