@@ -96,6 +96,15 @@ program test_qmrherm_4
             enddo
          enddo
       enddo
+
+
+! initialise common variables
+      beta = 0.4
+      am3 = 1.0
+      ibound = -1
+      if(ibound.eq.-1 .and. ip_t .eq. (np_t-1))then
+         u(:, :, ksizet_l, 3) = -u(:, :, ksizet_l, 3)
+      end if
 #ifdef MPI
       call start_halo_update_4(3, u, 3, reqs_u)
       call complete_halo_update(reqs_R)
@@ -108,11 +117,7 @@ program test_qmrherm_4
       call update_halo_5(4, R)
       call update_halo_4(3, u)
 #endif
-! initialise common variables
-      beta = 0.4
-      am3 = 1.0
-      ibound = -1
-      
+!     
       call init(istart)
 ! call function
       Phi0 = Phi0_orig
