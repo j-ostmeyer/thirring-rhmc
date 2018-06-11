@@ -126,9 +126,14 @@ program test_qmrherm_0
       end do
 ! check output
       if (generate) then
+#ifdef MPI
          write_file(x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_qmrherm_0_x.dat', MPI_Double_Complex)
          write_file(Phi0(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :, :), 'test_qmrherm_0_Phi0.dat', MPI_Double_Complex)
-      else
+#else
+         write(6,*) "Generation not possible"
+         call exit(1)
+#endif
+     else
          read_file(x_ref, 'test_qmrherm_0_x.dat', MPI_Double_Complex)
          read_file(Phi0_ref, 'test_qmrherm_0_Phi0.dat', MPI_Double_Complex)
          
