@@ -1,19 +1,16 @@
 #include "test_utils.fh"
-program test_qmrherm_3
+program test_qmrherm_4
+      use inverter_checks
+      use qmrherm_scratch
       use dwf3d_lib
       use trial
-      use vector
       use phizero
-      use dirac
       use gforce
-      use params
       use comms
       use test_utils
       implicit none
 
 ! general parameters
-      logical :: generate = .false.
-      integer :: timing_loops = 1
       complex, parameter :: iunit = cmplx(0, 1)
       real(dp), parameter :: tau = 8 * atan(1.0_8)
 
@@ -24,44 +21,42 @@ program test_qmrherm_3
       complex(dp) Phi(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
       complex(dp), allocatable :: Phi0_ref(:, :, :, :, :, :)
       complex(dp), allocatable :: Phi0_orig(:, :, :, :, :, :)
-      complex(dp) :: x_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-      complex(dp) :: delta_x(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-      complex(dp), allocatable :: delta_Phi0(:, :, :, :, :, :)
-      complex(dp) :: R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-
-      complex(dp) :: sum_delta_x, sum_delta_Phi0
-      real(dp) :: max_delta_x, max_delta_Phi0
+      complex(dp), allocatable :: delta_Phi(:, :, :, :, :)
+      complex(dp) :: xin(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+      !complex(dp) :: R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 
       integer :: imass, iflag, isweep, iter
-      real(dp) :: anum(0:ndiag), aden(ndiag)
-      real :: res, am
+      real(dp) :: anum(0:ndiag), aden(ndiag), sum_delta_Phi
+      real :: res, am, anumf, adenf
       integer :: itercg
       
       integer :: i, j, l, ix, iy, it, ithird
       integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
-      integer :: idx = 0
+      integer :: idx = 0, idiag
 
 #ifdef MPI
       type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
+      type(MPI_Request), dimension(12) :: reqs_xin
       call init_MPI
 #endif
 
       allocate(Phi0_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
       allocate(Phi0_orig(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 25))
-      allocate(delta_Phi0(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
+      allocate(delta_Phi(kthird, ksizex_l, ksizey_l, ksizet_l, 4))
 
-      res = 0.1
+      res = 1e-5
       am = 0.05
       imass = 3
-      iflag = 3
+      iflag = 0
       isweep = 1
       iter = 0
 
-      anum(0) = 0.5
-      do i = 1, ndiag
-         anum(i) = real(exp(iunit * i * tau / ndiag))
-         aden(i) = real(exp(-iunit * 0.5 * i * tau / ndiag))
+      open(unit=36,file='../remez2',status='old')
+      read(36,*) anum(0)
+      do i=1,ndiag
+          read(36,*) anum(i),aden(i)
       enddo
+      close(36)
       do j = 1,4
          do it = 1,ksizet_l
             do iy = 1,ksizey_l
@@ -101,6 +96,15 @@ program test_qmrherm_3
             enddo
          enddo
       enddo
+
+
+! initialise common variables
+      beta = 0.4
+      am3 = 1.0
+      ibound = -1
+      if(ibound.eq.-1 .and. ip_t .eq. (np_t-1))then
+         u(:, :, ksizet_l, 3) = -u(:, :, ksizet_l, 3)
+      end if
 #ifdef MPI
       call start_halo_update_4(3, u, 3, reqs_u)
       call complete_halo_update(reqs_R)
@@ -113,40 +117,32 @@ program test_qmrherm_3
       call update_halo_5(4, R)
       call update_halo_4(3, u)
 #endif
-! initialise common variables
-      beta = 0.4
-      am3 = 1.0
-      ibound = -1
-      
+!     
       call init(istart)
 ! call function
-      do i = 1,timing_loops
-         Phi0 = Phi0_orig
-         call qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter)
-      end do
+      Phi0 = Phi0_orig
+      max_qmr_iters = 180
+      call qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter)
 ! check output
-      if (generate) then
+      do idiag=1,ndiag
+          xin(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(:,:,:,:,:,idiag)
 #ifdef MPI
-         write_file(x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_qmrherm_3_x.dat', MPI_Double_Complex)
-         write_file(Phi0(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :, :), 'test_qmrherm_3_Phi0.dat', MPI_Double_Complex)
+          call start_halo_update_5(4, xin, 10, reqs_xin)
+          call complete_halo_update(reqs_xin)
 #else
-         write(6,*) "Generation not possible"
-         call exit(1)
+          call update_halo_5(4, xin)
 #endif
-      else
-         read_file(x_ref, 'test_qmrherm_3_x.dat', MPI_Double_Complex)
-         read_file(Phi0_ref, 'test_qmrherm_3_Phi0.dat', MPI_Double_Complex)
-         
-         delta_x = x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - x_ref
-         delta_Phi0 = Phi0(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :, :) - Phi0_ref
+          adenf = aden(idiag)
+          anumf = anum(idiag)
+          call dirac_op_shifted(xout,xin,am,imass,adenf,anumf)
+          
+          delta_Phi = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
+     &                xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
+          delta_Phi = abs(delta_Phi)**2
+          check_sum(delta_Phi, 1e-6, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4')
 
-         check_equality(itercg, 2, 'itercg', 'test_qmrherm_3')
-         check_sum(delta_x, 1e-12, 'x', sum_delta_x, MPI_Double_Complex, 'test_qmrherm_3')
-         check_max(delta_x, 1e-13, 'x', max_delta_x, MPI_Double_Precision, 'test_qmrherm_3')
-         check_sum(delta_Phi0, 1e-12, 'Phi0', sum_delta_Phi0, MPI_Double_Complex, 'test_qmrherm_3')
-         check_max(delta_Phi0, 1e-13, 'Phi0', max_delta_Phi0, MPI_Double_Precision, 'test_qmrherm_3')
-      end if
+      enddo
 #ifdef MPI
       call MPI_Finalize
 #endif
-end program test_qmrherm_3
+end program test_qmrherm_4

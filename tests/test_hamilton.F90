@@ -15,7 +15,7 @@ program test_hamilton
       integer :: timing_loops = 1
       complex, parameter :: iunit = cmplx(0, 1)
       real(dp), parameter :: tau = 8 * atan(1.0_8)
-      integer :: istart
+      
 
 ! initialise function parameters
       complex(dp) Phi(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -118,7 +118,7 @@ program test_hamilton
       beta = 0.4
       am3 = 1.0
       ibound = -1
-      istart = -1
+      
       call init(istart)
 ! call function
       do i = 1,timing_loops
@@ -127,7 +127,7 @@ program test_hamilton
          hg = 0
          hp = 0
          s = 0
-         call hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass, max_qmr_iter=2)
+         call hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass)
       end do
 ! check output
       if (ip_global .eq. 0) then

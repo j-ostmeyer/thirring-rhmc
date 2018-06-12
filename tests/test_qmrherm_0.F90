@@ -1,10 +1,10 @@
 #include "test_utils.fh"
 program test_qmrherm_0
       use dwf3d_lib
-      use trial
+      use trial, only :u 
       use vector
       use phizero
-      use dirac
+      !use dirac
       use gforce
       use params
       use comms
@@ -18,7 +18,7 @@ program test_qmrherm_0
       real(dp), parameter :: tau = 8 * atan(1.0_8)
 
 ! common blocks to function
-      integer :: istart
+      
 
 ! initialise function parameters
       complex(dp) Phi(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -117,19 +117,23 @@ program test_qmrherm_0
       beta = 0.4
       am3 = 1.0
       ibound = -1
-      istart = -1
+      
       call init(istart)
 ! call function
       do i = 1,timing_loops
          Phi0 = Phi0_orig
-         call qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter, &
-              & max_iter=2)
+         call qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter)
       end do
 ! check output
       if (generate) then
+#ifdef MPI
          write_file(x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_qmrherm_0_x.dat', MPI_Double_Complex)
          write_file(Phi0(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :, :), 'test_qmrherm_0_Phi0.dat', MPI_Double_Complex)
-      else
+#else
+         write(6,*) "Generation not possible"
+         call exit(1)
+#endif
+     else
          read_file(x_ref, 'test_qmrherm_0_x.dat', MPI_Double_Complex)
          read_file(Phi0_ref, 'test_qmrherm_0_Phi0.dat', MPI_Double_Complex)
          

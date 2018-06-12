@@ -1,40 +1,51 @@
 #include "test_utils.fh"
-program test_dslashd
-      use params
+program test_congrad_1
       use dwf3d_lib
+      use trial, only: u
+      use vector
       use dirac
       use comms
       use test_utils
+      use inverter_checks
       implicit none
 
 ! general parameters
-      logical :: generate = .false.
-      integer :: timing_loops = 1
       complex, parameter :: iunit = cmplx(0, 1)
-      real(dp), parameter :: tau = 8 * atan(1.0_8)
+      real*8, parameter :: tau = 8 * atan(1.0_8)
 
-! common blocks to function
       
 
 ! initialise function parameters
-      complex(dp) u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
-      complex(dp) Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-      complex(dp) Phiref(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-      complex(dp) R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-      complex(dp) diff(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-      complex(dp) sum_diff
-      real(dp) max_diff
-
-      real, parameter :: am = 0.05
-      integer, parameter :: imass = 1
-
-      integer :: i, j, ix, iy, it, ithird
+      complex(dp) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+      complex(dp), allocatable :: delta_Phi(:, :, :, :, :)
+      real(dp) :: sum_delta_Phi
+      
+      integer :: imass, iflag, isweep, iter
+      real :: res, am
+      real(dp) :: h, hg, hp, s
+      integer :: itercg
+      
+      integer :: j, ix, iy, it, ithird
       integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
-      integer :: idx
+      integer :: idx = 0
 #ifdef MPI
-      type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi
+      type(MPI_Request), dimension(12) :: reqs_X, reqs_Phi, reqs_u
+
       call init_MPI
 #endif
+      allocate(delta_Phi(kthird, ksizex_l, ksizey_l, ksizet_l, 4))
+
+      h = 0
+      hg = 0
+      hp = 0
+      s = 0
+      res = 1.0e-6
+      am = 0.2
+      imass = 3
+      iflag = 0
+      isweep = 1
+      iter = 0
+
       do j = 1,4
          do it = 1,ksizet_l
             do iy = 1,ksizey_l
@@ -45,16 +56,17 @@ program test_dslashd
                           & + (ip_t * ksizet_l + it - 1) * kthird * ksize * ksize &
                           & + (j - 1) * kthird * ksize * ksize * ksizet
                      Phi(ithird, ix, iy, it, j) = 1.1 * exp(iunit * idx * tau / idxmax)
-                     R(ithird, ix, iy, it, j) = 1.3 * exp(iunit * idx * tau / idxmax)
+                     X(ithird, ix, iy, it, j) = 0.5 * exp(1.0) * exp(iunit*idx*tau/idxmax)
                   enddo
                enddo
             enddo
          enddo
       enddo
 #ifdef MPI
-      call start_halo_update_5(4, R, 0, reqs_R)
-      call start_halo_update_5(4, Phi, 1, reqs_Phi)
+      call start_halo_update_5(4, X, 0, reqs_X)
+      call start_halo_update_5(4, Phi, 0, reqs_Phi)
 #endif
+      idx = 0
       do j = 1,3
          do it = 1,ksizet_l
             do iy = 1,ksizey_l
@@ -70,15 +82,14 @@ program test_dslashd
       enddo
 #ifdef MPI
       call start_halo_update_4(3, u, 1, reqs_u)
-      call complete_halo_update(reqs_R)
+      call complete_halo_update(reqs_X)
       call complete_halo_update(reqs_Phi)
       call complete_halo_update(reqs_u)
 #else
-      call update_halo_5(4, R)
       call update_halo_5(4, Phi)
+      call update_halo_5(4, X)
       call update_halo_4(3, u)
 #endif
-
 ! initialise common variables
       beta = 0.4
       am3 = 1.0
@@ -86,26 +97,14 @@ program test_dslashd
       
       call init(istart)
 ! call function
-      do i = 1,timing_loops
-         call dslashd(Phi, R, u, am, imass)
-#ifdef MPI
-         call start_halo_update_5(4, Phi, 2, reqs_Phi)
-         call complete_halo_update(reqs_Phi)
-#else
-         call update_halo_5(4, Phi)
-#endif
-      end do
-! check output
-      if (generate) then
-         write_file(Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_dslashd_1.dat', MPI_Double_Complex)
-      else
-         read_file(Phiref, 'test_dslashd_1.dat', MPI_Double_Complex)
-
-         diff = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - Phiref
-         check_max(diff, 1e-11, 'Phi', max_diff, MPI_Double_Precision, 'test_dslashd_1')
-         check_sum(diff, 1e-11, 'Phi', sum_diff, MPI_Double_Complex, 'test_dslashd_1')
-      end if
-#ifdef MPI
-      call MPI_Finalize
-#endif
+      call congrad(Phi, res, itercg, am, imass) ! results are in vector.x
+! check convergence
+      call dirac_operator(xout,x,am,imass)
+      delta_Phi = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
+     &                xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
+      delta_Phi = abs(delta_Phi)**2
+ 
+      check_sum(delta_Phi, 1e-6, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_congrad_1')
+      
 end program
+

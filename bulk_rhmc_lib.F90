@@ -174,6 +174,7 @@ contains
 !
 !                                               SJH February 2017
 !*******************************************************************
+    implicit none
     real, parameter :: respbp=0.000001, rescgg=0.000001
     real, parameter :: rescga=0.000000001
     real, parameter :: rescgm=0.000000001
@@ -239,7 +240,7 @@ contains
     close(25)
 ! set a new seed by hand...
     if(iseed.ne.0)then
-       seed=4139764973254.0
+       seed=4139764973254
     endif
     if (ip_global .eq. 0) then
        write(7,*) 'seed: ', seed
@@ -284,8 +285,6 @@ contains
     traj=iterl*dt
     proby=1.0/float(iterl)
     if (ip_global .eq. 0) then
-!       write(6, 9001)ksize,ksizet,kthird,Nf,dt,traj,ndiag,ndiagg, &
-!      & iter2,beta,am3,am,imass
        write(7, 9001)ksize,ksizet,kthird,Nf,dt,traj,ndiag,ndiagg, &
             & iter2,beta,am3,am,imass
 9001   format(' ksize=',i3,' ksizet=',i3,/ &
@@ -386,7 +385,6 @@ contains
 #endif
           pp(:,:,:,mu) = ps(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1)
        enddo
-!     write(6,*) idum
 !*******************************************************************
 !  call to Hamiltonian
 !     
@@ -487,7 +485,6 @@ contains
           ancgma=ancgma+ancgm
           ipbp=ipbp+1
 !        write(11,*) pbp
-!        write(6,*) isweep,':  ',pbp,ancgm
        endif
 !
        if((isweep/icheck)*icheck.eq.isweep)then
@@ -662,9 +659,9 @@ contains
     call MPI_AllReduce(MPI_In_Place, hg, 1, MPI_Double_Precision, MPI_Sum, comm)
 #endif
     h = hg + hp
+
 ! 
 ! uncomment these lines to quench the fermions!
-!     write(6,*) isweep,':  hg', hg,'   hp', hp,'   h',h
 !     return
 !         
 !  pseudofermion action is
@@ -693,7 +690,6 @@ contains
 #endif
 !
     h = hg + hp + hf
-!     write(6,*) isweep,':  hg', hg,'   hp', hp,'   hf', hf, '   h',h
     s = hg + hf
 !
     return
@@ -724,7 +720,7 @@ contains
     real, intent(in) :: res, am
     integer, intent(out) :: itercg
 !
-    real :: alphatild
+    real(dp) :: alphatild
     real(dp) :: coeff
 !      
     real(dp) :: alpha(ndiagq)
@@ -740,10 +736,10 @@ contains
 #endif
 !
 !     write(6,111)
-!111 format(' Hi from qmrherm')
+111 format(' Hi from qmrherm')
 !
-    resid=sqrt(kthird*ksize*ksize*ksizet*4*res*res)
-!     write(6,*) iflag, resid
+      resid=sqrt(kthird*ksize*ksize*ksizet*4*res*res)
+
     itercg=0
 !
 !   initialise r=Phi
@@ -758,8 +754,8 @@ contains
 #endif
     betaq = sqrt(betaq)
     phimod=betaq
-!     write(6,*) '|| Phi || = ', phimod
 !
+    !do niter=1,20
     do niter=1,max_qmr_iters
        itercg=itercg+1
 !
@@ -781,7 +777,7 @@ contains
        alphatild = sum(real(conjg(q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
        &                * x3(:,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 #ifdef MPI
-       call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Real, MPI_Sum, comm)
+       call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm)
 #endif
 !
        R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = &
@@ -853,7 +849,7 @@ contains
        call complete_halo_update(reqs_R)
 #endif
     enddo
-    if (niter .gt. max_qmr_iters .and. ip_global .eq. 0) then
+    if (niter .gt. max_qmr_iters .and. ip_global .eq. 0) then ! DEBUG
        write(7,*) 'QMRniterc!, isweep,iter,iflag,imass,anum,ndiagq = ' &
        &        ,isweep, iter, iflag, imass, anum(0), ndiagq
     end if
@@ -1848,19 +1844,29 @@ contains
 !******************************************************************
   subroutine coef(u, theta)
     use comms
+    implicit none
 !
     complex(dp), intent(out) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
     real, intent(in) :: theta(ksizex_l, ksizey_l, ksizet_l, 3)
-!
+#ifdef MPI
+      type(MPI_Request), dimension(12) :: reqs_u
+#endif
+
 !     u(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = exp(cmplx(0.0, theta))
     u(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = (1.0 + cmplx(0.0, theta))
 !
 !  anti-p.b.c. in timelike direction
-    if(ibound.eq.-1 .and. ip_t .eq. np_t)then
+    if(ibound.eq.-1 .and. ip_t .eq. (np_t-1))then
        u(:, :, ksizet_l, 3) = -u(:, :, ksizet_l, 3)
     end if
 !      
 !!!!    call complete_halo_update_4(3, u)
+#ifdef MPI
+      call start_halo_update_4(3, u, 3, reqs_u)
+      call complete_halo_update(reqs_u)
+#else
+      call update_halo_4(3, u)
+#endif
     return
   end subroutine coef
 !**********************************************************************

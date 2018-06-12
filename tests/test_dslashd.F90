@@ -14,7 +14,7 @@ program test_dslashd
       real(dp) :: acc_max = 0.
 
 ! common blocks to function
-      integer :: istart
+      
 
 ! initialise function parameters
       complex(dp) u(0:ksize+1, 0:ksize+1, 0:ksizet+1, 3)
@@ -79,7 +79,7 @@ program test_dslashd
       beta = 0.4
       am3 = 1.0
       ibound = -1
-      istart = -1
+      
       call init(istart)
 ! call function
       do i = 1,timing_loops

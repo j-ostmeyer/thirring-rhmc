@@ -6,13 +6,13 @@ FC = ifort
 #FCFLAGS = -no-prec-div -fp-model fast=2 -xHost -O3 -check_mpi -g
 #FCFLAGS = -g -ipo -O3 -no-prec-div -fp-model fast=2 -xHost -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1 #-heap-arrays -CB -traceback
 #FCFLAGS = -g -O3 -march=native -mtune=native -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1
-FCFLAGS = -g -O0 -CB -warn all
+FCFLAGS = -g -O0 -CB -warn all #-traceback
 #FCFLAGS = -g -O0 -Wall -ffree-line-length-none
 
-MPI=no
+MPI=yes
 NP_X=2
-NP_Y=3
-NP_T=4
+NP_Y=2
+NP_T=2
 
 # Do we need an extra rank for the MUST debugger?
 WITH_MUST=no
@@ -41,7 +41,11 @@ ifeq ($(WITH_MUST), yes)
 	COMMS_FLAGS += -DWITH_MUST
 endif
 
-TESTS = test_dslash_1 test_dslash_3 test_dslash_5 test_dslashd_1 test_dslashd_3 test_dslashd_5 test_dslash2d test_load test_save test_derivs test_qmrherm_0 test_qmrherm_1 test_qmrherm_2 test_qmrherm_3 test_hamilton test_force test_congrad test_measure test_gauss0 test_gaussp test_halo_4 test_halo_4_real test_halo_5 test_halo_6
+TESTS = test_dslash_1 test_dslash_3 test_dslash_5 test_dslashd_1 test_dslashd_3 \
+       test_dslashd_5 test_dslash2d test_load test_save test_derivs test_qmrherm_0 \
+       test_qmrherm_1 test_qmrherm_2 test_qmrherm_3 test_qmrherm_4 test_hamilton test_force \
+       test_congrad test_congrad_1 test_measure test_gauss0 test_gaussp \
+       test_halo_4 test_halo_4_real test_halo_5 test_halo_6
 
 default: $(TESTS)
 tests: $(TESTS)
@@ -77,6 +81,10 @@ bulk_rhmc_lib.o : ../bulk_rhmc_lib.F90 test_params.o $(COMMS_LIB) $(RANDOM) .mak
 site_random.o random.o : %.o : ../%.f90 test_params.o $(COMMS_LIB) .makefile.uptodate
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o $@ $<
 
+inverter_checks.o : inverter_checks.F90  .makefile.uptodate
+	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o $@ $<
+
+
 test_%.o: test_%.f90 .makefile.uptodate
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o $@ $<
 
@@ -89,7 +97,8 @@ test_utils.o: test_utils.F90 $(COMMS) $(RANDOM) .makefile.uptodate
 test_halo_%: test_params.o $(COMMS_LIB) test_halo_%.F90
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -o $@ $^
 
-$(TESTS) : % : test_params.o $(COMMS_LIB) $(RANDOM) bulk_rhmc_lib.o test_utils.o %.F90
+$(TESTS) : % : test_params.o $(COMMS_LIB) $(RANDOM) bulk_rhmc_lib.o \
+          test_utils.o inverter_checks.o %.F90
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -o $@ $^
 
 compile_flags:
