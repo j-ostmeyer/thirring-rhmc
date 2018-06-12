@@ -240,7 +240,7 @@ contains
     close(25)
 ! set a new seed by hand...
     if(iseed.ne.0)then
-       seed=4139764973254
+       seed=4139764973254.0d+0
     endif
     if (ip_global .eq. 0) then
        write(7,*) 'seed: ', seed
