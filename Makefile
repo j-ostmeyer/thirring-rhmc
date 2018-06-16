@@ -7,8 +7,8 @@
 #FCFLAGS = -g -O3 -march=native -mtune=native -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1
 #FCFLAGS = -O0 -heap-arrays -warn all -C -traceback
 
-COMPILER=gnu # either GCC or INTEL
-MPI=no
+COMPILER=gnu# either GCC or INTEL
+MPI=yes
 NP_X=1
 NP_Y=1
 NP_T=1
@@ -32,6 +32,8 @@ else ifeq ($(COMPILER), INTEL)
 	MPIFC  =$(INTEL_MPIFC)
 	FC     =$(INTEL_FC)
 	FCFLAGS=$(INTEL_FCFLAGS)
+else 
+    $(error COMPILER not correctly specified (watch for whitespaces))
 endif
 $(info COMPILER: $(COMPILER))
 $(info MPIFC   : $(MPIFC))
@@ -45,7 +47,7 @@ ifeq ($(MPI), yes)
 else ifeq ($(MPI), no)
 	COMMS_LIB = uncomms.o
 else 
-    $(error MPI not correctly specified)
+    $(error MPI not correctly specified (watch for whitespaces))
 endif
 
 ifeq ($(SITE_RANDOM), yes)
@@ -55,7 +57,7 @@ else ifeq ($(SITE_RANDOM), no)
 	RANDOM = random.o
 	RANDOM_FLAGS = 
 else 
-    $(error SITE_RANDOM not correctly specified)
+    $(error SITE_RANDOM not correctly specified (watch for whitespaces))
 endif
 
 default: bulk_rhmc compile_flags
