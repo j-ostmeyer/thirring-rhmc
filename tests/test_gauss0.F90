@@ -1,4 +1,4 @@
-#include 'test_utils.fh'
+#include "test_utils.fh"
 program test_gauss0
       use dwf3d_lib
       use gauge
