@@ -69,7 +69,7 @@ program test_measure
          enddo
       enddo
 #ifdef MPI
-      call start_halo_update_4(4, u, 0, reqs_u)
+      call start_halo_update_4(3, u, 0, reqs_u) ! to check.
       call complete_halo_update(reqs_x)
       call complete_halo_update(reqs_u)
 #else
