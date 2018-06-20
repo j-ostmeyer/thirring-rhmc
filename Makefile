@@ -7,24 +7,24 @@
 #FCFLAGS = -g -O3 -march=native -mtune=native -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1
 #FCFLAGS = -O0 -heap-arrays -warn all -C -traceback
 
-COMPILER=gnu# either GCC or INTEL
+COMPILER=INTEL# either GNU or INTEL
 MPI=yes
 NP_X=1
 NP_Y=1
 NP_T=1
-SITE_RANDOM=no
+SITE_RANDOM=yes
 
 #GNU SETTINGS
 GNU_MPIFC    = mpif90
 GNU_FC       = gfortran
-GNU_FCFLAGS  = -O0 -Wall
+GNU_FCFLAGS  = -O0 -Wall -ffree-line-length-none
 
 #INTEL SETTINGS
 INTEL_MPIFC  =mpiifort 
 INTEL_FC     =ifort 
 INTEL_FCFLAGS= -O0 -heap-arrays -warn all -C -traceback
 
-ifeq ($(COMPILER), gnu)
+ifeq ($(COMPILER), GNU)
 	MPIFC  =$(GNU_MPIFC)
 	FC     =$(GNU_FC)
 	FCFLAGS=$(GNU_FCFLAGS)

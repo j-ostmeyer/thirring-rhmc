@@ -1,23 +1,50 @@
+
+# HEAP OF OPTIONS THAT YOU MAY WANT TO TRY
 #FC = /usr/lib64/mpi/gcc/mvapich2/bin/mpif90B
 #FC = /usr/lib64/mvapich2/bin/mpif90
-MPIFC = mpiifort
-FC = ifort
-#FC = gfortran
+#MPIFC = mpiifort
+#FC = ifort
 #FCFLAGS = -no-prec-div -fp-model fast=2 -xHost -O3 -check_mpi -g
 #FCFLAGS = -g -ipo -O3 -no-prec-div -fp-model fast=2 -xHost -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1 #-heap-arrays -CB -traceback
 #FCFLAGS = -g -O3 -march=native -mtune=native -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1
-FCFLAGS = -g -O0 -CB -warn all #-traceback
-#FCFLAGS = -g -O0 -Wall -ffree-line-length-none
+#FCFLAGS = -g -O0 -CB -warn all #-traceback
 
-MPI=yes
-NP_X=2
-NP_Y=2
-NP_T=2
-
+COMPILER=INTEL# either GNU or INTEL
+MPI=no
+NP_X=1
+NP_Y=1
+NP_T=1
+SITE_RANDOM=yes
 # Do we need an extra rank for the MUST debugger?
 WITH_MUST=no
 
-SITE_RANDOM=yes
+
+#GNU SETTINGS
+GNU_MPIFC    = mpif90
+GNU_FC       = gfortran
+GNU_FCFLAGS  = -O0 -Wall -ffree-line-length-none
+
+#INTEL SETTINGS
+INTEL_MPIFC  =mpiifort 
+INTEL_FC     =ifort 
+INTEL_FCFLAGS= -O0 -g -heap-arrays -warn all -C -traceback
+
+ifeq ($(COMPILER), GNU)
+	MPIFC  =$(GNU_MPIFC)
+	FC     =$(GNU_FC)
+	FCFLAGS=$(GNU_FCFLAGS)
+else ifeq ($(COMPILER), INTEL)
+	MPIFC  =$(INTEL_MPIFC)
+	FC     =$(INTEL_FC)
+	FCFLAGS=$(INTEL_FCFLAGS)
+else 
+    $(error COMPILER not correctly specified (watch for whitespaces))
+endif
+$(info COMPILER: $(COMPILER))
+$(info MPIFC   : $(MPIFC))
+$(info FC      : $(FC))
+$(info FCFLAGS : $(FCFLAGS))
+
 
 ifeq ($(MPI), yes)
 	COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T)
@@ -45,7 +72,7 @@ TESTS = test_dslash_1 test_dslash_3 test_dslash_5 test_dslashd_1 test_dslashd_3 
        test_dslashd_5 test_dslash2d test_load test_save test_derivs test_qmrherm_0 \
        test_qmrherm_1 test_qmrherm_2 test_qmrherm_3 test_qmrherm_4 test_hamilton test_force \
        test_congrad test_congrad_1 test_measure test_gauss0 test_gaussp \
-       test_halo_4 test_halo_4_real test_halo_5 test_halo_6
+       test_halo_4 test_halo_4_real test_halo_5 test_halo_6 test_meson
 
 default: $(TESTS)
 tests: $(TESTS)

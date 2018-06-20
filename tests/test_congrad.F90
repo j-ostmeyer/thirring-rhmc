@@ -25,7 +25,6 @@ program test_congrad
       
       integer :: imass, iflag, isweep, iter
       real :: res, am
-      real(dp) :: h, hg, hp, s
       integer :: itercg
       
       integer :: i, j, ix, iy, it, ithird
@@ -37,10 +36,6 @@ program test_congrad
       call init_MPI
 #endif
 
-      h = 0
-      hg = 0
-      hp = 0
-      s = 0
       res = 0.1
       am = 0.05
       imass = 3
@@ -100,10 +95,6 @@ program test_congrad
       call init(istart)
 ! call function
       do i = 1,timing_loops
-         h = 0
-         hg = 0
-         hp = 0
-         s = 0
          call congrad(Phi, res, itercg, am, imass)
       end do
 ! check output
@@ -116,10 +107,8 @@ program test_congrad
          sum_diff = sum(diff)
          max_diff = maxval(abs(diff))
 #ifdef MPI
-         call MPI_AllReduce(MPI_IN_PLACE, sum_diff, 1, MPI_Double_Complex, MPI_Sum, &
-              & comm)
-         call MPI_AllReduce(MPI_IN_PLACE, max_diff, 1, MPI_Double_Precision, MPI_Max, &
-              & comm)
+         call MPI_Reduce(MPI_IN_PLACE, sum_diff, 1, MPI_Double_Complex, MPI_Sum,0, comm)
+         call MPI_Reduce(MPI_IN_PLACE, max_diff, 1, MPI_Double_Precision, MPI_Max,0, comm)
 #endif
          if (ip_global .eq. 0) then
             if (itercg .ne. 27) then

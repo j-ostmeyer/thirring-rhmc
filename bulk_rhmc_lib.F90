@@ -1087,6 +1087,7 @@ contains
     use trial, only: u
     use vector
     use comms
+    implicit none
     complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 !     complex, intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real, intent(in) :: res, am
@@ -1104,10 +1105,10 @@ contains
     integer :: nx
 #ifdef MPI
     type(MPI_Request), dimension(12) :: reqs_x1, reqs_r
-#else
-    integer :: reqs_x1, reqs_r
+!#else
+!    integer :: reqs_x1, reqs_r
 #endif
-!     write(6,111)
+!    write(6,111)
 !111 format(' Hi from congrad')
 !
     resid = 4 * ksize * ksize * ksizet * kthird * res * res
@@ -1190,7 +1191,7 @@ contains
 1000   format(' # iterations of congrad exceeds niterc')
     end if
 !    print *, nx
-!     write(6,*) itercg
+!     write(6,*) itercg, betacgn, sum(abs(x(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:)))
     return
   end subroutine congrad
 
@@ -1440,8 +1441,8 @@ contains
     integer :: ixxx,iyyy,ittt
     !     write(6,*) 'hi from meson'
     !      
-    integer, parameter :: nsource=5
-    integer, parameter :: nsmear=10
+    integer, parameter :: nsource=1
+    integer, parameter :: nsmear=1
     real, parameter :: c=0.25
     integer :: iter, idsource, ksource, ismear, isign
     integer :: it, itt, ittl, idd
@@ -1452,8 +1453,8 @@ contains
     iter = 0
     itercg = 0
 !
-    cpm = 0.0d+0
-    cmm = 0.0d+0
+    cpm = 0.0
+    cmm = 0.0
 !    cpmn = (0.0,0.0)
 !    cmmn = (0.0,0.0)
     cferm1 = (0.0d+0,0.0d+0)
@@ -1472,6 +1473,7 @@ contains
           ixxx=int(ksize*rano(yran,idum,1,1,1))+1
           iyyy=int(ksize*rano(yran,idum,1,1,1))+1
           ittt=int(ksizet*rano(yran,idum,1,1,1))+1
+          write(6,*) ixxx,iyyy,ittt
 #ifdef MPI
        endif
        call MPI_Bcast(ip_xxx, 1, MPI_INTEGER, 0, comm)
@@ -1501,6 +1503,13 @@ contains
           !
           ! now smear it.....
           !
+#ifdef MPI
+             call start_halo_update_4(4, x, 1, mpireqs)
+             call complete_halo_update(mpireqs)
+#else
+             call update_halo_4(4, x)
+#endif
+ 
           do ismear=1,nsmear
              call dslash2d(x0, x, u)
 #ifdef MPI
@@ -1521,23 +1530,25 @@ contains
           !
           call dslashd(Phi, xi, u, am, imass)
 #ifdef MPI
-          call start_halo_update_4(4,Phi , 1, mpireqs)
+          call start_halo_update_5(4,Phi , 1, mpireqs)
           call complete_halo_update(mpireqs)
 #else
-          call update_halo_4(4, Phi)
+          call update_halo_5(4, Phi)
 #endif
           !  preconditioning (no,really)
+          write(6,*) "PHI2 norm:", sum(abs(Phi(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:)))
           call dslashd(xi, Phi, u, am, imass)
 #ifdef MPI
-          call start_halo_update_4(4,xi, 1, mpireqs)
+          call start_halo_update_5(4,xi, 1, mpireqs)
           call complete_halo_update(mpireqs)
 #else
-          call update_halo_4(4, xi)
+          call update_halo_5(4, xi)
 #endif
           !  
           ! xi= (MdaggerM)**-1 * Phi 
           !
-          ! call congrad(Phi,res,itercg,am,imass)  ! solution is vector::x, here called xi
+          write(6,*) "XI norm:", sum(abs(xi(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:)))
+          call congrad(Phi,res,itercg,am,imass)  ! solution is vector::x, here called xi
           iter=iter+itercg
           !
           prop00(:, :, :, idsource, 1:2) = xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
@@ -1588,19 +1599,24 @@ contains
        !  First C+-
        !
        !  now evaluate the trace (exploiting projection)
-!!!! SOME MESSY COMMS HERE
-       tempcpmm_r = 0.0d+0
+       tempcpmm_r = 0.d0
        do it=0,ksizet-1
           itt=mod((ittt+it-1),ksizet)+1
           ittl = itt - ip_t*ksizet_l
           if(ittl.ge.1 .and. ittl.le.ksizet_l) then
               tempcpmm_r(it) = sum(abs(prop00(:, :, itt, 3:4, 1:2))**2)
+!              tempcpmm_r(it) = real(sum(abs(prop00(:, :, itt, 3:4, 1:2))**2))
           endif
        enddo
 #ifdef MPI
-       call MPI_AllReduce(MPI_In_Place,tempcpmm,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,comm)
+       call MPI_AllReduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,comm)
+!       call MPI_AllReduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_REAL,MPI_SUM,comm)
+       if(ip_global.eq.0) then
 #endif
        cpm = cpm + tempcpmm_r
+#ifdef MPI
+       endif
+#endif
        !
        ! if(imass.ne.1)then
        !     do it=0,ksizet-1
@@ -1612,18 +1628,25 @@ contains
        !
        !  next C--
        !  now evaluate the trace exploiting projection
-       tempcpmm_r = 0.0
+       tempcpmm_r = 0.d0
        do it=0,ksizet-1
           itt=mod((ittt+it-1),ksizet)+1
           ittl = itt - ip_t*ksizet_l
           if(ittl.ge.1 .and. ittl.le.ksizet_l) then
               tempcpmm_r(it) = sum(abs(prop0L(:, :, itt, 3:4, 3:4))**2)
+!              tempcpmm_r(it) = real(sum(abs(prop0L(:, :, itt, 3:4, 3:4))**2))
           endif
        enddo
 #ifdef MPI
-       call MPI_AllReduce(MPI_In_Place,tempcpmm,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,comm)
+       call MPI_Reduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm)
+!       call MPI_Reduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_REAL,MPI_SUM,0,comm)
+       if(ip_global.eq.0) then
 #endif
        cmm = cmm + tempcpmm_r
+#ifdef MPI
+       endif
+#endif
+
        !
        !     if(imass.ne.1)then
        !     do id1=3,4
@@ -1654,15 +1677,20 @@ contains
              endif
              ittl = itt - ip_t*ksizet_l
              if(ittl.ge.1 .and. ittl.le.ksizet_l) then
-                 tempcpmm_c(it) = isign * akappa * sum(prop0L(:, :, itt, idd, idd))
+                 tempcpmm_c(it) = tempcpmm_c(it) + &
+                    & isign * akappa * sum(prop0L(:, :, itt, idd, idd))
              endif
           enddo
        enddo
 #ifdef MPI
-       call MPI_AllReduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,comm)
+       call MPI_Reduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm)
+       if(ip_global.eq.0) then
 #endif
        cferm1 = cferm1 + tempcpmm_c
-       tempcpmm_c = (0.0,0.0)
+#ifdef MPI
+       endif
+#endif
+       tempcpmm_c = (0.0d0,0.0d0)
        do idd=3,4
           do it=0,ksizet-1
              itt=mod((ittt+it-1),ksizet)+1
@@ -1674,19 +1702,27 @@ contains
              endif
              ittl = itt - ip_t*ksizet_l
              if(ittl.ge.1 .and. ittl.le.ksizet_l) then
-                 tempcpmm_c(it) = isign * gamval(3,idd) * sum(prop00(:, :, itt, idd, gamin(3,idd)))
+                 tempcpmm_c(it) = tempcpmm_c(it) + &
+                    & isign * gamval(3,idd) * sum(prop00(:, :, itt, idd, gamin(3,idd)))
              endif
           enddo
        enddo
 #ifdef MPI
-       call MPI_AllReduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,comm)
+       call MPI_Reduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm)
+       if(ip_global.eq.0) then
 #endif
        cferm2 = cferm2 + tempcpmm_c
- 
+#ifdef MPI
+       endif
+#endif
+
        !
        !  finish loop over sources
     enddo
     !
+#ifdef MPI
+    if(ip_global.eq.0) then
+#endif
     do it=0,ksizet-1
        cpm(it)=cpm(it)/nsource
        cmm(it)=cmm(it)/nsource
@@ -1718,6 +1754,9 @@ contains
     enddo
     !     write(6,*) chim
     write(400,*) chim
+#ifdef MPI
+    endif
+#endif
     !     if(imass.ne.1)then
     !     do it=0,ksizet-1
     !     write(402,*) it, real(cpmn(it)), real(cmmn(it))
