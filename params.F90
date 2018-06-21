@@ -15,7 +15,7 @@ module params
   integer, parameter :: kvol=ksize*ksize*ksizet
   integer, parameter :: ndiag=25, ndiagg=12
   integer, parameter :: Nf=1
-  real, parameter :: akappa = 0.5
+  real(dp), parameter :: akappa = 0.5
 #ifndef MPI
   integer, parameter :: ksizex_l=ksize, ksizey_l=ksize, ksizet_l=ksizet
   integer, parameter :: kvol_l = kvol

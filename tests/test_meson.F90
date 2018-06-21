@@ -1,40 +1,53 @@
 #include "test_utils.fh"
-program test_congrad
+program test_measure
       use dwf3d_lib
       use trial, only: u
       use vector
       use dirac
       use comms
       use test_utils
+ 
       implicit none
+      !integer, parameter :: dp = kind(1.d0) ! DELETE
 
 ! general parameters
       logical :: generate = .false.
       integer :: timing_loops = 1
       complex, parameter :: iunit = cmplx(0, 1)
-      real*8, parameter :: tau = 8 * atan(1.0_8)
+      !integer, parameter :: ksize=12, ksizet=12, kthird=24, kvol=ksizet*ksize*ksize ! DELETE
+      !integer, parameter :: ndiag = 12 ! DELETE
+      real(dp), parameter :: tau = 8 * atan(1.0_8)
+      complex(dp) :: cferm1(0:ksizet-1), cferm2(0:ksizet-1)
+      real(dp) :: cpm(0:ksizet-1), cmm(0:ksizet-1)
+      complex(dp) :: cferm1_ref(0:ksizet-1), cferm2_ref(0:ksizet-1)
+      real :: cpm_ref(0:ksizet-1), cmm_ref(0:ksizet-1)
 
-      
+! common blocks to function
+      !common/para/beta,am3,ibound ! DELETE
+      !common/param/ancg,ancgh,ancgf,ancgpf
+      !common/parampv/ancgpv,ancghpv,ancgfpv,ancgpfpv
+      !common/ranseed/yran,idum ! DELETE
+      !real :: ancg,ancgh,ancgf,ancgpf
+      !real :: ancgpv,ancghpv,ancgfpv,ancgpfpv
 
 ! initialise function parameters
+      real :: aviter
+      integer :: iflag = 0
+
       complex(dp) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-      complex(dp) :: x_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-      complex(dp) :: diff(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-      complex(dp) :: sum_diff
-      real(dp) :: max_diff
-      
-      integer :: imass, iflag, isweep, iter
-      real :: res, am
-      integer :: itercg
-      
-      integer :: i, j, ix, iy, it, ithird
+      integer :: i, j, ix, iy, it, ithird, idx
       integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
-      integer :: idx = 0
+      real :: res, am
+      integer :: imass, isweep, itercg, iter
 #ifdef MPI
-      type(MPI_Request), dimension(12) :: reqs_X, reqs_Phi, reqs_u
+      type(MPI_Request), dimension(12) :: reqs_Phi, reqs_u
 
       call init_MPI
 #endif
+      seed = 4139764973254.0
+      idum = -1
+      call rranset(seed,1,1,1)
+      seed = rano(yran, idum,1,1,1)
 
       res = 0.1
       am = 0.05
@@ -53,14 +66,12 @@ program test_congrad
                           & + (ip_t * ksizet_l + it - 1) * kthird * ksize * ksize &
                           & + (j - 1) * kthird * ksize * ksize * ksizet
                      Phi(ithird, ix, iy, it, j) = 1.1 * exp(iunit * idx * tau / idxmax)
-                     X(ithird, ix, iy, it, j) = 0.5 * exp(1.0) * exp(iunit*idx*tau/idxmax)
                   enddo
                enddo
             enddo
          enddo
       enddo
 #ifdef MPI
-      call start_halo_update_5(4, X, 0, reqs_X)
       call start_halo_update_5(4, Phi, 0, reqs_Phi)
 #endif
       idx = 0
@@ -79,47 +90,43 @@ program test_congrad
       enddo
 #ifdef MPI
       call start_halo_update_4(3, u, 1, reqs_u)
-      call complete_halo_update(reqs_X)
       call complete_halo_update(reqs_Phi)
       call complete_halo_update(reqs_u)
 #else
       call update_halo_5(4, Phi)
-      call update_halo_5(4, X)
       call update_halo_4(3, u)
 #endif
+      
 ! initialise common variables
       beta = 0.4
       am3 = 1.0
       ibound = -1
-      
+      seed = rano(yran, idum,1,1,1)
       call init(istart)
+      seed = rano(yran, idum,1,1,1)
+
+     
 ! call function
       do i = 1,timing_loops
-         call congrad(Phi, res, itercg, am, imass)
+         x = (0.D0, 0.D0)
+         call meson(cpm, cmm, cferm1, cferm2, res, itercg, aviter, am, imass)
       end do
-! check output
+
+      open(3, file='test_meson.dat', form="unformatted", access="sequential")
       if (generate) then
-         write_file(x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_congrad.dat', MPI_Double_Complex)
+         write(3) cferm1, cferm2, cpm, cmm
+         print *, cferm1, cferm2, cpm, cmm
       else
-         read_file(x_ref, 'test_congrad.dat', MPI_Double_Complex)
-         
-         diff = x_ref - x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
-         sum_diff = sum(diff)
-         max_diff = maxval(abs(diff))
 #ifdef MPI
-         call MPI_AllReduce(MPI_IN_PLACE, sum_diff, 1, MPI_Double_Complex, MPI_Sum,comm)
-         call MPI_AllReduce(MPI_IN_PLACE, max_diff, 1, MPI_Double_Precision, MPI_Max,comm)
+         if(ip_global .eq. 0) then
 #endif
-         if (ip_global .eq. 0) then
-            if (itercg .ne. 27) then
-               print *, 'itercg looks wrong: ', itercg, ' != 27'
-            end if
-            if (abs(sum_diff) .gt. 2) then
-               print *, 'sum delta too large: ', sum_diff
-            end if
-            if (max_diff .gt. 5e-2) then
-               print *, 'max delta too large: ', max_diff
-            end if
-         end if
+         read(3) cferm1_ref, cferm2_ref, cpm_ref, cmm_ref
+         print *, maxval(abs((cferm1_ref - cferm1)))
+         print *, maxval(abs((cferm2_ref - cferm2)))
+         print *, maxval(abs((cpm_ref-cpm)))
+         print *, maxval(abs((cmm_ref-cmm)))  
+#ifdef MPI
+         endif! if(ip_global .eq. 0) then
+#endif
       end if
 end program

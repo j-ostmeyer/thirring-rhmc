@@ -1101,7 +1101,7 @@ contains
     complex(dp) :: p(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp) :: r(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real :: resid
-    real :: betacg, betacgn, betacgd, alpha, alphan, alphad
+    real(dp) :: betacg, betacgn, betacgd, alpha, alphan, alphad
     integer :: nx
 #ifdef MPI
     type(MPI_Request), dimension(12) :: reqs_x1, reqs_r
@@ -1134,9 +1134,9 @@ contains
 !
 !   alpha=(r,r)/(p,(Mdagger)Mp)
 !   Don't need x1's halo at this point
-          alphad = real(sum(abs(x1(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2))
+          alphad = sum(abs(x1(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
 #ifdef MPI
-          call MPI_AllReduce(MPI_In_Place, alphad, 1, MPI_Real, MPI_Sum, comm)
+          call MPI_AllReduce(MPI_In_Place, alphad, 1, MPI_Double_Precision, MPI_Sum, comm)
 #endif       
           alpha = alphan / alphad
 !     
@@ -1165,9 +1165,9 @@ contains
 #endif
 
 !   betacg=(r_k+1,r_k+1)/(r_k,r_k)
-       betacgn = real(sum(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2))
+       betacgn = sum(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
 #ifdef MPI
-       call MPI_AllReduce(MPI_In_Place, betacgn, 1, MPI_Real, MPI_Sum, comm)
+       call MPI_AllReduce(MPI_In_Place, betacgn, 1, MPI_Double_precision, MPI_Sum, comm)
 #endif       
        betacg = betacgn / betacgd
        betacgd = betacgn
@@ -1441,9 +1441,9 @@ contains
     integer :: ixxx,iyyy,ittt
     !     write(6,*) 'hi from meson'
     !      
-    integer, parameter :: nsource=1
-    integer, parameter :: nsmear=1
-    real, parameter :: c=0.25
+    integer, parameter :: nsource=5
+    integer, parameter :: nsmear=10
+    real(dp), parameter :: c=0.25d0
     integer :: iter, idsource, ksource, ismear, isign
     integer :: it, itt, ittl, idd
 #ifdef MPI
@@ -1453,8 +1453,8 @@ contains
     iter = 0
     itercg = 0
 !
-    cpm = 0.0
-    cmm = 0.0
+    cpm = 0.0d0
+    cmm = 0.0d0
 !    cpmn = (0.0,0.0)
 !    cmmn = (0.0,0.0)
     cferm1 = (0.0d+0,0.0d+0)
@@ -1473,12 +1473,11 @@ contains
           ixxx=int(ksize*rano(yran,idum,1,1,1))+1
           iyyy=int(ksize*rano(yran,idum,1,1,1))+1
           ittt=int(ksizet*rano(yran,idum,1,1,1))+1
-          write(6,*) ixxx,iyyy,ittt
 #ifdef MPI
        endif
-       call MPI_Bcast(ip_xxx, 1, MPI_INTEGER, 0, comm)
-       call MPI_Bcast(ip_yyy, 1, MPI_INTEGER, 0, comm)
-       call MPI_Bcast(ip_ttt, 1, MPI_INTEGER, 0, comm)
+       call MPI_Bcast(ixxx, 1, MPI_INTEGER, 0, comm)
+       call MPI_Bcast(iyyy, 1, MPI_INTEGER, 0, comm)
+       call MPI_Bcast(ittt, 1, MPI_INTEGER, 0, comm)
 #endif
  
        ip_xxx = int((ixxx-1)/ksizex_l)
@@ -1536,7 +1535,6 @@ contains
           call update_halo_5(4, Phi)
 #endif
           !  preconditioning (no,really)
-          write(6,*) "PHI2 norm:", sum(abs(Phi(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:)))
           call dslashd(xi, Phi, u, am, imass)
 #ifdef MPI
           call start_halo_update_5(4,xi, 1, mpireqs)
@@ -1547,7 +1545,6 @@ contains
           !  
           ! xi= (MdaggerM)**-1 * Phi 
           !
-          write(6,*) "XI norm:", sum(abs(xi(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:)))
           call congrad(Phi,res,itercg,am,imass)  ! solution is vector::x, here called xi
           iter=iter+itercg
           !
@@ -1604,13 +1601,15 @@ contains
           itt=mod((ittt+it-1),ksizet)+1
           ittl = itt - ip_t*ksizet_l
           if(ittl.ge.1 .and. ittl.le.ksizet_l) then
-              tempcpmm_r(it) = sum(abs(prop00(:, :, itt, 3:4, 1:2))**2)
-!              tempcpmm_r(it) = real(sum(abs(prop00(:, :, itt, 3:4, 1:2))**2))
+              tempcpmm_r(it) = sum(abs(prop00(:, :, ittl, 3:4, 1:2))**2)
           endif
        enddo
 #ifdef MPI
-       call MPI_AllReduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,comm)
-!       call MPI_AllReduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_REAL,MPI_SUM,comm)
+       if(ip_global.eq.0) then
+       call MPI_Reduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm)
+       else
+       call MPI_Reduce(tempcpmm_r,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm)
+       endif
        if(ip_global.eq.0) then
 #endif
        cpm = cpm + tempcpmm_r
@@ -1633,13 +1632,15 @@ contains
           itt=mod((ittt+it-1),ksizet)+1
           ittl = itt - ip_t*ksizet_l
           if(ittl.ge.1 .and. ittl.le.ksizet_l) then
-              tempcpmm_r(it) = sum(abs(prop0L(:, :, itt, 3:4, 3:4))**2)
-!              tempcpmm_r(it) = real(sum(abs(prop0L(:, :, itt, 3:4, 3:4))**2))
+              tempcpmm_r(it) = sum(abs(prop0L(:, :, ittl, 3:4, 3:4))**2)
           endif
        enddo
 #ifdef MPI
+       if(ip_global.eq.0) then
        call MPI_Reduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm)
-!       call MPI_Reduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_REAL,MPI_SUM,0,comm)
+       else
+       call MPI_Reduce(tempcpmm_r,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm)
+       endif
        if(ip_global.eq.0) then
 #endif
        cmm = cmm + tempcpmm_r
@@ -1678,12 +1679,17 @@ contains
              ittl = itt - ip_t*ksizet_l
              if(ittl.ge.1 .and. ittl.le.ksizet_l) then
                  tempcpmm_c(it) = tempcpmm_c(it) + &
-                    & isign * akappa * sum(prop0L(:, :, itt, idd, idd))
+                    & isign * akappa * sum(prop0L(:, :, ittl, idd, idd)) 
              endif
           enddo
        enddo
 #ifdef MPI
+       if(ip_global.eq.0) then
        call MPI_Reduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm)
+       else
+       call MPI_Reduce(tempcpmm_c,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm)
+       endif
+ 
        if(ip_global.eq.0) then
 #endif
        cferm1 = cferm1 + tempcpmm_c
@@ -1703,12 +1709,16 @@ contains
              ittl = itt - ip_t*ksizet_l
              if(ittl.ge.1 .and. ittl.le.ksizet_l) then
                  tempcpmm_c(it) = tempcpmm_c(it) + &
-                    & isign * gamval(3,idd) * sum(prop00(:, :, itt, idd, gamin(3,idd)))
+                    & isign * gamval(3,idd) * sum(prop00(:, :, ittl, idd, gamin(3,idd)))
              endif
           enddo
        enddo
 #ifdef MPI
+       if(ip_global.eq.0) then
        call MPI_Reduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm)
+       else
+       call MPI_Reduce(tempcpmm_c,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm)
+       endif
        if(ip_global.eq.0) then
 #endif
        cferm2 = cferm2 + tempcpmm_c
@@ -1755,7 +1765,7 @@ contains
     !     write(6,*) chim
     write(400,*) chim
 #ifdef MPI
-    endif
+    endif ! if(ip_global.eq.0) then
 #endif
     !     if(imass.ne.1)then
     !     do it=0,ksizet-1
@@ -2281,12 +2291,12 @@ contains
     complex(dp), intent(out) :: Phi(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     integer :: ix, iy, it, idirac, mu, ixup, iyup, igork
-    real :: diag
+    real(dp) :: diag
 
 !     write(6,*) 'hi from dslash2d'
 !
 !     diagonal term
-    diag=2.0
+    diag=2.0d0
     Phi = diag * R
 
 !     Wilson and Dirac terms
