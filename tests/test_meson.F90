@@ -20,7 +20,7 @@ program test_measure
       complex(dp) :: cferm1(0:ksizet-1), cferm2(0:ksizet-1)
       real(dp) :: cpm(0:ksizet-1), cmm(0:ksizet-1)
       complex(dp) :: cferm1_ref(0:ksizet-1), cferm2_ref(0:ksizet-1)
-      real :: cpm_ref(0:ksizet-1), cmm_ref(0:ksizet-1)
+      real(dp) :: cpm_ref(0:ksizet-1), cmm_ref(0:ksizet-1),maxreldiff
 
 ! common blocks to function
       !common/para/beta,am3,ibound ! DELETE
@@ -115,18 +115,39 @@ program test_measure
       open(3, file='test_meson.dat', form="unformatted", access="sequential")
       if (generate) then
          write(3) cferm1, cferm2, cpm, cmm
-         print *, cferm1, cferm2, cpm, cmm
+         !print *, "cferm1"
+         !print *, cferm1
+         !print *, "cferm2" 
+         !print *, cferm2 
+         !print *, "cpm"
+         !print *, cpm
+         !print *, "cmm"
+         !print *, cmm
       else
 #ifdef MPI
          if(ip_global .eq. 0) then
 #endif
          read(3) cferm1_ref, cferm2_ref, cpm_ref, cmm_ref
-         print *, maxval(abs((cferm1_ref - cferm1)))
-         print *, maxval(abs((cferm2_ref - cferm2)))
-         print *, maxval(abs((cpm_ref-cpm)))
-         print *, maxval(abs((cmm_ref-cmm)))  
+         maxreldiff = maxval(2*abs(cferm1_ref - cferm1)/abs(cferm1_ref + cferm1))
+         if( maxreldiff .gt. 1.0e-10) then
+         print * , 'maxval(2*abs(cferm1_ref - cferm1)/abs(cferm1_ref + cferm1))=', maxreldiff
+         endif
+         maxreldiff = maxval(2*abs(cferm2_ref - cferm2)/abs(cferm2_ref + cferm2))
+         if( maxreldiff .gt. 1.0e-10) then
+         print * , 'maxval(2*abs(cferm2_ref - cferm2)/abs(cferm2_ref + cferm2))=', maxreldiff
+         endif
+         maxreldiff = maxval(2*abs(cpm_ref - cpm)/abs(cpm_ref + cpm))
+         if( maxreldiff .gt. 1.0e-13) then
+         print * , 'maxval(2*abs(cpm_ref - cpm)/abs(cpm_ref + cpm))=', maxreldiff
+         endif
+         maxreldiff = maxval(2*abs(cmm_ref - cmm)/abs(cmm_ref + cmm))
+         if( maxreldiff .gt. 1.0e-13) then
+         print * , 'maxval(2*abs(cmm_ref - cmm)/abs(cmm_ref + cmm))=', maxreldiff
+         endif
+
 #ifdef MPI
          endif! if(ip_global .eq. 0) then
 #endif
       end if
+      close(3)
 end program
