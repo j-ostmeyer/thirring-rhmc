@@ -175,9 +175,9 @@ contains
 !                                               SJH February 2017
 !*******************************************************************
     implicit none
-    real, parameter :: respbp=0.000001, rescgg=0.000001
-    real, parameter :: rescga=0.000000001
-    real, parameter :: rescgm=0.000000001
+    real, parameter :: respbp=1.0e-6, rescgg=1.0e-6
+    real, parameter :: rescga=1e-9
+    real, parameter :: rescgm=1e-9
     integer, parameter :: itermax=1000
 !     complex :: Phi(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, Nf)
 !     complex qq,qbqb
@@ -246,7 +246,10 @@ contains
        write(7,*) 'seed: ', seed
     end if
     call init_random(seed)
-!     write(6,*) 'ran: ', y,idum
+     
+    if (ip_global .eq. 0) then
+     write(6,*) 'Initialized, ', seed
+    endif
 !*******************************************************************
 !     initialization
 !     istart.lt.0 : start from tape
@@ -335,6 +338,11 @@ contains
 !     start of classical evolution
 !*******************************************************************
     do isweep=1,iter2
+
+
+    if(ip_global .eq. 0) then
+      write(6,*) 'Isweep' , isweep, ' of', iter2
+    endif
 ! uncomment line below to go straight to measurement
 !     goto 666
 !*******************************************************************
@@ -404,6 +412,9 @@ contains
 !     start of main loop for classical time evolution
 !*******************************************************************
        do iter=1,itermax
+          if (ip_global .eq. 0) then
+            write(6,"(A15,I4,A15,I4)") "MD iteration", iter, "of (average)", iterl
+          endif
 !
 !  step (i) st(t+dt)=st(t)+p(t+dt/2)*dt;
 !
@@ -441,6 +452,7 @@ contains
        dS = S0 - S1
        if (ip_global .eq. 0) then
           write(98,*) dH,dS
+          write(6,*) "dH,dS ", dH,dS
        end if
        y = exp(real(dH))      
        yav = yav + y 
@@ -463,7 +475,7 @@ contains
        paction = real(hp) /kvol
 600    continue
        if (ip_global .eq. 0) then
-          write(11,*) isweep,gaction,paction
+          write(6,*) "isweep,gaction,paction", isweep,gaction,paction
        end if
        actiona=actiona+action 
        vel2 = sum(pp * pp)
@@ -485,6 +497,9 @@ contains
           ancgma=ancgma+ancgm
           ipbp=ipbp+1
 !        write(11,*) pbp
+          if (ip_global .eq. 0) then
+          write(6,*) isweep,'pbp:',pbp,ancgm
+          endif
        endif
 !
        if((isweep/icheck)*icheck.eq.isweep)then
@@ -492,7 +507,7 @@ contains
           if(iwrite.eq.1) then
              call swrite
           endif
-          flush(100)
+          !flush(100)
           flush(200)
 !     flush(302)
 !     flush(400)
@@ -731,8 +746,6 @@ contains
     integer :: niter, idiag
 #ifdef MPI
     type(MPI_Request), dimension(12) :: reqs_X2, reqs_vtild, reqs_Phi0, reqs_R, reqs_x
-!#else !!! TODO : REMOVE                
-!    integer :: reqs_X2, reqs_vtild, reqs_Phi0, reqs_R, reqs_x !!! TODO : remove
 #endif
 !
 !     write(6,111)
@@ -947,6 +960,9 @@ contains
     endif
 !
 !
+    if (ip_global .eq. 0) then
+      write(6,*) "Qmrherm iterations,res:", itercg, res
+    endif
     return
   end subroutine qmrherm
 !**********************************************************************
@@ -1375,10 +1391,13 @@ contains
           psibarpsi2 = cmplx(0.0,-1.0) * psibarpsi2 / kvol
           pbp(inoise) = psibarpsi1 + psibarpsi2
        endif
-!        write(6,*) real(psibarpsi1),aimag(psibarpsi1), real(psibarpsi2),aimag(psibarpsi2)
+       !write(6,*) real(psibarpsi1),aimag(psibarpsi1), real(psibarpsi2),aimag(psibarpsi2)
        if (ip_global .eq. 0) then
-          write(100,*) real(psibarpsi1), aimag(psibarpsi1), &
-               & real(psibarpsi2), aimag(psibarpsi2)
+          !write(100,*) real(psibarpsi1), aimag(psibarpsi1), &
+          !     & real(psibarpsi2), aimag(psibarpsi2)
+          !write(6,*) real(psibarpsi1), aimag(psibarpsi1), &
+          !     & real(psibarpsi2), aimag(psibarpsi2)
+
        end if
 !
 ! end loop on noise
