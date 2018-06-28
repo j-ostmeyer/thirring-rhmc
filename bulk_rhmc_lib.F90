@@ -78,7 +78,7 @@ module phizero
   implicit none
   save
 
-  complex(dp) :: Phi0(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 25)
+  complex(dp) :: Phi0(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4,ndiag)
 end module phizero
 
 module dirac
@@ -340,9 +340,13 @@ contains
     do isweep=1,iter2
 
 
-    if(ip_global .eq. 0) then
+#ifdef MPI
+      if(ip_global.eq.0) then
+#endif
       write(6,*) 'Isweep' , isweep, ' of', iter2
-    endif
+#ifdef MPI
+      endif
+#endif
 ! uncomment line below to go straight to measurement
 !     goto 666
 !*******************************************************************
@@ -412,9 +416,13 @@ contains
 !     start of main loop for classical time evolution
 !*******************************************************************
        do iter=1,itermax
-          if (ip_global .eq. 0) then
-            write(6,"(A15,I4,A15,I4)") "MD iteration", iter, "of (average)", iterl
-          endif
+#ifdef MPI
+      if(ip_global.eq.0) then
+#endif
+        write(6,"(A15,I4,A15,I4)") "MD iteration", iter, "of (average)", iterl
+#ifdef MPI
+      endif
+#endif   
 !
 !  step (i) st(t+dt)=st(t)+p(t+dt/2)*dt;
 !
@@ -475,7 +483,7 @@ contains
        paction = real(hp) /kvol
 600    continue
        if (ip_global .eq. 0) then
-          write(6,*) "isweep,gaction,paction", isweep,gaction,paction
+          write(11,*) "isweep,gaction,paction", isweep,gaction,paction
        end if
        actiona=actiona+action 
        vel2 = sum(pp * pp)
@@ -518,7 +526,13 @@ contains
 !        flush(402)
 !        flush(403)
           endif
-!     write(7,9023) seed
+!#ifdef MPI
+!      if (ip_global .eq. 0) then
+!#endif
+!      write(7,9023) seed
+!#ifdef MPI
+!      endif
+!#endif
        endif
 !
     end do
@@ -852,7 +866,7 @@ contains
 !     call testinv(Phi,resmax,itercg,am,imass,x1,aden,ndiagq)
 !     convergence based on || residual || not working well in single precision...
 !     if(resmax.lt.resid) goto 8
-             exit
+            exit
           endif
        endif
 !     
@@ -862,11 +876,16 @@ contains
        call complete_halo_update(reqs_R)
 #endif
     enddo
-    if (niter .gt. max_qmr_iters .and. ip_global .eq. 0) then ! DEBUG
+#ifdef MPI
+    if (ip_global .eq. 0) then
+#endif
        write(7,*) 'QMRniterc!, isweep,iter,iflag,imass,anum,ndiagq = ' &
        &        ,isweep, iter, iflag, imass, anum(0), ndiagq
+#ifdef MPI
     end if
-!     
+#endif
+!  
+8   continue
     if(iflag.lt.2)then
 !     Now evaluate solution x=(MdaggerM)^p * Phi
        do idiag=1,ndiagq
@@ -1202,12 +1221,14 @@ contains
        if(betacgn.lt.resid) exit
     end do
 !     write(6,1000)
-    if (nx.gt.niterc .and. ip_global.eq.0) then
+#ifdef MPI
+    if (ip_global.eq.0) then
+#endif
        write(7,1000)
 1000   format(' # iterations of congrad exceeds niterc')
+#ifdef MPI
     end if
-!    print *, nx
-!     write(6,*) itercg, betacgn, sum(abs(x(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:)))
+#endif
     return
   end subroutine congrad
 
