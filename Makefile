@@ -8,11 +8,11 @@
 #FCFLAGS = -O0 -heap-arrays -warn all -C -traceback
 
 COMPILER=INTEL# either GNU or INTEL
-MPI=no
-NP_X=1
-NP_Y=1
-NP_T=1
-SITE_RANDOM=yes
+MPI=yes
+NP_X=2
+NP_Y=2
+NP_T=2
+SITE_RANDOM=no
 
 #GNU SETTINGS
 GNU_MPIFC    = mpif90
@@ -22,104 +22,118 @@ GNU_FCFLAGS  = -O0 -Wall -ffree-line-length-none
 #INTEL SETTINGS
 INTEL_MPIFC  =mpiifort 
 INTEL_FC     =ifort 
-INTEL_FCFLAGS= -O0 -g -heap-arrays -warn all
+INTEL_FCFLAGS= -O3 -heap-arrays 
 
 ifeq ($(COMPILER), GNU)
-	MPIFC  =$(GNU_MPIFC)
-	FC     =$(GNU_FC)
-	FCFLAGS=$(GNU_FCFLAGS)
+MPIFC  =$(GNU_MPIFC)
+FC     =$(GNU_FC)
+FCFLAGS=$(GNU_FCFLAGS)
 else ifeq ($(COMPILER), INTEL)
-	MPIFC  =$(INTEL_MPIFC)
-	FC     =$(INTEL_FC)
-	FCFLAGS=$(INTEL_FCFLAGS)
+MPIFC  =$(INTEL_MPIFC)
+FC     =$(INTEL_FC)
+FCFLAGS=$(INTEL_FCFLAGS)
 else 
-    $(error COMPILER not correctly specified (watch for whitespaces))
-endif
+$(error COMPILER not correctly specified (watch for whitespaces)) endif
 $(info COMPILER: $(COMPILER))
 $(info MPIFC   : $(MPIFC))
 $(info FC      : $(FC))
 $(info FCFLAGS : $(FCFLAGS))
-
-
-OBJS = bulk_rhmc.o avgitercounts.o dirac.o dum1.o dwf3d_lib.o gauge.o gforce.o params.o phizero.o qmrherm_only.o qmrherm_scratch.o remez.o remezg.o trial.o vector.o comms.o random.o
-
-DEPDIR := .d
-$(shell mkdir -p $(DEPDIR) >/dev/null)
-ifeq ($(COMPILER), GNU)
-	DEPFLAGS = -cpp -MMD -E -MP -MF $(DEPDIR)/$*.Td
-else ifeq ($(COMPILER), INTEL)
-	DEPFLAGS = -module -P -syntax-only -gen-dep=$(DEPDIR)/$*.Td
-else 
-    $(error COMPILER not correctly specified (watch for whitespaces))
 endif
 
+OBJS = bulk_rhmc.o avgitercounts.o dirac.o dum1.o dwf3d_lib.o gauge.o gforce.o params.o phizero.o qmrherm_scratch.o remez.o remezg.o trial.o vector.o comms.o random.o
 
 default: bulk_rhmc compile_flags
 
 .PHONY: clean
 
 COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -c 
-POSTGETDEPS = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d 
-GETDEPS = $(FC) $(DEPFLAGS) $(FCFLAGS)  $(COMMS_FLAGS) ${RANDOM_FLAGS} -c 
 
-%.d : %.f90 Makefile
-	$(GETDEPS) $<
-	$(POSTGETDEPS) 
 
-%.o : %.f90 $(DEPDIR)/%.d Makefile
+
+bulk_rhmc.o : bulk_rhmc.f90 Makefile dwf3d_lib.mod
 	$(COMPILE) -o $*.o $<
 
-%.d : %.F90 Makefile
-	$(GETDEPS) $<
-	$(POSTGETDEPS) 
+avgitercounts.o avgitercounts.mod : avgitercounts.F90 Makefile
+	echo $(COMPILE)
+	$(COMPILE) -o $*.o $<
 
-%.o : %.F90 $(DEPDIR)/%.d Makefile
+dirac.o dirac.mod : dirac.F90 Makefile params.mod
+	$(COMPILE) -o $*.o $<
+
+dum1.o dum1.mod : dum1.F90 Makefile params.mod
+	$(COMPILE) -o $*.o $<
+
+dwf3d_lib.o dwf3d_lib.mod : dwf3d_lib.F90 Makefile avgitercounts.mod \
+    comms.mod dirac.mod dum1.mod gauge.mod gforce.mod params.mod \
+    phizero.mod qmrherm_scratch.mod random.mod remez.mod remezg.mod \
+    trial.mod vector.mod
+	$(COMPILE) -o $*.o $<
+
+gauge.o gauge.mod : gauge.F90 Makefile params.mod
+	$(COMPILE) -o $*.o $<
+
+gforce.o gforce.mod : gforce.F90 Makefile params.mod
+	$(COMPILE) -o $*.o $<
+
+params.o params.mod : params.F90 Makefile
+	$(COMPILE) -o $*.o $<
+
+phizero.o phizero.mod   : phizero.F90 Makefile params.mod
+	$(COMPILE) -o $*.o $<
+
+qmrherm_scratch.o qmrherm_scratch.mod : qmrherm_scratch.F90 Makefile params.mod
+	$(COMPILE) -o $*.o $<
+
+remez.o remez.mod : remez.F90 Makefile params.mod
+	$(COMPILE) -o $*.o $<
+
+remezg.o remezg.mod : remezg.F90 Makefile params.mod
+	$(COMPILE) -o $*.o $<
+
+trial.o trial.mod : trial.F90 Makefile params.mod
+	$(COMPILE) -o $*.o $<
+
+vector.o vector.mod : vector.F90 Makefile params.mod
 	$(COMPILE) -o $*.o $<
 
 
+# COMMUNICATION-RELATED 
 ifeq ($(MPI), yes)
-	COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T)
-	FC = $(MPIFC)
-comms.d : comms.F90 Makefile
-	$(GETDEPS) $<
-	$(POSTGETDEPS) 
-        
-comms.o comms.mod: comms.F90 $(DEPDIR)/comms.d Makefile
+COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T)
+FC = $(MPIFC)
+
+comms.o comms.mod: comms.F90 Makefile params.mod
 	$(COMPILE) -o $*.o $<
+
 else ifeq ($(MPI), no)
 
-comms.o comms.mod: comms.F90 Makefile
-	$(GETDEPS) $<
-	$(POSTGETDEPS) 
-comms.o comms.mod: uncomms.f90 $(DEPDIR)/comms.d Makefile
+comms.o comms.mod: uncomms.f90 Makefile params.mod
 	$(COMPILE) -o $*.o $<
+
 else 
-    $(error MPI not correctly specified (watch for whitespaces))
+$(error MPI not correctly specified (watch for whitespaces))
 endif
 
+# RNG-RELATED
 ifeq ($(SITE_RANDOM), yes)
-	RANDOM_FLAGS = -DSITE_RANDOM
-random.o random.mod: site_random.f90 Makefile
-random.o random.mod: site_random.f90 $(DEPDIR)/random.d Makefile
+RANDOM_FLAGS = -DSITE_RANDOM
+
+random.o random.mod: site_random.f90 Makefile comms.mod params.mod
 	$(COMPILE) -o $*.o $<
+
 else ifeq ($(SITE_RANDOM), no)
-	RANDOM_FLAGS = 
-random.o random.mod: random.f90 Makefile
-random.o random.mod: random.f90 $(DEPDIR)/random.d Makefile
+
+RANDOM_FLAGS = 
+
+random.o random.mod: random.f90 Makefile comms.mod
 	$(COMPILE) -o $*.o $<
 else 
     $(error SITE_RANDOM not correctly specified (watch for whitespaces))
 endif
 
 
-$(DEPDIR)/%.d: ; # generated rules are an actual make target
-.PRECIOUS: $(DEPDIR)/%.d
-
-# including generated rules 
-include $(wildcard $(patsubst %,$(DEPDIR)/%.d,$(basename $(OBJS))))
-	
 clean:
-	rm -f bulk_rhmc *.o *.mod compile_flags && rm -r .d
+	rm -f bulk_rhmc *.o *.mod compile_flags
 
 
 bulk_rhmc: $(OBJS)
@@ -127,5 +141,4 @@ bulk_rhmc: $(OBJS)
 
 compile_flags:
 	echo $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} > $@
-
 
