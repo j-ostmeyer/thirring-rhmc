@@ -12,7 +12,7 @@ MPI=yes
 NP_X=2
 NP_Y=2
 NP_T=2
-SITE_RANDOM=no
+SITE_RANDOM=yes
 
 #GNU SETTINGS
 GNU_MPIFC    = mpif90
@@ -22,7 +22,7 @@ GNU_FCFLAGS  = -O0 -Wall -ffree-line-length-none
 #INTEL SETTINGS
 INTEL_MPIFC  =mpiifort 
 INTEL_FC     =ifort 
-INTEL_FCFLAGS= -O3 -heap-arrays 
+INTEL_FCFLAGS= -O3 -heap-arrays
 
 ifeq ($(COMPILER), GNU)
 MPIFC  =$(GNU_MPIFC)
