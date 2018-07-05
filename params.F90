@@ -43,7 +43,6 @@ module params
   integer, parameter :: iread=0      ! 
   integer, parameter :: iwrite=0     !
   integer, parameter :: iprint=5     !
-  integer, parameter :: iseed=1      ! 
   integer, parameter :: icheck=100
 
   ! Inverter

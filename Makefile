@@ -12,7 +12,7 @@ MPI=yes
 NP_X=2
 NP_Y=2
 NP_T=2
-SITE_RANDOM=no
+SITE_RANDOM=yes
 
 #GNU SETTINGS
 GNU_MPIFC    = mpif90
@@ -22,7 +22,7 @@ GNU_FCFLAGS  = -O0 -Wall -ffree-line-length-none
 #INTEL SETTINGS
 INTEL_MPIFC  =mpiifort 
 INTEL_FC     =ifort 
-INTEL_FCFLAGS= -O3 -heap-arrays 
+INTEL_FCFLAGS= -O3 -heap-arrays  -warn all -C
 
 ifeq ($(COMPILER), GNU)
 MPIFC  =$(GNU_MPIFC)
@@ -41,8 +41,8 @@ $(info FC      : $(FC))
 $(info FCFLAGS : $(FCFLAGS))
 
 OBJS = bulk_rhmc.o avgitercounts.o dirac.o dum1.o dwf3d_lib.o \
-       gauge.o gaussian.o gforce.o params.o phizero.o \
-       qmrherm_scratch.o remez.o remezg.o trial.o vector.o\
+       gauge.o gaussian.o gforce.o measure_module.o params.o \
+       qmrherm_module.o remez.o remezg.o trial.o vector.o\
        comms.o random.o
 
 default: bulk_rhmc compile_flags
@@ -68,26 +68,29 @@ dum1.o dum1.mod : dum1.F90 Makefile params.mod
 
 dwf3d_lib.o dwf3d_lib.mod : dwf3d_lib.F90 Makefile avgitercounts.mod \
     comms.mod dirac.mod dum1.mod gauge.mod gaussian.mod gforce.mod \
-    params.mod phizero.mod qmrherm_scratch.mod random.mod remez.mod \
-    remezg.mod trial.mod vector.mod
+    measure_module.mod params.mod qmrherm_module.mod random.mod \
+    remez.mod remezg.mod trial.mod vector.mod
 	$(COMPILE) -o $*.o $<
 
 gauge.o gauge.mod : gauge.F90 Makefile params.mod
 	$(COMPILE) -o $*.o $<
 
-gaussian.o gaussian.mod : gaussian.F90 Makefile comms.mod params.mod random.mod 
+gaussian.o gaussian.mod : gaussian.F90 Makefile comms.mod params.mod \
+        random.mod 
 	$(COMPILE) -o $*.o $<
 
 gforce.o gforce.mod : gforce.F90 Makefile params.mod
 	$(COMPILE) -o $*.o $<
 
+measure_module.o measure_module.mod : measure_module.F90 Makefile params.mod \
+        gaussian.mod trial.mod vector.mod comms.mod dirac.mod 
+	$(COMPILE) -o $*.o $<
+
 params.o params.mod : params.F90 Makefile
 	$(COMPILE) -o $*.o $<
 
-phizero.o phizero.mod   : phizero.F90 Makefile params.mod
-	$(COMPILE) -o $*.o $<
-
-qmrherm_scratch.o qmrherm_scratch.mod : qmrherm_scratch.F90 Makefile params.mod
+qmrherm_module.o qmrherm_module.mod : qmrherm_module.F90 Makefile params.mod trial.mod \
+        vector.mod gforce.mod  comms.mod
 	$(COMPILE) -o $*.o $<
 
 remez.o remez.mod : remez.F90 Makefile params.mod
