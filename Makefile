@@ -33,14 +33,17 @@ MPIFC  =$(INTEL_MPIFC)
 FC     =$(INTEL_FC)
 FCFLAGS=$(INTEL_FCFLAGS)
 else 
-$(error COMPILER not correctly specified (watch for whitespaces)) endif
+$(error COMPILER not correctly specified (watch for whitespaces)) 
+endif
 $(info COMPILER: $(COMPILER))
 $(info MPIFC   : $(MPIFC))
 $(info FC      : $(FC))
 $(info FCFLAGS : $(FCFLAGS))
-endif
 
-OBJS = bulk_rhmc.o avgitercounts.o dirac.o dum1.o dwf3d_lib.o gauge.o gforce.o params.o phizero.o qmrherm_scratch.o remez.o remezg.o trial.o vector.o comms.o random.o
+OBJS = bulk_rhmc.o avgitercounts.o dirac.o dum1.o dwf3d_lib.o \
+       gauge.o gaussian.o gforce.o params.o phizero.o \
+       qmrherm_scratch.o remez.o remezg.o trial.o vector.o\
+       comms.o random.o
 
 default: bulk_rhmc compile_flags
 
@@ -64,12 +67,15 @@ dum1.o dum1.mod : dum1.F90 Makefile params.mod
 	$(COMPILE) -o $*.o $<
 
 dwf3d_lib.o dwf3d_lib.mod : dwf3d_lib.F90 Makefile avgitercounts.mod \
-    comms.mod dirac.mod dum1.mod gauge.mod gforce.mod params.mod \
-    phizero.mod qmrherm_scratch.mod random.mod remez.mod remezg.mod \
-    trial.mod vector.mod
+    comms.mod dirac.mod dum1.mod gauge.mod gaussian.mod gforce.mod \
+    params.mod phizero.mod qmrherm_scratch.mod random.mod remez.mod \
+    remezg.mod trial.mod vector.mod
 	$(COMPILE) -o $*.o $<
 
 gauge.o gauge.mod : gauge.F90 Makefile params.mod
+	$(COMPILE) -o $*.o $<
+
+gaussian.o gaussian.mod : gaussian.F90 Makefile comms.mod params.mod random.mod 
 	$(COMPILE) -o $*.o $<
 
 gforce.o gforce.mod : gforce.F90 Makefile params.mod
