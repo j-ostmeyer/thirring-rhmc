@@ -42,7 +42,7 @@ $(info FCFLAGS : $(FCFLAGS))
 
 OBJS = bulk_rhmc.o avgitercounts.o dirac.o dum1.o dwf3d_lib.o \
        gauge.o gaussian.o gforce.o measure_module.o params.o \
-       phizero.o qmrherm_scratch.o remez.o remezg.o trial.o vector.o\
+       qmrherm_scratch.o remez.o remezg.o trial.o vector.o\
        comms.o random.o
 
 default: bulk_rhmc compile_flags
@@ -68,7 +68,7 @@ dum1.o dum1.mod : dum1.F90 Makefile params.mod
 
 dwf3d_lib.o dwf3d_lib.mod : dwf3d_lib.F90 Makefile avgitercounts.mod \
     comms.mod dirac.mod dum1.mod gauge.mod gaussian.mod gforce.mod \
-    measure_module.mod params.mod phizero.mod qmrherm_scratch.mod \
+    measure_module.mod params.mod qmrherm_scratch.mod \
     random.mod remez.mod remezg.mod trial.mod vector.mod
 	$(COMPILE) -o $*.o $<
 
@@ -86,9 +86,6 @@ measure_module.o measure_module.mod : measure_module.F90 Makefile params.mod \
 	$(COMPILE) -o $*.o $<
 
 params.o params.mod : params.F90 Makefile
-	$(COMPILE) -o $*.o $<
-
-phizero.o phizero.mod   : phizero.F90 Makefile params.mod
 	$(COMPILE) -o $*.o $<
 
 qmrherm_scratch.o qmrherm_scratch.mod : qmrherm_scratch.F90 Makefile params.mod

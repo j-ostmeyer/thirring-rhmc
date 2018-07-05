@@ -630,7 +630,6 @@ contains
     use trial, only: u
     use vector
     use gforce
-    use phizero
     use qmrherm_scratch
     use comms
     use dirac
