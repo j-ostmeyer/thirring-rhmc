@@ -42,7 +42,7 @@ module params
   integer, parameter :: istart=1    !
   integer, parameter :: iread=0      ! 
   integer, parameter :: iwrite=0     !
-  integer, parameter :: iprint=5     !
+  integer, parameter :: iprint=1     !
   integer, parameter :: iseed=1      ! 
   integer, parameter :: icheck=100
 
