@@ -12,7 +12,7 @@ MPI=yes
 NP_X=2
 NP_Y=2
 NP_T=2
-SITE_RANDOM=yes
+SITE_RANDOM=no
 
 #GNU SETTINGS
 GNU_MPIFC    = mpif90
@@ -42,7 +42,7 @@ $(info FCFLAGS : $(FCFLAGS))
 
 OBJS = bulk_rhmc.o avgitercounts.o dirac.o dum1.o dwf3d_lib.o \
        gauge.o gaussian.o gforce.o measure_module.o params.o \
-       qmrherm_scratch.o remez.o remezg.o trial.o vector.o\
+       qmrherm_module.o remez.o remezg.o trial.o vector.o\
        comms.o random.o
 
 default: bulk_rhmc compile_flags
@@ -58,50 +58,50 @@ bulk_rhmc.o : bulk_rhmc.f90 Makefile dwf3d_lib.mod
 
 avgitercounts.o avgitercounts.mod : avgitercounts.F90 Makefile
 	echo $(COMPILE)
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o avgitercounts.o avgitercounts.F90 
 
 dirac.o dirac.mod : dirac.F90 Makefile params.mod
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o dirac.o dirac.F90
 
 dum1.o dum1.mod : dum1.F90 Makefile params.mod
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o dum1.o dum1.F90
 
 dwf3d_lib.o dwf3d_lib.mod : dwf3d_lib.F90 Makefile avgitercounts.mod \
     comms.mod dirac.mod dum1.mod gauge.mod gaussian.mod gforce.mod \
-    measure_module.mod params.mod qmrherm_scratch.mod \
+    measure_module.mod params.mod qmrherm_module.mod \
     random.mod remez.mod remezg.mod trial.mod vector.mod
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o dwf3d_lib.o dwf3d_lib.F90 
 
 gauge.o gauge.mod : gauge.F90 Makefile params.mod
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o gauge.o gauge.F90
 
 gaussian.o gaussian.mod : gaussian.F90 Makefile comms.mod params.mod random.mod 
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o gaussian.o gaussian.F90 
 
 gforce.o gforce.mod : gforce.F90 Makefile params.mod
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o gforce.o gforce.F90 
 
 measure_module.o measure_module.mod : measure_module.F90 Makefile params.mod \
         gaussian.mod trial.mod vector.mod comms.mod dirac.mod 
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o measure_module.o measure_module.F90
 
 params.o params.mod : params.F90 Makefile
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o params.o params.F90
 
-qmrherm_scratch.o qmrherm_scratch.mod : qmrherm_scratch.F90 Makefile params.mod
-	$(COMPILE) -o $*.o $<
+qmrherm_module.o qmrherm_module.mod : qmrherm_module.F90 Makefile params.mod
+	$(COMPILE) -o qmrherm_module.o qmrherm_module.F90
 
 remez.o remez.mod : remez.F90 Makefile params.mod
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o remez.o remez.F90 
 
 remezg.o remezg.mod : remezg.F90 Makefile params.mod
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o remezg.o remezg.F90 
 
 trial.o trial.mod : trial.F90 Makefile params.mod
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o trial.o trial.F90
 
 vector.o vector.mod : vector.F90 Makefile params.mod
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o vector.o vector.F90
 
 
 # COMMUNICATION-RELATED 
@@ -110,12 +110,12 @@ COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T)
 FC = $(MPIFC)
 
 comms.o comms.mod: comms.F90 Makefile params.mod
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o comms.o comms.F90
 
 else ifeq ($(MPI), no)
 
 comms.o comms.mod: uncomms.f90 Makefile params.mod
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o comms.o comms.F90 
 
 else 
 $(error MPI not correctly specified (watch for whitespaces))
@@ -126,14 +126,14 @@ ifeq ($(SITE_RANDOM), yes)
 RANDOM_FLAGS = -DSITE_RANDOM
 
 random.o random.mod: site_random.f90 Makefile comms.mod params.mod
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o random.o site_random.F90
 
 else ifeq ($(SITE_RANDOM), no)
 
 RANDOM_FLAGS = 
 
 random.o random.mod: random.f90 Makefile comms.mod
-	$(COMPILE) -o $*.o $<
+	$(COMPILE) -o random.o random.f90 
 else 
     $(error SITE_RANDOM not correctly specified (watch for whitespaces))
 endif
