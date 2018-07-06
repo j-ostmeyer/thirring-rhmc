@@ -1,12 +1,12 @@
 program test_hamilton
       use dwf3d_lib
+      use avgitercounts
       use trial
-      use phizero
+      use qmrherm_module, only: phi0, qmrhprint => printall
       use dirac
       use gforce
       use remez
       use remezg
-      use param
       use params
       use comms
       implicit none
@@ -35,6 +35,7 @@ program test_hamilton
       type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
       call init_MPI
 #endif
+      qmrhprint = .false.
 
       allocate(Phi0_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
       allocate(Phi0_orig(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 25))

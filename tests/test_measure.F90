@@ -5,6 +5,7 @@ program test_measure
       use vector
       use comms
       use random
+      use measure_module
       use test_utils
       implicit none
 

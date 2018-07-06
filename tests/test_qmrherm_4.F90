@@ -1,10 +1,9 @@
 #include "test_utils.fh"
 program test_qmrherm_4
       use inverter_checks
-      use qmrherm_scratch
       use dwf3d_lib
+      use qmrherm_module, only : qmrherm, phi0, R, x1, qmrhprint => printall
       use trial
-      use phizero
       use gforce
       use comms
       use test_utils
@@ -40,6 +39,7 @@ program test_qmrherm_4
       call init_MPI
 #endif
 
+      qmrhprint = .false.
       allocate(Phi0_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
       allocate(Phi0_orig(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 25))
       allocate(delta_Phi(kthird, ksizex_l, ksizey_l, ksizet_l, 4))

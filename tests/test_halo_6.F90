@@ -1,11 +1,3 @@
-module data
-  use params
-  implicit none
-  save
-
-  complex(dp) :: test_array(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 12)
-end module data
-
 pure function pid(ix, iy, it) result(id)
   use params
   implicit none
@@ -17,12 +9,12 @@ end function pid
 
 program test_halo_6
   use params
-  use data
   use comms
   implicit none
   integer :: ithird, ix, iy, it, i5, i6, i=0
   integer :: pid
   integer :: passed_basic = 0
+  complex(dp) :: test_array(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 12)
 #ifdef MPI
   type(MPI_Request) :: reqs(12)
 
