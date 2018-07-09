@@ -21,8 +21,9 @@ contains
     use gforce
     use avgitercounts
     use dum1
-    use qmrherm_module, only: qmrherm
-    use measure_module, only : measure
+    use comms
+    use measure_module
+    use qmrherm_module, only : qmrherm,qmrhprint => printall
 !*******************************************************************
 !    Rational Hybrid Monte Carlo algorithm for bulk Thirring Model with Domain Wall
 !         fermions
@@ -96,6 +97,7 @@ contains
 !*******************************************************************
     complex(dp), parameter :: zi=(0.0,1.0)
     ibound=-1
+    qmrhprint = .true.
 #ifdef MPI
     call init_MPI
 #endif
@@ -390,7 +392,7 @@ contains
           thetat = theta
           call coef(ut,thetat)
           call measure(pbp,respbp,ancgm,am,imass)
-!        call meson(rescgm,itercg,ancgm,am,imass)
+!         call meson(rescgm,itercg,ancgm,am,imass)
           pbpa=pbpa+pbp
           ancgma=ancgma+ancgm
           ipbp=ipbp+1
@@ -489,14 +491,14 @@ contains
     use gforce
     use avgitercounts
     use comms
-    use qmrherm_module, only : qmrherm,X2
+    use qmrherm_module, only : qmrherm
 
     complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, Nf)
     real, intent(in) :: res1, am
     integer, intent(in) :: imass, isweep, iter
 !     complex Phi(kferm,Nf),X2(kferm)
 !     complex X1,u
-    !complex(dp) :: X2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp) :: X2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     integer :: ia, itercg
 !
 !     write(6,111)
@@ -567,7 +569,7 @@ contains
     integer :: itercg, ia
 !     write(6,111)
 !111 format(' Hi from hamilton')
-!
+! 
     hf=0.0
 !
     hp = 0.5 * sum(pp ** 2)
@@ -883,7 +885,4 @@ contains
 #endif
     return
   end subroutine coef
-!***********************************************************************
-
-
 end module dwf3d_lib

@@ -5,6 +5,7 @@ program test_congrad
       use vector
       use dirac
       use comms
+      use measure_module
       use test_utils
       implicit none
 

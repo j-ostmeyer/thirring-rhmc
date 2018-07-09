@@ -1,12 +1,3 @@
-module data
-  use params
-  implicit none
-  save
-
-  real :: test_array(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
-  real :: test_array_2(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
-end module data
-
 pure function pid(fip_x, fip_y, fip_t) result(id)
   use params
   implicit none
@@ -19,12 +10,13 @@ end function pid
 
 program test_halo_4_real
   use params
-  use data
   use comms
   implicit none
   integer :: ix, iy, it, i5, i=0
   integer :: pid
   integer :: passed_basic = 0
+  real :: test_array(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
+  real :: test_array_2(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
 #ifdef MPI
   type(MPI_Request), dimension(12) :: reqs, reqs2
 

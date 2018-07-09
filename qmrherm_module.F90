@@ -10,9 +10,10 @@ module qmrherm_module
   complex(dp) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
   complex(dp) :: x1(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
   complex(dp) :: x2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-  
 
   complex(dp),save :: Phi0(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4,ndiag)
+  logical :: printall
+
 contains
 !******************************************************************
 !    multisolver matrix inversion via Lanczos technique
@@ -268,7 +269,7 @@ contains
     endif
 !
 !
-    if (ip_global .eq. 0) then
+    if (ip_global .eq. 0 .and. printall) then
       write(6,*) "Qmrherm iterations,res:", itercg, res
     endif
     return

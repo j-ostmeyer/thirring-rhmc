@@ -7,7 +7,7 @@ contains
 
 !   For the multi-shift inverter
 subroutine dirac_op_shifted(xout,xin,am,imass,shift,num)
-    use dwf3d_lib
+    use dirac
     complex(dp),intent(in) :: xin(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp),intent(out) :: xout(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real, intent(in) :: am,shift,num
@@ -19,7 +19,7 @@ end subroutine
 
 subroutine dirac_operator(xout,xin,am,imass)
     use trial, only: u
-    use dwf3d_lib
+    use dirac
     use comms
     complex(dp),intent(in) :: xin(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp),intent(out) :: xout(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)

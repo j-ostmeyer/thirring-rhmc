@@ -6,9 +6,9 @@ program test_force
       use dirac
       use gforce
       use remezg
-      use param
+      use avgitercounts
       use comms
-      use phizero
+      use qmrherm_module, only : phi0, qmrhprint => printall
       use test_utils
       implicit none
 
@@ -40,6 +40,7 @@ program test_force
       type(MPI_Request), dimension(12) :: reqs_R, reqs_X, reqs_U, reqs_Phi, reqs_Phi0
       call init_MPI
 #endif
+      qmrhprint = .false.
 
       h = 0
       hg = 0

@@ -2,6 +2,7 @@
 program test_gaussp
       use dwf3d_lib
       use gauge
+      use gaussian
       use comms
       use random
       implicit none

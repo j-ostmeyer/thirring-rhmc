@@ -1,9 +1,9 @@
 #include "test_utils.fh"
 program test_qmrherm_0
       use dwf3d_lib
+      use qmrherm_module, only: qmrherm, phi0, qmrhprint => printall
       use trial, only :u 
       use vector
-      use phizero
       !use dirac
       use gforce
       use params
@@ -45,6 +45,7 @@ program test_qmrherm_0
       type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
       call init_MPI
 #endif
+      qmrhprint = .false.
 
       allocate(Phi0_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
       allocate(Phi0_orig(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 25))
