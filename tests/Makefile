@@ -42,7 +42,7 @@ runtests: $(TESTS)
 clean:
 	rm -f $(TESTS) test_halo *.mod *.o compile_flags
 
-.makefile.uptodate: Makefile ../MkRules
+.makefile.uptodate: Makefile ../MkRules ./MkFlags
 	make clean
 	touch .makefile.uptodate
 

@@ -1,6 +1,6 @@
 
 COMPILER=INTEL# either GNU or INTEL
-MPI=yes
+MPI=yes#
 NP_X=2
 NP_Y=2
 NP_T=2

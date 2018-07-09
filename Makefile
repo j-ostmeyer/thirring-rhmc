@@ -1,6 +1,6 @@
 
 include ./MkFlags
-.makefile.uptodate: Makefile MkRules
+.makefile.uptodate: Makefile MkRules MkFlags
 	make clean
 	touch .makefile.uptodate
 

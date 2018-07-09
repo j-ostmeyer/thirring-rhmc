@@ -491,7 +491,7 @@ contains
     use gforce
     use avgitercounts
     use comms
-    use qmrherm_module, only : qmrherm,qmrhprint => printall
+    use qmrherm_module, only : qmrherm
 
     complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, Nf)
     real, intent(in) :: res1, am
@@ -511,7 +511,6 @@ contains
 ! pseudofermion action is
 !   Phi^dagger {MdaggerM(1)}^1/4 {MdaggerM(m)})^-1/2 {MdaggerM(1)}^1/4 Phi
 !
-    qmrhprint = .true.
     do ia=1,Nf
 !
        X2 = Phi(:, :, :, :, :, ia)
@@ -559,7 +558,7 @@ contains
     use dum1
     use avgitercounts
     use comms
-    use qmrherm_module, only : qmrherm,qmrhprint => printall
+    use qmrherm_module, only : qmrherm
     complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, Nf)
     real(dp), intent(out) :: h, hg, hp, s
     real, intent(in) :: res2, am
@@ -571,7 +570,6 @@ contains
 !     write(6,111)
 !111 format(' Hi from hamilton')
 ! 
-    qmrhprint = .true.
     hf=0.0
 !
     hp = 0.5 * sum(pp ** 2)
