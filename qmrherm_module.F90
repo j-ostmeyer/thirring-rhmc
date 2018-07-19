@@ -166,14 +166,16 @@ contains
        call complete_halo_update(reqs_R)
 #endif
     enddo
+    if (niter.gt.max_qmr_iters) then
 #ifdef MPI
-    if (ip_global .eq. 0) then
+      if (ip_global .eq. 0) then
 #endif
-       write(7,*) 'QMRniterc!, isweep,iter,iflag,imass,anum,ndiagq = ' &
-       &        ,isweep, iter, iflag, imass, anum(0), ndiagq
+         write(7,*) 'QMRniterc!, niter, isweep,iter,iflag,imass,anum,ndiagq = ', &
+         &   niter,isweep, iter, iflag, imass, anum(0), ndiagq
 #ifdef MPI
-    end if
+      end if
 #endif
+    endif
 !  
 8   continue
     if(iflag.lt.2)then

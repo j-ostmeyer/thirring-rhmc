@@ -110,14 +110,19 @@ contains
        if(betacgn.lt.resid) exit
     end do
 !     write(6,1000)
+
+    if (nx .gt. niterc) then
 #ifdef MPI
-    if (ip_global.eq.0) then
+      if (ip_global.eq.0) then
 #endif
-       write(7,1000)
-1000   format(' # iterations of congrad exceeds niterc')
+         write(7,1000)
+1000     format(' # iterations of congrad exceeds niterc')
+         write(7,*) "Iterations:", nx
+       
 #ifdef MPI
-    end if
+      end if
 #endif
+    endif
     return
   end subroutine congrad
 
