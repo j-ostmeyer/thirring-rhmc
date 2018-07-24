@@ -88,6 +88,7 @@ contains
 !*******************************************************************
 #ifdef MPI
     type(MPI_Request) :: reqs_ps(12)
+    integer :: ierr
 #else
     integer :: reqs_ps
 #endif
@@ -331,7 +332,7 @@ contains
              ytest = rano(yran, idum, 1, 1, 1)
           end if
 #ifdef MPI
-          call MPI_Bcast(ytest, 1, MPI_Real, 0, comm)
+          call MPI_Bcast(ytest, 1, MPI_Real, 0, comm,ierr)
 #endif
           if(ytest.lt.proby)then
              pp = pp - 0.5 * dt * dSdpi
@@ -361,7 +362,7 @@ contains
        if(dH.lt.0.0)then
           x = rano(yran, idum, 1, 1, 1)
 #ifdef MPI
-          call MPI_Bcast(x, 1, MPI_Real, 0, comm)
+          call MPI_Bcast(x, 1, MPI_Real, 0, comm,ierr)
 #endif
           if(x.gt.y)goto 600
        endif
@@ -380,7 +381,7 @@ contains
        actiona=actiona+action 
        vel2 = sum(pp * pp)
 #ifdef MPI
-       call MPI_AllReduce(MPI_In_Place, vel2, 1, MPI_Real, MPI_Sum, comm)
+       call MPI_AllReduce(MPI_In_Place, vel2, 1, MPI_Real, MPI_Sum, comm,ierr)
 #endif
        vel2 = vel2 / (3 * kvol)
        vel2a = vel2a + vel2
@@ -567,6 +568,9 @@ contains
 !     complex X1,R
     real(dp) :: hf
     integer :: itercg, ia
+#ifdef MPI
+    integer :: ierr
+#endif
 !     write(6,111)
 !111 format(' Hi from hamilton')
 ! 
@@ -574,12 +578,12 @@ contains
 !
     hp = 0.5 * sum(pp ** 2)
 #ifdef MPI
-    call MPI_AllReduce(MPI_In_Place, hp, 1, MPI_Double_Precision, MPI_Sum, comm)
+    call MPI_AllReduce(MPI_In_Place, hp, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
 #endif
 
     hg = 0.5 * Nf * beta * sum(theta ** 2)
 #ifdef MPI
-    call MPI_AllReduce(MPI_In_Place, hg, 1, MPI_Double_Precision, MPI_Sum, comm)
+    call MPI_AllReduce(MPI_In_Place, hg, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
 #endif
     h = hg + hp
 
@@ -609,7 +613,7 @@ contains
 #ifdef MPI
 ! hf is built up from zero during the loop so only needs to be summed across
 ! all partitions at this point
-    call MPI_AllReduce(MPI_In_Place, hf, 1, MPI_Double_Precision, MPI_Sum, comm)
+    call MPI_AllReduce(MPI_In_Place, hf, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
 #endif
 !
     h = hg + hp + hf
@@ -673,23 +677,24 @@ contains
     use comms
     type(MPI_File) :: mpi_fh
     type(MPI_Status) :: status
+    integer :: ierr
     
     call MPI_File_Open(comm, 'con', MPI_Mode_Rdonly, &
-         & MPI_Info_Null, mpi_fh)
+         & MPI_Info_Null, mpi_fh,ierr)
 ! Get the configuration
     call MPI_File_Set_View(mpi_fh, 0_8, MPI_Real, mpiio_type, "native", &
-         & MPI_Info_Null)
+         & MPI_Info_Null,ierr)
     call MPI_File_Read_All(mpi_fh, theta, 3 * ksizex_l * ksizey_l * ksizet_l, &
-         & MPI_Real, status)
-    call MPI_File_Close(mpi_fh)
-! Get the seed
+         & MPI_Real, status,ierr)
+    call MPI_File_Close(mpi_fh,ierr)
+! Get the see,ierrd
     if (ip_global.eq.0) then
        open(unit=10, file='con', status='old', form='unformatted', access='stream')
        call fseek(10, 3 * ksize * ksize * ksizet * 4 + 4, 0)
        read (10) seed
        close(10)
     end if
-    call MPI_Bcast(seed, 1, MPI_Double_Precision, 0, comm)
+    call MPI_Bcast(seed, 1, MPI_Double_Precision, 0, comm,ierr)
 #else
     open(unit=10, file='con', status='old', form='unformatted')
     read (10) theta, seed
@@ -705,15 +710,16 @@ contains
     use comms
     type(MPI_File) :: mpi_fh
     type(MPI_Status) :: status
+    integer :: ierr
     
 ! Write theta
     call MPI_File_Open(comm, 'con', MPI_Mode_Wronly + MPI_Mode_Create, &
-         & MPI_Info_Null, mpi_fh)
+         & MPI_Info_Null, mpi_fh,ierr)
     call MPI_File_Set_View(mpi_fh, 0_8, MPI_Real, mpiio_type, "native", &
-         & MPI_Info_Null)
+         & MPI_Info_Null,ierr)
     call MPI_File_Write_All(mpi_fh, theta, 3 * ksizex_l * ksizey_l * ksizet_l, &
-         & MPI_Real, status)
-    call MPI_File_Close(mpi_fh)
+         & MPI_Real, status,ierr)
+    call MPI_File_Close(mpi_fh,ierr)
 
 ! Write seed in serial
     if (ip_global.eq.0) then
