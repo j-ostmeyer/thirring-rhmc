@@ -46,11 +46,12 @@ contains
     real(dp) :: amu(ndiagq), d(ndiagq), dm1(ndiagq)
     real(dp) :: rho(ndiagq), rhom1(ndiagq)
     real(dp) :: betaq, betaq0, phimod
-    real :: resid, rhomax, arelax
+   real :: resid, rhomax, arelax
     integer :: niter, idiag
 #ifdef MPI
     type(MPI_Request), dimension(12) :: reqs_X2, reqs_vtild, reqs_Phi0, reqs_R, reqs_x
     integer :: ierr
+    real(dp) :: dp_reduction ! DEBUG
 #endif
 !
 !     write(6,111)
@@ -68,8 +69,10 @@ contains
 
     betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
 #ifdef MPI
-    call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
-#endif
+    !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
+    call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
+    betaq = dp_reduction
+#endif 
     betaq = sqrt(betaq)
     phimod=betaq
 !
@@ -95,7 +98,9 @@ contains
        alphatild = sum(real(conjg(q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
        &                * x3(:,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 #ifdef MPI
-       call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+       !call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+       call MPI_AllReduce(alphatild, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
+       alphatild = dp_reduction ! DEBUG
 #endif
 !
        R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = &
@@ -114,7 +119,9 @@ contains
        betaq0 = betaq
        betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:)) ** 2)
 #ifdef MPI
-       call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+       !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+       call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
+       betaq = dp_reduction ! DEBUG
 #endif
        betaq = sqrt(betaq)
 !

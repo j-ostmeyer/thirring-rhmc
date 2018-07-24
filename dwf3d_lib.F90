@@ -89,6 +89,8 @@ contains
 #ifdef MPI
     type(MPI_Request) :: reqs_ps(12)
     integer :: ierr
+    real(dp) :: dp_reduction
+    real :: reduction
 #else
     integer :: reqs_ps
 #endif
@@ -381,7 +383,9 @@ contains
        actiona=actiona+action 
        vel2 = sum(pp * pp)
 #ifdef MPI
-       call MPI_AllReduce(MPI_In_Place, vel2, 1, MPI_Real, MPI_Sum, comm,ierr)
+       !call MPI_AllReduce(MPI_In_Place, vel2, 1, MPI_Real, MPI_Sum, comm,ierr)
+       call MPI_AllReduce(vel2, reduction, 1, MPI_Real, MPI_Sum, comm,ierr)  ! DEBUG
+       vel2 = reduction ! DEBUG
 #endif
        vel2 = vel2 / (3 * kvol)
        vel2a = vel2a + vel2
@@ -480,6 +484,8 @@ contains
        call swrite
        write(7,*) 'seed: ', idum
     endif
+
+    call MPI_Finalize(ierr)
 !
   end subroutine dwf3d_main
 !******************************************************************
@@ -570,6 +576,7 @@ contains
     integer :: itercg, ia
 #ifdef MPI
     integer :: ierr
+    real(dp) :: dp_reduction
 #endif
 !     write(6,111)
 !111 format(' Hi from hamilton')
@@ -578,12 +585,16 @@ contains
 !
     hp = 0.5 * sum(pp ** 2)
 #ifdef MPI
-    call MPI_AllReduce(MPI_In_Place, hp, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+    !call MPI_AllReduce(MPI_In_Place, hp, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)  ! DEBUG
+    call MPI_AllReduce(hp,dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)  ! DEBUG
+    hp = dp_reduction
 #endif
 
     hg = 0.5 * Nf * beta * sum(theta ** 2)
 #ifdef MPI
-    call MPI_AllReduce(MPI_In_Place, hg, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
+    !call MPI_AllReduce(MPI_In_Place, hg, 1, MPI_Double_Precision, MPI_Sum, comm, ierr) ! DEBUG
+    call MPI_AllReduce(hg, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm, ierr) ! DEBUG
+    hg = dp_reduction
 #endif
     h = hg + hp
 
@@ -613,7 +624,9 @@ contains
 #ifdef MPI
 ! hf is built up from zero during the loop so only needs to be summed across
 ! all partitions at this point
-    call MPI_AllReduce(MPI_In_Place, hf, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+    !call MPI_AllReduce(MPI_In_Place, hf, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
+    call MPI_AllReduce(hf, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
+    hf = dp_reduction
 #endif
 !
     h = hg + hp + hf
