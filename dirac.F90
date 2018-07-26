@@ -1,5 +1,6 @@
 module dirac
   use params
+  use comms
   implicit none
   save
 
@@ -109,7 +110,11 @@ contains
     return
   end subroutine dslash
 !***********************************************************************
+#ifdef MPI
+  subroutine dslashd(Phi,R,u,am,imass,reqs_R)
+#else
   pure subroutine dslashd(Phi,R,u,am,imass)
+#endif
 !     calculates Phi = Mdagger*R
 !
 !     complex, intent(in) ::  u(0:ksize+1,0:ksize+1,0:ksizet+1,3)
@@ -124,42 +129,16 @@ contains
     complex(dp) :: zkappa
     real :: diag
     integer :: ixup, iyup, itup, ix, iy, it, idirac, mu, igork
-!     write(6,*) 'hi from dslashd'
+#ifdef MPI
+    type(MPI_Request), dimension(12),intent(inout), optional :: reqs_R
+#endif
 !
-!     diagonal term (hermitian)
+!   Taking care of the part that does NOT need the halo
+!   diagonal term (hermitian)
     diag=(3.0-am3)+1.0
-    Phi = diag * R
-!
-!     Wilson term (hermitian) and Dirac term (antihermitian)
-    do mu=1,3
-       ixup = kdelta(1, mu)
-       iyup = kdelta(2, mu)
-       itup = kdelta(3, mu)
+    Phi(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:) = diag * R(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:)
 
-       do idirac=1,4
-          igork=gamin(mu,idirac)
-          do it = 1,ksizet_l
-             do iy = 1,ksizey_l
-                do ix = 1,ksizex_l
-                   Phi(:,ix,iy,it,idirac)=Phi(:,ix,iy,it,idirac) &
-! Wilson term (hermitian)
-                   &    - akappa * (u(ix,iy,it,mu) &
-                   &              * R(:, ix+ixup, iy+iyup, it+itup, idirac) &
-                   &             + conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
-                   &              * R(:, ix-ixup, iy-iyup, it-itup, idirac)) &
-! Dirac term (antihermitian)
-                   &    - gamval(mu,idirac) * &
-                   &       (u(ix,iy,it,mu) &
-                   &         * R(:, ix+ixup, iy+iyup, it+itup, igork) &
-                   &        - conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
-                   &         * R(:, ix-ixup, iy-iyup, it-itup, igork))
-                enddo
-             enddo
-          enddo
-       enddo
-    enddo
-!
-!  s-like term exploiting projection
+!   s-like term exploiting projection
     Phi(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
          & = Phi(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
          & - R(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
@@ -167,7 +146,7 @@ contains
          & = Phi(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
          & - R(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
 !
-!  Mass term (couples the two walls unless imass=5) 
+!   Mass term (couples the two walls unless imass=5) 
     if(imass.eq.1)then
        zkappa=cmplx(am,0.0)
        Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
@@ -193,7 +172,42 @@ contains
             & Phi(1,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
             & - zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
     endif
-!      call complete_halo_update_5(4, Phi)
+!   call complete_halo_update_5(4, Phi)
+!
+!   Taking care of the part that DOES need the halo
+!   Wilson term (hermitian) and Dirac term (antihermitian)
+#ifdef MPI
+    if(present(reqs_R)) then
+    call complete_halo_update(reqs_R)
+    endif
+#endif
+    do mu=1,3
+       ixup = kdelta(1, mu)
+       iyup = kdelta(2, mu)
+       itup = kdelta(3, mu)
+
+       do idirac=1,4
+          igork=gamin(mu,idirac)
+          do it = 1,ksizet_l
+             do iy = 1,ksizey_l
+                do ix = 1,ksizex_l
+                   Phi(:,ix,iy,it,idirac)=Phi(:,ix,iy,it,idirac) &
+!   Wilson term (hermitian)
+                   &    - akappa * (u(ix,iy,it,mu) &
+                   &              * R(:, ix+ixup, iy+iyup, it+itup, idirac) &
+                   &             + conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
+                   &              * R(:, ix-ixup, iy-iyup, it-itup, idirac)) &
+!   Dirac term (antihermitian)
+                   &    - gamval(mu,idirac) * &
+                   &       (u(ix,iy,it,mu) &
+                   &         * R(:, ix+ixup, iy+iyup, it+itup, igork) &
+                   &        - conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
+                   &         * R(:, ix-ixup, iy-iyup, it-itup, igork))
+                enddo
+             enddo
+          enddo
+       enddo
+    enddo
 !
     return
   end subroutine dslashd

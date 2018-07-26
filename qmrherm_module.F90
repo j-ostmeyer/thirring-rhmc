@@ -84,12 +84,13 @@ contains
 #ifdef MPI
 ! No way to hide communications here unfortunately
        call start_halo_update_5(4, vtild, 1, reqs_vtild)
-       call complete_halo_update(reqs_vtild)
+       !call complete_halo_update(reqs_vtild) ! Now this call happens in dslashd
+       call dslashd(x3,vtild,u,am,imass,reqs_vtild)
 #else
        call update_halo_5(4, vtild)
+       call dslashd(x3,vtild,u,am,imass)
 #endif
 
-       call dslashd(x3,vtild,u,am,imass)
 !
        alphatild = sum(real(conjg(q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
        &                * x3(:,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
