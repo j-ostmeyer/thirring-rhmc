@@ -49,8 +49,11 @@ COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -c
 %.mod : %.o
 	touch $@
 
-# generic rule for dirac,dum,gauge,gforce,remez,remezg,trial,vector
+# generic rule for dum,gauge,gforce,remez,remezg,trial,vector
 %.o : $(TOPDIR)/%.F90 .makefile.uptodate params.mod
+	$(COMPILE) -o $*.o $<
+
+dirac.o : $(TOPDIR)/dirac.F90 .makefile.uptodate params.mod comms.mod
 	$(COMPILE) -o $*.o $<
 
 avgitercounts.o : $(TOPDIR)/avgitercounts.F90 \
