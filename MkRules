@@ -15,7 +15,7 @@ GNU_FCFLAGS  = -O0 -Wall -ffree-line-length-none
 #INTEL SETTINGS
 INTEL_MPIFC  =mpiifort 
 INTEL_FC     =ifort 
-INTEL_FCFLAGS= -O3 -heap-arrays
+INTEL_FCFLAGS= -g -O3 -heap-arrays
 
 ifeq ($(COMPILER), GNU)
 MPIFC  =$(GNU_MPIFC)
@@ -122,6 +122,6 @@ endif
 
 
 #MISC
-compile_flags:
+compile_flags: MkRules
 	echo $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} > $@
 
