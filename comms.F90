@@ -98,7 +98,6 @@ contains
     integer, dimension(6) :: sizes, subsizes, starts
     integer :: ierr
 
-
     sizes = (/ kthird, ksizex_l + 2, ksizey_l + 2, ksizet_l + 2, size5, size6 /)
     subsizes = (/ kthird, ksizex_l, ksizey_l, ksizet_l, size5, size6 /)
     subsizes(direction+2) = 1
@@ -267,14 +266,6 @@ contains
     call MPI_Irecv(Array, 1, halo_4_xup_recv(size4), ip_xup, 1 + tag_offset, comm, &
          & reqs(4),ierr)
 
-! Start send and receive in y direction
-    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup,ierr)
-    call MPI_Isend(Array, 1, halo_4_yup_send(size4), ip_yup, 2 + tag_offset, comm, &
-         & reqs(5),ierr)
-    call MPI_Irecv(Array, 1, halo_4_ydn_recv(size4), ip_ydn, 2 + tag_offset, comm, &
-         & reqs(6),ierr)
-    call MPI_Isend(Array, 1, halo_4_ydn_send(size4), ip_ydn, 3 + tag_offset, comm, &
-         & reqs(7),ierr)
 ! Start receive in y direction
     call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup,ierr)
     call MPI_Irecv(Array, 1, halo_4_ydn_recv(size4), ip_ydn, 2 + tag_offset, comm, &
@@ -324,6 +315,7 @@ contains
     integer :: ierr
 
     tag_offset = 6 * tag
+
 
     ! RECEIVES
     ! Start receive in x direction
