@@ -110,31 +110,15 @@ contains
     return
   end subroutine dslash
 !***********************************************************************
-#ifdef MPI
-  subroutine dslashd(Phi,R,u,am,imass,reqs_R)
-#else
-  pure subroutine dslashd(Phi,R,u,am,imass)
-#endif
-!     calculates Phi = Mdagger*R
-!
-!     complex, intent(in) ::  u(0:ksize+1,0:ksize+1,0:ksizet+1,3)
-!     complex, intent(out) :: Phi(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
-!     complex, intent(in) :: R(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
-!     complex :: zkappa
-    complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
+  pure subroutine dslashd_local(am,Phi,R,imass)
+    implicit none
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    integer, intent(in) :: imass
-    real, intent(in) :: am
-    complex(dp) :: zkappa
     real :: diag
-    integer :: ixup, iyup, itup, ix, iy, it, idirac, mu, igork
-#ifdef MPI
-    type(MPI_Request), dimension(12),intent(inout), optional :: reqs_R
-#endif
-!
-!   Taking care of the part that does NOT need the halo
-!   diagonal term (hermitian)
+    complex(dp) :: zkappa
+    real, intent(in) :: am
+    integer, intent(in) :: imass
+ 
     diag=(3.0-am3)+1.0
     Phi(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:) = diag * R(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:)
 
@@ -172,6 +156,37 @@ contains
             & Phi(1,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
             & - zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
     endif
+
+  return 
+  end subroutine dslashd_local
+#ifdef MPI
+  subroutine dslashd(Phi,R,u,am,imass,reqs_R)
+#else
+  pure subroutine dslashd(Phi,R,u,am,imass)
+#endif
+!     calculates Phi = Mdagger*R
+!
+!     complex, intent(in) ::  u(0:ksize+1,0:ksize+1,0:ksizet+1,3)
+!     complex, intent(out) :: Phi(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
+!     complex, intent(in) :: R(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
+!     complex :: zkappa
+    complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
+    complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    integer, intent(in) :: imass
+    real, intent(in) :: am
+    !complex(dp) :: zkappa
+    !real :: diag
+    integer :: ixup, iyup, itup, ix, iy, it, idirac, mu, igork
+#ifdef MPI
+    type(MPI_Request), dimension(12),intent(inout), optional :: reqs_R
+#endif
+!
+!   Taking care of the part that does NOT need the halo
+!   diagonal term (hermitian)
+
+    call dslashd_local(am,Phi,R,imass)
+
 !   call complete_halo_update_5(4, Phi)
 !
 !   Taking care of the part that DOES need the halo
@@ -225,8 +240,6 @@ contains
     integer :: ix, iy, it, idirac, mu, ixup, iyup, igork
     real(dp) :: diag
 
-!     write(6,*) 'hi from dslash2d'
-!
 !     diagonal term
     diag=2.0d0
     Phi = diag * R

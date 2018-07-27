@@ -48,6 +48,7 @@ contains
     real(dp) :: betaq, betaq0, phimod
    real :: resid, rhomax, arelax
     integer :: niter, idiag
+    logical :: go_on
 #ifdef MPI
     type(MPI_Request), dimension(12) :: reqs_X2, reqs_vtild, reqs_Phi0, reqs_R, reqs_x
     integer :: ierr
@@ -77,7 +78,10 @@ contains
     phimod=betaq
 !
     !do niter=1,20
-    do niter=1,max_qmr_iters
+    niter = 0
+    go_on = .true.
+    do while(niter.lt.max_qmr_iters .and. go_on )
+       niter=niter+1
        itercg=itercg+1
 !
 !  Lanczos steps
@@ -165,7 +169,7 @@ contains
 !     call testinv(Phi,resmax,itercg,am,imass,x1,aden,ndiagq)
 !     convergence based on || residual || not working well in single precision...
 !     if(resmax.lt.resid) goto 8
-            exit
+             go_on = .false.
           endif
        endif
 !     
