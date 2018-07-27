@@ -166,7 +166,6 @@ contains
     type(MPI_Request), dimension(12) :: reqs_ps, reqs_pt, reqs_Phi
     integer :: ierr
     complex(dp) :: dc_reduction
-    real(dp) :: dp_reduction
 #else
     integer :: reqs_ps, reqs_pt, reqs_Phi
 #endif
@@ -397,8 +396,7 @@ contains
 #ifdef MPI
     type(MPI_Request), dimension(12) :: mpireqs
     real(dp) :: dp_reduction
-    complex(dp) :: cp_reduction
-    real :: reduction
+    complex(dp) :: dc_reduction
 #endif
 !
     iter = 0

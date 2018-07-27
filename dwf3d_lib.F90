@@ -89,7 +89,6 @@ contains
 #ifdef MPI
     type(MPI_Request) :: reqs_ps(12)
     integer :: ierr
-    real(dp) :: dp_reduction
     real :: reduction
 #else
     integer :: reqs_ps
