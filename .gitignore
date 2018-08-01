@@ -8,4 +8,5 @@ fort.*
 **output
 **genmod.f90
 **.swp
+**.optrpt
 run???/
