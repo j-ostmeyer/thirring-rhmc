@@ -8,4 +8,6 @@ fort.*
 **output
 **genmod.f90
 **.swp
+compile_flags
+bulk_rhmc
 run???/
