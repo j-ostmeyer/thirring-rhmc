@@ -1,4 +1,3 @@
-
 COMPILER=INTEL# either GNU or INTEL
 MPI=yes#
 NP_X=2
@@ -7,4 +6,3 @@ NP_T=2
 SITE_RANDOM=yes#
 WITH_MUST=no#
 SWAPSENDRECVS=no#
-

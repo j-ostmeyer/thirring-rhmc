@@ -58,10 +58,7 @@ TOPDIR = ..
 
 include ../MkRules
 
-
-LIBOBJS += $(OBJS)
-
-LIBOBJS += test_utils.o params.o inverter_checks.o
+LIBOBJS += test_utils.o inverter_checks.o
 
 MODS=$(patsubst %.o,%.mod,$(LIBOBJS))
 
