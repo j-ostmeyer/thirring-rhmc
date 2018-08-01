@@ -11,6 +11,7 @@ contains
     use vector
     use comms
     use dirac
+    use params
     implicit none
     complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 !     complex, intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -18,7 +19,6 @@ contains
     integer, intent(out) :: itercg
     integer, intent(in) :: imass
 
-    integer, parameter :: niterc=kthird*kvol
 !     complex x1(kferm),x2(kferm),p(kferm),r(kferm)
     complex(dp) :: x1(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp) :: x2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)

@@ -26,3 +26,6 @@ test_qmrherm_2
 test_qmrherm_3
 test_qmrherm_4
 test_save
+test_dslashd_1_reqs
+test_dslashd_3_reqs
+test_dslashd_5_reqs

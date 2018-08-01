@@ -7,6 +7,8 @@ module params
   integer, parameter :: dp=kind(1.d0)
   integer, parameter :: sp=kind(1.)
 
+  ! benchmarking/profiling parameters
+  integer :: timing_loops = 10
   ! Lattice parameters
 #define KSIZE 12
 #define KSIZET 12
@@ -15,7 +17,7 @@ module params
   integer, parameter :: kvol=ksize*ksize*ksizet
   integer, parameter :: ndiag=25, ndiagg=12
   integer, parameter :: Nf=1
-  real(dp), parameter :: akappa = 0.5
+  real(dp), parameter :: akappa = 0.5d0
 #ifndef MPI
   integer, parameter :: ksizex_l=ksize, ksizey_l=ksize, ksizet_l=ksizet
   integer, parameter :: kvol_l = kvol
@@ -39,16 +41,16 @@ module params
 #endif
   
   ! Control parameters
-  integer, parameter :: istart=1    !
-  integer, parameter :: iread=0      ! 
-  integer, parameter :: iwrite=0     !
-  integer, parameter :: iprint=1     !
-  integer, parameter :: iseed=1      ! 
+  integer, parameter :: istart=-1
+  integer, parameter :: iread=1
+  integer, parameter :: iwrite=0
+  integer, parameter :: iprint=5
+  integer, parameter :: iseed=1
   integer, parameter :: icheck=100
-
+  
   ! Inverter
-  integer :: max_qmr_iters=7500 ! QMRHERM
-  integer :: niterc=kthird*kvol ! CONGRAD
+  integer :: max_qmr_iters=10    !QMRHERM
+  integer :: niterc=10 !CONGRAD
   
   ! Runtime parameters
   real :: beta
