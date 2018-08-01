@@ -40,15 +40,16 @@ program benchmark_qmrherm_1
 
 #ifdef MPI
       type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
+      integer :: ierr
       call init_MPI
 #endif
-      qmrhprint = .false.
+      qmrhprint = .true.
 
       allocate(Phi0_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
       allocate(Phi0_orig(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 25))
       allocate(delta_Phi0(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
 
-      res = 0.1
+      res = 1e-14
       am = 0.05
       imass = 3
       iflag = 1
@@ -123,6 +124,6 @@ program benchmark_qmrherm_1
          call qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter)
       end do
 #ifdef MPI
-      call MPI_Finalize
+      call MPI_Finalize(ierr)
 #endif
 end program benchmark_qmrherm_1

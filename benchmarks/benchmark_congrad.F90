@@ -28,13 +28,15 @@ program benchmark_congrad
       integer :: i, j, ix, iy, it, ithird
       integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
       integer :: idx = 0
+      integer :: iterations
 #ifdef MPI
       type(MPI_Request), dimension(12) :: reqs_X, reqs_Phi, reqs_u
+      integer :: ierr
 
       call init_MPI
 #endif
 
-      res = 0.1
+      res = 1e-14
       am = 0.05
       imass = 3
       iflag = 0
@@ -93,10 +95,15 @@ program benchmark_congrad
       call init(istart)
 ! call function
       do i = 1,timing_loops
-         call congrad(Phi, res, itercg, am, imass)
+         call congrad(Phi, res, itercg, am, imass,iterations)
+#ifdef MPI
+         if(ip_global.eq.0) then
+         print *, "Congrad iterations, res:", iterations,res
+         endif
+#endif
       end do
 #ifdef MPI
-      call MPI_Finalize
+      call MPI_Finalize(ierr)
 #endif
 
 end program benchmark_congrad

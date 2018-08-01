@@ -6,7 +6,7 @@ contains
 !       solves (Mdagger)Mx=Phi, 
 !           NB. no even/odd partitioning
 !******************************************************************
-  subroutine congrad(Phi,res,itercg,am,imass)
+  subroutine congrad(Phi,res,itercg,am,imass,iterations)
     use trial, only: u
     use vector
     use comms
@@ -18,6 +18,7 @@ contains
     real, intent(in) :: res, am
     integer, intent(out) :: itercg
     integer, intent(in) :: imass
+    integer, intent(out), optional :: iterations
 
 !     complex x1(kferm),x2(kferm),p(kferm),r(kferm)
     complex(dp) :: x1(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -128,6 +129,9 @@ contains
 #ifdef MPI
       end if
 #endif
+    endif
+    if(present(iterations)) then
+       iterations  = nx 
     endif
     return
   end subroutine congrad
