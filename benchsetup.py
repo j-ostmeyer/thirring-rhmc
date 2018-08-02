@@ -6,7 +6,7 @@ import glob
 from contextlib import contextmanager
 import math
 
-ranks_per_node = 24
+ranks_per_node = 32
 
 @contextmanager
 def cd(newdir):
@@ -91,8 +91,8 @@ def run(divs,ssize):
     suffix = str(int(math.ceil(float(nranks)/ranks_per_node)))
     newdirname="{div}x{div}x{div}".format(div=divs)
     script='''
-../../time -o timeqmr -p mpirun -n {nrank} ./benchmark_qmrherm_1 > qmroutput
-../../time -o timecongrad -p mpirun -n {nrank} ./benchmark_congrad > congradoutput
+/usr/bin/time -o timeqmr -p mpirun -n {nrank} ./benchmark_qmrherm_1 > qmroutput
+/usr/bin/time -o timecongrad -p mpirun -n {nrank} ./benchmark_congrad > congradoutput
 '''.format(div = divs, nrank = nranks)
     scriptname = 'scriptrun'+suffix
     print script
