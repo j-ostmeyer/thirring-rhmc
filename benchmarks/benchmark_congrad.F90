@@ -16,6 +16,7 @@ program benchmark_congrad
 
 ! initialise function parameters
       complex(dp) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+      complex(dp) :: Phi0(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
       complex(dp) :: x_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
       complex(dp) :: diff(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
       complex(dp) :: sum_diff
@@ -29,6 +30,8 @@ program benchmark_congrad
       integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
       integer :: idx = 0
       integer :: iterations
+      integer :: t1i(2), t2i(2)
+      double precision :: dt
 #ifdef MPI
       type(MPI_Request), dimension(12) :: reqs_X, reqs_Phi, reqs_u
       integer :: ierr
@@ -94,15 +97,29 @@ program benchmark_congrad
       
       call init(istart)
 ! call function
+      Phi0 = Phi
+
+      call gettimeofday(t1i,ierr)
       do i = 1,timing_loops
+         Phi=Phi0
          call congrad(Phi, res, itercg, am, imass,iterations)
 #ifdef MPI
          if(ip_global.eq.0) then
+#endif
          print *, "Congrad iterations, res:", iterations,res
+#ifdef MPI
          endif
 #endif
       end do
+      call gettimeofday(t2i,ierr)
+      dt = t2i(1)-t1i(1) + 1.0d-6 * (t2i(2)-t1i(2))
+      dt = dt / timing_loops / iterations
 #ifdef MPI
+      if(ip_global.eq.0) then
+#endif
+      print *, "Time per iteration:" , dt
+#ifdef MPI
+      endif
       call MPI_Finalize(ierr)
 #endif
 
