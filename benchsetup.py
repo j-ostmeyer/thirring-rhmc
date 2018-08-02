@@ -4,6 +4,9 @@ from sys import argv
 import os
 import glob
 from contextlib import contextmanager
+import math
+
+ranks_per_node = 24
 
 @contextmanager
 def cd(newdir):
@@ -14,23 +17,58 @@ def cd(newdir):
     finally:
         os.chdir(prevdir)
 
+def work_in_dir(func,directory,possible_subsizes):
+    with cd(directory):
+        #os.system('make clean')
+        print directory
+        
+        for divs,ssize in possible_subsizes:
+            func(divs,ssize)
 
-def cycle(func):
-     for directory in glob.glob('benchmarks[0-9]*'):
-        size = int(directory.replace('benchmarks',''))
-        possible_subsizes = []
-        for divs in range(1,size):
-            if size%divs is 0:
-                possible_subsizes.append((divs,size/divs))
-    
-        print size,possible_subsizes
+def create_work_in_dir(func):
+    def work_in_dir(size,directory,possible_subsizes):
         with cd(directory):
             #os.system('make clean')
             print directory
             
             for divs,ssize in possible_subsizes:
                 func(divs,ssize)
-     
+    return work_in_dir
+
+def cycle(func):
+     ksizes = [4,6,8,10,12,16]
+     for size in ksizes:
+        directory = 'benchmarks'+str(size)
+        possible_subsizes = []
+        for divs in range(1,size):
+            if size%divs is 0:
+                possible_subsizes.append((divs,size/divs))
+    
+        print size,possible_subsizes
+        func(size,directory,possible_subsizes)
+
+
+def createdir(size,directory,possible_subsizes):
+    with open('benchmarks/benchmark_params.tmpl.F90','r') as f:
+        benchparam_tmpl_text = f.read()
+
+    benchparam_text = benchparam_tmpl_text.replace('SEDKSIZE',str(size))
+    script='''
+mkdir -p {directory}
+cd {directory} 
+ln -s ../benchmarks/benchmark_congrad.F90 ./
+ln -s ../benchmarks/benchmark_qmrherm_1.F90 ./
+cp ../benchmarks/MkFlags.tmpl ./MkFlags
+cp ../benchmarks/Makefile ./
+
+'''.format(directory = directory)
+    scriptname = 'script'
+    with open(scriptname,'w') as f:
+        f.write(script)
+    os.system('bash ./'+scriptname)
+    
+    with open(os.path.join(directory,'benchmark_params.F90'),'w') as f:
+         f.write(benchparam_text)
 
 
 def prepare(divs,ssize):
@@ -50,22 +88,23 @@ cp benchmark_congrad benchmark_qmrherm_1 $NEWDIR
 
 def run(divs,ssize):
     nranks=divs**3
+    suffix = str(int(math.ceil(float(nranks)/ranks_per_node)))
+    newdirname="{div}x{div}x{div}".format(div=divs)
     script='''
-NEWDIR={div}x{div}x{div}
-cd $NEWDIR
-/usr/bin/time -o timeqmr -p numactl -m 1 mpirun -n {nrank} ./benchmark_qmrherm_1 > qmroutput
-/usr/bin/time -o timecongrad -p numactl -m 1 mpirun -n {nrank} ./benchmark_congrad > congradoutput
+../../time -o timeqmr -p mpirun -n {nrank} ./benchmark_qmrherm_1 > qmroutput
+../../time -o timecongrad -p mpirun -n {nrank} ./benchmark_congrad > congradoutput
 '''.format(div = divs, nrank = nranks)
-    scriptname = 'scriptrun'
+    scriptname = 'scriptrun'+suffix
     print script
-    with open(scriptname,'w') as f:
+    with open(os.path.join(newdirname,scriptname),'w') as f:
         f.write(script)
-    os.system('bash ./'+scriptname)
+    #os.system('bash ./'+scriptname)
  
             
 modes = {
-    'prepare': prepare,
-    'run' : run
+    'createdir' : createdir,
+    'prepare': create_work_in_dir(prepare),
+    'run' : create_work_in_dir(run)
 } 
 
 
