@@ -94,6 +94,7 @@ SWAPSR=
 else 
 $(error SWAPSENDRECVS not correctly specified)
 endif
+
 ifeq ($(MPI), yes)
 COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T) 
 FC = $(MPIFC)
@@ -104,6 +105,13 @@ comms.o :  $(TOPDIR)/comms.F90 .makefile.uptodate params.mod
 else ifeq ($(MPI), no)
 
 comms.o :  $(TOPDIR)/uncomms.f90 .makefile.uptodate params.mod
+	$(COMPILE) -o comms.o $<
+
+else ifeq ($(MPI), fake)
+COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T) 
+FC = $(MPIFC)
+
+comms.o :  $(TOPDIR)/fake_comms.F90 .makefile.uptodate params.mod
 	$(COMPILE) -o comms.o $<
 
 else 
