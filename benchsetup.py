@@ -6,7 +6,8 @@ import glob
 from contextlib import contextmanager
 import math
 
-ranks_per_node = 32
+ranks_per_node = 24
+setFake = False
 
 @contextmanager
 def cd(newdir):
@@ -38,7 +39,10 @@ def create_work_in_dir(func):
 def cycle(func):
      ksizes = [4,6,8,10,12,16]
      for size in ksizes:
-        directory = 'benchmarks'+str(size)
+        if setFake:
+            directory = 'benchmarks_fake'+str(size)
+        else:
+            directory = 'benchmarks'+str(size)
         possible_subsizes = []
         for divs in range(1,size):
             if size%divs is 0:
@@ -62,6 +66,10 @@ cp ../benchmarks/MkFlags.tmpl ./MkFlags
 cp ../benchmarks/Makefile ./
 
 '''.format(directory = directory)
+    if setFake:
+        fakecorrection = "\nsed -i 's/MPI=yes/MPI=fake/' ./MkFlags\n"
+        script += fakecorrection
+
     scriptname = 'script'
     with open(scriptname,'w') as f:
         f.write(script)
@@ -109,6 +117,9 @@ modes = {
 
 
 if __name__ == "__main__" : 
+    if 'fake' in argv:
+        setFake = True
+        argv.remove('fake')
     cycle(modes[argv[1]])
 
 
