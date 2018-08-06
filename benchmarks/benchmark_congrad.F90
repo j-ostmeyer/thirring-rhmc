@@ -8,7 +8,6 @@ program benchmark_congrad
       implicit none
 
 ! general parameters
-      logical :: generate = .false.
       complex, parameter :: iunit = cmplx(0, 1)
       real*8, parameter :: tau = 8 * atan(1.0_8)
 
@@ -17,10 +16,7 @@ program benchmark_congrad
 ! initialise function parameters
       complex(dp) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
       complex(dp) :: Phi0(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-      complex(dp) :: x_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-      complex(dp) :: diff(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-      complex(dp) :: sum_diff
-      real(dp) :: max_diff
+      complex(dp) :: X0(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
       
       integer :: imass, iflag, isweep, iter
       real :: res, am
@@ -98,10 +94,12 @@ program benchmark_congrad
       call init(istart)
 ! call function
       Phi0 = Phi
+      X0 = X
 
       call gettimeofday(t1i,ierr)
       do i = 1,timing_loops
          Phi=Phi0
+         X = X0
          call congrad(Phi, res, itercg, am, imass,iterations)
 #ifdef MPI
          if(ip_global.eq.0) then

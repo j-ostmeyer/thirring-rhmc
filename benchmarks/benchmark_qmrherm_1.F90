@@ -10,7 +10,6 @@ program benchmark_qmrherm_1
       implicit none
 
 ! general parameters
-      logical :: generate = .false.
       complex, parameter :: iunit = cmplx(0, 1)
       real(dp), parameter :: tau = 8 * atan(1.0_8)
 
@@ -21,13 +20,9 @@ program benchmark_qmrherm_1
       complex(dp) Phi(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
       complex(dp), allocatable :: Phi0_ref(:, :, :, :, :, :)
       complex(dp), allocatable :: Phi0_orig(:, :, :, :, :, :)
-      complex(dp) :: x_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-      complex(dp) :: delta_x(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
       complex(dp), allocatable :: delta_Phi0(:, :, :, :, :, :)
       complex(dp) :: R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 
-      complex(dp) :: sum_delta_x, sum_delta_Phi0
-      real(dp) :: max_delta_x, max_delta_Phi0
 
       integer :: imass, iflag, isweep, iter
       real(dp) :: anum(0:ndiag), aden(ndiag)
