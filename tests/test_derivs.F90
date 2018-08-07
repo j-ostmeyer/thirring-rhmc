@@ -33,6 +33,7 @@ program test_derivs
       integer :: idx = 0
 #ifdef MPI
       type(MPI_Request), dimension(12) :: reqs_R, reqs_Phi, reqs_X2
+      integer :: ierr
       call init_MPI
 #endif
       do j = 1,4
@@ -102,9 +103,9 @@ program test_derivs
          max_diff = maxval(abs(diff))
 #ifdef MPI
          call MPI_AllReduce(MPI_IN_PLACE, sum_diff, 1, MPI_Real, MPI_Sum, &
-              & comm)
+              & comm,ierr)
          call MPI_AllReduce(MPI_IN_PLACE, max_diff, 1, MPI_Real, MPI_Max, &
-              & comm)
+              & comm,ierr)
 #endif
          if (ip_global .eq. 0) then
             if (abs(sum_diff) .gt. 0.3) then
@@ -116,6 +117,6 @@ program test_derivs
          end if      
       end if
 #ifdef MPI
-      call MPI_Finalize
+      call MPI_Finalize(ierr)
 #endif
 end program test_derivs

@@ -33,6 +33,7 @@ program test_congrad
       integer :: idx = 0
 #ifdef MPI
       type(MPI_Request), dimension(12) :: reqs_X, reqs_Phi, reqs_u
+      integer :: ierr
 
       call init_MPI
 #endif
@@ -108,8 +109,8 @@ program test_congrad
          sum_diff = sum(diff)
          max_diff = maxval(abs(diff))
 #ifdef MPI
-         call MPI_AllReduce(MPI_IN_PLACE, sum_diff, 1, MPI_Double_Complex, MPI_Sum,comm)
-         call MPI_AllReduce(MPI_IN_PLACE, max_diff, 1, MPI_Double_Precision, MPI_Max,comm)
+         call MPI_AllReduce(MPI_IN_PLACE, sum_diff, 1, MPI_Double_Complex, MPI_Sum,comm,ierr)
+         call MPI_AllReduce(MPI_IN_PLACE, max_diff, 1, MPI_Double_Precision, MPI_Max,comm,ierr)
 #endif
          if (ip_global .eq. 0) then
             if (itercg .ne. 27) then

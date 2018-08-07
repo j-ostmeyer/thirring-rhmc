@@ -32,6 +32,7 @@ program test_dslash2d
       integer :: idx
 #ifdef MPI
       type(MPI_Request), dimension(12) :: reqs_R, reqs_u, reqs_Phi
+      integer :: ierr
       call init_MPI
 #endif
       do j = 1,4
@@ -103,14 +104,14 @@ program test_dslash2d
          max_diff = maxval(abs(diff))
 #ifdef MPI
          call MPI_AllReduce(MPI_IN_PLACE, sum_diff, 1, MPI_Double_Complex, MPI_Sum, &
-              & comm)
+              & comm,ierr)
          call MPI_AllReduce(MPI_IN_PLACE, max_diff, 1, MPI_Double_Precision, MPI_Max, &
-              & comm)
+              & comm,ierr)
 #endif
          check_max(diff, 1e-13, 'Phi', max_diff, MPI_Double_Precision, 'test_dslash2d')
          check_sum(diff, 1e-11, 'Phi', sum_diff, MPI_Double_Complex, 'test_dslash2d')
       end if
 #ifdef MPI
-      call MPI_Finalize
+      call MPI_Finalize(ierr)
 #endif
 end program

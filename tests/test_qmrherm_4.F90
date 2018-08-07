@@ -36,6 +36,7 @@ program test_qmrherm_4
 #ifdef MPI
       type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
       type(MPI_Request), dimension(12) :: reqs_xin
+      integer :: ierr
       call init_MPI
 #endif
 
@@ -143,6 +144,6 @@ program test_qmrherm_4
 
       enddo
 #ifdef MPI
-      call MPI_Finalize
+      call MPI_Finalize(ierr)
 #endif
 end program test_qmrherm_4

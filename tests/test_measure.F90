@@ -25,7 +25,7 @@ program test_measure
       integer :: idx = 0
 #ifdef MPI
       type(MPI_Request), dimension(12) :: reqs_x, reqs_u
-
+      integer :: ierr
       call init_MPI
 #endif
       seed = 4139764973254.0
@@ -96,6 +96,6 @@ program test_measure
 #endif
       check_equality(aviter, 5, 'aviter', 'test_measure')
 #ifdef MPI
-      call MPI_Finalize
+      call MPI_Finalize(ierr)
 #endif
 end program

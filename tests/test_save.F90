@@ -6,6 +6,7 @@ program test_save
 
 ! setup
 #ifdef MPI
+      integer :: ierr
       call init_MPI
 #endif
       call sread
@@ -14,6 +15,6 @@ program test_save
       call swrite
 
 #ifdef MPI
-      call MPI_Finalize
+      call MPI_Finalize(ierr)
 #endif
 end program

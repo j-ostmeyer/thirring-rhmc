@@ -48,13 +48,19 @@ contains
     betacgd=1.0
     alpha=1.0
 !
+#ifdef MPI
+       call init_halo_update_5(4, x1, 8, reqs_x1) ! ATTEMPT 
+       call init_halo_update_5(4, r, 10, reqs_r)  ! ATTEMPT
+#endif
+
     do nx=1,niterc
        itercg=itercg+1
 !
 !  x1=Mp
        call dslash(x1,p,u,am,imass)
 #ifdef MPI
-       call start_halo_update_5(4, x1, 8, reqs_x1)
+       call MPI_Startall(12,reqs_x1)
+       !call start_halo_update_5(4, x1, 8, reqs_x1) ! ATTEMPT
 #endif
 !
        if(nx.ne.1)then
@@ -90,7 +96,8 @@ contains
 !   Now update halo for r instead since we can hide communication during the summation
 !   x2 is discarded so we no longer care about its halo
 #ifdef MPI
-       call start_halo_update_5(4, r, 10, reqs_r)
+       call MPI_Startall(12,reqs_r)              ! ATTEMPT
+       !call start_halo_update_5(4, r, 10, reqs_r) ! ATTEMPT
 #endif
 
 !   betacg=(r_k+1,r_k+1)/(r_k,r_k)
@@ -109,7 +116,7 @@ contains
 !   p=r+betacg*p
 !   Now the correct value of r is needed to avoid having to communicate p as well
 #ifdef MPI
-       call complete_halo_update(reqs_r)
+       call complete_halo_update(reqs_r)! ATTEMPT
 #else
        call update_halo_5(4, r)
 #endif

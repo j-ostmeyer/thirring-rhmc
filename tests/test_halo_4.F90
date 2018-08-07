@@ -17,6 +17,7 @@ program test_halo_4
   complex(dp) :: test_array(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 #ifdef MPI
   type(MPI_Request) :: reqs(12)
+  integer :: ierr
 
   call init_MPI
 #endif
@@ -85,6 +86,6 @@ program test_halo_4
 
 
 #ifdef MPI
-  call MPI_Finalize
+  call MPI_Finalize(ierr)
 #endif
 end program test_halo_4

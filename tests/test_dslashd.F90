@@ -31,6 +31,7 @@ program test_dslashd
       integer :: idx
 #ifdef MPI
       integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi
+      integer :: ierr
       call init_MPI
 #endif
       do j = 1,4
@@ -110,6 +111,6 @@ program test_dslashd
          end if
       end if
 #ifdef MPI
-      call MPI_Finalize
+      call MPI_Finalize(ierr)
 #endif
 end program

@@ -43,6 +43,7 @@ program test_qmrherm_1
 
 #ifdef MPI
       type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
+      integer :: ierr
       call init_MPI
 #endif
       qmrhprint = .false.
@@ -148,6 +149,6 @@ program test_qmrherm_1
          check_max(delta_Phi0, 2.5, 'Phi0', max_delta_Phi0, MPI_Double_Precision, 'test_qmrherm_1')
       end if
 #ifdef MPI
-      call MPI_Finalize
+      call MPI_Finalize(ierr)
 #endif
 end program test_qmrherm_1

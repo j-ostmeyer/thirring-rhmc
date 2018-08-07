@@ -31,6 +31,7 @@ program test_dslashd
       integer :: idx
 #ifdef MPI
       type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi
+      integer :: ierr
       call init_MPI
 #endif
       do j = 1,4
@@ -99,6 +100,6 @@ program test_dslashd
       check_max(diff, 1e-11, 'Phi', max_diff, MPI_Double_Precision, 'test_dslashd_3')
       check_sum(diff, 1e-11, 'Phi', sum_diff, MPI_Double_Complex, 'test_dslashd_3')
 #ifdef MPI
-      call MPI_Finalize
+      call MPI_Finalize(ierr)
 #endif
 end program

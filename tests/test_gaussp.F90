@@ -16,6 +16,7 @@ program test_gaussp
 ! initialise MPI
 #ifdef MPI
       type(MPI_Request) :: reqs(12)
+      integer :: ierr
       call init_MPI
 #else
       integer :: reqs
@@ -60,10 +61,10 @@ program test_gaussp
       end do outer
       
 #ifdef MPI
-      call MPI_AllReduce(MPI_IN_PLACE, sumps, 1, MPI_REAL, MPI_SUM, comm)
-      call MPI_AllReduce(MPI_IN_PLACE, maxps, 1, MPI_REAL, MPI_MAX, comm)
-      call MPI_AllReduce(MPI_IN_PLACE, minps, 1, MPI_REAL, MPI_MIN, comm)
-      call MPI_AllReduce(MPI_IN_PLACE, has_duplicates, 1, MPI_LOGICAL, MPI_LOR, comm)
+      call MPI_AllReduce(MPI_IN_PLACE, sumps, 1, MPI_REAL, MPI_SUM, comm,ierr)
+      call MPI_AllReduce(MPI_IN_PLACE, maxps, 1, MPI_REAL, MPI_MAX, comm,ierr)
+      call MPI_AllReduce(MPI_IN_PLACE, minps, 1, MPI_REAL, MPI_MIN, comm,ierr)
+      call MPI_AllReduce(MPI_IN_PLACE, has_duplicates, 1, MPI_LOGICAL, MPI_LOR, comm,ierr)
 #endif
 #ifndef SITE_RANDOM
 #if defined(MPI) && NP_T > 1 && NP_X > 1 && NP_Y > 1
