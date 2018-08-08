@@ -59,7 +59,7 @@ contains
 !  x1=Mp
        call dslash(x1,p,u,am,imass)
 #ifdef MPI
-       call MPI_Startall(12,reqs_x1)
+       call MPI_Startall(12,reqs_x1,ierr)
        !call start_halo_update_5(4, x1, 8, reqs_x1) ! ATTEMPT
 #endif
 !
@@ -96,7 +96,7 @@ contains
 !   Now update halo for r instead since we can hide communication during the summation
 !   x2 is discarded so we no longer care about its halo
 #ifdef MPI
-       call MPI_Startall(12,reqs_r)              ! ATTEMPT
+       call MPI_Startall(12,reqs_r,ierr)              ! ATTEMPT
        !call start_halo_update_5(4, r, 10, reqs_r) ! ATTEMPT
 #endif
 
@@ -435,9 +435,9 @@ contains
           ittt=int(ksizet*rano(yran,idum,1,1,1))+1
 #ifdef MPI
        endif
-       call MPI_Bcast(ixxx, 1, MPI_INTEGER, 0, comm)
-       call MPI_Bcast(iyyy, 1, MPI_INTEGER, 0, comm)
-       call MPI_Bcast(ittt, 1, MPI_INTEGER, 0, comm)
+       call MPI_Bcast(ixxx, 1, MPI_INTEGER, 0, comm,ierr)
+       call MPI_Bcast(iyyy, 1, MPI_INTEGER, 0, comm,ierr)
+       call MPI_Bcast(ittt, 1, MPI_INTEGER, 0, comm,ierr)
 #endif
  
        ip_xxx = int((ixxx-1)/ksizex_l)
@@ -567,10 +567,10 @@ contains
 #ifdef MPI
        if(ip_global.eq.0) then
        !call MPI_Reduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm) !DEBUG
-       call MPI_Reduce(tempcpmm_r,dp_reduction,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm) ! DEBUG
+       call MPI_Reduce(tempcpmm_r,dp_reduction,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm,ierr) ! DEBUG
        tempcpmm_r = dp_reduction ! DEBUG
        else 
-       call MPI_Reduce(tempcpmm_r,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm)
+       call MPI_Reduce(tempcpmm_r,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm,ierr)
        endif
        if(ip_global.eq.0) then
 #endif
@@ -600,10 +600,10 @@ contains
 #ifdef MPI
        if(ip_global.eq.0) then
        !call MPI_Reduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm) ! DEBUG
-       call MPI_Reduce(tempcpmm_r,dp_reduction,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm) ! DEBUG
+       call MPI_Reduce(tempcpmm_r,dp_reduction,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm,ierr) ! DEBUG
        tempcpmm_r = dp_reduction
        else
-       call MPI_Reduce(tempcpmm_r,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm)
+       call MPI_Reduce(tempcpmm_r,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm,ierr)
        endif
        if(ip_global.eq.0) then
 #endif
@@ -650,10 +650,10 @@ contains
 #ifdef MPI
        if(ip_global.eq.0) then
        !call MPI_Reduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm) ! DEBUG
-       call MPI_Reduce(tempcpmm_c,dc_reduction,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm) ! DEBUG
+       call MPI_Reduce(tempcpmm_c,dc_reduction,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr) ! DEBUG
        tempcpmm_c = dc_reduction
        else
-       call MPI_Reduce(tempcpmm_c,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm)
+       call MPI_Reduce(tempcpmm_c,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr)
        endif
  
        if(ip_global.eq.0) then
@@ -682,10 +682,10 @@ contains
 #ifdef MPI
        if(ip_global.eq.0) then
        !call MPI_Reduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm) ! DEBUG
-       call MPI_Reduce(tempcpmm_c,dp_reduction,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm) !DEBUG
+       call MPI_Reduce(tempcpmm_c,dp_reduction,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr) !DEBUG
        tempcpmm_c = dc_reduction
        else
-       call MPI_Reduce(tempcpmm_c,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm)
+       call MPI_Reduce(tempcpmm_c,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr)
        endif
        if(ip_global.eq.0) then
 #endif

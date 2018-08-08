@@ -74,6 +74,11 @@ program test_halo_4
        nint(aimag(test_array(1,0,1,1))) &
        .ne. pid(ip_x, modulo(ip_y-1, np_y), ip_t)) then
      print *, "Positive y update failed on process", ip_x, ip_y, ip_t
+  endif
+  if (real(test_array(1,1,ksizet_l,1)) .ne. real(test_array(1,1,0,1)) .or. &
+       nint(aimag(test_array(1,1,0,1))) &
+       .ne. pid(ip_x, ip_y,modulo(ip_t-1, np_t))) then
+     print *, "Positive t update failed on process", ip_x, ip_y, ip_t
   else
      passed_basic = 1
   end if

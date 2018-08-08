@@ -31,7 +31,7 @@ program test_congrad_1
       integer :: idx = 0
 #ifdef MPI
       type(MPI_Request), dimension(12) :: reqs_X, reqs_Phi, reqs_u
-
+      integer :: ierr
       call init_MPI
 #endif
       allocate(delta_Phi(kthird, ksizex_l, ksizey_l, ksizet_l, 4))
@@ -106,6 +106,10 @@ program test_congrad_1
       delta_Phi = abs(delta_Phi)**2
  
       check_sum(delta_Phi, 1e-6, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_congrad_1')
+
+#ifdef MPI
+      call MPI_Finalize(ierr)
+#endif
       
 end program
 

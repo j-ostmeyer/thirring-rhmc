@@ -46,8 +46,9 @@ program test_halo_4_real
 ! Communicate
 #ifdef MPI
   call start_halo_update_4_real(2, test_array, 0, reqs)
-  call start_halo_update_4_real(2, test_array_2, 1, reqs2)
   call complete_halo_update(reqs)
+
+  call start_halo_update_4_real(2, test_array_2, 1, reqs2)
   call complete_halo_update(reqs2)
 #else
   call update_halo_4_real(2, test_array)

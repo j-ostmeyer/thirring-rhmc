@@ -38,6 +38,7 @@ program test_force
 
 #ifdef MPI
       type(MPI_Request), dimension(12) :: reqs_R, reqs_X, reqs_U, reqs_Phi, reqs_Phi0
+      integer :: ierr
       call init_MPI
 #endif
       qmrhprint = .false.
@@ -149,4 +150,7 @@ program test_force
          check_max(diff, 1.3, 'dSdpi', max_diff, MPI_Real, 'test_force')
          check_sum(diff, 2450, 'dSdpi', sum_diff, MPI_Real, 'test_force')
    end if
+#ifdef MPI
+   call MPI_Finalize(ierr)
+#endif
 end program
