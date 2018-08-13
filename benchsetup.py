@@ -30,9 +30,7 @@ from sys import argv
 import os
 import glob
 from contextlib import contextmanager
-from itertools import combinations_with_replacement as cwp
 import math
-import numpy as np
 from benchsetup_parameters import * # to keep parameters out ov VCS
 
 setFake = False
@@ -67,6 +65,8 @@ def cycle(func):
         possible_subsizes = []
 
         if detailed_mode:
+            import numpy as np
+            from itertools import combinations_with_replacement as cwp
             possible_divs = []
             for div in range(1,size):
                 if size%div is 0:
@@ -181,7 +181,6 @@ def write_runscripts(divs,ssize):
     print script
     with open(os.path.join(newdirname,scriptname),'w') as f:
         f.write(script)
-    #os.system('bash ./'+scriptname)
  
 def run(divs,ssize):
     newdirname = get_newdirname(divs)
