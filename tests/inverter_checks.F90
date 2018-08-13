@@ -1,12 +1,12 @@
 module inverter_checks
-    use params
-implicit none
-    complex(dp) :: xout(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  use params
+  implicit none
+  complex(dp) :: xout(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 
 contains
 
-!   For the multi-shift inverter
-subroutine dirac_op_shifted(xout,xin,am,imass,shift,num)
+  !   For the multi-shift inverter
+  subroutine dirac_op_shifted(xout,xin,am,imass,shift,num)
     use dirac
     complex(dp),intent(in) :: xin(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp),intent(out) :: xout(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -15,9 +15,9 @@ subroutine dirac_op_shifted(xout,xin,am,imass,shift,num)
 
     call dirac_operator(xout,xin,am,imass)
     xout = (xout + shift*xin)!/num
-end subroutine 
+  end subroutine 
 
-subroutine dirac_operator(xout,xin,am,imass)
+  subroutine dirac_operator(xout,xin,am,imass)
     use trial, only: u
     use dirac
     use comms
@@ -26,26 +26,26 @@ subroutine dirac_operator(xout,xin,am,imass)
     real, intent(in) :: am
     integer, intent(in) :: imass
 
-#ifdef MPI
+    #ifdef MPI
     type(MPI_Request), dimension(12) :: reqs_xtemp, reqs_xout
-#endif
+    #endif
     complex(dp) :: xtemp(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
- 
+
     call dslash(xtemp,xin,u,am,imass)
-#ifdef MPI
+    #ifdef MPI
     call start_halo_update_5(4, xtemp, 8, reqs_xtemp)
     call complete_halo_update(reqs_xtemp)
-#else
+    #else
     call update_halo_5(4, xtemp)
-#endif
+    #endif
     call dslashd(xout, xtemp, u, am, imass)
-#ifdef MPI
+    #ifdef MPI
     call start_halo_update_5(4, xout, 10, reqs_xout)
     call complete_halo_update(reqs_xout)
-#else
+    #else
     call update_halo_5(4, xout)
-#endif
+    #endif
 
-end subroutine dirac_operator 
+  end subroutine dirac_operator 
 
 end module
