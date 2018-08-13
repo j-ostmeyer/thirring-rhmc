@@ -73,6 +73,11 @@ contains
     !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
     call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
     betaq = dp_reduction
+
+
+    ! Setting up persistent communication requests
+    call init_halo_update_5(4, vtild, 1, reqs_vtild)
+    call init_halo_update_5(4, R, 2, reqs_R)
 #endif 
     betaq = sqrt(betaq)
     phimod=betaq
@@ -91,7 +96,8 @@ contains
        call dslash(vtild,q,u,am,imass)
 #ifdef MPI
 ! No way to hide communications here unfortunately
-       call start_halo_update_5(4, vtild, 1, reqs_vtild)
+       !call start_halo_update_5(4, vtild, 1, reqs_vtild)
+       call MPI_Startall(12,reqs_vtild,ierr)
        !call complete_halo_update(reqs_vtild) ! Now this call happens in dslashd
        call dslashd(x3,vtild,u,am,imass,reqs_vtild)
 #else
@@ -115,7 +121,8 @@ contains
 #ifdef MPI
 ! R will be needed at the start of the next iteration to compute q
 ! so start updating the boundary
-       call start_halo_update_5(4, R, 2, reqs_R)
+       call MPI_Startall(12,reqs_R,ierr)
+       !call start_halo_update_5(4, R, 2, reqs_R)
 #else
        call update_halo_5(4, R)
 #endif
@@ -178,7 +185,10 @@ contains
 ! so start updating the bounddary
        call complete_halo_update(reqs_R)
 #endif
-    enddo
+    enddo! do while(niter.lt.max_qmr_iters .and. go_on )
+
+
+
     if (niter.gt.max_qmr_iters) then
 #ifdef MPI
       if (ip_global .eq. 0) then
@@ -220,12 +230,12 @@ contains
 #else
           call update_halo_6(4, ndiagq, Phi0)
 #endif
-       endif
+       endif! if(iflag.eq.1) then
 #ifdef MPI
        call complete_halo_update(reqs_x)
 #endif
 !     
-    else
+    else! if(iflag.lt.2)then
 !
        do idiag=1, ndiagq
 !
@@ -253,7 +263,7 @@ contains
              call complete_halo_update(reqs_X2)
 #endif
              call derivs(R, X2, coeff, 0)
-          else
+          else! if(iflag.eq.2)then
              coeff=-anum(idiag)
              R = Phi0(:, :, :, :, :, idiag)
 #ifdef MPI
@@ -278,12 +288,10 @@ contains
              call update_halo_5(4, R)
 #endif
              call derivs(X2, R, coeff, 1)
-          endif
-!
-       enddo
-    endif
-!
-!
+          endif! if(iflag.eq.2)then
+       enddo! do idiag=1, ndiagq
+    endif !if(iflag.lt.2)then , else
+
     if (ip_global .eq. 0 .and. printall) then
       write(6,*) "Qmrherm iterations,res:", itercg, res
     endif
