@@ -9,27 +9,17 @@ program test_measure
   use test_utils
 
   implicit none
-  !integer, parameter :: dp = kind(1.d0) ! DELETE
 
   ! general parameters
   logical :: generate = .false.
   integer :: timing_loops = 1
   complex, parameter :: iunit = cmplx(0, 1)
-  !integer, parameter :: ksize=12, ksizet=12, kthird=24, kvol=ksizet*ksize*ksize ! DELETE
-  !integer, parameter :: ndiag = 12 ! DELETE
   real(dp), parameter :: tau = 8 * atan(1.0_8)
   complex(dp) :: cferm1(0:ksizet-1), cferm2(0:ksizet-1)
   real(dp) :: cpm(0:ksizet-1), cmm(0:ksizet-1)
   complex(dp) :: cferm1_ref(0:ksizet-1), cferm2_ref(0:ksizet-1)
   real(dp) :: cpm_ref(0:ksizet-1), cmm_ref(0:ksizet-1),maxreldiff
 
-  ! common blocks to function
-  !common/para/beta,am3,ibound ! DELETE
-  !common/param/ancg,ancgh,ancgf,ancgpf
-  !common/parampv/ancgpv,ancghpv,ancgfpv,ancgpfpv
-  !common/ranseed/yran,idum ! DELETE
-  !real :: ancg,ancgh,ancgf,ancgpf
-  !real :: ancgpv,ancghpv,ancgfpv,ancgpfpv
 
   ! initialise function parameters
   real :: aviter
@@ -40,11 +30,12 @@ program test_measure
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
   real :: res, am
   integer :: imass, isweep, itercg, iter
-  #ifdef MPI
+#ifdef MPI
   type(MPI_Request), dimension(12) :: reqs_Phi, reqs_u
+  integer :: ierr
 
   call init_MPI
-  #endif
+#endif
   seed = 4139764973254.0
   idum = -1
   call rranset(seed,1,1,1)
@@ -72,9 +63,9 @@ program test_measure
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_5(4, Phi, 0, reqs_Phi)
-  #endif
+#endif
   idx = 0
   do j = 1,3
     do it = 1,ksizet_l
@@ -89,14 +80,14 @@ program test_measure
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_4(3, u, 1, reqs_u)
   call complete_halo_update(reqs_Phi)
   call complete_halo_update(reqs_u)
-  #else
+#else
   call update_halo_5(4, Phi)
   call update_halo_4(3, u)
-  #endif
+#endif
 
   ! initialise common variables
   beta = 0.4
@@ -115,26 +106,32 @@ program test_measure
 
   open(3, file='test_meson.dat', form="unformatted", access="sequential")
   if (generate) then
-    write(3) cferm1, cferm2, cpm, cmm
-    !print *, "cferm1"
-    !print *, cferm1
-    !print *, "cferm2" 
-    !print *, cferm2 
-    !print *, "cpm"
-    !print *, cpm
-    !print *, "cmm"
-    !print *, cmm
-  else
-    #ifdef MPI
+#ifdef MPI
     if(ip_global .eq. 0) then
-      #endif
+#endif
+      write(3) cferm1, cferm2, cpm, cmm
+      print *, "cferm1"
+      print *, cferm1
+      print *, "cferm2" 
+      print *, cferm2 
+      print *, "cpm"
+      print *, cpm
+      print *, "cmm"
+      print *, cmm
+#ifdef MPI
+    endif! if(ip_global .eq. 0) then
+#endif
+  else
+#ifdef MPI
+    if(ip_global .eq. 0) then
+#endif
       read(3) cferm1_ref, cferm2_ref, cpm_ref, cmm_ref
       maxreldiff = maxval(2*abs(cferm1_ref - cferm1)/abs(cferm1_ref + cferm1))
-      if( maxreldiff .gt. 1.0e-10) then
+      if( maxreldiff .gt. 1.0e-09) then
         print * , 'maxval(2*abs(cferm1_ref - cferm1)/abs(cferm1_ref + cferm1))=', maxreldiff
       endif
       maxreldiff = maxval(2*abs(cferm2_ref - cferm2)/abs(cferm2_ref + cferm2))
-      if( maxreldiff .gt. 1.0e-10) then
+      if( maxreldiff .gt. 1.0e-09) then
         print * , 'maxval(2*abs(cferm2_ref - cferm2)/abs(cferm2_ref + cferm2))=', maxreldiff
       endif
       maxreldiff = maxval(2*abs(cpm_ref - cpm)/abs(cpm_ref + cpm))
@@ -146,9 +143,10 @@ program test_measure
         print * , 'maxval(2*abs(cmm_ref - cmm)/abs(cmm_ref + cmm))=', maxreldiff
       endif
 
-      #ifdef MPI
+#ifdef MPI
     endif! if(ip_global .eq. 0) then
-    #endif
+    call MPI_Finalize(ierr)
+#endif
   end if
   close(3)
 end program

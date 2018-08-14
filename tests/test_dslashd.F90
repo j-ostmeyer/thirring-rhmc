@@ -29,11 +29,11 @@ program test_dslashd
   integer :: i, j, l, ix, iy, it, ithird
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
   integer :: idx
-  #ifdef MPI
+#ifdef MPI
   integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi
   integer :: ierr
   call init_MPI
-  #endif
+#endif
   do j = 1,4
     do it = 1,ksizet_l
       do iy = 1,ksizey_l
@@ -50,9 +50,9 @@ program test_dslashd
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_5(4, R, 0, reqs_R)
-  #endif
+#endif
   do j = 1,3
     do it = 1,ksizet
       do iy = 1,ksize
@@ -67,14 +67,14 @@ program test_dslashd
     enddo
   enddo
   !      call update_halo_5(4, Phi)
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_4(3, u, 1, reqs_u)
   call complete_halo_update(reqs_R)
   call complete_halo_update(reqs_u)
-  #else
+#else
   call update_halo_5(4, R)
   call update_halo_4(3, u)
-  #endif
+#endif
 
   ! initialise common variables
   beta = 0.4
@@ -85,12 +85,12 @@ program test_dslashd
   ! call function
   do i = 1,timing_loops
     call dslashd(Phi, R, u, am, imass)
-    #ifdef MPI
+#ifdef MPI
     call start_halo_update_5(4, Phi, 2, reqs_Phi)
     call complete_halo_update(reqs_Phi)
-    #else
+#else
     call update_halo_5(4, Phi)
-    #endif
+#endif
   end do
   ! check output
   !      do i = 1,10
@@ -110,7 +110,7 @@ program test_dslashd
       print *, 'max delta = ', maxval(abs(diff))
     end if
   end if
-  #ifdef MPI
+#ifdef MPI
   call MPI_Finalize(ierr)
-  #endif
+#endif
 end program

@@ -49,11 +49,11 @@ contains
     real :: resid, rhomax, arelax
     integer :: niter, idiag
     logical :: go_on
-    #ifdef MPI
+#ifdef MPI
     type(MPI_Request), dimension(12) :: reqs_X2, reqs_vtild, reqs_Phi0, reqs_R, reqs_x
     integer :: ierr
     real(dp) :: dp_reduction ! DEBUG
-    #endif
+#endif
     !
     !     write(6,111)
     !111 format(' Hi from qmrherm')
@@ -69,7 +69,7 @@ contains
     x = anum(0) * Phi
 
     betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
-    #ifdef MPI
+#ifdef MPI
     !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
     call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
     betaq = dp_reduction
@@ -78,7 +78,7 @@ contains
     ! Setting up persistent communication requests
     call init_halo_update_5(4, vtild, 1, reqs_vtild)
     call init_halo_update_5(4, R, 2, reqs_R)
-    #endif 
+#endif 
     betaq = sqrt(betaq)
     phimod=betaq
     !
@@ -94,47 +94,47 @@ contains
       q = R / betaq
 
       call dslash(vtild,q,u,am,imass)
-      #ifdef MPI
+#ifdef MPI
       ! No way to hide communications here unfortunately
       !call start_halo_update_5(4, vtild, 1, reqs_vtild)
       call MPI_Startall(12,reqs_vtild,ierr)
       !call complete_halo_update(reqs_vtild) ! Now this call happens in dslashd
       call dslashd(x3,vtild,u,am,imass,reqs_vtild)
-      #else
+#else
       call update_halo_5(4, vtild)
       call dslashd(x3,vtild,u,am,imass)
-      #endif
+#endif
 
       !
       alphatild = sum(real(conjg(q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
         &                * x3(:,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
-      #ifdef MPI
+#ifdef MPI
       !call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
       call MPI_AllReduce(alphatild, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
       alphatild = dp_reduction ! DEBUG
-      #endif
+#endif
       !
       R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = &
         & x3(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
         & - alphatild * q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
         & - betaq * qm1
-      #ifdef MPI
+#ifdef MPI
       ! R will be needed at the start of the next iteration to compute q
       ! so start updating the boundary
       call MPI_Startall(12,reqs_R,ierr)
       !call start_halo_update_5(4, R, 2, reqs_R)
-      #else
+#else
       call update_halo_5(4, R)
-      #endif
+#endif
       qm1 = q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
       !
       betaq0 = betaq
       betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:)) ** 2)
-      #ifdef MPI
+#ifdef MPI
       !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
       call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
       betaq = dp_reduction ! DEBUG
-      #endif
+#endif
       betaq = sqrt(betaq)
       !
       alpha = alphatild + aden
@@ -180,24 +180,24 @@ contains
         endif
       endif
       !     
-      #ifdef MPI
+#ifdef MPI
       ! R will be needed at the start of the next iteration to compute q
       ! so start updating the bounddary
       call complete_halo_update(reqs_R)
-      #endif
+#endif
     enddo! do while(niter.lt.max_qmr_iters .and. go_on )
 
 
 
     if (niter.gt.max_qmr_iters) then
-      #ifdef MPI
+#ifdef MPI
       if (ip_global .eq. 0) then
-        #endif
+#endif
         write(7,*) 'QMRniterc!, niter, isweep,iter,iflag,imass,anum,ndiagq = ', &
         &   niter,isweep, iter, iflag, imass, anum(0), ndiagq
-        #ifdef MPI
+#ifdef MPI
       end if
-      #endif
+#endif
     endif
     !  
     8   continue
@@ -208,32 +208,32 @@ contains
           & x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
           & + anum(idiag) * x1(:, :, :, :, :, idiag)
       enddo
-      #ifdef MPI
+#ifdef MPI
       ! x is a saved module variable, so must be updated to avoid polluting the parent function
       ! could this in principle be moved outside the function so we don't do it unnecessarily?
       ! but in that case we wouldn't be able to hide the communications
       call start_halo_update_5(4, x, 3, reqs_x)
-      #else
+#else
       call update_halo_5(4, x)
-      #endif
+#endif
       !     
       !  update phi0 block if required...
       if(iflag.eq.1) then
         Phi0(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :, 1:ndiagq) = &
           & X1(:, :, :, :, :, 1:ndiagq)
-        #ifdef MPI
+#ifdef MPI
         ! No way to hide communications here unfortunately
         ! In principle this could be better interleaved with the x update
         ! but that would add extra branching, and this section is messy enough already
         call start_halo_update_6(4, ndiagq, Phi0, 4, reqs_Phi0)
         call complete_halo_update(reqs_Phi0)
-        #else
+#else
         call update_halo_6(4, ndiagq, Phi0)
-        #endif
+#endif
       endif! if(iflag.eq.1) then
-      #ifdef MPI
+#ifdef MPI
       call complete_halo_update(reqs_x)
-      #endif
+#endif
       !     
     else! if(iflag.lt.2)then
       !
@@ -241,52 +241,52 @@ contains
         !
         !  X2 = M*X1
         R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = X1(:, :, :, :, :, idiag)
-        #ifdef MPI
+#ifdef MPI
         ! No way to hide communications here unfortunately
         call start_halo_update_5(4, R, 5, reqs_R)
         call complete_halo_update(reqs_R)
-        #else
+#else
         call update_halo_5(4, R)
-        #endif
+#endif
 
         ! Communication of X2 generated here can be hidden if iflag isn't 2, while R is updated
         call dslash(X2, R, u, am, imass)
-        #ifdef MPI
+#ifdef MPI
         call start_halo_update_5(4, X2, 6, reqs_X2)
-        #else
+#else
         call update_halo_5(4, X2)
-        #endif
+#endif
         !
         if(iflag.eq.2)then
           coeff=anum(idiag)
-          #ifdef MPI
+#ifdef MPI
           call complete_halo_update(reqs_X2)
-          #endif
+#endif
           call derivs(R, X2, coeff, 0)
         else! if(iflag.eq.2)then
           coeff=-anum(idiag)
           R = Phi0(:, :, :, :, :, idiag)
-          #ifdef MPI
+#ifdef MPI
           call complete_halo_update(reqs_X2)
-          #endif
+#endif
           call derivs(R, X2, coeff, 0)
           !
           ! Communication of X2 generated here can be hidden while R is updated
           call dslash(X2, R, u, am, imass)
-          #ifdef MPI
+#ifdef MPI
           call start_halo_update_5(4, X2, 7, reqs_X2)
-          #else
+#else
           call update_halo_5(4, X2)
-          #endif
+#endif
           !
           R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(: ,:, :, :, :, idiag)
-          #ifdef MPI
+#ifdef MPI
           call start_halo_update_5(4, R, 8, reqs_R)
           call complete_halo_update(reqs_X2)
           call complete_halo_update(reqs_R)
-          #else
+#else
           call update_halo_5(4, R)
-          #endif
+#endif
           call derivs(X2, R, coeff, 1)
         endif! if(iflag.eq.2)then
       enddo! do idiag=1, ndiagq

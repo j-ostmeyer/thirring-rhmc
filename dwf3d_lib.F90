@@ -484,7 +484,9 @@ contains
        write(7,*) 'seed: ', idum
     endif
 
+#ifdef MPI
     call MPI_Finalize(ierr)
+#endif
 !
   end subroutine dwf3d_main
 !******************************************************************

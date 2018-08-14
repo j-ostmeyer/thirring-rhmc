@@ -33,12 +33,12 @@ program test_qmrherm_4
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
   integer :: idx = 0, idiag
 
-  #ifdef MPI
+#ifdef MPI
   type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
   type(MPI_Request), dimension(12) :: reqs_xin
   integer :: ierr
   call init_MPI
-  #endif
+#endif
 
   qmrhprint = .false.
   allocate(Phi0_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
@@ -78,11 +78,11 @@ program test_qmrherm_4
       end do
     end do
   end do
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_5(4, R, 0, reqs_R)
   call start_halo_update_5(4, Phi, 1, reqs_Phi)
   call start_halo_update_6(4, 25, Phi0_orig, 2, reqs_Phi0)
-  #endif
+#endif
   do j = 1,3
     do it = 1,ksizet_l
       do iy = 1,ksizey_l
@@ -106,18 +106,18 @@ program test_qmrherm_4
   if(ibound.eq.-1 .and. ip_t .eq. (np_t-1))then
     u(:, :, ksizet_l, 3) = -u(:, :, ksizet_l, 3)
   end if
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_4(3, u, 3, reqs_u)
   call complete_halo_update(reqs_R)
   call complete_halo_update(reqs_Phi)
   call complete_halo_update(reqs_Phi0)
   call complete_halo_update(reqs_u)
-  #else
+#else
   call update_halo_6(4, 25, Phi0_orig)
   call update_halo_5(4, Phi)
   call update_halo_5(4, R)
   call update_halo_4(3, u)
-  #endif
+#endif
   !     
   call init(istart)
   ! call function
@@ -127,12 +127,12 @@ program test_qmrherm_4
   ! check output
   do idiag=1,ndiag
     xin(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(:,:,:,:,:,idiag)
-    #ifdef MPI
+#ifdef MPI
     call start_halo_update_5(4, xin, 10, reqs_xin)
     call complete_halo_update(reqs_xin)
-    #else
+#else
     call update_halo_5(4, xin)
-    #endif
+#endif
     adenf = aden(idiag)
     anumf = anum(idiag)
     call dirac_op_shifted(xout,xin,am,imass,adenf,anumf)
@@ -143,7 +143,7 @@ program test_qmrherm_4
     check_sum(delta_Phi, 1e-6, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4')
 
   enddo
-  #ifdef MPI
+#ifdef MPI
   call MPI_Finalize(ierr)
-  #endif
+#endif
 end program test_qmrherm_4

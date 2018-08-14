@@ -29,11 +29,11 @@ program test_dslashd
   integer :: i, j, ix, iy, it, ithird
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
   integer :: idx
-  #ifdef MPI
+#ifdef MPI
   type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi
   integer :: ierr
   call init_MPI
-  #endif
+#endif
   do j = 1,4
     do it = 1,ksizet_l
       do iy = 1,ksizey_l
@@ -50,10 +50,10 @@ program test_dslashd
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_5(4, R, 0, reqs_R)
   call start_halo_update_5(4, Phi, 1, reqs_Phi)
-  #endif
+#endif
   do j = 1,3
     do it = 1,ksizet_l
       do iy = 1,ksizey_l
@@ -67,16 +67,16 @@ program test_dslashd
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_4(3, u, 1, reqs_u)
   !call complete_halo_update(reqs_R) ! done in dslashd
   call complete_halo_update(reqs_Phi)
   call complete_halo_update(reqs_u)
-  #else
+#else
   call update_halo_5(4, R)
   call update_halo_5(4, Phi)
   call update_halo_4(3, u)
-  #endif
+#endif
 
   ! initialise common variables
   beta = 0.4
@@ -85,21 +85,21 @@ program test_dslashd
 
   call init(istart)
   ! call function
-  #ifdef MPI
+#ifdef MPI
   call dslashd(Phi, R, u, am, imass, reqs_R)
   call start_halo_update_5(4, Phi, 2, reqs_Phi)
   call complete_halo_update(reqs_Phi)
-  #else
+#else
   call dslashd(Phi, R, u, am, imass)
   call update_halo_5(4, Phi)
-  #endif
+#endif
   ! check output
   read_file(Phiref, 'test_dslashd_1.dat', MPI_Double_Complex)
 
   diff = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - Phiref
   check_max(diff, 1e-11, 'Phi', max_diff, MPI_Double_Precision, 'test_dslashd_1')
   check_sum(diff, 1e-11, 'Phi', sum_diff, MPI_Double_Complex, 'test_dslashd_1')
-  #ifdef MPI
+#ifdef MPI
   call MPI_Finalize(ierr)
-  #endif
+#endif
 end program

@@ -5,16 +5,16 @@ program test_save
   implicit none
 
   ! setup
-  #ifdef MPI
+#ifdef MPI
   integer :: ierr
   call init_MPI
-  #endif
+#endif
   call sread
 
   ! call function
   call swrite
 
-  #ifdef MPI
+#ifdef MPI
   call MPI_Finalize(ierr)
-  #endif
+#endif
 end program

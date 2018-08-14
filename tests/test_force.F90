@@ -36,11 +36,11 @@ program test_force
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
   integer :: idx = 0
 
-  #ifdef MPI
+#ifdef MPI
   type(MPI_Request), dimension(12) :: reqs_R, reqs_X, reqs_U, reqs_Phi, reqs_Phi0
   integer :: ierr
   call init_MPI
-  #endif
+#endif
   qmrhprint = .false.
 
   h = 0
@@ -84,12 +84,12 @@ program test_force
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_5(4, R, 0, reqs_R)
   call start_halo_update_5(4, X, 0, reqs_X)
   call start_halo_update_6(4, 1, Phi, 1, reqs_Phi)
   call start_halo_update_6(4, 25, Phi0_orig, 2, reqs_Phi0)
-  #endif
+#endif
   do j = 1,3
     do it = 1,ksizet_l
       do iy = 1,ksizey_l
@@ -106,20 +106,20 @@ program test_force
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_4(3, u, 3, reqs_u)
   call complete_halo_update(reqs_R)
   call complete_halo_update(reqs_X)
   call complete_halo_update(reqs_Phi)
   call complete_halo_update(reqs_Phi0)
   call complete_halo_update(reqs_u)
-  #else
+#else
   call update_halo_6(4, 25, Phi0_orig)
   call update_halo_6(4, 1, Phi)
   call update_halo_5(4, R)
   call update_halo_5(4, X)
   call update_halo_4(3, u)
-  #endif
+#endif
 
   ! initialise common variables
   beta = 0.4
@@ -150,7 +150,7 @@ program test_force
     check_max(diff, 1.3, 'dSdpi', max_diff, MPI_Real, 'test_force')
     check_sum(diff, 2450, 'dSdpi', sum_diff, MPI_Real, 'test_force')
   end if
-  #ifdef MPI
+#ifdef MPI
   call MPI_Finalize(ierr)
-  #endif
+#endif
 end program

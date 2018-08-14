@@ -30,11 +30,11 @@ program test_dslash2d
   integer :: i, j, ix, iy, it
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet
   integer :: idx
-  #ifdef MPI
+#ifdef MPI
   type(MPI_Request), dimension(12) :: reqs_R, reqs_u, reqs_Phi
   integer :: ierr
   call init_MPI
-  #endif
+#endif
   do j = 1,4
     do it = 1,ksizet_l
       do iy = 1,ksizey_l
@@ -49,10 +49,10 @@ program test_dslash2d
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_4(4, Phi, 0, reqs_Phi)
   call start_halo_update_4(4, R, 1, reqs_R)
-  #endif
+#endif
   do j = 1,3
     do it = 1,ksizet_l
       do iy = 1,ksizey_l
@@ -66,16 +66,16 @@ program test_dslash2d
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_4(3, u, 2, reqs_u)
   call complete_halo_update(reqs_Phi)
   call complete_halo_update(reqs_R)
   call complete_halo_update(reqs_u)
-  #else
+#else
   call update_halo_4(4, Phi)
   call update_halo_4(4, R)
   call update_halo_4(3, u)
-  #endif
+#endif
 
   ! initialise common variables
   beta = 0.4
@@ -86,12 +86,12 @@ program test_dslash2d
   ! call function
   do i = 1,timing_loops
     call dslash2d(Phi, R, u)
-    #ifdef MPI
+#ifdef MPI
     call start_halo_update_4(4, Phi, 2, reqs_Phi)
     call complete_halo_update(reqs_Phi)
-    #else
+#else
     call update_halo_4(4, Phi)
-    #endif
+#endif
   end do
   ! check output
   if (generate) then
@@ -102,16 +102,16 @@ program test_dslash2d
     diff = Phi(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - Phiref
     sum_diff = sum(diff)
     max_diff = maxval(abs(diff))
-    #ifdef MPI
+#ifdef MPI
     call MPI_AllReduce(MPI_IN_PLACE, sum_diff, 1, MPI_Double_Complex, MPI_Sum, &
       & comm,ierr)
     call MPI_AllReduce(MPI_IN_PLACE, max_diff, 1, MPI_Double_Precision, MPI_Max, &
       & comm,ierr)
-    #endif
+#endif
     check_max(diff, 1e-13, 'Phi', max_diff, MPI_Double_Precision, 'test_dslash2d')
     check_sum(diff, 1e-11, 'Phi', sum_diff, MPI_Double_Complex, 'test_dslash2d')
   end if
-  #ifdef MPI
+#ifdef MPI
   call MPI_Finalize(ierr)
-  #endif
+#endif
 end program

@@ -34,11 +34,11 @@ program benchmark_qmrherm_1
   integer :: idx = 0
   integer :: t1i(2), t2i(2)
   double precision :: dt
-  #ifdef MPI
+#ifdef MPI
   type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
   integer :: ierr
   call init_MPI
-  #endif
+#endif
   qmrhprint = .true.
 
   allocate(Phi0_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
@@ -77,11 +77,11 @@ program benchmark_qmrherm_1
       end do
     end do
   end do
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_5(4, R, 0, reqs_R)
   call start_halo_update_5(4, Phi, 1, reqs_Phi)
   call start_halo_update_6(4, 25, Phi0_orig, 2, reqs_Phi0)
-  #endif
+#endif
   do j = 1,3
     do it = 1,ksizet_l
       do iy = 1,ksizey_l
@@ -96,18 +96,18 @@ program benchmark_qmrherm_1
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_4(3, u, 3, reqs_u)
   call complete_halo_update(reqs_R)
   call complete_halo_update(reqs_Phi)
   call complete_halo_update(reqs_Phi0)
   call complete_halo_update(reqs_u)
-  #else
+#else
   call update_halo_6(4, 25, Phi0_orig)
   call update_halo_5(4, Phi)
   call update_halo_5(4, R)
   call update_halo_4(3, u)
-  #endif
+#endif
   ! initialise common variables
   beta = 0.4
   am3 = 1.0
@@ -123,12 +123,12 @@ program benchmark_qmrherm_1
   call gettimeofday(t2i,ierr)
   dt = t2i(1)-t1i(1) + 1.0d-6 * (t2i(2)-t1i(2))
   dt = dt / timing_loops / itercg
-  #ifdef MPI
+#ifdef MPI
   if(ip_global.eq.0) then
-    #endif
+#endif
     print *, "Time per iteration:" , dt
-    #ifdef MPI
+#ifdef MPI
   endif
   call MPI_Finalize(ierr)
-  #endif
+#endif
 end program benchmark_qmrherm_1

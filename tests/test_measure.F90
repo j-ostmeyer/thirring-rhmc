@@ -23,11 +23,11 @@ program test_measure
   integer :: i, j, ix, iy, it, ithird
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
   integer :: idx = 0
-  #ifdef MPI
+#ifdef MPI
   type(MPI_Request), dimension(12) :: reqs_x, reqs_u
   integer :: ierr
   call init_MPI
-  #endif
+#endif
   seed = 4139764973254.0
   call init_random(seed)
   res = 0.1
@@ -53,9 +53,9 @@ program test_measure
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_5(4, x, 0, reqs_x)
-  #endif
+#endif
   do j = 1,3
     do it = 1,ksizet_l
       do iy = 1,ksizey_l
@@ -69,14 +69,14 @@ program test_measure
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_4(3, u, 0, reqs_u) ! to check.
   call complete_halo_update(reqs_x)
   call complete_halo_update(reqs_u)
-  #else
+#else
   call update_halo_5(4, X)
   call update_halo_4(3, u)
-  #endif
+#endif
 
   ! initialise common variables
 
@@ -85,17 +85,17 @@ program test_measure
   do i = 1,timing_loops
     call measure(psibarpsi, res, aviter, am, imass)
   end do
-  #ifdef SITE_RANDOM
+#ifdef SITE_RANDOM
   ! differing random numbers will throw off stochastic estimates like these
   check_float_equality(psibarpsi, 2.504295e-4, 0.001, 'psibarpsi', 'test_measure')
-  #else
+#else
   if(ip_global .eq. 0 ) then 
     write(6,*) "This test is not supposed to work if SITE_RANDOM is not defined"
   endif
   check_float_equality(psibarpsi, 2.504295e-4, 0.001, 'psibarpsi', 'test_measure')
-  #endif
+#endif
   check_equality(aviter, 5, 'aviter', 'test_measure')
-  #ifdef MPI
+#ifdef MPI
   call MPI_Finalize(ierr)
-  #endif
+#endif
 end program

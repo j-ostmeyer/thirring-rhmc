@@ -26,25 +26,25 @@ contains
     real, intent(in) :: am
     integer, intent(in) :: imass
 
-    #ifdef MPI
+#ifdef MPI
     type(MPI_Request), dimension(12) :: reqs_xtemp, reqs_xout
-    #endif
+#endif
     complex(dp) :: xtemp(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 
     call dslash(xtemp,xin,u,am,imass)
-    #ifdef MPI
+#ifdef MPI
     call start_halo_update_5(4, xtemp, 8, reqs_xtemp)
     call complete_halo_update(reqs_xtemp)
-    #else
+#else
     call update_halo_5(4, xtemp)
-    #endif
+#endif
     call dslashd(xout, xtemp, u, am, imass)
-    #ifdef MPI
+#ifdef MPI
     call start_halo_update_5(4, xout, 10, reqs_xout)
     call complete_halo_update(reqs_xout)
-    #else
+#else
     call update_halo_5(4, xout)
-    #endif
+#endif
 
   end subroutine dirac_operator 
 

@@ -41,11 +41,11 @@ program test_qmrherm_2
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
   integer :: idx = 0
 
-  #ifdef MPI
+#ifdef MPI
   type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
   integer :: ierr
   call init_MPI
-  #endif
+#endif
   qmrhprint = .false.
 
   allocate(Phi0_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
@@ -84,11 +84,11 @@ program test_qmrherm_2
       end do
     end do
   end do
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_5(4, R, 0, reqs_R)
   call start_halo_update_5(4, Phi, 1, reqs_Phi)
   call start_halo_update_6(4, 25, Phi0_orig, 2, reqs_Phi0)
-  #endif
+#endif
   do j = 1,3
     do it = 1,ksizet_l
       do iy = 1,ksizey_l
@@ -103,18 +103,18 @@ program test_qmrherm_2
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_4(3, u, 3, reqs_u)
   call complete_halo_update(reqs_R)
   call complete_halo_update(reqs_Phi)
   call complete_halo_update(reqs_Phi0)
   call complete_halo_update(reqs_u)
-  #else
+#else
   call update_halo_6(4, 25, Phi0_orig)
   call update_halo_5(4, Phi)
   call update_halo_5(4, R)
   call update_halo_4(3, u)
-  #endif
+#endif
   ! initialise common variables
   beta = 0.4
   am3 = 1.0
@@ -128,13 +128,13 @@ program test_qmrherm_2
   end do
   ! check output
   if (generate) then
-    #ifdef MPI
+#ifdef MPI
     write_file(x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_qmrherm_2_x.dat', MPI_Double_Complex)
     write_file(Phi0(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :, :), 'test_qmrherm_2_Phi0.dat', MPI_Double_Complex)
-    #else
+#else
     write(6,*) "Generation not possible"
     call exit(1)
-    #endif
+#endif
   else
     read_file(x_ref, 'test_qmrherm_2_x.dat', MPI_Double_Complex)
     read_file(Phi0_ref, 'test_qmrherm_2_Phi0.dat', MPI_Double_Complex)
@@ -148,7 +148,7 @@ program test_qmrherm_2
     check_sum(delta_Phi0, 1e-12, 'Phi0', sum_delta_Phi0, MPI_Double_Complex, 'test_qmrherm_2')
     check_max(delta_Phi0, 1e-14, 'Phi0', max_delta_Phi0, MPI_Double_Precision, 'test_qmrherm_2')
   end if
-  #ifdef MPI
+#ifdef MPI
   call MPI_Finalize(ierr)
-  #endif
+#endif
 end program test_qmrherm_2

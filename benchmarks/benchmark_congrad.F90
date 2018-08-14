@@ -28,12 +28,12 @@ program benchmark_congrad
   integer :: iterations
   integer :: t1i(2), t2i(2)
   double precision :: dt
-  #ifdef MPI
+#ifdef MPI
   type(MPI_Request), dimension(12) :: reqs_X, reqs_Phi, reqs_u
   integer :: ierr
 
   call init_MPI
-  #endif
+#endif
 
   res = 1e-14
   am = 0.05
@@ -58,10 +58,10 @@ program benchmark_congrad
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_5(4, X, 0, reqs_X)
   call start_halo_update_5(4, Phi, 0, reqs_Phi)
-  #endif
+#endif
   idx = 0
   do j = 1,3
     do it = 1,ksizet_l
@@ -76,16 +76,16 @@ program benchmark_congrad
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_4(3, u, 1, reqs_u)
   call complete_halo_update(reqs_X)
   call complete_halo_update(reqs_Phi)
   call complete_halo_update(reqs_u)
-  #else
+#else
   call update_halo_5(4, Phi)
   call update_halo_5(4, X)
   call update_halo_4(3, u)
-  #endif
+#endif
   ! initialise common variables
   beta = 0.4
   am3 = 1.0
@@ -101,24 +101,24 @@ program benchmark_congrad
     Phi=Phi0
     X = X0
     call congrad(Phi, res, itercg, am, imass,iterations)
-    #ifdef MPI
+#ifdef MPI
     if(ip_global.eq.0) then
-      #endif
+#endif
       print *, "Congrad iterations, res:", iterations,res
-      #ifdef MPI
+#ifdef MPI
     endif
-    #endif
+#endif
   end do
   call gettimeofday(t2i,ierr)
   dt = t2i(1)-t1i(1) + 1.0d-6 * (t2i(2)-t1i(2))
   dt = dt / timing_loops / iterations
-  #ifdef MPI
+#ifdef MPI
   if(ip_global.eq.0) then
-    #endif
+#endif
     print *, "Time per iteration:" , dt
-    #ifdef MPI
+#ifdef MPI
   endif
   call MPI_Finalize(ierr)
-  #endif
+#endif
 
 end program benchmark_congrad

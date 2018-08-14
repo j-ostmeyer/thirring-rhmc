@@ -1,14 +1,14 @@
 module test_utils
   use params
   use random
-  #ifdef MPI
+#ifdef MPI
   use comms
-  #endif
+#endif
   implicit none
 
 contains
 
-  #ifdef MPI
+#ifdef MPI
   subroutine rw_file_mpi(array, array_shape, rank, filename, mpi_dtype, write_out)
     integer, intent(in) :: array_shape(:), rank
     type(*), dimension(..), intent(inout) :: array
@@ -72,5 +72,5 @@ contains
     call MPI_Type_Free(local_mpiio_type,ierr)
     return
   end subroutine rw_file_mpi
-  #endif
+#endif
 end module

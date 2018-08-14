@@ -31,11 +31,11 @@ program test_derivs
   integer :: i, j, ix, iy, it, ithird
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
   integer :: idx = 0
-  #ifdef MPI
+#ifdef MPI
   type(MPI_Request), dimension(12) :: reqs_R, reqs_Phi, reqs_X2
   integer :: ierr
   call init_MPI
-  #endif
+#endif
   do j = 1,4
     do it = 1,ksizet_l
       do iy = 1,ksizey_l
@@ -53,11 +53,11 @@ program test_derivs
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_5(4, R, 0, reqs_R)
   call start_halo_update_5(4, Phi, 0, reqs_Phi)
   call start_halo_update_5(4, X2, 0, reqs_X2)
-  #endif
+#endif
   do j = 1,3
     do it = 1,ksizet_l
       do iy = 1,ksizey_l
@@ -72,15 +72,15 @@ program test_derivs
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call complete_halo_update(reqs_R)
   call complete_halo_update(reqs_Phi)
   call complete_halo_update(reqs_X2)
-  #else
+#else
   call update_halo_5(4, X2)
   call update_halo_5(4, R)
   call update_halo_4(3, u)
-  #endif
+#endif
   ! initialise common variables
   beta = 0.4
   am3 = 1.0
@@ -101,12 +101,12 @@ program test_derivs
     diff = dSdpi - dSdpi_ref
     sum_diff = sum(diff)
     max_diff = maxval(abs(diff))
-    #ifdef MPI
+#ifdef MPI
     call MPI_AllReduce(MPI_IN_PLACE, sum_diff, 1, MPI_Real, MPI_Sum, &
       & comm,ierr)
     call MPI_AllReduce(MPI_IN_PLACE, max_diff, 1, MPI_Real, MPI_Max, &
       & comm,ierr)
-    #endif
+#endif
     if (ip_global .eq. 0) then
       if (abs(sum_diff) .gt. 0.3) then
         print *, 'sum delta too large: ', sum_diff
@@ -116,7 +116,7 @@ program test_derivs
       end if
     end if      
   end if
-  #ifdef MPI
+#ifdef MPI
   call MPI_Finalize(ierr)
-  #endif
+#endif
 end program test_derivs

@@ -15,11 +15,11 @@ contains
   !**********************************************************************
   subroutine gaussp(ps, reqs)
     real, intent(out) :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
-    #ifdef MPI
+#ifdef MPI
     type(MPI_Request), intent(out) :: reqs(12)
-    #else
+#else
     integer, intent(out), optional :: reqs
-    #endif
+#endif
     integer ix, iy, it
     real :: theta
     !     write(6,1)
@@ -40,11 +40,11 @@ contains
         end do
       end do
     end do
-    #ifdef MPI
+#ifdef MPI
     call start_halo_update_4_real(2, ps, 13, reqs)
-    #else
+#else
     call update_halo_4_real(2, ps)
-    #endif
+#endif
     return
   end subroutine gaussp
   !**********************************************************************
@@ -54,11 +54,11 @@ contains
   !**********************************************************************
   subroutine gauss0(ps, reqs)
     real, intent(out) :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
-    #ifdef MPI
+#ifdef MPI
     type(MPI_Request), intent(out) :: reqs(12)
-    #else
+#else
     integer, intent(out), optional :: reqs
-    #endif
+#endif
     integer :: ix, iy, it
     real :: theta
     !     write(6,1)
@@ -79,11 +79,11 @@ contains
         end do
       end do
     end do
-    #ifdef MPI
+#ifdef MPI
     call start_halo_update_4_real(2, ps, 14, reqs)
-    #else
+#else
     call update_halo_4_real(2, ps)
-    #endif
+#endif
     return
   end subroutine gauss0
 

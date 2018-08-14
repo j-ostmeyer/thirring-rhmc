@@ -159,11 +159,11 @@ contains
 
     return 
   end subroutine dslashd_local
-  #ifdef MPI
+#ifdef MPI
   subroutine dslashd(Phi,R,u,am,imass,reqs_R)
-  #else
+#else
   pure subroutine dslashd(Phi,R,u,am,imass)
-  #endif
+#endif
     !     calculates phi = mdagger*r
     !
     !     complex, intent(in) ::  u(0:ksize+1,0:ksize+1,0:ksizet+1,3)
@@ -171,31 +171,29 @@ contains
     !     complex, intent(in) :: r(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
     !     complex :: zkappa
     complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
-    complex(dp), intent(out) :: phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(in) :: r(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     integer, intent(in) :: imass
     real, intent(in) :: am
     !complex(dp) :: zkappa
     !real :: diag
     integer :: ixup, iyup, itup, ix, iy, it, idirac, mu, igork
-    #ifdef mpi
-    type(mpi_request), dimension(12),intent(inout), optional :: reqs_r
-    #endif
+#ifdef MPI
+    type(MPI_request), dimension(12),intent(inout), optional :: reqs_R
+#endif
     !
     !   taking care of the part that does not need the halo
     !   diagonal term (hermitian)
-
-    call dslashd_local(am,phi,r,imass)
-
+    call dslashd_local(am,Phi,R,imass)
     !   call complete_halo_update_5(4, phi)
     !
     !   taking care of the part that does need the halo
     !   wilson term (hermitian) and dirac term (antihermitian)
-    #ifdef mpi
+#ifdef MPI
     if(present(reqs_r)) then
-      call complete_halo_update(reqs_r)
+      call complete_halo_update(reqs_R)
     endif
-    #endif
+#endif
     do mu=1,3
       ixup = kdelta(1, mu)
       iyup = kdelta(2, mu)
@@ -225,11 +223,11 @@ contains
     enddo
     !
     return
-  #ifdef mpi
+#ifdef MPI
   end subroutine dslashd
-  #else
+#else
   end subroutine dslashd
-  #endif
+#endif
 
 
   !***********************************************************************

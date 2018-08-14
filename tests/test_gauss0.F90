@@ -16,22 +16,22 @@ program test_gauss0
   real :: sumpsred, maxpsred, minpsred
 
   ! initialise MPI
-  #ifdef MPI
+#ifdef MPI
   type(MPI_Request) :: reqs(12)
   integer :: ierr
   call init_MPI
-  #else
+#else
   integer :: reqs
-  #endif
+#endif
 
   seed = 1.0
   call init_random(seed)
 
   ! call function
   call gauss0(ps, reqs)
-  #ifdef MPI
+#ifdef MPI
   call complete_halo_update(reqs)
-  #endif
+#endif
 
   ! check output
   sumps = sum(ps(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))
@@ -61,7 +61,7 @@ program test_gauss0
       end do
     end do
   end do outer
-  #ifdef MPI
+#ifdef MPI
   ! ISSUE WITH MPI_IN_PLACE and pmpi_f08
   !call MPI_AllReduce(MPI_IN_PLACE, sumps, 1, MPI_REAL, MPI_SUM, comm,ierr)
   !call MPI_AllReduce(MPI_IN_PLACE, maxps, 1, MPI_REAL, MPI_MAX, comm,ierr)
@@ -76,18 +76,18 @@ program test_gauss0
   minps          = minpsred
   has_duplicates = has_duplicatesred
 
-  #endif
-  #ifndef SITE_RANDOM
-  #if defined(MPI) && NP_T > 1 && NP_X > 1 && NP_Y > 1
+#endif
+#ifndef SITE_RANDOM
+#if defined(MPI) && NP_T > 1 && NP_X > 1 && NP_Y > 1
   if (ip_global .eq. 0) then
     print *, 'Unable to check results in parallel without using site_random'
   end if
-  #else
+#else
   check_float_equality(sumps, -15.65166, 0.001, 'sum', 'test_gauss0')
   check_float_equality(maxps, 2.768291, 0.001, 'max', 'test_gauss0')
   check_float_equality(minps, -2.516524, 0.001, 'min', 'test_gauss0')
-  #endif
-  #else
+#endif
+#else
   check_float_equality(sumps, 14.460, 0.001, 'sum', 'test_gauss0')
   check_float_equality(maxps, 2.59536, 0.001, 'max', 'test_gauss0')
   check_float_equality(minps, -2.441575, 0.001, 'min', 'test_gauss0')
@@ -98,8 +98,8 @@ program test_gauss0
       write(*, '(4i3)') duplicate_position2
     end if
   end if
-  #endif
-  #ifdef MPI
+#endif
+#ifdef MPI
   call MPI_Finalize(ierr)
-  #endif
+#endif
 end program

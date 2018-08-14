@@ -17,11 +17,11 @@ program test_halo_4_real
   integer :: passed_basic = 0
   real :: test_array(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
   real :: test_array_2(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
-  #ifdef MPI
+#ifdef MPI
   type(MPI_Request), dimension(12) :: reqs, reqs2
   integer :: ierr
   call init_MPI
-  #endif
+#endif
 
   test_array(0,:,:,:) = cmplx(-1,-1)
   test_array(:,0,:,:) = cmplx(-2,-1)
@@ -44,16 +44,16 @@ program test_halo_4_real
   end do
 
   ! Communicate
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_4_real(2, test_array, 0, reqs)
   call complete_halo_update(reqs)
 
   call start_halo_update_4_real(2, test_array_2, 1, reqs2)
   call complete_halo_update(reqs2)
-  #else
+#else
   call update_halo_4_real(2, test_array)
   call update_halo_4_real(2, test_array_2)
-  #endif
+#endif
 
   ! Check output
   if (test_array(1,1,1,1) .ne. test_array(ksizex_l+1,1,1,1) .or. &
@@ -96,8 +96,8 @@ program test_halo_4_real
   end if
 
 
-  #ifdef MPI
+#ifdef MPI
   call MPI_Finalize(ierr)
-  #endif
+#endif
 end program test_halo_4_real
 

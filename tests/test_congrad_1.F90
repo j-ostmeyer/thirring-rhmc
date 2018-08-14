@@ -29,11 +29,11 @@ program test_congrad_1
   integer :: j, ix, iy, it, ithird
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
   integer :: idx = 0
-  #ifdef MPI
+#ifdef MPI
   type(MPI_Request), dimension(12) :: reqs_X, reqs_Phi, reqs_u
   integer :: ierr
   call init_MPI
-  #endif
+#endif
   allocate(delta_Phi(kthird, ksizex_l, ksizey_l, ksizet_l, 4))
 
   h = 0
@@ -63,10 +63,10 @@ program test_congrad_1
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_5(4, X, 0, reqs_X)
   call start_halo_update_5(4, Phi, 0, reqs_Phi)
-  #endif
+#endif
   idx = 0
   do j = 1,3
     do it = 1,ksizet_l
@@ -81,16 +81,16 @@ program test_congrad_1
       enddo
     enddo
   enddo
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_4(3, u, 1, reqs_u)
   call complete_halo_update(reqs_X)
   call complete_halo_update(reqs_Phi)
   call complete_halo_update(reqs_u)
-  #else
+#else
   call update_halo_5(4, Phi)
   call update_halo_5(4, X)
   call update_halo_4(3, u)
-  #endif
+#endif
   ! initialise common variables
   beta = 0.4
   am3 = 1.0
@@ -107,9 +107,9 @@ program test_congrad_1
 
   check_sum(delta_Phi, 1e-6, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_congrad_1')
 
-  #ifdef MPI
+#ifdef MPI
   call MPI_Finalize(ierr)
-  #endif
+#endif
 
 end program
 

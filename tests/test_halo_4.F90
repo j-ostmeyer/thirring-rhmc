@@ -15,12 +15,12 @@ program test_halo_4
   integer :: pid
   integer :: passed_basic = 0
   complex(dp) :: test_array(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-  #ifdef MPI
+#ifdef MPI
   type(MPI_Request) :: reqs(12)
   integer :: ierr
 
   call init_MPI
-  #endif
+#endif
 
   test_array(0,:,:,:) = cmplx(-1,-1)
   test_array(:,0,:,:) = cmplx(-2,-1)
@@ -42,12 +42,12 @@ program test_halo_4
   end do
 
   ! Communicate
-  #ifdef MPI
+#ifdef MPI
   call start_halo_update_4(4, test_array, 0, reqs)
   call complete_halo_update(reqs)
-  #else
+#else
   call update_halo_4(4, test_array)
-  #endif
+#endif
 
   ! Check output
   if (real(test_array(1,1,1,1)) .ne. real(test_array(ksizex_l+1,1,1,1)) .or. &
@@ -90,7 +90,7 @@ program test_halo_4
   end if
 
 
-  #ifdef MPI
+#ifdef MPI
   call MPI_Finalize(ierr)
-  #endif
+#endif
 end program test_halo_4

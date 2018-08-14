@@ -28,13 +28,13 @@ contains
     real :: resid
     real(dp) :: betacg, betacgn, betacgd, alpha, alphan, alphad
     integer :: nx
-    #ifdef MPI
+#ifdef MPI
     type(MPI_Request), dimension(12) :: reqs_x1, reqs_r
     integer :: ierr
     real(dp) :: dp_reduction
     !#else
     !    integer :: reqs_x1, reqs_r
-    #endif
+#endif
     !    write(6,111)
     !111 format(' Hi from congrad')
     !
@@ -48,31 +48,31 @@ contains
     betacgd=1.0
     alpha=1.0
     !
-    #ifdef MPI
+#ifdef MPI
     call init_halo_update_5(4, x1, 8, reqs_x1) ! ATTEMPT 
     call init_halo_update_5(4, r, 10, reqs_r)  ! ATTEMPT
-    #endif
+#endif
 
     do nx=1,niterc
       itercg=itercg+1
       !
       !  x1=Mp
       call dslash(x1,p,u,am,imass)
-      #ifdef MPI
+#ifdef MPI
       call MPI_Startall(12,reqs_x1,ierr)
       !call start_halo_update_5(4, x1, 8, reqs_x1) ! ATTEMPT
-      #endif
+#endif
       !
       if(nx.ne.1)then
         !
         !   alpha=(r,r)/(p,(Mdagger)Mp)
         !   Don't need x1's halo at this point
         alphad = sum(abs(x1(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
-        #ifdef MPI
+#ifdef MPI
         !call MPI_AllReduce(MPI_In_Place, alphad, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
         call MPI_AllReduce(alphad, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG = dc_reduction
         alphad = dp_reduction
-        #endif       
+#endif       
         alpha = alphan / alphad
         !     
         !   x=x+alpha*p
@@ -80,11 +80,11 @@ contains
       end if
 
       !   Now we need x1's halo, so ensure communication is finished
-      #ifdef MPI
+#ifdef MPI
       call complete_halo_update(reqs_x1)
-      #else
+#else
       call update_halo_5(4, x1)
-      #endif
+#endif
       !     
       !   x2=(Mdagger)x1=(Mdagger)Mp
       call dslashd(x2, x1, u, am, imass)
@@ -95,18 +95,18 @@ contains
 
       !   Now update halo for r instead since we can hide communication during the summation
       !   x2 is discarded so we no longer care about its halo
-      #ifdef MPI
+#ifdef MPI
       call MPI_Startall(12,reqs_r,ierr)              ! ATTEMPT
       !call start_halo_update_5(4, r, 10, reqs_r) ! ATTEMPT
-      #endif
+#endif
 
       !   betacg=(r_k+1,r_k+1)/(r_k,r_k)
       betacgn = sum(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
-      #ifdef MPI
+#ifdef MPI
       !call MPI_AllReduce(MPI_In_Place, betacgn, 1, MPI_Double_precision, MPI_Sum, comm,ierr) ! DEBUG
       call MPI_AllReduce(betacgn,dp_reduction, 1, MPI_Double_precision, MPI_Sum, comm,ierr) ! DEBUG
       betacgn = dp_reduction
-      #endif       
+#endif       
       betacg = betacgn / betacgd
       betacgd = betacgn
       alphan = betacgn
@@ -115,27 +115,27 @@ contains
       !
       !   p=r+betacg*p
       !   Now the correct value of r is needed to avoid having to communicate p as well
-      #ifdef MPI
+#ifdef MPI
       call complete_halo_update(reqs_r)! ATTEMPT
-      #else
+#else
       call update_halo_5(4, r)
-      #endif
+#endif
       p = r + betacg * p
       if(betacgn.lt.resid) exit
     end do
     !     write(6,1000)
 
     if (nx .gt. niterc) then
-      #ifdef MPI
+#ifdef MPI
       if (ip_global.eq.0) then
-        #endif
+#endif
         write(7,1000)
         1000     format(' # iterations of congrad exceeds niterc')
         write(7,*) "Iterations:", nx
 
-        #ifdef MPI
+#ifdef MPI
       end if
-      #endif
+#endif
     endif
     if(present(iterations)) then
       iterations  = nx 
@@ -173,13 +173,13 @@ contains
     integer :: idsource, idsource2, inoise
     integer :: iter, itercg
     real :: susclsing
-    #ifdef MPI
+#ifdef MPI
     type(MPI_Request), dimension(12) :: reqs_ps, reqs_pt, reqs_Phi
     integer :: ierr
     complex(dp) :: dc_reduction
-    #else
+#else
     integer :: reqs_ps, reqs_pt, reqs_Phi
-    #endif
+#endif
     !     write(6,*) 'hi from measure'
     !
     iter=0
@@ -201,13 +201,13 @@ contains
         !  source on domain wall at ithird=1
         !   
         x = cmplx(0.0, 0.0)
-        #ifdef MPI
+#ifdef MPI
         !  We started a halo update in the gauss0 call;
         !  Now we need it to be complete if it isn't already
         if (idsource .eq. 1) then
           call complete_halo_update(reqs_ps)
         end if
-        #endif
+#endif
         if(imass.ne.5)then
           x(:, :, :, idsource) = cmplx(ps(:,:,:,1), ps(:,:,:,2))
         else
@@ -226,13 +226,13 @@ contains
         ! Phi= Mdagger*xi
         !
         call dslashd(Phi, xi, u, am, imass)
-        #ifdef MPI
+#ifdef MPI
         ! No way to hide communications here unfortunately
         call start_halo_update_5(4, Phi, 11, reqs_Phi)
         call complete_halo_update(reqs_Phi)
-        #else
+#else
         call update_halo_5(4, Phi)
-        #endif
+#endif
         !     call qmrherm(Phi,res,itercg,am,imass,cnum,cden,1,0)
         call congrad(Phi, res, itercg, am, imass)
         iter = iter + itercg
@@ -254,12 +254,12 @@ contains
         idsource2=idsource+2
         !
         x = cmplx(0.0, 0.0)
-        #ifdef MPI
+#ifdef MPI
         !  Again, if this isn't finished by now we have to wait for it
         if (idsource .eq. 1) then
           call complete_halo_update(reqs_pt)
         end if
-        #endif
+#endif
         if(imass.ne.5)then
           x(:, :, :, idsource2) = cmplx(pt(:,:,:,1), pt(:,:,:,2))
         else
@@ -278,13 +278,13 @@ contains
         ! Phi= Mdagger*xi
         !
         call dslashd(Phi,xi,u,am,imass)
-        #ifdef MPI
+#ifdef MPI
         ! No way to hide communications here unfortunately
         call start_halo_update_5(4, Phi, 12, reqs_Phi)
         call complete_halo_update(reqs_Phi)
-        #else
+#else
         call update_halo_5(4, Phi)
-        #endif
+#endif
         !
         ! xi= (M)**-1 * Phi
         !
@@ -306,7 +306,7 @@ contains
         !
         !  end trace on Dirac indices....
       enddo
-      #ifdef MPI
+#ifdef MPI
       !  The sums psibarpsi1 and psibarpsi2 are initialised to 0 outside the loop
       !  So can be summed up per process, then collected here at the end
       !call MPI_AllReduce(MPI_In_Place, psibarpsi1, 1, MPI_Double_Complex, & !DEBUG
@@ -317,7 +317,7 @@ contains
       call MPI_AllReduce(psibarpsi2, dc_reduction, 1, MPI_Double_Complex, & !DEBUG
         & MPI_Sum, comm,ierr)
       psibarpsi2 = dc_reduction
-      #endif
+#endif
       !
       if(imass.eq.1)then
         psibarpsi1 = psibarpsi1 / kvol
@@ -404,11 +404,12 @@ contains
     real(dp), parameter :: c=0.25d0
     integer :: iter, idsource, ksource, ismear, isign
     integer :: it, itt, ittl, idd
-    #ifdef MPI
+#ifdef MPI
     type(MPI_Request), dimension(12) :: mpireqs
-    real(dp) :: dp_reduction
-    complex(dp) :: dc_reduction
-    #endif
+    real(dp) :: dp_reduction(0:ksizet-1)
+    complex(dp) :: dc_reduction(0:ksizet-1)
+    integer :: ierr
+#endif
     !
     iter = 0
     itercg = 0
@@ -427,18 +428,18 @@ contains
     do ksource=1,nsource
       !
       !   random location for +m source
-      #ifdef MPI
+#ifdef MPI
       if(ip_global.eq.0) then
-        #endif
+#endif
         ixxx=int(ksize*rano(yran,idum,1,1,1))+1
         iyyy=int(ksize*rano(yran,idum,1,1,1))+1
         ittt=int(ksizet*rano(yran,idum,1,1,1))+1
-        #ifdef MPI
+#ifdef MPI
       endif
       call MPI_Bcast(ixxx, 1, MPI_INTEGER, 0, comm,ierr)
       call MPI_Bcast(iyyy, 1, MPI_INTEGER, 0, comm,ierr)
       call MPI_Bcast(ittt, 1, MPI_INTEGER, 0, comm,ierr)
-      #endif
+#endif
 
       ip_xxx = int((ixxx-1)/ksizex_l)
       ip_yyy = int((iyyy-1)/ksizey_l)
@@ -462,23 +463,23 @@ contains
         !
         ! now smear it.....
         !
-        #ifdef MPI
+#ifdef MPI
         call start_halo_update_4(4, x, 1, mpireqs)
         call complete_halo_update(mpireqs)
-        #else
+#else
         call update_halo_4(4, x)
-        #endif
+#endif
 
         do ismear=1,nsmear
           call dslash2d(x0, x, u)
-          #ifdef MPI
+#ifdef MPI
           call start_halo_update_4(4, x0, 1, mpireqs)
           call complete_halo_update(mpireqs)
-          #else
+#else
           call update_halo_4(4, x0)
-          #endif
+#endif
           x = (1.0d+0-c) * x + c * x0
-        enddo
+        enddo! do ismear=1,nsmear
         !
         !
         !   xi = x  on DW at ithird=1
@@ -488,20 +489,20 @@ contains
         ! Phi= Mdagger*xi
         !
         call dslashd(Phi, xi, u, am, imass)
-        #ifdef MPI
+#ifdef MPI
         call start_halo_update_5(4,Phi , 1, mpireqs)
         call complete_halo_update(mpireqs)
-        #else
+#else
         call update_halo_5(4, Phi)
-        #endif
+#endif
         !  preconditioning (no,really)
         call dslashd(xi, Phi, u, am, imass)
-        #ifdef MPI
+#ifdef MPI
         call start_halo_update_5(4,xi, 1, mpireqs)
         call complete_halo_update(mpireqs)
-        #else
+#else
         call update_halo_5(4, xi)
-        #endif
+#endif
         !  
         ! xi= (MdaggerM)**-1 * Phi 
         !
@@ -549,7 +550,7 @@ contains
         ! am=-am
         !
         !  end loop on source Dirac index....
-      enddo
+      enddo ! do idsource=3,4
       !
       !  Now tie up the ends....
       !
@@ -564,20 +565,17 @@ contains
           tempcpmm_r(it) = sum(abs(prop00(:, :, ittl, 3:4, 1:2))**2)
         endif
       enddo
-      #ifdef MPI
+#ifdef MPI
+      !call MPI_Reduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm) !DEBUG
+      call MPI_Reduce(tempcpmm_r,dp_reduction,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm,ierr) ! DEBUG
       if(ip_global.eq.0) then
-        !call MPI_Reduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm) !DEBUG
-        call MPI_Reduce(tempcpmm_r,dp_reduction,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm,ierr) ! DEBUG
         tempcpmm_r = dp_reduction ! DEBUG
-      else 
-        call MPI_Reduce(tempcpmm_r,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm,ierr)
-      endif
-      if(ip_global.eq.0) then
-        #endif
+#endif
+        !!! if(ip_global.eq.0) then
         cpm = cpm + tempcpmm_r
-        #ifdef MPI
-      endif
-      #endif
+#ifdef MPI
+      endif! if(ip_global.eq.0) then
+#endif
       !
       ! if(imass.ne.1)then
       !     do it=0,ksizet-1
@@ -597,20 +595,16 @@ contains
           tempcpmm_r(it) = sum(abs(prop0L(:, :, ittl, 3:4, 3:4))**2)
         endif
       enddo
-      #ifdef MPI
+#ifdef MPI
+      !call MPI_Reduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm) ! DEBUG
+      call MPI_Reduce(tempcpmm_r,dp_reduction,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm,ierr) ! DEBUG
       if(ip_global.eq.0) then
-        !call MPI_Reduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm) ! DEBUG
-        call MPI_Reduce(tempcpmm_r,dp_reduction,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm,ierr) ! DEBUG
         tempcpmm_r = dp_reduction
-      else
-        call MPI_Reduce(tempcpmm_r,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm,ierr)
-      endif
-      if(ip_global.eq.0) then
-        #endif
+#endif
         cmm = cmm + tempcpmm_r
-        #ifdef MPI
+#ifdef MPI
       endif
-      #endif
+#endif
 
       !
       !     if(imass.ne.1)then
@@ -646,22 +640,20 @@ contains
               & isign * akappa * sum(prop0L(:, :, ittl, idd, idd)) 
           endif
         enddo
-      enddo
-      #ifdef MPI
+      enddo! do idd=3,4
+#ifdef MPI
+      !call MPI_Reduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm) ! DEBUG
+      call MPI_Reduce(tempcpmm_c,dc_reduction,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr) ! DEBUG
       if(ip_global.eq.0) then
-        !call MPI_Reduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm) ! DEBUG
-        call MPI_Reduce(tempcpmm_c,dc_reduction,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr) ! DEBUG
         tempcpmm_c = dc_reduction
-      else
-        call MPI_Reduce(tempcpmm_c,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr)
       endif
 
       if(ip_global.eq.0) then
-        #endif
+#endif
         cferm1 = cferm1 + tempcpmm_c
-        #ifdef MPI
+#ifdef MPI
       endif
-      #endif
+#endif
       tempcpmm_c = (0.0d0,0.0d0)
       do idd=3,4
         do it=0,ksizet-1
@@ -678,29 +670,26 @@ contains
               & isign * gamval(3,idd) * sum(prop00(:, :, ittl, idd, gamin(3,idd)))
           endif
         enddo
-      enddo
-      #ifdef MPI
+      enddo! do idd=3,4
+#ifdef MPI
+      !call MPI_Reduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm) ! DEBUG
+      call MPI_Reduce(tempcpmm_c,dc_reduction,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr) !DEBUG
       if(ip_global.eq.0) then
-        !call MPI_Reduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm) ! DEBUG
-        call MPI_Reduce(tempcpmm_c,dp_reduction,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr) !DEBUG
         tempcpmm_c = dc_reduction
-      else
-        call MPI_Reduce(tempcpmm_c,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr)
-      endif
-      if(ip_global.eq.0) then
-        #endif
+#endif
+        !!! if(ip_global.eq.0) then
         cferm2 = cferm2 + tempcpmm_c
-        #ifdef MPI
+#ifdef MPI
       endif
-      #endif
+#endif
 
       !
       !  finish loop over sources
-    enddo
+    enddo! do ksource=1,nsource
     !
-    #ifdef MPI
+#ifdef MPI
     if(ip_global.eq.0) then
-      #endif
+#endif
       do it=0,ksizet-1
         cpm(it)=cpm(it)/nsource
         cmm(it)=cmm(it)/nsource
@@ -732,9 +721,9 @@ contains
       enddo
       !     write(6,*) chim
       write(400,*) chim
-      #ifdef MPI
+#ifdef MPI
     endif ! if(ip_global.eq.0) then
-    #endif
+#endif
     !     if(imass.ne.1)then
     !     do it=0,ksizet-1
     !     write(402,*) it, real(cpmn(it)), real(cmmn(it))
