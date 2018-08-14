@@ -104,8 +104,8 @@ program test_measure
     call meson(cpm, cmm, cferm1, cferm2, res, itercg, aviter, am, imass)
   end do
 
-  open(3, file='test_meson.dat', form="unformatted", access="sequential")
   if (generate) then
+    open(3, file='test_meson.dat', form="unformatted", access="sequential")
 #ifdef MPI
     if(ip_global .eq. 0) then
 #endif
@@ -122,6 +122,7 @@ program test_measure
     endif! if(ip_global .eq. 0) then
 #endif
   else
+    open(3, file='test_meson.dat', form="unformatted", access="sequential",status='old')
 #ifdef MPI
     if(ip_global .eq. 0) then
 #endif
