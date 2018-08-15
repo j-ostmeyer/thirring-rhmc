@@ -128,19 +128,19 @@ program test_measure
 #endif
       read(3) cferm1_ref, cferm2_ref, cpm_ref, cmm_ref
       maxreldiff = maxval(2*abs(cferm1_ref - cferm1)/abs(cferm1_ref + cferm1))
-      if( maxreldiff .gt. 1.0e-09) then
+      if( maxreldiff .gt. 1.0e-07) then
         print * , 'maxval(2*abs(cferm1_ref - cferm1)/abs(cferm1_ref + cferm1))=', maxreldiff
       endif
       maxreldiff = maxval(2*abs(cferm2_ref - cferm2)/abs(cferm2_ref + cferm2))
-      if( maxreldiff .gt. 1.0e-09) then
+      if( maxreldiff .gt. 1.0e-06) then
         print * , 'maxval(2*abs(cferm2_ref - cferm2)/abs(cferm2_ref + cferm2))=', maxreldiff
       endif
       maxreldiff = maxval(2*abs(cpm_ref - cpm)/abs(cpm_ref + cpm))
-      if( maxreldiff .gt. 1.0e-13) then
+      if( maxreldiff .gt. 1.0e-07) then
         print * , 'maxval(2*abs(cpm_ref - cpm)/abs(cpm_ref + cpm))=', maxreldiff
       endif
       maxreldiff = maxval(2*abs(cmm_ref - cmm)/abs(cmm_ref + cmm))
-      if( maxreldiff .gt. 1.0e-13) then
+      if( maxreldiff .gt. 1.0e-07) then
         print * , 'maxval(2*abs(cmm_ref - cmm)/abs(cmm_ref + cmm))=', maxreldiff
       endif
 
