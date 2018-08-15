@@ -26,7 +26,7 @@ program test_qmrherm_4
 
   integer :: imass, iflag, isweep, iter
   real(dp) :: anum(0:ndiag), aden(ndiag), sum_delta_Phi
-  real :: res, am, anumf, adenf
+  real :: res, am, adenf
   integer :: itercg
 
   integer :: i, j, l, ix, iy, it, ithird
@@ -134,8 +134,7 @@ program test_qmrherm_4
     call update_halo_5(4, xin)
 #endif
     adenf = aden(idiag)
-    anumf = anum(idiag)
-    call dirac_op_shifted(xout,xin,am,imass,adenf,anumf)
+    call dirac_op_shifted(xout,xin,am,imass,adenf)
 
     delta_Phi = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
       &                xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)

@@ -13,12 +13,14 @@ contains
   ! to refresh momenta
   !   Numerical Recipes pp.203
   !**********************************************************************
+#ifdef MPI
   subroutine gaussp(ps, reqs)
+#else
+  subroutine gaussp(ps)
+#endif
     real, intent(out) :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
 #ifdef MPI
     type(MPI_Request), intent(out) :: reqs(12)
-#else
-    integer, intent(out), optional :: reqs
 #endif
     integer ix, iy, it
     real :: theta
@@ -52,12 +54,14 @@ contains
   ! to generate pseudofermion fields R
   !   Numerical Recipes pp.203
   !**********************************************************************
+#ifdef MPI
   subroutine gauss0(ps, reqs)
+#else
+  subroutine gauss0(ps)
+#endif
     real, intent(out) :: ps(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
 #ifdef MPI
     type(MPI_Request), intent(out) :: reqs(12)
-#else
-    integer, intent(out), optional :: reqs
 #endif
     integer :: ix, iy, it
     real :: theta

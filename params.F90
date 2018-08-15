@@ -8,8 +8,8 @@ module params
   integer, parameter :: sp=kind(1.)
 
   ! Lattice parameters
-  #define KSIZE 12
-  #define KSIZET 12
+#define KSIZE 12
+#define KSIZET 12
   integer, parameter :: ksize=KSIZE, ksizet=KSIZET
   integer, parameter :: kthird=24
   integer, parameter :: kvol=ksize*ksize*ksizet
@@ -26,11 +26,11 @@ module params
   #error "NP_X, NP_Y, and NP_T must be defined for MPI compilation."
 #endif
 #if (KSIZE / NP_X) * NP_X != KSIZE
-  #error "ksize must be divisible by NP_X"
-  #elif (KSIZE / NP_Y) * NP_Y != KSIZE
-  #error "ksize must be divisible by NP_Y"
-  #elif (KSIZET / NP_T) * NP_T != KSIZET
-  #error "ksizet must be divisible by NP_T"
+#error "ksize must be divisible by NP_X"
+#elif (KSIZE / NP_Y) * NP_Y != KSIZE
+#error "ksize must be divisible by NP_Y"
+#elif (KSIZET / NP_T) * NP_T != KSIZET
+#error "ksizet must be divisible by NP_T"
 #endif
   integer, parameter :: np_x=NP_X, np_y=NP_Y, np_t=NP_T
   integer, parameter :: ksizex_l = ksize / np_x

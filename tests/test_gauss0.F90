@@ -11,26 +11,24 @@ program test_gauss0
   integer :: ix, iy, it, ix2, iy2, it2, i, j
   integer, dimension(4) :: duplicate_position1, duplicate_position2
   logical :: has_duplicates = .false.
-  logical :: has_duplicatesred
   real :: sumps, maxps, minps
-  real :: sumpsred, maxpsred, minpsred
 
   ! initialise MPI
 #ifdef MPI
   type(MPI_Request) :: reqs(12)
   integer :: ierr
   call init_MPI
-#else
-  integer :: reqs
 #endif
 
   seed = 1.0
   call init_random(seed)
 
   ! call function
-  call gauss0(ps, reqs)
 #ifdef MPI
+  call gauss0(ps, reqs)
   call complete_halo_update(reqs)
+#else 
+  call gauss0(ps)
 #endif
 
   ! check output
@@ -62,19 +60,10 @@ program test_gauss0
     end do
   end do outer
 #ifdef MPI
-  ! ISSUE WITH MPI_IN_PLACE and pmpi_f08
-  !call MPI_AllReduce(MPI_IN_PLACE, sumps, 1, MPI_REAL, MPI_SUM, comm,ierr)
-  !call MPI_AllReduce(MPI_IN_PLACE, maxps, 1, MPI_REAL, MPI_MAX, comm,ierr)
-  !call MPI_AllReduce(MPI_IN_PLACE, minps, 1, MPI_REAL, MPI_MIN, comm,ierr)
-  !call MPI_AllReduce(MPI_IN_PLACE, has_duplicates, 1, MPI_LOGICAL, MPI_LOR, comm,ierr)
-  call MPI_AllReduce(sumps         , sumpsred, 1, MPI_REAL, MPI_SUM, comm,ierr)
-  call MPI_AllReduce(maxps         , maxpsred, 1, MPI_REAL, MPI_MAX, comm,ierr)
-  call MPI_AllReduce(minps         , minpsred, 1, MPI_REAL, MPI_MIN, comm,ierr)
-  call MPI_AllReduce(has_duplicates, has_duplicatesred, 1, MPI_LOGICAL, MPI_LOR, comm,ierr)
-  sumps          = sumpsred
-  maxps          = maxpsred
-  minps          = minpsred
-  has_duplicates = has_duplicatesred
+  call MPI_AllReduce(MPI_IN_PLACE, sumps, 1, MPI_REAL, MPI_SUM, comm,ierr)
+  call MPI_AllReduce(MPI_IN_PLACE, maxps, 1, MPI_REAL, MPI_MAX, comm,ierr)
+  call MPI_AllReduce(MPI_IN_PLACE, minps, 1, MPI_REAL, MPI_MIN, comm,ierr)
+  call MPI_AllReduce(MPI_IN_PLACE, has_duplicates, 1, MPI_LOGICAL, MPI_LOR, comm,ierr)
 
 #endif
 #ifndef SITE_RANDOM

@@ -26,7 +26,7 @@ program test_dslashd
   real, parameter :: am = 0.05
   integer, parameter :: imass = 1
 
-  integer :: i, j, ix, iy, it, ithird
+  integer :: j, ix, iy, it, ithird
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
   integer :: idx
 #ifdef MPI

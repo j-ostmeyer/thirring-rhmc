@@ -6,15 +6,15 @@ module inverter_checks
 contains
 
   !   For the multi-shift inverter
-  subroutine dirac_op_shifted(xout,xin,am,imass,shift,num)
+  subroutine dirac_op_shifted(xout,xin,am,imass,shift)
     use dirac
     complex(dp),intent(in) :: xin(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp),intent(out) :: xout(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    real, intent(in) :: am,shift,num
+    real, intent(in) :: am,shift
     integer, intent(in) :: imass
 
     call dirac_operator(xout,xin,am,imass)
-    xout = (xout + shift*xin)!/num
+    xout = (xout + shift*xin)
   end subroutine 
 
   subroutine dirac_operator(xout,xin,am,imass)

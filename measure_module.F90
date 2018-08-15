@@ -31,8 +31,7 @@ contains
 #ifdef MPI
     type(MPI_Request), dimension(12) :: reqs_x1, reqs_r
     integer :: ierr
-    real(dp) :: dp_reduction
-    !#else
+!#else
     !    integer :: reqs_x1, reqs_r
 #endif
     !    write(6,111)
@@ -69,9 +68,7 @@ contains
         !   Don't need x1's halo at this point
         alphad = sum(abs(x1(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
 #ifdef MPI
-        !call MPI_AllReduce(MPI_In_Place, alphad, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
-        call MPI_AllReduce(alphad, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG = dc_reduction
-        alphad = dp_reduction
+        call MPI_AllReduce(MPI_In_Place, alphad, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) 
 #endif       
         alpha = alphan / alphad
         !     
@@ -103,9 +100,7 @@ contains
       !   betacg=(r_k+1,r_k+1)/(r_k,r_k)
       betacgn = sum(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
 #ifdef MPI
-      !call MPI_AllReduce(MPI_In_Place, betacgn, 1, MPI_Double_precision, MPI_Sum, comm,ierr) ! DEBUG
-      call MPI_AllReduce(betacgn,dp_reduction, 1, MPI_Double_precision, MPI_Sum, comm,ierr) ! DEBUG
-      betacgn = dp_reduction
+      call MPI_AllReduce(MPI_In_Place, betacgn, 1, MPI_Double_precision, MPI_Sum, comm,ierr) 
 #endif       
       betacg = betacgn / betacgd
       betacgd = betacgn
@@ -176,9 +171,6 @@ contains
 #ifdef MPI
     type(MPI_Request), dimension(12) :: reqs_ps, reqs_pt, reqs_Phi
     integer :: ierr
-    complex(dp) :: dc_reduction
-#else
-    integer :: reqs_ps, reqs_pt, reqs_Phi
 #endif
     !     write(6,*) 'hi from measure'
     !
@@ -191,10 +183,17 @@ contains
     do inoise=1,knoise
       !
       !     set up noise
+#ifdef MPI
       call gauss0(ps, reqs_ps)
       psibarpsi1=(0.0,0.0)
       call gauss0(pt, reqs_pt)
       psibarpsi2=(0.0,0.0)
+#else
+      call gauss0(ps)
+      psibarpsi1=(0.0,0.0)
+      call gauss0(pt)
+      psibarpsi2=(0.0,0.0)
+#endif
       !
       do idsource=1,2
         !
@@ -309,14 +308,10 @@ contains
 #ifdef MPI
       !  The sums psibarpsi1 and psibarpsi2 are initialised to 0 outside the loop
       !  So can be summed up per process, then collected here at the end
-      !call MPI_AllReduce(MPI_In_Place, psibarpsi1, 1, MPI_Double_Complex, & !DEBUG
-      call MPI_AllReduce(psibarpsi1, dc_reduction, 1, MPI_Double_Complex, & ! DEBUG
+      call MPI_AllReduce(MPI_In_Place, psibarpsi1, 1, MPI_Double_Complex, &
         & MPI_Sum, comm,ierr)
-      psibarpsi1 = dc_reduction
-      !call MPI_AllReduce(MPI_In_Place, psibarpsi2, 1, MPI_Double_Complex, &!DEBUG
-      call MPI_AllReduce(psibarpsi2, dc_reduction, 1, MPI_Double_Complex, & !DEBUG
+      call MPI_AllReduce(MPI_In_Place, psibarpsi2, 1, MPI_Double_Complex, &
         & MPI_Sum, comm,ierr)
-      psibarpsi2 = dc_reduction
 #endif
       !
       if(imass.eq.1)then
@@ -406,8 +401,6 @@ contains
     integer :: it, itt, ittl, idd
 #ifdef MPI
     type(MPI_Request), dimension(12) :: mpireqs
-    real(dp) :: dp_reduction(0:ksizet-1)
-    complex(dp) :: dc_reduction(0:ksizet-1)
     integer :: ierr
 #endif
     !
@@ -566,10 +559,8 @@ contains
         endif
       enddo
 #ifdef MPI
-      !call MPI_Reduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm) !DEBUG
-      call MPI_Reduce(tempcpmm_r,dp_reduction,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm,ierr) ! DEBUG
+      call MPI_AllReduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,comm,ierr) 
       if(ip_global.eq.0) then
-        tempcpmm_r = dp_reduction ! DEBUG
 #endif
         !!! if(ip_global.eq.0) then
         cpm = cpm + tempcpmm_r
@@ -596,11 +587,10 @@ contains
         endif
       enddo
 #ifdef MPI
-      !call MPI_Reduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm) ! DEBUG
-      call MPI_Reduce(tempcpmm_r,dp_reduction,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm,ierr) ! DEBUG
+      call MPI_AllReduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,comm,ierr)
       if(ip_global.eq.0) then
-        tempcpmm_r = dp_reduction
 #endif
+        !!! if(ip_global.eq.0) then
         cmm = cmm + tempcpmm_r
 #ifdef MPI
       endif
@@ -642,14 +632,10 @@ contains
         enddo
       enddo! do idd=3,4
 #ifdef MPI
-      !call MPI_Reduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm) ! DEBUG
-      call MPI_Reduce(tempcpmm_c,dc_reduction,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr) ! DEBUG
-      if(ip_global.eq.0) then
-        tempcpmm_c = dc_reduction
-      endif
-
+      call MPI_AllReduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,comm,ierr)
       if(ip_global.eq.0) then
 #endif
+        !!! if(ip_global.eq.0) then
         cferm1 = cferm1 + tempcpmm_c
 #ifdef MPI
       endif
@@ -672,10 +658,8 @@ contains
         enddo
       enddo! do idd=3,4
 #ifdef MPI
-      !call MPI_Reduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm) ! DEBUG
-      call MPI_Reduce(tempcpmm_c,dc_reduction,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr) !DEBUG
+      call MPI_AllReduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,comm,ierr)
       if(ip_global.eq.0) then
-        tempcpmm_c = dc_reduction
 #endif
         !!! if(ip_global.eq.0) then
         cferm2 = cferm2 + tempcpmm_c
