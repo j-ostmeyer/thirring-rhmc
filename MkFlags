@@ -5,4 +5,3 @@ NP_X=2#
 NP_Y=2#
 NP_T=2#
 SITE_RANDOM=yes#
-SWAPSENDRECVS=no#

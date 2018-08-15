@@ -1,6 +1,5 @@
 module comms
   use params
-  ! use pmpi_f08 !DEBUG
   use mpi_f08
   implicit none
 
@@ -261,53 +260,6 @@ contains
 
     tag_offset = 6 * tag
 
-#ifdef SWAPSR
-    !RECEIVES
-    ! Start receive in x direction
-    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup,ierr)
-    call MPI_Irecv(Array, 1, halo_4_xdn_recv(size4), ip_xdn, 0 + tag_offset, comm, &
-      & reqs(2),ierr)
-    call MPI_Irecv(Array, 1, halo_4_xup_recv(size4), ip_xup, 1 + tag_offset, comm, &
-      & reqs(4),ierr)
-
-    ! Start receive in y direction
-    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup,ierr)
-    call MPI_Irecv(Array, 1, halo_4_ydn_recv(size4), ip_ydn, 2 + tag_offset, comm, &
-      & reqs(6),ierr)
-    call MPI_Irecv(Array, 1, halo_4_yup_recv(size4), ip_yup, 3 + tag_offset, comm, &
-      & reqs(8),ierr)
-
-    ! Start receive in t direction
-    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup,ierr)
-    call MPI_Irecv(Array, 1, halo_4_tdn_recv(size4), ip_tdn, 4 + tag_offset, comm, &
-      & reqs(10),ierr)
-    call MPI_Irecv(Array, 1, halo_4_tup_recv(size4), ip_tup, 5 + tag_offset, comm, &
-      & reqs(12),ierr)
-
-
-    !SENDS
-    ! Start send in x direction
-    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup,ierr)
-    call MPI_Isend(Array, 1, halo_4_xup_send(size4), ip_xup, 0 + tag_offset, comm, &
-      & reqs(1),ierr)
-    call MPI_Isend(Array, 1, halo_4_xdn_send(size4), ip_xdn, 1 + tag_offset, comm, &
-      & reqs(3),ierr)
-
-    ! Start send in y direction
-    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup,ierr)
-    call MPI_Isend(Array, 1, halo_4_yup_send(size4), ip_yup, 2 + tag_offset, comm, &
-      & reqs(5),ierr)
-    call MPI_Isend(Array, 1, halo_4_ydn_send(size4), ip_ydn, 3 + tag_offset, comm, &
-      & reqs(7),ierr)
-
-    ! Start send in t direction
-    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup,ierr)
-    call MPI_Isend(Array, 1, halo_4_tup_send(size4), ip_tup, 4 + tag_offset, comm, &
-      & reqs(9),ierr)
-    call MPI_Isend(Array, 1, halo_4_tdn_send(size4), ip_tdn, 5 + tag_offset, comm, &
-      & reqs(11),ierr)
-    !      
-#else
     ! Start send and receive in x direction
     call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup,ierr)
     call MPI_Isend(Array, 1, halo_4_xup_send(size4), ip_xup, 0 + tag_offset, comm, &
@@ -341,7 +293,6 @@ contains
     call MPI_Irecv(Array, 1, halo_4_tup_recv(size4), ip_tup, 5 + tag_offset, comm, &
       & reqs(12),ierr)
 
-#endif
   end subroutine start_halo_update_4
 
   subroutine start_halo_update_4_real(size4, Array, tag, reqs)
@@ -355,51 +306,6 @@ contains
 
     tag_offset = 6 * tag
 
-#ifdef SWAPSR
-    ! RECEIVES
-    ! Start receive in x direction
-    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup,ierr)
-    call MPI_Irecv(Array, 1, halo_4_real_xdn_recv(size4), ip_xdn, 0 + tag_offset, comm, &
-      & reqs(2),ierr)
-    call MPI_Irecv(Array, 1, halo_4_real_xup_recv(size4), ip_xup, 1 + tag_offset, comm, &
-      & reqs(4),ierr)
-
-    ! Start receive in y direction
-    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup,ierr)
-    call MPI_Irecv(Array, 1, halo_4_real_ydn_recv(size4), ip_ydn, 2 + tag_offset, comm, &
-      & reqs(6),ierr)
-    call MPI_Irecv(Array, 1, halo_4_real_yup_recv(size4), ip_yup, 3 + tag_offset, comm, &
-      & reqs(8),ierr)
-
-    ! Start receive in t direction
-    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup,ierr)
-    call MPI_Irecv(Array, 1, halo_4_real_tdn_recv(size4), ip_tdn, 4 + tag_offset, comm, &
-      & reqs(10),ierr)
-    call MPI_Irecv(Array, 1, halo_4_real_tup_recv(size4), ip_tup, 5 + tag_offset, comm, &
-      & reqs(12),ierr)
-
-    ! SENDS
-    ! Start send in x direction
-    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup,ierr)
-    call MPI_Isend(Array, 1, halo_4_real_xup_send(size4), ip_xup, 0 + tag_offset, comm, &
-      & reqs(1),ierr)
-    call MPI_Isend(Array, 1, halo_4_real_xdn_send(size4), ip_xdn, 1 + tag_offset, comm, &
-      & reqs(3),ierr)
-
-    ! Start send in y direction
-    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup,ierr)
-    call MPI_Isend(Array, 1, halo_4_real_yup_send(size4), ip_yup, 2 + tag_offset, comm, &
-      & reqs(5),ierr)
-    call MPI_Isend(Array, 1, halo_4_real_ydn_send(size4), ip_ydn, 3 + tag_offset, comm, &
-      & reqs(7),ierr)
-
-    ! Start send in t direction
-    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup,ierr)
-    call MPI_Isend(Array, 1, halo_4_real_tup_send(size4), ip_tup, 4 + tag_offset, comm, &
-      & reqs(9),ierr)
-    call MPI_Isend(Array, 1, halo_4_real_tdn_send(size4), ip_tdn, 5 + tag_offset, comm, &
-      & reqs(11),ierr)
-#else
     ! Start send and receive in x direction
     call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup,ierr)
     call MPI_Isend(Array, 1, halo_4_real_xup_send(size4), ip_xup, 0 + tag_offset, comm, &
@@ -432,8 +338,6 @@ contains
       & reqs(11),ierr)
     call MPI_Irecv(Array, 1, halo_4_real_tup_recv(size4), ip_tup, 5 + tag_offset, comm, &
       & reqs(12),ierr)
-#endif
-    !      
   end subroutine start_halo_update_4_real
 
   subroutine init_halo_update_5(size5, Array, tag, reqs)
@@ -448,51 +352,6 @@ contains
 
     tag_offset = 6 * tag
 
-#ifdef SWAPSR
-    ! RECEIVE
-    ! Start receive in x direction
-    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup,ierr)
-    call MPI_Recv_init(Array, 1, halo_5_xdn_recv(size5), ip_xdn, 0 + tag_offset, comm, &
-      & reqs(2),ierr)
-    call MPI_Recv_init(Array, 1, halo_5_xup_recv(size5), ip_xup, 1 + tag_offset, comm, &
-      & reqs(4),ierr)
-
-    ! Start receive in y direction
-    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup,ierr)
-    call MPI_Recv_init(Array, 1, halo_5_ydn_recv(size5), ip_ydn, 2 + tag_offset, comm, &
-      & reqs(6),ierr)
-    call MPI_Recv_init(Array, 1, halo_5_yup_recv(size5), ip_yup, 3 + tag_offset, comm, &
-      & reqs(8),ierr)
-
-    ! Start receive in t direction
-    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup,ierr)
-    call MPI_Recv_init(Array, 1, halo_5_tdn_recv(size5), ip_tdn, 4 + tag_offset, comm, &
-      & reqs(10),ierr)
-    call MPI_Recv_init(Array, 1, halo_5_tup_recv(size5), ip_tup, 5 + tag_offset, comm, &
-      & reqs(12),ierr)
-
-    !SENDS
-    ! Start send in x direction
-    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup,ierr)
-    call MPI_Send_init(Array, 1, halo_5_xup_send(size5), ip_xup, 0 + tag_offset, comm, &
-      & reqs(1),ierr)
-    call MPI_Send_init(Array, 1, halo_5_xdn_send(size5), ip_xdn, 1 + tag_offset, comm, &
-      & reqs(3),ierr)
-
-    ! Start send in y direction
-    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup,ierr)
-    call MPI_Send_init(Array, 1, halo_5_yup_send(size5), ip_yup, 2 + tag_offset, comm, &
-      & reqs(5),ierr)
-    call MPI_Send_init(Array, 1, halo_5_ydn_send(size5), ip_ydn, 3 + tag_offset, comm, &
-      & reqs(7),ierr)
-
-    ! Start send in t direction
-    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup,ierr)
-    call MPI_Send_init(Array, 1, halo_5_tup_send(size5), ip_tup, 4 + tag_offset, comm, &
-      & reqs(9),ierr)
-    call MPI_Send_init(Array, 1, halo_5_tdn_send(size5), ip_tdn, 5 + tag_offset, comm, &
-      & reqs(11),ierr)
-#else
     ! Start send and receive in x direction
     call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup,ierr)
     call MPI_Send_init(Array, 1, halo_5_xup_send(size5), ip_xup, 0 + tag_offset, comm, &
@@ -525,7 +384,6 @@ contains
       & reqs(11),ierr)
     call MPI_Recv_init(Array, 1, halo_5_tup_recv(size5), ip_tup, 5 + tag_offset, comm, &
       & reqs(12),ierr)
-#endif
     !      
   end subroutine init_halo_update_5
 
@@ -544,51 +402,6 @@ contains
 
     tag_offset = 6 * tag
 
-#ifdef SWAPSR
-    ! RECEIVE
-    ! Start receive in x direction
-    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup,ierr)
-    call MPI_Irecv(Array, 1, halo_5_xdn_recv(size5), ip_xdn, 0 + tag_offset, comm, &
-      & reqs(2),ierr)
-    call MPI_Irecv(Array, 1, halo_5_xup_recv(size5), ip_xup, 1 + tag_offset, comm, &
-      & reqs(4),ierr)
-
-    ! Start receive in y direction
-    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup,ierr)
-    call MPI_Irecv(Array, 1, halo_5_ydn_recv(size5), ip_ydn, 2 + tag_offset, comm, &
-      & reqs(6),ierr)
-    call MPI_Irecv(Array, 1, halo_5_yup_recv(size5), ip_yup, 3 + tag_offset, comm, &
-      & reqs(8),ierr)
-
-    ! Start receive in t direction
-    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup,ierr)
-    call MPI_Irecv(Array, 1, halo_5_tdn_recv(size5), ip_tdn, 4 + tag_offset, comm, &
-      & reqs(10),ierr)
-    call MPI_Irecv(Array, 1, halo_5_tup_recv(size5), ip_tup, 5 + tag_offset, comm, &
-      & reqs(12),ierr)
-
-    !SENDS
-    ! Start send in x direction
-    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup,ierr)
-    call MPI_Isend(Array, 1, halo_5_xup_send(size5), ip_xup, 0 + tag_offset, comm, &
-      & reqs(1),ierr)
-    call MPI_Isend(Array, 1, halo_5_xdn_send(size5), ip_xdn, 1 + tag_offset, comm, &
-      & reqs(3),ierr)
-
-    ! Start send in y direction
-    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup,ierr)
-    call MPI_Isend(Array, 1, halo_5_yup_send(size5), ip_yup, 2 + tag_offset, comm, &
-      & reqs(5),ierr)
-    call MPI_Isend(Array, 1, halo_5_ydn_send(size5), ip_ydn, 3 + tag_offset, comm, &
-      & reqs(7),ierr)
-
-    ! Start send in t direction
-    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup,ierr)
-    call MPI_Isend(Array, 1, halo_5_tup_send(size5), ip_tup, 4 + tag_offset, comm, &
-      & reqs(9),ierr)
-    call MPI_Isend(Array, 1, halo_5_tdn_send(size5), ip_tdn, 5 + tag_offset, comm, &
-      & reqs(11),ierr)
-#else
     ! Start send and receive in x direction
     call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup,ierr)
     call MPI_Isend(Array, 1, halo_5_xup_send(size5), ip_xup, 0 + tag_offset, comm, &
@@ -621,8 +434,6 @@ contains
       & reqs(11),ierr)
     call MPI_Irecv(Array, 1, halo_5_tup_recv(size5), ip_tup, 5 + tag_offset, comm, &
       & reqs(12),ierr)
-#endif
-    !      
   end subroutine start_halo_update_5
 
   subroutine start_halo_update_6(size5, size6, Array, tag, reqs)
@@ -637,51 +448,6 @@ contains
 
     tag_offset = 6 * tag
 
-#ifdef SWAPSR
-    ! RECEIVES
-    ! Start send and receive in x direction
-    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup,ierr)
-    call MPI_Irecv(Array, 1, halo_6_xdn_recv(size5, size6), ip_xdn, 0 + tag_offset, comm, &
-      & reqs(2),ierr)
-    call MPI_Irecv(Array, 1, halo_6_xup_recv(size5, size6), ip_xup, 1 + tag_offset, comm, &
-      & reqs(4),ierr)
-
-    ! Start send and receive in y direction
-    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup,ierr)
-    call MPI_Irecv(Array, 1, halo_6_ydn_recv(size5, size6), ip_ydn, 2 + tag_offset, comm, &
-      & reqs(6),ierr)
-    call MPI_Irecv(Array, 1, halo_6_yup_recv(size5, size6), ip_yup, 3 + tag_offset, comm, &
-      & reqs(8),ierr)
-
-    ! Start send and receive in t direction
-    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup,ierr)
-    call MPI_Irecv(Array, 1, halo_6_tdn_recv(size5, size6), ip_tdn, 4 + tag_offset, comm, &
-      & reqs(10),ierr)
-    call MPI_Irecv(Array, 1, halo_6_tup_recv(size5, size6), ip_tup, 5 + tag_offset, comm, &
-      & reqs(12),ierr)
-
-    ! SENDS
-    ! Start send and receive in x direction
-    call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup,ierr)
-    call MPI_Isend(Array, 1, halo_6_xup_send(size5, size6), ip_xup, 0 + tag_offset, comm, &
-      & reqs(1),ierr)
-    call MPI_Isend(Array, 1, halo_6_xdn_send(size5, size6), ip_xdn, 1 + tag_offset, comm, &
-      & reqs(3),ierr)
-
-    ! Start send and receive in y direction
-    call MPI_Cart_Shift(comm, 1, 1, ip_ydn, ip_yup,ierr)
-    call MPI_Isend(Array, 1, halo_6_yup_send(size5, size6), ip_yup, 2 + tag_offset, comm, &
-      & reqs(5),ierr)
-    call MPI_Isend(Array, 1, halo_6_ydn_send(size5, size6), ip_ydn, 3 + tag_offset, comm, &
-      & reqs(7),ierr)
-
-    ! Start send and receive in t direction
-    call MPI_Cart_Shift(comm, 2, 1, ip_tdn, ip_tup,ierr)
-    call MPI_Isend(Array, 1, halo_6_tup_send(size5, size6), ip_tup, 4 + tag_offset, comm, &
-      & reqs(9),ierr)
-    call MPI_Isend(Array, 1, halo_6_tdn_send(size5, size6), ip_tdn, 5 + tag_offset, comm, &
-      & reqs(11),ierr)
-#else
     ! Start send and receive in x direction
     call MPI_Cart_Shift(comm, 0, 1, ip_xdn, ip_xup,ierr)
     call MPI_Isend(Array, 1, halo_6_xup_send(size5, size6), ip_xup, 0 + tag_offset, comm, &
@@ -714,8 +480,6 @@ contains
       & reqs(11),ierr)
     call MPI_Irecv(Array, 1, halo_6_tup_recv(size5, size6), ip_tup, 5 + tag_offset, comm, &
       & reqs(12),ierr)
-#endif
-    !      
   end subroutine start_halo_update_6
 
   subroutine complete_halo_update(reqs)

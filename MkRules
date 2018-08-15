@@ -87,14 +87,6 @@ measure_module.o : $(TOPDIR)/measure_module.F90 \
 
 
 # COMMUNICATION-RELATED 
-ifeq ($(SWAPSENDRECVS), yes)
-SWAPSR=-DSWAPSR
-else ifeq ($(SWAPSENDRECVS), no)
-SWAPSR=
-else 
-$(error SWAPSENDRECVS not correctly specified)
-endif
-
 ifeq ($(MPI), yes)
 COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T) 
 FC = $(MPIFC)
