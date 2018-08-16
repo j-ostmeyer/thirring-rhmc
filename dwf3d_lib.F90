@@ -375,7 +375,7 @@ contains
        paction = real(hp) /kvol
 600    continue
        if (ip_global .eq. 0) then
-          write(11,*) "isweep,gaction,paction", isweep,gaction,paction
+          write(11,*) isweep,gaction,paction
        end if
        actiona=actiona+action 
        vel2 = sum(pp * pp)
