@@ -40,10 +40,10 @@ module params
 
   ! Control parameters
   integer, parameter :: istart=1    !
-  integer, parameter :: iread=0      ! 
-  integer, parameter :: iwrite=0     !
+  integer, parameter :: iread=1      ! 
+  integer, parameter :: iwrite=1     !
   integer, parameter :: iprint=1     !
-  integer, parameter :: iseed=1      ! 
+  integer, parameter :: iseed=0      ! 
   integer, parameter :: icheck=100
 
   ! Inverter

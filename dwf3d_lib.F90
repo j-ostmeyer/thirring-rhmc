@@ -82,7 +82,6 @@ contains
     real :: ancgm, ancgma
     integer :: imass, iter, iterl, iter2, i, ia, idirac, ithird
     integer :: naccp, ipbp, itot, isweep, itercg, mu
-    integer :: seedreadstatus
 !*******************************************************************
 !     variables to keep track of MPI requests
 !*******************************************************************
@@ -126,12 +125,10 @@ contains
     read(25,*) dt,beta,am3,am,imass,iterl,iter2
     close(25)
 ! set a new seed by hand...
-    open(unit=40,file='random_seed',iostat = seedreadstatus,status='old')
-    if(seedreadstatus.eq.0) then
-        read(40,*) seed
-        close(40)
-    else if (iread.ne.1) then
-        seed = 5315130505.0d0
+   
+    if (iseed.ne.0) then
+      seed = 4139764973254.0 ! this should be a double precision number
+                             ! ending with d0, but we do not care
     endif
     if (ip_global .eq. 0) then
        write(7,*) 'seed: ', seed
@@ -681,6 +678,7 @@ contains
     use gauge
 #ifdef MPI
     use comms
+    integer :: seedreadstatus
     type(MPI_File) :: mpi_fh
     type(MPI_Status) :: status
     integer :: ierr
@@ -695,16 +693,33 @@ contains
     call MPI_File_Close(mpi_fh,ierr)
 ! Get the see,ierrd
     if (ip_global.eq.0) then
-       open(unit=10, file='con', status='old', form='unformatted', access='stream')
-       call fseek(10, 3 * ksize * ksize * ksizet * 4 + 4, 0)
-       read (10) seed
-       close(10)
+      open(unit=10, file='con', status='old', form='unformatted', access='stream')
+      call fseek(10, 3 * ksize * ksize * ksizet * 4 + 4, 0)
+      read (10) seed
+      close(10)
+
+      ! if file 'random_seed' is present, read seed from it.
+      open(unit=40,file='random_seed',iostat = seedreadstatus,status='old')
+      if(seedreadstatus.eq.0) then
+        read(40,*) seed
+        close(40)
+      endif
+ 
     end if
     call MPI_Bcast(seed, 1, MPI_Double_Precision, 0, comm,ierr)
 #else
+    integer :: seedreadstatus
+
     open(unit=10, file='con', status='old', form='unformatted')
     read (10) theta, seed
     close(10)
+
+    ! if file 'random_seed' is present, read seed from it.
+    open(unit=40,file='random_seed',iostat = seedreadstatus,status='old')
+    if(seedreadstatus.eq.0) then
+      read(40,*) seed
+      close(40)
+    endif
 #endif
     return
   end subroutine sread
@@ -729,19 +744,30 @@ contains
 
 ! Write seed in serial
     if (ip_global.eq.0) then
-       open(unit=31, file='con', status='old', form='unformatted', access='stream')
-       call fseek(31, 3 * ksize * ksize * ksizet * 4 + 4, 0)
+      open(unit=31, file='con', status='old', form='unformatted', access='stream')
+      call fseek(31, 3 * ksize * ksize * ksizet * 4 + 4, 0)
 ! Manually compute the effective record length to be compatible with serial Fortran
-       write (31), seed, 3 * ksize * ksize * ksizet * 4 + 8
-       close(31)
-       open(unit=40,file='random_seed',status='replace')
-       write(40,*) seed
-       close(40)
+      write (31), seed, 3 * ksize * ksize * ksizet * 4 + 8
+      close(31)
+      open(unit=40,file='random_seed',status='replace')
+      write(40,*) seed
+      close(40)
+
+
+      ! saving also random seed in separate file
+      open(unit=40,file='random_seed')
+      write(40,*) seed
+      close(40)
     end if
 #else
     open(unit=31, file='con', status='unknown', form='unformatted')
     write (31) theta, seed
     close(31)
+
+    ! saving also random seed in separate file
+    open(unit=40,file='random_seed')
+    write(40,*) seed
+    close(40)
 #endif
     return
   end subroutine swrite
