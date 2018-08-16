@@ -7,22 +7,22 @@ team.
 
 ## Compilation
 
-Before compile time, the user may need to change the MkFlags file 
-and the parms.F90 file. More details follow.
+Before compile time, the user may need to change the `MkFlags` file 
+and the `params.F90` file. More details follow.
 
 ### Make-related files
 
 Compilation is done using GNU `make`. In order to allow code reuse and 
 modularity, the amount of information needed to compile is split in 3 files:
-   * the Makefile itself: this is the file which is read by make, and there are 
+   * the `Makefile` itself: this is the file which is read by make, and there are 
 different versions for it - a 'main' version, a 'test' version in the 'tests' 
 directory, and a 'benchmark' version in the 'benchmarks' directory. This 
 does not need to be modified (to my experience).
-   * the MkRules file: the only version of this file is included in all makefiles
+   * the `MkRules` file: the only version of this file is included in all makefiles
 and contains the rules to build all the components of the program.
 This file does not need to be modified unless one wants to change 
-compiler-specific flags, e.g. the flags for the Intel compiler.
-   * the MkFlags file: this is the file that the user is going to modify the most 
+compiler-specific flags, e.g. the flags for the Intel or GNU compiler.
+   * the `MkFlags` file: this is the file that the user is going to modify the most 
 often. It contains the some details about the parallelization of the code. 
 A possible content is the following:
 
@@ -39,8 +39,8 @@ A brief explanation of the options follows.
 
 #### Compiling in parallel
 
-Set `MPIFC` to the MPI wrapped Fortran compiler, and set `MPI` to `yes` to
-enable MPI. `NP_X`, `NP_Y`, and `NP_T` must be set as the number of processes
+Set `MPI` to `yes` to enable MPI. `NP_X`, `NP_Y`, and `NP_T` must be set as the 
+number of processes
 in the x, y, and t directions respectively; these are checked at compile time
 so that the lattice dimensions are divisible by these, and at runtime against 
 the number of ranks available. 
@@ -80,7 +80,6 @@ to edit the lines repeatedly throughout the code when e.g. the lattice volume
 changes.
 Other version of the params.F90 file are used for tests and benchmarks - see 
 the respective directories.
-
 
 #### Caveats
 * Only the INTEL compiler works with MPI, for now.
