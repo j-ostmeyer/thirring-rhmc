@@ -6,3 +6,9 @@ fort.*
 **#*#
 **control
 **output
+**genmod.f90
+**.swp
+**.optrpt
+compile_flags
+bulk_rhmc
+run???/

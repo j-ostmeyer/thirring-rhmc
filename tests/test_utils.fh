@@ -41,7 +41,7 @@
 
 #ifdef MPI
 #define do_mpi_reduction(_reduction_var, _mpi_op, _mpi_type) \
-  call MPI_AllReduce(MPI_In_Place, _reduction_var, 1, _mpi_type, _mpi_op, comm);
+  call MPI_AllReduce(MPI_In_Place, _reduction_var, 1, _mpi_type, _mpi_op, comm,ierr);
 #else
 #define do_mpi_reduction(_reduction_var, _mpi_op, _mpi_type)
 #endif

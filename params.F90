@@ -15,7 +15,7 @@ module params
   integer, parameter :: kvol=ksize*ksize*ksizet
   integer, parameter :: ndiag=25, ndiagg=12
   integer, parameter :: Nf=1
-  real, parameter :: akappa = 0.5
+  real(dp), parameter :: akappa = 0.5
 #ifndef MPI
   integer, parameter :: ksizex_l=ksize, ksizey_l=ksize, ksizet_l=ksizet
   integer, parameter :: kvol_l = kvol
@@ -23,7 +23,7 @@ module params
   integer, parameter :: ip_x=0, ip_y=0, ip_t=0, ip_global=0
 #else
 #if !(defined(NP_X) && defined(NP_Y) && defined(NP_T))
-#error "NP_X, NP_Y, and NP_T must be defined for MPI compilation."
+  #error "NP_X, NP_Y, and NP_T must be defined for MPI compilation."
 #endif
 #if (KSIZE / NP_X) * NP_X != KSIZE
 #error "ksize must be divisible by NP_X"
@@ -37,18 +37,19 @@ module params
   integer, parameter :: ksizey_l = ksize / np_y
   integer, parameter :: ksizet_l = ksizet / np_t
 #endif
-  
+
   ! Control parameters
-  integer, parameter :: istart=-1
-  integer, parameter :: iread=1
-  integer, parameter :: iwrite=0
-  integer, parameter :: iprint=5
-  integer, parameter :: iseed=1
+  integer, parameter :: istart=1    !
+  integer, parameter :: iread=1      ! 
+  integer, parameter :: iwrite=1     !
+  integer, parameter :: iprint=1     !
+  integer, parameter :: iseed=0      ! 
   integer, parameter :: icheck=100
 
   ! Inverter
-  integer :: max_qmr_iters=7500
-  
+  integer :: max_qmr_iters=7500 ! QMRHERM
+  integer :: niterc=kthird*kvol ! CONGRAD
+
   ! Runtime parameters
   real :: beta
   real :: am3

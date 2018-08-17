@@ -1,0 +1,4 @@
+*.stf*
+*.prot
+benchmark_congrad
+benchmark_qmrherm_1

@@ -5,8 +5,8 @@ module test_utils
   use comms
 #endif
   implicit none
-  
-  contains
+
+contains
 
 #ifdef MPI
   subroutine rw_file_mpi(array, array_shape, rank, filename, mpi_dtype, write_out)
@@ -23,28 +23,29 @@ module test_utils
     type(MPI_Datatype) :: local_mpiio_type
     type(MPI_Status) :: status
     integer :: mode
+    integer :: ierr
 
     if (write_out) then
-       mode = MPI_Mode_Wronly + MPI_Mode_Create
+      mode = MPI_Mode_Wronly + MPI_Mode_Create
     else
-       mode = MPI_Mode_Rdonly
+      mode = MPI_Mode_Rdonly
     end if
-    
+
     global_size = array_shape
     local_size = array_shape
     start = 0
 
     ! Work out which elements of local_size will differ from global_size
     if (rank .eq. 4) then
-       offset = 0
+      offset = 0
     else
-       offset = 1
+      offset = 1
     end if
 
     ! Work out how many elements to transfer
     count = 1
     do size_index = 1, rank
-       count = count * local_size(size_index)
+      count = count * local_size(size_index)
     end do
 
     global_size(1 + offset) = ksize
@@ -56,19 +57,19 @@ module test_utils
     start(3 + offset) = ip_t * ksizet_l
 
     call MPI_Type_Create_Subarray(rank, global_size, local_size, &
-         start, MPI_Order_Fortran, mpi_dtype, local_mpiio_type)
-    call MPI_Type_Commit(local_mpiio_type)   
+      start, MPI_Order_Fortran, mpi_dtype, local_mpiio_type,ierr)
+    call MPI_Type_Commit(local_mpiio_type,ierr)   
     call MPI_File_Open(comm, filename, mode, &
-         MPI_Info_Null, mpi_fh)
+      MPI_Info_Null, mpi_fh,ierr)
     call MPI_File_Set_View(mpi_fh, 4_8, mpi_dtype, &
-        local_mpiio_type, "native", MPI_Info_Null)
+      local_mpiio_type, "native", MPI_Info_Null,ierr)
     if (write_out) then
-       call MPI_File_Write_All(mpi_fh, array, count, mpi_dtype, status)
+      call MPI_File_Write_All(mpi_fh, array, count, mpi_dtype, status,ierr)
     else
-       call MPI_File_Read_All(mpi_fh, array, count, mpi_dtype, status)
+      call MPI_File_Read_All(mpi_fh, array, count, mpi_dtype, status,ierr)
     end if
-    call MPI_File_Close(mpi_fh)
-    call MPI_Type_Free(local_mpiio_type)
+    call MPI_File_Close(mpi_fh,ierr)
+    call MPI_Type_Free(local_mpiio_type,ierr)
     return
   end subroutine rw_file_mpi
 #endif
