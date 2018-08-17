@@ -130,6 +130,7 @@ contains
       seed = 4139764973254.0 ! this should be a double precision number
                              ! ending with d0, but we do not care
     endif
+    call readseed(seed)
     if (ip_global .eq. 0) then
        write(7,*) 'seed: ', seed
     end if
@@ -477,6 +478,7 @@ contains
     if(iwrite.eq.1) then
        call rranget(seed, 1, 1, 1)
        call swrite
+       call saveseed(seed)
        write(7,*) 'seed: ', idum
     endif
 
@@ -678,7 +680,6 @@ contains
     use gauge
 #ifdef MPI
     use comms
-    integer :: seedreadstatus
     type(MPI_File) :: mpi_fh
     type(MPI_Status) :: status
     integer :: ierr
@@ -697,29 +698,11 @@ contains
       call fseek(10, 3 * ksize * ksize * ksizet * 4 + 4, 0)
       read (10) seed
       close(10)
-
-      ! if file 'random_seed' is present, read seed from it.
-      open(unit=40,file='random_seed',iostat = seedreadstatus,status='old')
-      if(seedreadstatus.eq.0) then
-        read(40,*) seed
-        close(40)
-      endif
- 
     end if
-    call MPI_Bcast(seed, 1, MPI_Double_Precision, 0, comm,ierr)
 #else
-    integer :: seedreadstatus
-
     open(unit=10, file='con', status='old', form='unformatted')
     read (10) theta, seed
     close(10)
-
-    ! if file 'random_seed' is present, read seed from it.
-    open(unit=40,file='random_seed',iostat = seedreadstatus,status='old')
-    if(seedreadstatus.eq.0) then
-      read(40,*) seed
-      close(40)
-    endif
 #endif
     return
   end subroutine sread
@@ -753,24 +736,59 @@ contains
       write(40,*) seed
       close(40)
 
-
-      ! saving also random seed in separate file
-      open(unit=40,file='random_seed')
-      write(40,*) seed
-      close(40)
     end if
 #else
     open(unit=31, file='con', status='unknown', form='unformatted')
     write (31) theta, seed
     close(31)
-
-    ! saving also random seed in separate file
-    open(unit=40,file='random_seed')
-    write(40,*) seed
-    close(40)
 #endif
     return
   end subroutine swrite
+
+  ! Tries to read seed from file
+  subroutine readseed(globalseed)
+#ifdef MPI
+    use comms
+#endif
+    implicit none
+    ! if the seed file is not correctly read, we do not want to change
+    ! the vaule of globalseed passed as input
+    real(dp),intent(inout) :: globalseed
+    integer :: seedreadstatus
+#ifdef MPI
+    integer :: ierr
+    if (ip_global.eq.0) then
+#endif
+      open(unit=40,file='random_seed',iostat = seedreadstatus,status='old')
+      ! if 'random_seed' can be opened, read from it.
+      if(seedreadstatus.eq.0) then
+        read(40,*) globalseed
+        close(40)
+      endif
+#ifdef MPI
+    endif
+    call MPI_Bcast(globalseed, 1, MPI_Double_Precision, 0, comm,ierr)
+#endif
+  end subroutine readseed
+
+  ! Saves seed into file
+  subroutine saveseed(seedtosave)
+#ifdef MPI
+    use comms
+#endif
+    implicit none
+    real(dp),intent(in) :: seedtosave
+
+#ifdef MPI
+    if (ip_global.eq.0) then
+#endif
+      open(unit=40,file='random_seed')
+      write(40,*) seedtosave
+      close(40)
+#ifdef MPI
+    endif
+#endif
+  end subroutine saveseed
 !
   subroutine init(nc)
     use random

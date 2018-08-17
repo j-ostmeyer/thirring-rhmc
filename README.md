@@ -62,10 +62,9 @@ The random seed can be set in a number of ways. It is read from/saved into the
 gauge configuration file (`iread` must be set to 1 for this to happen), 
 but it can also be set manually in the code by also 
 setting the `iseed` parameter in params.F90 to be different from zero.
-A more flexible alternative is to write the seed in a file named `random\_seed` 
-that will be read after the gauge configuration file. If that file is found,
-the new seed will be read from it and will replace the one read from the gauge 
-configuration.
+A more flexible alternative is to write the seed in a file named `random_seed`. 
+If that file is found, the new seed will be read from it and will replace the 
+one read from the gauge configuration and the hard-coded one.
 When the gauge configuration is saved, the seed is saved both in the 
 gauge configuration file and in the 'random\_seed' file. If the user wants to 
 change it, in order e.g. to have another statistically independent
