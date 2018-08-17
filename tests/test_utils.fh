@@ -1,0 +1,65 @@
+#ifdef MPI
+#define read_file(_a, _fn, _dt) \
+    call rw_file_mpi(_a, shape(_a), rank(_a), _fn, _dt, .false.)
+#define write_file(_a, _fn, _dt) \
+    call rw_file_mpi(_a, shape(_a), rank(_a), _fn, _dt, .true.)
+#else
+#define MPI_Double_Complex 0
+#define MPI_Double_Complex 0
+#define MPI_Real 0
+#define MPI_Complex 0
+#define MPI_Integer 0
+#define MPI_Sum 0
+#define MPI_Max 0
+#define read_file(_a, _fn, _dt) \
+    open(unit=10, file=_fn, status='old', form='unformatted'); \
+    read(10) _a; \
+    close(10)
+
+#define write_file(_a, _fn, _dt) \
+    open(unit=10, file=_fn, status='unknown', form='unformatted'); \
+    write(10) _a; \
+    close(10)
+#endif
+
+#define check_equality(_check_var, _true_var, _var_name, _unit_name) \
+    if (ip_global .eq. 0) then; \
+        if (_check_var .ne. _true_var) then; \
+            print *, _unit_name, ': ', _var_name, ' looks wrong: ', _check_var, ' != ', _true_var; \
+        end if; \
+    end if
+
+
+#define check_float_equality(_check_var, _true_var, _tol, _var_name, _unit_name) \
+  if (ip_global .eq. 0) then; \
+    if (_check_var .lt. _true_var - abs(_true_var) * _tol .or.   \
+        _check_var .gt. _true_var + abs(_true_var) * _tol) then;	\
+    print *, _unit_name, ': ', _var_name, ' looks wrong: ', _check_var, ' != ', _true_var; \
+    end if; \
+  end if
+
+
+#ifdef MPI
+#define do_mpi_reduction(_reduction_var, _mpi_op, _mpi_type) \
+  call MPI_AllReduce(MPI_In_Place, _reduction_var, 1, _mpi_type, _mpi_op, comm,ierr);
+#else
+#define do_mpi_reduction(_reduction_var, _mpi_op, _mpi_type)
+#endif
+
+
+#define check_max(_diff_array, _max_value, _var_name, _reduction_var,  _mpi_type, _unit_name) \
+  _reduction_var = maxval(abs(_diff_array));                             \
+  do_mpi_reduction(_reduction_var, MPI_Max, _mpi_type)                   \
+  if (ip_global .eq. 0) then;                                            \
+  if (_reduction_var .gt. _max_value) then;                              \
+  print *, _unit_name, ': max ', _var_name, ' difference too large: ', _reduction_var; \
+  end if;                                                                \
+  end if
+#define check_sum(_diff_array, _max_value, _var_name, _reduction_var,  _mpi_type, _unit_name) \
+  _reduction_var = sum(_diff_array);                                        \
+  do_mpi_reduction(_reduction_var, MPI_Sum, _mpi_type)                      \
+  if (ip_global .eq. 0) then;                                               \
+  if (abs(_reduction_var) .gt. _max_value) then;                            \
+  print *, _unit_name, ': sum of ', _var_name, ' difference too large: ', _reduction_var; \
+  end if;                                                                   \
+  end if

@@ -1,13 +1,24 @@
-FC = ifort
-FCFLAGS = -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -parallel -g
+
+include ./MkFlags
+.makefile.uptodate: Makefile MkRules MkFlags
+	make clean
+	touch .makefile.uptodate
 
 default: bulk_rhmc compile_flags
 
+# PARAMETERS
+params.o params.mod : params.F90 .makefile.uptodate
+	$(COMPILE) -o params.o params.F90
+
+TOPDIR = .
+include ./MkRules
+
+.PRECIOUS : %.mod
+# MAIN PROGRAM
+bulk_rhmc: $(LIBOBJS) bulk_rhmc.o
+	$(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -o $@ $^
+
 clean:
-	rm bulk_rhmc compile_flags
+	rm -f bulk_rhmc *.o *.mod compile_flags
 
-bulk_rhmc: bulk_rhmc.f
-	$(FC) $(FCFLAGS) -o $@ $^
 
-compile_flags:
-	echo $(FC) $(FCFLAGS) > $@
