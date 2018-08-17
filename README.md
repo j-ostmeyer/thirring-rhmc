@@ -2,8 +2,8 @@
 
 A program-come-library for computations in lattice field theory with domain
 wall fermions in 2+1D. Developed by Simon Hands, and refactored and
-parallelised by Ed Bennett and the Swansea Academy of Advanced Computing RSE
-team.
+parallelised by Ed Bennett, Michele Mesiti, and the Swansea Academy of 
+Advanced Computing RSE team.
 
 ## Compilation
 
