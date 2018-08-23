@@ -107,4 +107,13 @@ to `.true.`.
 ## Benchmarks
 In order to study the performance of the 'congrad' and 'qmrherm' subroutines,
 which make up most of the computational load of the program, two separate benchmark
-programs have been created. 
+programs have been created, with the scripts and data needed to run them in many possible 
+setups. See che `benchmarks` directory.
+
+## Machine-Specific options and caveats
+* On the `enhpc` cluster it is necessary to load the `intel` and the `mvapich2`
+modules. Moreover, the `INTEL_MPIFC` in the `MkRules` file must be set to 
+`mpifort` instead of `mpiifort`.
+* On the `hawk` and `sunbird` clusters the modules to load are `compiler/intel` and `mpi/intel`.
+
+
