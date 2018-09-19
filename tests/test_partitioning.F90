@@ -1,11 +1,11 @@
 #include "test_utils.fh"
-program test_locvol_partitioning
+program test_partitioning
   use mpi_f08
   use params
-  use locvol_partitioning
+  use partitioning
   use comms
   implicit none
-  integer :: all_border_partitions(2,3,-1:1,-1:1,-1:1)
+  integer :: all_partitions(2,3,-2:2,-2:2,-2:2)
   integer :: id1,id2
   integer :: is1,is2
   integer :: ipx1,ipy1,ipt1
@@ -19,41 +19,14 @@ program test_locvol_partitioning
 #ifdef MPI
   call init_MPI
 #endif
-  call init_partitions()
-  vol = 0
-  do id1=1,3
-    do is1=1,2
-      p1 = united_border_partitions(:,:,is1,id1)
-      call partition_check(check,p1)
-      if(.not.check) then
-        print *, "partition is bad:", id1,is1
-      endif
-      call partition_volume(tempvol,p1)
-      vol = vol + tempvol
-    enddo
-  enddo
+  call init_partitions_and_neighs()
 
-  expected_vol = ksizet_l*ksizey_l*ksizex_l - (ksizet_l-2)*(ksizey_l-2)*(ksizex_l-2)
-  if(vol.ne.expected_vol) then
-    print *, "Total border volume incorrect:",vol,expected_vol
-  endif
-
-  call partition_volume(tempvol,bulk_partition)
-  expected_vol = (ksizet_l-2)*(ksizey_l-2)*(ksizex_l-2)
-  if(tempvol.ne.expected_vol) then
-    print *, "bulk volume incorrect:",vol,expected_vol
-  endif
-
-#ifdef MPI
-  call MPI_Barrier(MPI_COMM_WORLD,ierr)
-#endif
-  call get_all_partitions(all_border_partitions)
-  do ipx1=-1,1
-    do ipy1=-1,1
-      do ipt1=-1,1
-        do ipx2=-1,1
-          do ipy2=-1,1
-            do ipt2=-1,1
+  do ipx1=-2,2
+    do ipy1=-2,2
+      do ipt1=-2,2
+        do ipx2=-2,2
+          do ipy2=-2,2
+            do ipt2=-2,2
               if((ipx1.ne.ipx2).and.(ipy1.ne.ipy2).and.(ipt1.ne.ipt2)) then
                 p1 = all_border_partitions(:,:,ipx1,ipy1,ipt1)
                 p2 = all_border_partitions(:,:,ipx2,ipy2,ipt2)
@@ -73,41 +46,23 @@ program test_locvol_partitioning
     enddo
   enddo
 
-  ! intersection check
-  do id1=1,3
-    do id2=1,3
-      do is1=1,2
-        do is2=1,2
-          if((id1.ne.id2).and.(is1.ne.is2)) then
-            p1 = united_border_partitions(:,:,is1,id1)
-            p2 = united_border_partitions(:,:,is2,id2)
-            call partition_intersect(check,p1,p2)
-            if (ip_global.eq.0) then
-              if((check)) then
-                print *, "partitions intersect", id1,is1,id2,is2
-                print *, p1
-                print *, p2
-              endif
-            endif
-          endif
-        enddo
+  vol = 0
+  do ipx1=-2,2
+    do ipy1=-2,2
+      do ipt1=-2,2
+        p1 = all_border_partitions(:,:,ipx1,ipy1,ipt1)
+        partition_volume(tempvol,p1)
+        vol = vol + tempvol
       enddo
     enddo
   enddo
+  expected_vol = (ksizet_l+2)*(ksizey_l+2)*(ksizex_l+2)
+  if(expected_vol.ne.vol) then
+    if(ip_global.ne.0)then
+      print*, "Volume is not correct."
+    endif
+  endif
 
-  do id1=1,3
-    do is1=1,2
-      p1 = united_border_partitions(:,:,is1,id1)
-      call partition_intersect(check, bulk_partition,p1)
-      if (ip_global.eq.0) then
-        if((check)) then
-          print *, "partitions intersect", id1,is1
-          print *, p1
-          print *, bulk_partition
-        endif
-      endif
-    enddo
-  enddo
 
  
 
