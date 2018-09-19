@@ -99,7 +99,7 @@ contains
 
   end subroutine
 
-  subroutine get_all_local_partitions_neighbors(tbd_cube,tbp_list)
+  subroutine get_all_local_partitions_neighbors(tbp_cube,tbp_list)
     use comms
     use mpi_f08
     type(localpart),intent(out) :: tbp_cube(-1:1,-1:1,-1:1)
@@ -119,7 +119,7 @@ contains
     do ipx=-1,1
       do ipy=-1,1
         do ipt=-1,1
-          tpart%chunk(:,iside) = tap(:,:,ipx,ipy,ipt)
+          tpart%chunk = tap(:,:,ipx,ipy,ipt)
           ipxs = (/ ipx, ipy, ipt /)
  
           tpart%nn = sum(ipxs**2) ! neighbour count
@@ -142,8 +142,10 @@ contains
             endif
           enddo
           tbp_cube(ipx,ipy,ipt) = tpart
-          tpartcount = tpartcount+1
-          tbp_list(tpartcount) = tpart
+          if(tpart%nn.ne.0) then
+            tpartcount = tpartcount+1
+            tbp_list(tpartcount) = tpart
+          endif
         enddo
       enddo
     enddo
@@ -153,7 +155,7 @@ contains
     use comms
     use mpi_f08
     type(halopart),intent(out) :: thp_cube(-2:2,-2:2,-2:2)
-    type(halopart),intent(out) :: hbp_list(54)
+    type(halopart),intent(out) :: thp_list(54)
     type(halopart) :: tpart
     integer :: tap(2,3,-2:2,-2:2,-2:2) ! temp_all_partitions
     integer :: ipx,ipy,ipt
@@ -173,7 +175,7 @@ contains
           ipxs = (/ ipx, ipy, ipt /)
           discr = sum(ipxs**2)
           if((discr.ge.4).and.(discr.le.6)) then 
-            tpart%chunk(:,iside) = tap(:,:,ipx,ipy,ipt)
+            tpart%chunk = tap(:,:,ipx,ipy,ipt)
             ! then we are in the halo. but not on the edges or on the vertices
             do idir=1,3 ! scanning for ipdx(idir)=+-2
               if(ipxs(idir)**2.eq.4) then 
