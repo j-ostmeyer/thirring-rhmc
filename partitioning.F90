@@ -1,46 +1,12 @@
-module partitioning
+module locvol_partitioning
   use params
   implicit none
+  integer :: united_border_partitions(2,3,2,3)
+  integer :: bulk_partition(2,3)
 
 contains
   ! Partition: a (2,3) array of integers with the contents
   ! ((xmin,xmax),(ymin,ymax),(tmin,tmax))
-
-  subroutine partition_check(check,p)
-    integer, intent(in) :: p(2,3)
-    logical, intent(out) :: check
-    integer :: idir
-
-    check = .true.
-    do idir=1,3
-      check = check.and.(p(2,idir).ge.p(1,idir))
-    enddo
-  end subroutine
-
-  subroutine partition_volume(vol,p)
-    integer, intent(in) :: p(2,3)
-    integer, intent(out) :: vol
-
-    vol = p(2,1)-p(1,1)
-    vol = vol*(p(2,2)-p(1,2))
-    vol = vol*(p(2,3)-p(1,3))
-  end subroutine
-
-  subroutine partition_intersect(check,p1,p2)
-    integer, intent(in) :: p1(2,3),p2(2,3)
-    logical, intent(out) :: check
-    logical :: acheck1, acheck2
-    integer :: idir
-
-    check = .true.
-    do idir=1,3
-      acheck1 = (p1(1,idir).le.p2(2,idir)).and.(p1(2,idir).ge.p2(1,idir))
-      acheck2 = (p1(2,idir).ge.p2(1,idir)).and.(p1(2,idir).le.p2(2,idir))
-      check = (acheck1.or.acheck2).and.check
-    enddo
-
-  end subroutine
-
   ! expands first partition to include the second one. Just translates the 
   ! lower and upper limits.
   subroutine expand_partition(p1,p2)
@@ -61,7 +27,7 @@ contains
   subroutine get_border3geometry(border3geometry)
     integer,intent(out) :: border3geometry(2,-1:1,3)
     integer :: locdim(3), idimension
-    integer :: portion_starts(-1,2),iportion
+    integer :: portion_starts(-1:2),iportion
     integer :: halo_size 
 
     locdim(1) = ksizex_l
@@ -71,10 +37,10 @@ contains
     halo_size=1
 
     do idimension=1,3
-      portion_starts(1) = 1
-      portion_starts(2) = halo_size+1
-      portion_starts(3) = locdim(idimension)-halo_size+1
-      portion_starts(4) = locdim(idimension)+1 ! already beyond
+      portion_starts(-1) = 1
+      portion_starts(0) = halo_size+1
+      portion_starts(1) = locdim(idimension)-halo_size+1
+      portion_starts(2) = locdim(idimension)+1 ! already beyond
       do iportion = -1,1
         border3geometry(1,iportion,idimension) = portion_starts(iportion)
         border3geometry(2,iportion,idimension) = portion_starts(iportion+1)-1
@@ -84,17 +50,17 @@ contains
   end subroutine
 
   ! create a set of partitions
-  subroutine get_all_border_partitions(border_partitions)
+  subroutine get_all_partitions(border_partitions)
     integer, intent(out) :: border_partitions(2,3,-1:1,-1:1,-1:1)
     integer :: border3geometry(2,-1:1,3)
     integer :: ipx,ipy,ipt,iside
     integer :: ips(3)
 
-    get_border3geometry(border3geometry)
+    call get_border3geometry(border3geometry)
     do ipt=-1,1
       do ipy=-1,1
         do ipx=-1,1
-          ips = \(ipx,ipy,ipt\)
+          ips = (/ ipx,ipy,ipt /)
           do iside=1,3
             border_partitions(:,iside,ipx,ipy,ipt) = & 
               & border3geometry(:,ips(iside),iside)
@@ -105,41 +71,51 @@ contains
 
   end subroutine
 
-  subroutine get_united_border_partitions(united_border_partitions)
-    integer, intent(out) :: united_border_partitions(2,3,2,3)
-    integer, intent(out) :: border_partitions(2,3,-1:1,-1:1,-1:1)
+  subroutine get_united_partitions(temp_united_border_partitions, &
+    &               temp_bulk_partition)
+    integer, intent(out) :: temp_united_border_partitions(2,3,2,3)
+    integer, intent(out) :: temp_bulk_partition(2,3)
+    integer ::  border_partitions(2,3,-1:1,-1:1,-1:1)
     integer :: ipx,ipy
     integer :: part(2,3)
     integer :: ud,udtgt
 
-    get_all_border_partitions(border_partitions)
+    call get_all_partitions(border_partitions)
 
-    ! T
+    ! T border
     do ud=-1,1,2
       part = border_partitions(:,:,-1,-1,ud)
       do ipx=-1,1
         do ipy=-1,1
-          expand_partition(part,border_partitions(:,:,ipx,ipy,ud))
+          call expand_partition(part,border_partitions(:,:,ipx,ipy,ud))
         enddo
       enddo
       udtgt = 1+(ud+1)/2
-      united_border_partitions(:,:,udtgt,3) = part
+      temp_united_border_partitions(:,:,udtgt,3) = part
     enddo
-    ! Y
+    ! Y border
     do ud=-1,1,2
       part = border_partitions(:,:,-1,ud,0)
       do ipx=-1,1
-        expand_partition(part,border_partitions(:,:,ipx,ud,0))
+        call expand_partition(part,border_partitions(:,:,ipx,ud,0))
       enddo
       udtgt = 1+(ud+1)/2
-      united_border_partitions(:,:,udtgt,2) = part
+      temp_united_border_partitions(:,:,udtgt,2) = part
     enddo
-    ! X
+    ! X xborder
     do ud=-1,1,2
       part = border_partitions(:,:,ud,0,0)
       udtgt = 1+(ud+1)/2
-      united_border_partitions(:,:,udtgt,1) = part
+      temp_united_border_partitions(:,:,udtgt,1) = part
     enddo
+
+    temp_bulk_partition = border_partitions(:,:,0,0,0)
+
   end subroutine
 
-end module partitioning
+  subroutine init_partitions()
+    call get_united_partitions(united_border_partitions,bulk_partition)
+  end subroutine
+
+
+end module locvol_partitioning

@@ -11,7 +11,7 @@ module params
 #define KSIZE 12
 #define KSIZET 12
   integer, parameter :: ksize=KSIZE, ksizet=KSIZET
-  integer, parameter :: kthird=24
+  integer, parameter :: kthird=48
   integer, parameter :: kvol=ksize*ksize*ksizet
   integer, parameter :: ndiag=25, ndiagg=12
   integer, parameter :: Nf=1
@@ -40,14 +40,14 @@ module params
 
   ! Control parameters
   integer, parameter :: istart=1    !
-  integer, parameter :: iread=1      ! 
+  integer, parameter :: iread=0      ! 
   integer, parameter :: iwrite=1     !
   integer, parameter :: iprint=1     !
   integer, parameter :: iseed=0      ! 
   integer, parameter :: icheck=100
 
   ! Inverter
-  integer :: max_qmr_iters=7500 ! QMRHERM
+  integer :: max_qmr_iters=12000 ! QMRHERM
   integer :: niterc=kthird*kvol ! CONGRAD
 
   ! Runtime parameters

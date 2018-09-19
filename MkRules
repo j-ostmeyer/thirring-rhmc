@@ -15,7 +15,8 @@ GNU_FCFLAGS  = -O0 -Wall -ffree-line-length-none
 #INTEL SETTINGS
 INTEL_MPIFC  =mpiifort 
 INTEL_FC     =ifort 
-INTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g -warn all
+#INTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g -warn all
+INTEL_FCFLAGS=-g -O0 -heap-arrays -warn all -C -traceback
 
 ifeq ($(COMPILER), GNU)
 MPIFC  =$(GNU_MPIFC)
