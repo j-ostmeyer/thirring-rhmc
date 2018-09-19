@@ -5,9 +5,6 @@ program test_partitioning
   use partitioning
   use comms
   implicit none
-  integer :: all_partitions(2,3,-2:2,-2:2,-2:2)
-  integer :: id1,id2
-  integer :: is1,is2
   integer :: ipx1,ipy1,ipt1
   integer :: ipx2,ipy2,ipt2
   integer :: vol,tempvol,expected_vol
@@ -28,8 +25,8 @@ program test_partitioning
           do ipy2=-2,2
             do ipt2=-2,2
               if((ipx1.ne.ipx2).and.(ipy1.ne.ipy2).and.(ipt1.ne.ipt2)) then
-                p1 = all_border_partitions(:,:,ipx1,ipy1,ipt1)
-                p2 = all_border_partitions(:,:,ipx2,ipy2,ipt2)
+                p1 = all_partitions(:,:,ipx1,ipy1,ipt1)
+                p2 = all_partitions(:,:,ipx2,ipy2,ipt2)
                 call partition_intersect(check,p1,p2)
                 if (ip_global.eq.0) then
                   if((check)) then
@@ -50,8 +47,8 @@ program test_partitioning
   do ipx1=-2,2
     do ipy1=-2,2
       do ipt1=-2,2
-        p1 = all_border_partitions(:,:,ipx1,ipy1,ipt1)
-        partition_volume(tempvol,p1)
+        p1 = all_partitions(:,:,ipx1,ipy1,ipt1)
+        call partition_volume(tempvol,p1)
         vol = vol + tempvol
       enddo
     enddo

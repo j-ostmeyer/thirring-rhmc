@@ -46,7 +46,7 @@ contains
       portion_starts(1) = locdim(idimension)   ! start border
       portion_starts(2) = locdim(idimension)+1 ! start halo
       portion_starts(3) = locdim(idimension)+2 ! beyond
-      do iportion = -1,1
+      do iportion = -2,2
         border3geometry(1,iportion,idimension) = portion_starts(iportion)
         border3geometry(2,iportion,idimension) = portion_starts(iportion+1)-1
       enddo
@@ -119,6 +119,8 @@ contains
   end subroutine
 
   subroutine get_all_halo_partitions_neighbors(temp_all_halo_partitions_neighbors)
+    use comms
+    use mpi_f08
     integer, intent(out) :: temp_all_halo_partitions_neighbors(2,-2:2,-2:2,-2:2)
     integer :: ipx,ipy,ipt
     integer :: ipn,ipw ! ipw not actually used
