@@ -30,7 +30,7 @@ program test_partitioning
                 call partition_intersect(check,p1,p2)
                 if (ip_global.eq.0) then
                   if((check)) then
-                    write(6,"(A10,6I4)"), "problem",ipx1,ipy1,ipt1,ipx2,ipy2,ipt2
+                    write(6,"(A25,6I4)"), "Intersection not null:",ipx1,ipy1,ipt1,ipx2,ipy2,ipt2
                     print *, p1
                     print *, p2
                   endif
@@ -43,6 +43,7 @@ program test_partitioning
     enddo
   enddo
 
+  ! local volume + halo
   vol = 0
   do ipx1=-2,2
     do ipy1=-2,2
@@ -56,7 +57,33 @@ program test_partitioning
   expected_vol = (ksizet_l+2)*(ksizey_l+2)*(ksizex_l+2)
   if(expected_vol.ne.vol) then
     if(ip_global.ne.0)then
-      print*, "Volume is not correct."
+      print*, "Local+Halo Volume is not correct."
+    endif
+  endif
+
+  ! local volume
+  vol = 0
+  do ipx1=-1,1
+    do ipy1=-1,1
+      do ipt1=-1,1
+        p1 = all_partitions(:,:,ipx1,ipy1,ipt1)
+        call partition_volume(tempvol,p1)
+        vol = vol + tempvol
+      enddo
+    enddo
+  enddo
+  expected_vol = ksizet_l*ksizey_l*ksizex_l
+  if(expected_vol.ne.vol) then
+    if(ip_global.ne.0)then
+      print*, "Local Volume is not correct."
+    endif
+  endif
+
+  call partition_volume(vol,all_partitions(:,:,0,0,0))
+  expected_vol = (ksizet_l-2)*(ksizey_l-2)*(ksizex_l-2)
+  if(expected_vol.ne.vol) then
+    if(ip_global.ne.0)then
+      print*, "Bulk Volume is not correct."
     endif
   endif
 

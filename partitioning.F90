@@ -1,19 +1,42 @@
 module partitioning
   use params
   implicit none
+
   integer :: all_partitions(2,3,-2:2,-2:2,-2:2) ! with halo 
+
   integer :: all_local_partitions_neighbors(0:3,2,-1:1,-1:1,-1:1)
   ! [ no_neighbors, neigh1 , neigh2 , neigh3  ]
   ! [ ////////////, mpitag1, mpitag2, mpitag3 ] ! tags go from 1 to 9
 
   integer :: all_halo_partitions_neighbors(2,-2:2,-2:2,-2:2)
   ! [ neigh, tag ]
+ 
+  type localpart
+    integer :: chunk(2,3)
+    integer :: nn ! number of neighbours the partition must be sent to (0..3)
+    integer :: nns(3) ! ranks of the nearest neighbours
+    integer :: tags(3) ! tags for the partition in all sends
+  end type localpart
 
+  type halopart
+    integer :: chunk(2,3)
+    integer :: nn ! rank of the neares neighbour
+    integer :: tag ! tag to the partition
+  end type halopart
+
+  type(localpart) border_partitions_list(26)
+  type(halopart) halo_partitions_list(54)
+
+  type(localpart) border_partitions_cube(-1:1,-1:1,-1:1)
+  type(halopart) halo_partitions_cube(-2:2,-2:2,-2:2)
+
+ 
 contains
   ! Partition: a (2,3) array of integers with the contents
   ! ((xmin,xmax),(ymin,ymax),(tmin,tmax))
   ! expands first partition to include the second one. Just translates the 
   ! lower and upper limits.
+
   subroutine expand_partition(p1,p2)
     integer, intent(in) :: p2(2,3)
     integer, intent(inout) :: p1(2,3)
@@ -76,52 +99,63 @@ contains
 
   end subroutine
 
-  subroutine get_all_local_partitions_neighbors(temp_all_local_partitions_neighbors)
+  subroutine get_all_local_partitions_neighbors(tbd_cube,tbp_list)
     use comms
     use mpi_f08
-    integer,intent(out) :: temp_all_local_partitions_neighbors(0:3,2,-1:1,-1:1,-1:1)
+    type(localpart),intent(out) :: tbp_cube(-1:1,-1:1,-1:1)
+    type(localpart),intent(out) :: tbp_list(26)
+    type(localpart) :: tpart
+    integer :: tap(2,3,-2:2,-2:2,-2:2) ! temp_all_partitions
     integer :: ipx,ipy,ipt
     integer :: ipn,ipw ! ipw not actually used
-    integer :: neighbour_count
     integer :: ipxs(3)
     integer :: neighidx, idir
     integer :: facecoord(2),tag
     integer :: ierr
+    integer :: tpartcount
 
+    tpartcount = 0
+    call get_all_partitions(tap)
     do ipx=-1,1
       do ipy=-1,1
         do ipt=-1,1
+          tpart%chunk(:,iside) = tap(:,:,ipx,ipy,ipt)
           ipxs = (/ ipx, ipy, ipt /)
-          neighbour_count = sum(ipxs**2)
+ 
+          tpart%nn = sum(ipxs**2) ! neighbour count
 
-          temp_all_local_partitions_neighbors(0,1,ipx,ipy,ipt) = neighbour_count
-          temp_all_local_partitions_neighbors(0,2,ipx,ipy,ipt) = -1 ! unused
           neighidx = 1
           do idir=1,3
-            if(ipxs(idir).ne.0) then
-              ! getting neighbour
-              call MPI_Cart_Shift(comm, 0, ipxs(idir), ipw, ipn,ierr)
-              temp_all_local_partitions_neighbors(neighidx,1,ipx,ipy,ipt) = ipn
+            if(ipxs(idir).ne.0) then ! we have a neigbouring rank
+              ! getting neighbour in direction idir
+              call MPI_Cart_Shift(comm, idir-1, ipxs(idir), ipw, ipn,ierr)
+              tpart%nns(neighidx) = ipn
 
               ! computing tag
               facecoord(1:idir-1)=ipxs(1:idir-1)
               facecoord(idir:2)=ipxs(idir+1:3)
               tag = 1+(facecoord(1)+1)+(facecoord(2)+1)*3
               
-              temp_all_local_partitions_neighbors(neighidx,2,ipx,ipy,ipt) = tag
+              tpart%tags(neighidx) = tag
 
               neighidx = neighidx + 1 
             endif
           enddo
+          tbp_cube(ipx,ipy,ipt) = tpart
+          tpartcount = tpartcount+1
+          tbp_list(tpartcount) = tpart
         enddo
       enddo
     enddo
   end subroutine
 
-  subroutine get_all_halo_partitions_neighbors(temp_all_halo_partitions_neighbors)
+  subroutine get_all_halo_partitions_neighbors(thp_cube,thp_list)
     use comms
     use mpi_f08
-    integer, intent(out) :: temp_all_halo_partitions_neighbors(2,-2:2,-2:2,-2:2)
+    type(halopart),intent(out) :: thp_cube(-2:2,-2:2,-2:2)
+    type(halopart),intent(out) :: hbp_list(54)
+    type(halopart) :: tpart
+    integer :: tap(2,3,-2:2,-2:2,-2:2) ! temp_all_partitions
     integer :: ipx,ipy,ipt
     integer :: ipn,ipw ! ipw not actually used
     integer :: ipxs(3)
@@ -129,32 +163,35 @@ contains
     integer :: facecoord(2),tag
     integer :: ierr
     integer :: discr
+    integer :: tpartcount
 
-
-    temp_all_halo_partitions_neighbors = -1
-
+    tpartcount = 0
+    call get_all_partitions(tap)
     do ipx=-2,2
       do ipy=-2,2
         do ipt=-2,2
           ipxs = (/ ipx, ipy, ipt /)
           discr = sum(ipxs**2)
           if((discr.ge.4).and.(discr.le.6)) then 
+            tpart%chunk(:,iside) = tap(:,:,ipx,ipy,ipt)
             ! then we are in the halo. but not on the edges or on the vertices
-            do idir=1,3
-              if(ipxs(idir)**2.eq.4) then
+            do idir=1,3 ! scanning for ipdx(idir)=+-2
+              if(ipxs(idir)**2.eq.4) then 
                 ! getting neighbour
                 call MPI_Cart_Shift(comm, 0, ipxs(idir)/2, ipw, ipn,ierr)
-                temp_all_halo_partitions_neighbors(1,ipx,ipy,ipt) = ipn
+                tpart%nn = ipn
 
                 ! computing tag
                 facecoord(1:idir-1)=ipxs(1:idir-1)
                 facecoord(idir:2)=ipxs(idir+1:3)
                 tag = 1+(facecoord(1)+1)+(facecoord(2)+1)*3
 
-                temp_all_halo_partitions_neighbors(2,ipx,ipy,ipt) = tag
-
+                tpart%tag = tag
               endif
             enddo
+            thp_cube(ipx,ipy,ipt) = tpart
+            tpartcount = tpartcount+1
+            thp_list(tpartcount) = tpart
           endif
         enddo
       enddo
@@ -162,11 +199,10 @@ contains
 
   end subroutine
 
-
   subroutine init_partitions_and_neighs()
     call get_all_partitions(all_partitions)
-    call get_all_local_partitions_neighbors(all_local_partitions_neighbors)
-    call get_all_halo_partitions_neighbors(all_halo_partitions_neighbors)
+    call get_all_local_partitions_neighbors(border_partitions_cube,border_partitions_list)
+    call get_all_halo_partitions_neighbors(halo_partitions_cube,halo_partitions_list)
   end subroutine
 
 
