@@ -4,13 +4,6 @@ module partitioning
 
   integer :: all_partitions(2,3,-2:2,-2:2,-2:2) ! with halo 
 
-  integer :: all_local_partitions_neighbors(0:3,2,-1:1,-1:1,-1:1)
-  ! [ no_neighbors, neigh1 , neigh2 , neigh3  ]
-  ! [ ////////////, mpitag1, mpitag2, mpitag3 ] ! tags go from 1 to 9
-
-  integer :: all_halo_partitions_neighbors(2,-2:2,-2:2,-2:2)
-  ! [ neigh, tag ]
- 
   type localpart
     integer :: chunk(2,3)
     integer :: nn ! number of neighbours the partition must be sent to (0..3)
@@ -24,9 +17,11 @@ module partitioning
     integer :: tag ! tag to the partition
   end type halopart
 
+  ! partitions as lists (contains only useful ones, but difficult to access)
   type(localpart) border_partitions_list(26)
   type(halopart) halo_partitions_list(54)
 
+  ! partitions as a cube (contains also useless ones, but easier to access)
   type(localpart) border_partitions_cube(-1:1,-1:1,-1:1)
   type(halopart) halo_partitions_cube(-2:2,-2:2,-2:2)
 
