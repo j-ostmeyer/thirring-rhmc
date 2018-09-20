@@ -175,7 +175,7 @@ contains
             do idir=1,3 ! scanning for ipdx(idir)=+-2
               if(ipxs(idir)**2.eq.4) then 
                 ! getting neighbour
-                call MPI_Cart_Shift(comm, 0, ipxs(idir)/2, ipw, ipn,ierr)
+                call MPI_Cart_Shift(comm, idir-1, ipxs(idir)/2, ipw, ipn,ierr)
                 tpart%nn = ipn
 
                 ! computing tag
@@ -184,6 +184,7 @@ contains
                 tag = 1+(facecoord(1)+1)+(facecoord(2)+1)*3
 
                 tpart%tag = tag
+                write(7+ip_global,"(5I4)"),ipx,ipy,ipt,ipn,tag
               endif
             enddo
             thp_cube(ipx,ipy,ipt) = tpart

@@ -5,11 +5,6 @@ program test_partitioning
   use partitioning
   use comms
   implicit none
-  integer :: ipx1,ipy1,ipt1
-  integer :: ipx2,ipy2,ipt2
-  integer :: vol,tempvol,expected_vol
-  integer :: p1(2,3), p2(2,3)
-  logical :: check
   integer :: ierr
 
   integer,allocatable :: mpi_other_rank_count_cube(:)
@@ -24,25 +19,27 @@ program test_partitioning
   integer :: ipart
   integer :: discr
 
+  integer :: irank
 
-  #ifdef MPI
+
+#ifdef MPI
   call init_MPI
-  #endif
+#endif
   call init_partitions_and_neighs()
 
-  allocate mpi_other_rank_count_cube(np_global)
-  allocate mpi_other_rank_count_list(np_global)
-  allocate expected_mpi_other_rank_count(np_global)
+  allocate(mpi_other_rank_count_cube(0:np_global-1))
+  allocate(mpi_other_rank_count_list(0:np_global-1))
+  allocate(expected_mpi_other_rank_count(0:np_global-1))
 
-  mpi_other_rank_count_cube = 0
   expected_mpi_other_rank_count = 0
   do idir=1,3
     call MPI_Cart_Shift(comm, idir-1, 1, ipxs(1,idir), ipxs(2,idir),ierr)
-    expected_mpi_other_rank_count(ipxs(1,idir)) = 9
-    expected_mpi_other_rank_count(ipxs(2,idir)) = 9
+    expected_mpi_other_rank_count(ipxs(1,idir)) = 9 + expected_mpi_other_rank_count(ipxs(1,idir))
+    expected_mpi_other_rank_count(ipxs(2,idir)) = 9 + expected_mpi_other_rank_count(ipxs(2,idir))
   enddo
 
   ! checking the cube version - border
+  mpi_other_rank_count_cube = 0
   do ipx=-1,1
     do ipy=-1,1
       do ipt=-1,1
@@ -57,9 +54,16 @@ program test_partitioning
     enddo
   enddo
 
-  if((mpi_other_rank_count_cube-expected_mpi_other_rank_count)**2.ne.0)then
-    print *, "Issue with mpi_other_rank_count_cube - border - rank",ip_global
-  endif 
+  do irank=0,np_global-1
+    call MPI_Barrier(comm,ierr)
+    if(irank.eq.ip_global) then
+      if(sum((mpi_other_rank_count_cube-expected_mpi_other_rank_count)**2).ne.0)then
+        print *, "Issue with mpi_other_rank_count_cube - border - rank",ip_global
+        print *,mpi_other_rank_count_cube
+        print *,expected_mpi_other_rank_count
+      endif 
+    endif
+  enddo
 
 
   ! checking the list version - border
@@ -72,11 +76,19 @@ program test_partitioning
     enddo
   enddo
 
-  if((mpi_other_rank_count_list-expected_mpi_other_rank_count)**2.ne.0)then
-    print *, "Issue with mpi_other_rank_count_list - border - rank", ip_global
-  endif 
+  do irank=0,np_global-1
+    call MPI_Barrier(comm,ierr)
+    if(irank.eq.ip_global) then
+      if(sum((mpi_other_rank_count_list-expected_mpi_other_rank_count)**2).ne.0)then
+        print *, "Issue with mpi_other_rank_count_list - border - rank", ip_global
+        print *,mpi_other_rank_count_list
+        print *,expected_mpi_other_rank_count
+      endif 
+    endif
+  enddo
 
   ! checking the cube version - halo
+  mpi_other_rank_count_cube = 0
   do ipx=-2,2
     do ipy=-2,2
       do ipt=-2,2
@@ -89,9 +101,17 @@ program test_partitioning
     enddo
   enddo
 
-  if((mpi_other_rank_count_cube-expected_mpi_other_rank_count)**2.ne.0)then
-    print *, "Issue with mpi_other_rank_count_cube - halo - rank", ip_global
-  endif 
+
+  do irank=0,np_global-1
+    call MPI_Barrier(comm,ierr)
+    if(irank.eq.ip_global) then
+      if(sum((mpi_other_rank_count_cube-expected_mpi_other_rank_count)**2).ne.0)then
+        print *, "Issue with mpi_other_rank_count_cube - halo - rank", ip_global
+        print *,mpi_other_rank_count_cube
+        print *,expected_mpi_other_rank_count
+      endif 
+    endif 
+  enddo
 
 
   ! checking the list version - halo
@@ -101,18 +121,25 @@ program test_partitioning
     mpi_other_rank_count_list(nn) = mpi_other_rank_count_list(nn)+1
   enddo
 
-  if((mpi_other_rank_count_list-expected_mpi_other_rank_count)**2.ne.0)then
-    print *, "Issue with mpi_other_rank_count_list - halo - rank", ip_global
-  endif 
+  do irank=0,np_global-1
+    call MPI_Barrier(comm,ierr)
+    if(irank.eq.ip_global) then
+      if(sum((mpi_other_rank_count_list-expected_mpi_other_rank_count)**2).ne.0)then
+        print *, "Issue with mpi_other_rank_count_list - halo - rank", ip_global
+        print *,mpi_other_rank_count_list
+        print *,expected_mpi_other_rank_count
+      endif 
+    endif 
+  enddo
 
-  deallocate mpi_other_rank_count_cube
-  deallocate mpi_other_rank_count_list
-  deallocate expected_mpi_other_rank_count
+  deallocate(mpi_other_rank_count_cube)
+  deallocate(mpi_other_rank_count_list)
+  deallocate(expected_mpi_other_rank_count)
 
 
 
-  #ifdef MPI
+#ifdef MPI
   call MPI_Finalize(ierr)
-  #endif
+#endif
 end program
 
