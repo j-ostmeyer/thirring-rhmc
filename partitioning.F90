@@ -160,7 +160,7 @@ contains
             tpartcount = tpartcount+1
             tbp_list(tpartcount) = tpart
             tb_cl(ipx,ipy,ipt) = tpartcount 
-            tb_lc(tpartcount) = (/ipx,ipy,ipt/)
+            tb_lc(:,tpartcount) = (/ipx,ipy,ipt/)
           endif
         enddo
       enddo
@@ -217,7 +217,7 @@ contains
             thp_list(tpartcount) = tpart
 
             th_cl(ipx,ipy,ipt) = tpartcount
-            th_lc(tpartcount) = (/ipx,ipy,ipt/)
+            th_lc(:,tpartcount) = (/ipx,ipy,ipt/)
           endif
         enddo
       enddo
@@ -229,14 +229,14 @@ contains
     type(bhas),intent(out) :: tbhass(26)        ! Temp bhass
     integer,intent(in) :: tb_lc(3,26)           ! Temp Border List->Cube
     integer,intent(in) :: th_cl(-2:2,-2:2,-2:2) ! Temp Halo Cube->List
-    integer :: ips(3),ipx,ipy,ipt
+    integer :: ips(3)
     integer :: hips(3) ! halo-ips
     integer :: idir
     integer :: ibp
     integer :: neighidx
 
-    do ipb=1,26
-      ips = tb_lc(:,ipb)
+    do ibp=1,26
+      ips = tb_lc(:,ibp)
       tbhass(ibp)%nhp = sum(ips**2)
       neighidx = 0
       do idir=1,3
@@ -244,7 +244,7 @@ contains
           hips = ips
           hips(idir) = -2*ips(idir) ! going on the halo on the opposite side
           neighidx = neighidx+1
-          tbhass(ipb)%hps(neighidx) = th_cl(hips(1),hips(2),hips(3))
+          tbhass(ibp)%hps(neighidx) = th_cl(hips(1),hips(2),hips(3))
         endif
       enddo
     enddo
@@ -255,7 +255,7 @@ contains
     call get_all_partitions(all_partitions)
     call get_all_local_partitions_neighbors(border_partitions_cube,&
       &    border_partitions_list,border_cl,border_lc)
-    call get_all_halo_partitions_neighbors(halo_partitions_cube,
+    call get_all_halo_partitions_neighbors(halo_partitions_cube,&
       &    halo_partitions_list,halo_cl,halo_lc)
     call get_border_halo_associations(bhass,border_lc,halo_cl)
   end subroutine

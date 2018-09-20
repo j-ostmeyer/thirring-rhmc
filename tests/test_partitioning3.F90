@@ -1,11 +1,11 @@
 #include "test_utils.fh"
 program test_partitioning
-  use mpi_f08
   use partitioning
+  use comms
   implicit none
   integer :: ierr
-  integer :: ips(3)
   integer :: issindex
+  logical :: check_hbass
 
 #ifdef MPI
   call init_MPI
@@ -14,29 +14,78 @@ program test_partitioning
 
   issindex = 1
   if(border_cl(0,0,0).ne.0) then
-    print *,"Issue ", issindex
+    if(ip_global.eq.0) then
+      print *,"Issue ", issindex
+    endif
   endif
   issindex = issindex + 1
 
   if(.not.check_hbass((/-2,0,0/),(/1,0,0/)))then 
-    print *,"Issue ", issindex
+    if(ip_global.eq.0) then
+      print *,"Issue ", issindex
+    endif
   endif
   issindex = issindex + 1
 
   if(.not.check_hbass((/-2,1,1/),(/1,1,1/)))then 
+    if(ip_global.eq.0) then
+      print *,"Issue ", issindex
+    endif
   endif
-    print *,"Issue ", issindex
   issindex = issindex + 1
 
   if(.not.check_hbass((/1,-2,1/),(/1,1,1/)))then 
+    if(ip_global.eq.0) then
+      print *,"Issue ", issindex
+    endif
   endif
-    print *,"Issue ", issindex
   issindex = issindex + 1
 
   if(.not.check_hbass((/1,1,-2/),(/1,1,1/)))then 
+    if(ip_global.eq.0) then
+      print *,"Issue ", issindex
+    endif
   endif
-    print *,"Issue ", issindex
   issindex = issindex + 1
+
+  if(.not.check_hbass((/1,-1,-2/),(/1,-1,1/)))then 
+    if(ip_global.eq.0) then
+      print *,"Issue ", issindex
+    endif
+  endif
+  issindex = issindex + 1
+
+  if(.not.check_hbass((/1,2,1/),(/1,-1,1/)))then 
+    if(ip_global.eq.0) then
+      print *,"Issue ", issindex
+    endif
+  endif
+  issindex = issindex + 1
+
+  if(.not.check_hbass((/-2,-1,1/),(/1,-1,1/)))then 
+    if(ip_global.eq.0) then
+      print *,"Issue ", issindex
+    endif
+  endif
+  issindex = issindex + 1
+
+  if(.not.check_hbass((/-2,0,1/),(/1,0,1/)))then 
+    if(ip_global.eq.0) then
+      print *,"Issue ", issindex
+    endif
+  endif
+  issindex = issindex + 1
+
+  if(.not.check_hbass((/1,0,-2/),(/1,0,1/)))then 
+    if(ip_global.eq.0) then
+      print *,"Issue ", issindex
+    endif
+  endif
+  issindex = issindex + 1
+
+
+
+
 
 #ifdef MPI
   call MPI_Finalize(ierr)
@@ -46,9 +95,10 @@ end program
 
 function check_hbass(hips,bips) result(check)
   use partitioning
+  use comms
   integer, intent(in) :: hips(3)
   integer, intent(in) :: bips(3)
-  logical,            :: check
+  logical             :: check
 
   integer :: thips(3)
   integer :: ibp,ihp
@@ -59,7 +109,7 @@ function check_hbass(hips,bips) result(check)
   check = .false.
   do idhp=1,nhp 
     ihp = bhass(ibp)%hps(idhp)
-    thips = halo_cl(:,ihp)
+    thips = halo_lc(:,ihp)
     if(all(thips.eq.hips)) then
       check = .true.
     endif
