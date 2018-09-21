@@ -11,17 +11,7 @@ module dirac_split
 
 contains 
 
-
-
-
-
-  pure subroutine dslash_border(Phi,R,u,am,imass)
-
-
-  end subroutine dslash_border
-  
-
-  pure subroutine dslash_split(Phi,R,u,am,imass,xd,xu,yd,yu,td,tu)
+  pure subroutine dslash_split(Phi,R,u,am,imass,chunk)
     !
     !     calculates Phi = M*R
     !
@@ -29,15 +19,23 @@ contains
     !     complex, intent(in) :: Phi(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
     !     complex, intent(in) :: R(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
     !     complex :: zkappa
-    complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    integer, intent(in) :: xd,xu,yd,yu,td,tu ! portion of array to operate on
-    integer, intent(in) :: imass
+    complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
     real, intent(in) :: am
+    integer, intent(in) :: imass
+    integer :: chunk(2,3) ! portion of array to operate on
+    integer :: xd,xu,yd,yu,td,tu ! portion of array to operate on
     complex(dp) :: zkappa
     real :: diag
     integer :: ixup, iyup, itup, ix, iy, it, idirac, mu, igork
+
+    xd=chunk(1,1)
+    xu=chunk(2,1)
+    yd=chunk(1,2)
+    yu=chunk(2,2)
+    td=chunk(1,3)
+    tu=chunk(2,3)
     !     write(6,*) 'hi from dslash'
     !
     !     diagonal term
@@ -123,15 +121,23 @@ contains
     return
   end subroutine dslash_split
   !***********************************************************************
-  pure subroutine dslashd_split_local(am,Phi,R,imass,xd,xu,yd,yu,td,tu)
+  pure subroutine dslashd_split_local(am,Phi,R,imass,chunk)
     implicit none
+    real, intent(in) :: am
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    integer, intent(in) :: xd,xu,yd,yu,td,tu ! portion of array to operate on
+    integer, intent(in) :: imass
+    integer :: chunk(2,3) ! portion of array to operate on
+    integer :: xd,xu,yd,yu,td,tu ! portion of array to operate on
     real :: diag
     complex(dp) :: zkappa
-    real, intent(in) :: am
-    integer, intent(in) :: imass
+
+    xd=chunk(1,1)
+    xu=chunk(2,1)
+    yd=chunk(1,2)
+    yu=chunk(2,2)
+    td=chunk(1,3)
+    tu=chunk(2,3)
 
     diag=(3.0-am3)+1.0
     Phi(:,xd:xu,yd:yu,td:tu,:) = diag * R(:,xd:xu,yd:yu,td:tu,:)
@@ -174,9 +180,9 @@ contains
     return 
   end subroutine dslashd_split_local
 #ifdef MPI
-  subroutine dslashd_local(Phi,R,u,am,imass,reqs_R,xd,xu,yd,yu,td,tu)
+  subroutine dslashd_split(Phi,R,u,am,imass,reqs_R,chunk)
 #else
-  pure subroutine dslashd_local(Phi,R,u,am,imass,xd,xu,yd,yu,td,tu)
+  pure subroutine dslashd_split(Phi,R,u,am,imass,chunk)
 #endif
     !     calculates phi = mdagger*r
     !
@@ -188,18 +194,27 @@ contains
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     integer, intent(in) :: xd,xu,yd,yu,td,tu ! portion of array to operate on
-    integer, intent(in) :: imass
     real, intent(in) :: am
+    integer, intent(in) :: imass
+    integer :: chunk(2,3) ! portion of array to operate on
+    integer :: xd,xu,yd,yu,td,tu ! portion of array to operate on
     !complex(dp) :: zkappa
     !real :: diag
     integer :: ixup, iyup, itup, ix, iy, it, idirac, mu, igork
 #ifdef MPI
     type(MPI_request), dimension(12),intent(inout), optional :: reqs_R
 #endif
+
+    xd=chunk(1,1)
+    xu=chunk(2,1)
+    yd=chunk(1,2)
+    yu=chunk(2,2)
+    td=chunk(1,3)
+    tu=chunk(2,3)
     !
     !   taking care of the part that does not need the halo
     !   diagonal term (hermitian)
-    call dslashd_local(am,Phi,R,imass,xd,xu,yd,yu,td,tu)
+    call dslashd_split_local(am,Phi,R,imass,chunk)
     !
     !   taking care of the part that does need the halo
     !   wilson term (hermitian) and dirac term (antihermitian)
@@ -238,9 +253,9 @@ contains
     !
     return
 #ifdef MPI
-  end subroutine dslashd_local
+  end subroutine dslashd_split
 #else
-  end subroutine dslashd_local
+  end subroutine dslashd_split
 #endif
 
   pure integer function kdelta(nu, mu)
