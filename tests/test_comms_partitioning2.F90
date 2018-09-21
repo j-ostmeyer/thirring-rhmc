@@ -1,7 +1,6 @@
 ! Testing communications with the partitions on 2 dummy arrays.
 #include "test_utils.fh"
 program test_partitioning
-  use mpi_f08
   use params
   use partitioning
   use comms_partitioning
@@ -12,7 +11,6 @@ program test_partitioning
   !BUFfer To Recv
   complex(dp) :: buftr(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
 
-
   type(MPI_Request) :: rreqs(54)! Recv REQuestS
   type(MPI_Request) :: sreqs(54)! Send REQuestS
 
@@ -20,6 +18,7 @@ program test_partitioning
   integer :: ix,iy,it
 
   integer :: ierr
+  logical :: check_cube_eq
 
 #ifdef MPI
   call init_MPI
@@ -38,58 +37,69 @@ program test_partitioning
   ! test x-dir
   ! filling send buffer
   do ix=0,ksizex_l+1
-    bufts(:,ix,:,:,:) = ix0+ix
+    bufts(:,ix,:,:,:) = modulo(ix0+ix,KSIZE)
   enddo
   ! taking care of the local part
   buftr(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:) = &
     & bufts(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:)
 
   ! taking care of the halos
-  MPI_StartAll(54,rreqs,ierr)
-  MPI_StartAll(54,sreqs,ierr)
+  call MPI_StartAll(54,rreqs,ierr)
+  call MPI_StartAll(54,sreqs,ierr)
 
-  MPI_Waitall(54,rreqs,MPI_Statuses_Ignore,ierr)
+  call MPI_Waitall(54,rreqs,MPI_Statuses_Ignore,ierr)
+  call MPI_Waitall(54,sreqs,MPI_Statuses_Ignore,ierr)
 
-  if(.not.all(buftr.eq.bufts))then
-    print *,"X dir:problem on rank",ip_x,ip_y,ip_t
+  if(.not.check_cube_eq(buftr,bufts))then
+    print *,"X dir:problem on rank",ip_x,ip_y,ip_t,sum((buftr-bufts)**2)
+    print*,int(real(buftr(1,:,1,1,1))),ip_x
+  else
+    print *,"X dir: ok on rank",ip_x,ip_y,ip_t
   endif
+
 
   ! test y-dir
   ! filling send buffer
   do iy=0,ksizey_l+1
-    bufts(:,:,iy,:,:) = iy0+iy
+    bufts(:,:,iy,:,:) = modulo(iy0+iy,KSIZE)
   enddo
   ! taking care of the local part
   buftr(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:) = &
     & bufts(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:)
 
   ! taking care of the halos
-  MPI_StartAll(54,rreqs,ierr)
-  MPI_StartAll(54,sreqs,ierr)
+  call MPI_StartAll(54,rreqs,ierr)
+  call MPI_StartAll(54,sreqs,ierr)
 
-  MPI_Waitall(54,rreqs,MPI_Statuses_Ignore,ierr)
+  call MPI_Waitall(54,rreqs,MPI_Statuses_Ignore,ierr)
+  call MPI_Waitall(54,sreqs,MPI_Statuses_Ignore,ierr)
 
-  if(.not.all(buftr.eq.bufts))then
-    print *,"Y dir:problem on rank",ip_x,ip_y,ip_t
+  if(.not.check_cube_eq(buftr,bufts))then
+    print *,"Y dir:problem on rank",ip_x,ip_y,ip_t,sum((buftr-bufts)**2)
+  else
+    print *,"Y dir:ok on rank",ip_x,ip_y,ip_t
   endif
 
   ! test t-dir
   ! filling send buffer
   do it=0,ksizet_l+1
-    bufts(:,:,:,it,:) = it0+it
+    bufts(:,:,:,it,:) = modulo(it0+it,KSIZE)
   enddo
   ! taking care of the local part
   buftr(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:) = &
     & bufts(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:)
 
   ! taking care of the halos
-  MPI_StartAll(54,rreqs,ierr)
-  MPI_StartAll(54,sreqs,ierr)
+  call MPI_StartAll(54,rreqs,ierr)
+  call MPI_StartAll(54,sreqs,ierr)
 
-  MPI_Waitall(54,rreqs,MPI_Statuses_Ignore,ierr)
+  call MPI_Waitall(54,rreqs,MPI_Statuses_Ignore,ierr)
+  call MPI_Waitall(54,sreqs,MPI_Statuses_Ignore,ierr)
 
-  if(.not.all(buftr.eq.bufts))then
-    print *,"T dir:problem on rank",ip_x,ip_y,ip_t
+  if(.not.check_cube_eq(buftr,bufts))then
+    print *,"T dir:problem on rank",ip_x,ip_y,ip_t,sum((buftr-bufts)**2)
+  else
+    print *,"T dir:ok on rank",ip_x,ip_y,ip_t
   endif
 
 #ifdef MPI
@@ -97,3 +107,35 @@ program test_partitioning
 #endif
 end program
 
+function check_cube_eq(buf1,buf2) result(check)
+  use params
+  complex(dp),intent(in) :: buf1(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
+  complex(dp),intent(in) :: buf2(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
+
+  logical :: check
+
+  check = all(buf2(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:).eq.&
+    & buf1(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:))
+
+  ! down x
+  check = check.and.all(buf2(:,0,1:ksizey_l,1:ksizet_l,:).eq.&
+    & buf1(:,0,1:ksizey_l,1:ksizet_l,:))
+  !up x
+  check = check.and.all(buf2(:,1+ksizex_l,1:ksizey_l,1:ksizet_l,:).eq.&
+    & buf1(:,1+ksizex_l,1:ksizey_l,1:ksizet_l,:))
+
+  !down y
+  check = check.and.all(buf2(:,1:ksizex_l,0,1:ksizet_l,:).eq.&
+    & buf1(:,1:ksizex_l,0,1:ksizet_l,:))
+  !up y
+  check = check.and.all(buf2(:,1:ksizex_l,1+ksizey_l,1:ksizet_l,:).eq.&
+    & buf1(:,1:ksizex_l,1+ksizey_l,1:ksizet_l,:))
+
+  !down t
+  check = check.and.all(buf2(:,1:ksizex_l,1:ksizey_l,0,:).eq.&
+    & buf1(:,1:ksizex_l,1:ksizey_l,0,:))
+  !up t
+  check = check.and.all(buf2(:,1:ksizex_l,1:ksizey_l,1+ksizet_l,:).eq.&
+    & buf1(:,1:ksizex_l,1:ksizey_l,1+ksizet_l,:))
+
+end function

@@ -83,11 +83,11 @@ contains
 
     integer :: ierr
 
-    do ib=1,26
-      do ibhas=1,tbhass(ib)%nhp
-        call MPI_Send_init(bufts,1,tsbdts(ib),&
-          & tbpl(ib)%nns(ibhas),tbpl(ib)%tags(ibhas),&
-          & comm,sreqs(tbhass(ib)%hps(ibhas),ierr)
+    do ibp=1,26
+      do ibhas=1,tbhass(ibp)%nhp
+        call MPI_Send_init(bufts,1,tsbdts(ibp),&
+          & tbpl(ibp)%nns(ibhas),tbpl(ibp)%tags(ibhas),&
+          & comm,sreqs(tbhass(ibp)%hps(ibhas)),ierr)
       enddo
     enddo
   end subroutine
@@ -114,18 +114,17 @@ contains
     implicit none
     type(MPI_Request), intent(out) :: rreqs(54)! Recv REQuestS
     !BUFfer To Recv
-    complex(dp),intent(in) :: bufts(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
+    complex(dp),intent(in) :: buftr(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
     type(MPI_Datatype),intent(in) :: trhdts(54) ! Temp Recv Halo Data TypeS
-    type(localpart),intent(in) :: thpl(54) ! Temp Halo Partition List 
+    type(halopart),intent(in) :: thpl(54) ! Temp Halo Partition List 
     integer :: ihp ! Index Halo Partition
 
     integer :: ierr
 
-    do ih=1,54
-        call MPI_Recv_init(buftr,1,trhdts(ih),&
-          & tbpl(ih)%nn,thpl(ih)%tag,&
-          & comm,rreqs(ih),ierr)
-      enddo
+    do ihp=1,54
+      call MPI_Recv_init(buftr,1,trhdts(ihp),&
+        & thpl(ihp)%nn,thpl(ihp)%tag,&
+        & comm,rreqs(ihp),ierr)
     enddo
   end subroutine
  
@@ -135,7 +134,7 @@ contains
     implicit none
     type(MPI_Request), intent(out) :: rreqs(54)! Recv REQuestS
     !BUFfer To Recv
-    complex(dp),intent(in) :: bufts(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
+    complex(dp),intent(in) :: buftr(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
 
     call create_dprreqs(rreqs,buftr,dirac_halo_dts,halo_partitions_list)
   end subroutine
