@@ -37,7 +37,7 @@ $(info FCFLAGS : $(FCFLAGS))
 LIBOBJS = avgitercounts.o dirac.o dum1.o dwf3d_lib.o \
        gauge.o gaussian.o gforce.o measure_module.o params.o \
        qmrherm_module.o remez.o remezg.o trial.o vector.o\
-       comms.o random.o partitioning.o
+       comms.o random.o partitioning.o comms_partitioning.o
 
 
 .PHONY: clean
@@ -52,6 +52,13 @@ COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -c
 
 # generic rule for dum,gauge,gforce,remez,remezg,trial,vector,partitioning
 %.o : $(TOPDIR)/%.F90 .makefile.uptodate params.mod
+	$(COMPILE) -o $*.o $<
+
+partitioning.o : $(TOPDIR)/%.F90 .makefile.uptodate params.mod comms.mod
+	$(COMPILE) -o $*.o $<
+
+comms_partitioning.o : $(TOPDIR)/%.F90 .makefile.uptodate params.mod \
+        partitioning.mod
 	$(COMPILE) -o $*.o $<
 
 dirac.o : $(TOPDIR)/dirac.F90 .makefile.uptodate params.mod comms.mod
