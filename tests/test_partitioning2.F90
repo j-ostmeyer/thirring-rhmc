@@ -1,3 +1,5 @@
+! Testing that each rank is referenced the correct number of times
+! in the global structures in the partitioning module
 #include "test_utils.fh"
 program test_partitioning
   use mpi_f08
@@ -25,7 +27,7 @@ program test_partitioning
 #ifdef MPI
   call init_MPI
 #endif
-  call init_partitions_and_neighs()
+  call init_partitioning()
 
   allocate(mpi_other_rank_count_cube(0:np_global-1))
   allocate(mpi_other_rank_count_list(0:np_global-1))

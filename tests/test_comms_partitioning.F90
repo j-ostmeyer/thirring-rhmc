@@ -1,3 +1,4 @@
+! Checking that the MPI_datatype sizes match the sizes of the partitions
 #include "test_utils.fh"
 program test_partitioning
   use mpi_f08
@@ -28,7 +29,7 @@ program test_partitioning
 #ifdef MPI
   call init_MPI
 #endif
-  call init_partitions_and_neighs()
+  call init_partitioning()
 
 
   call MPI_Barrier(comm,ierr)

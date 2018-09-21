@@ -1,9 +1,13 @@
 module comms_partitioning
   use partitioning
   use mpi_f08
+  implicit none
 
   type(MPI_Datatype) :: dirac_halo_dts(54)   ! Data TypeS
   type(MPI_Datatype) :: dirac_border_dts(26) ! Data TypeS
+
+  !type(MPI_Request) :: dirac_border_send_reqs(54) 
+  !type(MPI_Request) :: dirac_halo_recv_reqs(54) 
 
 contains
 
@@ -61,7 +65,87 @@ contains
     enddo
   end subroutine
 
-! TODO: create persistent comm requests
-! TODO: test!
+  ! CREATE Dirac Persistent Send REQuestS
+  subroutine create_dpsreqs(sreqs,bufts,tsbdts,tbpl,tbhass)
+    use mpi_f08
+    use comms
+    use params
+    use partitioning
+    implicit none
+    type(MPI_Request), intent(out) :: sreqs(54)! Send REQuestS
+    !BUFfer To Send
+    complex(dp),intent(in) :: bufts(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
+    type(MPI_Datatype),intent(in) :: tsbdts(26) ! Temp Send Border Data TypeS
+    type(localpart),intent(in) :: tbpl(26) ! Temp Border Partition List 
+    type(bhas),intent(in) :: tbhass(26)
+    integer :: ibp ! Index Border Partition
+    integer :: ibhas ! Index Border Halo ASsociation
+
+    integer :: ierr
+
+    do ib=1,26
+      do ibhas=1,tbhass(ib)%nhp
+        call MPI_Send_init(bufts,1,tsbdts(ib),&
+          & tbpl(ib)%nns(ibhas),tbpl(ib)%tags(ibhas),&
+          & comm,sreqs(tbhass(ib)%hps(ibhas),ierr)
+      enddo
+    enddo
+  end subroutine
+
+  ! for convenience. GLOBAL data structures must be initialised first!
+  subroutine get_dirac_sendreqs(sreqs,bufts)
+    use partitioning
+    implicit none
+    type(MPI_Request), intent(out) :: sreqs(54)! Send REQuestS
+    !BUFfer To Send
+    complex(dp),intent(in) :: bufts(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
+
+    
+    call create_dpsreqs(sreqs,bufts,dirac_border_dts,border_partitions_list,&
+      & bhass )
+  end subroutine
+
+  ! CREATE Dirac Persistent Rrecv REQuestS
+  subroutine create_dprreqs(rreqs,buftr,trhdts,thpl)
+    use mpi_f08
+    use comms
+    use params
+    use partitioning
+    implicit none
+    type(MPI_Request), intent(out) :: rreqs(54)! Recv REQuestS
+    !BUFfer To Recv
+    complex(dp),intent(in) :: bufts(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
+    type(MPI_Datatype),intent(in) :: trhdts(54) ! Temp Recv Halo Data TypeS
+    type(localpart),intent(in) :: thpl(54) ! Temp Halo Partition List 
+    integer :: ihp ! Index Halo Partition
+
+    integer :: ierr
+
+    do ih=1,54
+        call MPI_Recv_init(buftr,1,trhdts(ih),&
+          & tbpl(ih)%nn,thpl(ih)%tag,&
+          & comm,rreqs(ih),ierr)
+      enddo
+    enddo
+  end subroutine
+ 
+  ! for convenience. GLOBAL data structures must be initialised first!
+  subroutine get_dirac_recvreqs(rreqs,buftr)
+    use partitioning
+    implicit none
+    type(MPI_Request), intent(out) :: rreqs(54)! Recv REQuestS
+    !BUFfer To Recv
+    complex(dp),intent(in) :: bufts(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
+
+    call create_dprreqs(rreqs,buftr,dirac_halo_dts,halo_partitions_list)
+  end subroutine
+
+  subroutine init_dirac_hb_types()
+    use partitioning
+    call init_dirac_halo_types(dirac_halo_dts,halo_partitions_list)
+    call init_dirac_border_types(dirac_border_dts,border_partitions_list)
+  end subroutine
+
+
 
 end module comms_partitioning

@@ -1,3 +1,5 @@
+! Checking that partitions do not intersect
+! but that the sum of the volumes is correct
 #include "test_utils.fh"
 program test_partitioning
   use mpi_f08
@@ -17,7 +19,7 @@ program test_partitioning
 #ifdef MPI
   call init_MPI
 #endif
-  call init_partitions_and_neighs()
+  call init_partitioning()
 
   do ipx1=-2,2
     do ipy1=-2,2

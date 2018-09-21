@@ -251,7 +251,8 @@ contains
   end subroutine
 
 
-  subroutine init_partitions_and_neighs()
+  ! Initialises global module data structured
+  subroutine init_partitioning() 
     call get_all_partitions(all_partitions)
     call get_all_local_partitions_neighbors(border_partitions_cube,&
       &    border_partitions_list,border_cl,border_lc)
