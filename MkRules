@@ -54,11 +54,12 @@ COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -c
 %.o : $(TOPDIR)/%.F90 .makefile.uptodate params.mod
 	$(COMPILE) -o $*.o $<
 
-partitioning.o : $(TOPDIR)/%.F90 .makefile.uptodate params.mod comms.mod
+partitioning.o : $(TOPDIR)/partitioning.F90 .makefile.uptodate params.mod \
+                 comms.mod
 	$(COMPILE) -o $*.o $<
 
-comms_partitioning.o : $(TOPDIR)/%.F90 .makefile.uptodate params.mod \
-        partitioning.mod
+comms_partitioning.o : $(TOPDIR)/comms_partitioning.F90 .makefile.uptodate \
+        params.mod partitioning.mod
 	$(COMPILE) -o $*.o $<
 
 dirac.o : $(TOPDIR)/dirac.F90 .makefile.uptodate params.mod comms.mod

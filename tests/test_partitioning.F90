@@ -7,10 +7,11 @@ program test_partitioning
   implicit none
   integer :: ipx1,ipy1,ipt1
   integer :: ipx2,ipy2,ipt2
-  integer :: vol,tempvol,expected_vol
+  integer :: vol,expected_vol
   integer :: p1(2,3), p2(2,3)
-  logical :: check
   integer :: ierr
+  logical :: partition_intersect
+  integer :: partition_volume
 
  
 #ifdef MPI
@@ -27,9 +28,8 @@ program test_partitioning
               if((ipx1.ne.ipx2).and.(ipy1.ne.ipy2).and.(ipt1.ne.ipt2)) then
                 p1 = all_partitions(:,:,ipx1,ipy1,ipt1)
                 p2 = all_partitions(:,:,ipx2,ipy2,ipt2)
-                call partition_intersect(check,p1,p2)
                 if (ip_global.eq.0) then
-                  if((check)) then
+                  if(partition_intersect(p1,p2)) then
                     write(6,"(A25,6I4)"), "Intersection not null:",ipx1,ipy1,ipt1,ipx2,ipy2,ipt2
                     print *, p1
                     print *, p2
@@ -49,8 +49,7 @@ program test_partitioning
     do ipy1=-2,2
       do ipt1=-2,2
         p1 = all_partitions(:,:,ipx1,ipy1,ipt1)
-        call partition_volume(tempvol,p1)
-        vol = vol + tempvol
+        vol = vol + partition_volume(p1)
       enddo
     enddo
   enddo
@@ -67,8 +66,7 @@ program test_partitioning
     do ipy1=-1,1
       do ipt1=-1,1
         p1 = all_partitions(:,:,ipx1,ipy1,ipt1)
-        call partition_volume(tempvol,p1)
-        vol = vol + tempvol
+        vol = vol + partition_volume(p1)
       enddo
     enddo
   enddo
@@ -79,9 +77,9 @@ program test_partitioning
     endif
   endif
 
-  call partition_volume(vol,all_partitions(:,:,0,0,0))
+  
   expected_vol = (ksizet_l-2)*(ksizey_l-2)*(ksizex_l-2)
-  if(expected_vol.ne.vol) then
+  if(expected_vol.ne.partition_volume(all_partitions(:,:,0,0,0))) then
     if(ip_global.ne.0)then
       print*, "Bulk Volume is not correct."
     endif
@@ -95,32 +93,18 @@ program test_partitioning
 #endif
 end program
 
-subroutine partition_check(check,p)
+function partition_volume(p) result(vol)
   integer, intent(in) :: p(2,3)
-  logical, intent(out) :: check
-  integer :: idir
-
-  check = .true.
-  do idir=1,3
-    check = check.and.(p(2,idir).ge.p(1,idir))
-  enddo
-  if(.not.check) then
-    print *, p
-  endif
-end subroutine
-
-subroutine partition_volume(vol,p)
-  integer, intent(in) :: p(2,3)
-  integer, intent(out) :: vol
+  integer             :: vol
 
   vol = p(2,1)-p(1,1)+1
   vol = vol*(p(2,2)-p(1,2)+1)
   vol = vol*(p(2,3)-p(1,3)+1)
-end subroutine
+end function
 
-subroutine partition_intersect(check,p1,p2)
+function partition_intersect(p1,p2) result(check)
   integer, intent(in) :: p1(2,3),p2(2,3)
-  logical, intent(out) :: check
+  logical             :: check
   logical :: acheck1, acheck2
   integer :: idir
 
@@ -131,5 +115,5 @@ subroutine partition_intersect(check,p1,p2)
     check = (acheck1.or.acheck2).and.check
   enddo
 
-end subroutine
+end function
 

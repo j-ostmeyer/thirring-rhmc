@@ -19,9 +19,8 @@ program test_partitioning
   integer, parameter :: size_factor=4*kthird*16
   integer :: ih,ib
 
-  type(localpart) tbpart
-  type(halopart) thpart
   integer :: tempes ! TEMPorary Expected Size
+  integer :: partition_volume
 
 
 
@@ -32,7 +31,9 @@ program test_partitioning
   call init_partitions_and_neighs()
 
 
-  call init_dirac_halo_types(dirac_halo_dts,halo_partitions_list)
+  call MPI_Barrier(comm,ierr)
+  print*,"Initializing border types"
+  call MPI_Barrier(comm,ierr)
   call init_dirac_border_types(dirac_border_dts,border_partitions_list)
 
   ! check border
@@ -47,7 +48,7 @@ program test_partitioning
     call MPI_type_size(dirac_border_dts(ib),tempbds)
     total_border_datasize = tempbds + total_border_datasize
     tempes = partition_volume(border_partitions_list(ib)%chunk)*size_factor
-    if((tempes.ne.tempbds).eq.(ip_global.eq.0))then
+    if((tempes.ne.tempbds).and.(ip_global.eq.0))then
       print*,"Border Partition wrong datasize", ib
       print*,tempes,tempbds
     endif
@@ -57,6 +58,13 @@ program test_partitioning
     print*,"Total border datasize not correct"
     print*,total_border_datasize,exp_total_border_datasize
   endif
+
+  call MPI_Barrier(comm,ierr)
+  print*,"Initializing halo types"
+  call MPI_Barrier(comm,ierr)
+  call init_dirac_halo_types(dirac_halo_dts,halo_partitions_list)
+
+
   
   exp_total_halo_datasize = 2*ksizex_l*ksizey_l+ &
                          &  2*ksizey_l*ksizet_l+ &
@@ -92,4 +100,4 @@ function partition_volume(p) result(vol)
   vol = p(2,1)-p(1,1)+1
   vol = vol*(p(2,2)-p(1,2)+1)
   vol = vol*(p(2,3)-p(1,3)+1)
-end subroutine
+end function
