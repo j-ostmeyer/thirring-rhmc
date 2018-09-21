@@ -23,7 +23,8 @@ TESTS = test_dslash_1 test_dslash_3 test_dslash_5 test_dslashd_1 test_dslashd_3 
        test_congrad test_congrad_1 test_measure test_gauss0 test_gaussp \
        test_halo_4 test_halo_4_real test_halo_5 test_halo_6 test_meson \
        test_dslashd_1_reqs test_dslashd_3_reqs test_dslashd_5_reqs \
-       test_partitioning test_partitioning2 test_partitioning3
+       test_partitioning test_partitioning2 test_partitioning3 \
+       test_comms_partitioning 
 
 default: $(TESTS)
 tests: $(TESTS)

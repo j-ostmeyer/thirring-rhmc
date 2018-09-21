@@ -7,7 +7,7 @@ module comms_partitioning
 
 contains
 
-  subroutine init_dirac_halo_types(tdhdts,tbpl)
+  subroutine init_dirac_halo_types(tdhdts,thpl)
     use partitioning
     use mpi_f08
     type(MPI_Datatype),intent(out) :: tdhdts(54) ! Temp Dirac Halo Data TypeS
@@ -28,7 +28,8 @@ contains
       ! For MPI_Type_create_subarray, indices start at 0 (because it's a C function)
       starts(2:4) = chunk(1,:)-1 
       call MPI_Type_create_subarray(5,sizes,subsizes,start,MPI_Order_Fortran,&
-      &  MPI_Double_Complex, tdhdts(ih))
+      &  MPI_Double_Complex, tdhdts(ih),ierr)
+      call MPI_Type_Commit(tdhdts(ih),ierr)
     enddo
   end subroutine
 
@@ -54,6 +55,7 @@ contains
       starts(2:4) = chunk(1,:)-1 
       call MPI_Type_create_subarray(5,sizes,subsizes,start,MPI_Order_Fortran,&
       &  MPI_Double_Complex, tdhdts(ih))
+      call MPI_Type_Commit(tdbdts(ih),ierr)
     enddo
   end subroutine
 
