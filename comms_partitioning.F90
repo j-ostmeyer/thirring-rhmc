@@ -77,7 +77,7 @@ contains
     complex(dp),intent(in) :: bufts(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
     type(MPI_Datatype),intent(in) :: tsbdts(26) ! Temp Send Border Data TypeS
     type(localpart),intent(in) :: tbpl(26) ! Temp Border Partition List 
-    type(bhas),intent(in) :: tbhass(26)
+    type(bhas),intent(in) :: tbhass(26) ! Temp Border-Halo ASsociationS
     integer :: ibp ! Index Border Partition
     integer :: ibhas ! Index Border Halo ASsociation
 

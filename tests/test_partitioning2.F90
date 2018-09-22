@@ -14,8 +14,9 @@ program test_partitioning
   integer,allocatable :: expected_mpi_other_rank_count(:)
 
   integer :: ipxs(2,3)
-  integer :: idir
+  integer :: idir,iv
   integer :: ipx,ipy,ipt
+  integer :: ihp
 
   integer :: nn,nns(3)
   integer :: ipart
@@ -134,6 +135,64 @@ program test_partitioning
     endif 
   enddo
 
+
+  ! checking ahpsr member in border partitions.
+
+  ! checking the cube version - border
+  mpi_other_rank_count_cube = 0
+  do ipx=-1,1
+    do ipy=-1,1
+      do ipt=-1,1
+        do idir=1,3
+          do iv=1,2
+            ihp = border_partitions_cube(ipx,ipy,ipt)%ahpsr(iv,idir)
+            if(ihp.ne.0) then
+              nn = halo_partitions_list(ihp)%nn
+              mpi_other_rank_count_cube(nn) = mpi_other_rank_count_cube(nn)+1
+            endif
+          enddo
+        enddo
+      enddo
+    enddo
+  enddo
+
+  do irank=0,np_global-1
+    call MPI_Barrier(comm,ierr)
+    if(irank.eq.ip_global) then
+      if(sum((mpi_other_rank_count_cube-expected_mpi_other_rank_count)**2).ne.0)then
+        print *, "Issue with mpi_other_rank_count_cube - border - rank",ip_global
+        print *,mpi_other_rank_count_cube
+        print *,expected_mpi_other_rank_count
+      endif 
+    endif
+  enddo
+
+  ! checking the list version - border
+  mpi_other_rank_count_list = 0
+  do ipart=1,26
+    do idir=1,3
+      do iv=1,2
+        ihp = border_partitions_list(ipart)%ahpsr(iv,idir)
+        if(ihp.ne.0) then
+          nn = halo_partitions_list(ihp)%nn
+          mpi_other_rank_count_list(nn) = mpi_other_rank_count_list(nn)+1
+        endif
+      enddo
+    enddo
+  enddo
+
+  do irank=0,np_global-1
+    call MPI_Barrier(comm,ierr)
+    if(irank.eq.ip_global) then
+      if(sum((mpi_other_rank_count_list-expected_mpi_other_rank_count)**2).ne.0)then
+        print *, "Issue with mpi_other_rank_count_list - border - rank (ahpsr)", ip_global
+        print *,mpi_other_rank_count_list
+        print *,expected_mpi_other_rank_count
+      endif 
+    endif
+  enddo
+
+ 
   deallocate(mpi_other_rank_count_cube)
   deallocate(mpi_other_rank_count_list)
   deallocate(expected_mpi_other_rank_count)
