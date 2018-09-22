@@ -8,11 +8,12 @@ program test_partitioning
   integer :: ierr
   integer :: issindex
   logical :: check_ahpss
+  logical :: check_ahpsr
 
 #ifdef MPI
   call init_MPI
 #endif
-  call init_partitions_and_neighs()
+  call init_partitioning()
 
   issindex = 1
   if(border_cl(0,0,0).ne.0) then
@@ -188,7 +189,7 @@ function check_ahpsr(hips,bips) result(check)
 
   integer :: thips(3)
   integer :: ibp,ihp
-  integer :: nhp, idir
+  integer :: idir
 
   ibp = border_cl(bips(1),bips(2),bips(3))
   check = .false.

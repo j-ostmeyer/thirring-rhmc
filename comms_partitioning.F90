@@ -66,7 +66,7 @@ contains
   end subroutine
 
   ! CREATE Dirac Persistent Send REQuestS
-  subroutine create_dpsreqs(sreqs,bufts,tsbdts,tbpl,tbhass)
+  subroutine create_dpsreqs(sreqs,bufts,tsbdts,tbpl)
     use mpi_f08
     use comms
     use params
@@ -77,17 +77,16 @@ contains
     complex(dp),intent(in) :: bufts(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
     type(MPI_Datatype),intent(in) :: tsbdts(26) ! Temp Send Border Data TypeS
     type(localpart),intent(in) :: tbpl(26) ! Temp Border Partition List 
-    type(bhas),intent(in) :: tbhass(26) ! Temp Border-Halo ASsociationS
     integer :: ibp ! Index Border Partition
     integer :: ibhas ! Index Border Halo ASsociation
 
     integer :: ierr
 
     do ibp=1,26
-      do ibhas=1,tbhass(ibp)%nhp
+      do ibhas=1,tbpl(ibp)%nn
         call MPI_Send_init(bufts,1,tsbdts(ibp),&
           & tbpl(ibp)%nns(ibhas),tbpl(ibp)%tags(ibhas),&
-          & comm,sreqs(tbhass(ibp)%hps(ibhas)),ierr)
+          & comm,sreqs(tbpl(ibp)%ahpss(ibhas)),ierr)
       enddo
     enddo
   end subroutine
@@ -101,8 +100,7 @@ contains
     complex(dp),intent(in) :: bufts(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
 
     
-    call create_dpsreqs(sreqs,bufts,dirac_border_dts,border_partitions_list,&
-      & bhass )
+    call create_dpsreqs(sreqs,bufts,dirac_border_dts,border_partitions_list)
   end subroutine
 
   ! CREATE Dirac Persistent Rrecv REQuestS
