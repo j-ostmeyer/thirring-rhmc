@@ -14,9 +14,34 @@ module dirac_split
 
 contains 
 
+  subroutine check_work_and_start_transfer(tdswd,tbpc,ichunk,sreqs)
+    use mpi_f08
+    use partitioning
+    implicit none
+    !Temp DSLASH(D) Split Work Done
+    logical, intent(in) :: tdswd(-3:3,-1:1,-1:1,-1:1) 
+    ! Temp Border Partition Cube
+    type(localpart), intent(in) :: tbpc(-1:1,-1:1,-1:1)
+    integer,intent(in) :: ichunk(3) ! portion of array to operate on 
+    type(MPI_Request) :: sreqs(54) ! persistent Send REQuestS
+
+    integer :: nn,inn
+    type(localpart) :: tpart
+    integer :: ierr
+
+    if(all(tdswd(:,ichunk(1),ichunk(2),ichunk(3)))then
+      tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
+      nn = tpart%nn
+      do inn=1,nn
+        MPI_Start(sreqs(tpart%ahpss(inn),ierr)
+      enddo
+    endif
+  end subroutine
+
   pure subroutine dslash_split(Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr)
     use partitioning
     use mpi_f08
+    implicit none
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
@@ -57,30 +82,13 @@ contains
       endif
     endif
 
-
-
+    ! flagging work done
     tdsswd(mu,ichunk(1),ichunk(2),ichunk(3)) = .true.
 
   end subroutine
 
-  pure subroutine dslashd_split(Phi,R,u,am,imass,ichunk,mu,tbpc)
-    use partitioning
-    complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
-    real, intent(in) :: am
-    integer, intent(in) :: imass
-    integer,intent(in) :: ichunk(3) ! portion of array to operate on 
-    integer,intent(in) :: mu ! -3 <= mu <= 3
-    type(localpart),intent(in) :: tbpc(-1:1,-1:1,-1:1)
-
-
-
-
-
-  end subroutine
-
   pure subroutine dslash_split_nonlocal(Phi,R,u,am,imass,chunk,mu,v,init)
+    implicit none
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
@@ -249,7 +257,60 @@ contains
     return
   end subroutine dslash_split_local
 
+  pure subroutine dslashd_split(Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr)
+    use partitioning
+    use mpi_f08
+    implicit none
+    complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
+    real, intent(in) :: am
+    integer, intent(in) :: imass
+    integer,intent(in) :: ichunk(3) ! portion of array to operate on 
+    integer,intent(in) :: mu ! -3 <= mu <= 3
+    ! Temp Border Partition Cube
+    type(localpart),intent(in) :: tbpc(-1:1,-1:1,-1:1)
+    ! Temp DSlash Split Work Done
+    logical, intent(inout) :: tdsswd(-3:3,-1:1,-1:1,-1:1)
+    ! Temp Dirac Halo Recv Requests
+    type(MPI_Request) :: tdhrr(54)
+
+    integer :: chunk(2,3)
+    logical :: init
+    integer :: halo_to_wait_for
+    type(localpart) :: tpart
+
+
+    tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
+    chunk = tpart%chunk
+    halo_to_wait_for = tpart%ahpsr(mu)
+    ! checking if some work on the partition has already been done
+    init = .not.any(tdsswd(:,ichunk(1),ichunk(2),ichunk(3))
+
+    if(mu.eq.0)then
+      call dslashd_split_local(Phi,R,am,imass,chunk,init)
+    else 
+      if(halo_to_wait_for.ne.0) then
+        MPI_Wait(tdhrr(halo_to_wait_for),ierr)
+      endif
+      if(mu.gt.0) then
+        call dslashd_split_nonlocal(Phi,R,u,am,imass,chunk,mu,2,init)
+      else if(mu.lt.0) then
+        call dslashd_split_nonlocal(Phi,R,u,am,imass,chunk,-mu,1,init)
+
+      endif
+    endif
+
+    ! flagging work done
+    tdsswd(mu,ichunk(1),ichunk(2),ichunk(3)) = .true. 
+
+  end subroutine
+
+
+
+
   pure subroutine dslashd_split_nonlocal(Phi,R,u,am,imass,chunk,mu,v,init)
+    implicit none
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
@@ -420,6 +481,7 @@ contains
   end subroutine dslashd_split_local
 
   pure integer function kdelta(nu, mu)
+    implicit none
     integer, intent(in) :: nu
     integer, intent(in) :: mu
 

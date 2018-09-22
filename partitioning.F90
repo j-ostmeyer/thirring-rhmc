@@ -12,12 +12,11 @@ module partitioning
     integer :: tags(3) ! tags for the partition in all sends
     ! index (in halo_partitions_list) of the associated Halo Partitions
     ! Associated Halo PartitionS to Send
-    ! Can be useful for sinchronisation?
     integer :: ahpss(3) 
-    ! Associated Halo PartitionS to Recv. They are ALWAYS [7]
+    ! Associated Halo PartitionS to Recv, in halo_partitions_list.
     ! [verse] x [mu] := [down=-1,up=1]*[x=1,y=2,t=3]
     ! -3 <= mu <= -3
-    ! When there is no Halo partition to receive from, value is 0 
+    ! When there is no corresponding Halo partition to receive from, value is 0 
     ! (e.g. ahpsr(0) == 0 always)
     integer :: ahpsr(-3:3) 
   end type localpart
