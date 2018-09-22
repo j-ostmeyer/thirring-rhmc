@@ -143,14 +143,12 @@ program test_partitioning
   do ipx=-1,1
     do ipy=-1,1
       do ipt=-1,1
-        do idir=1,3
-          do iv=1,2
-            ihp = border_partitions_cube(ipx,ipy,ipt)%ahpsr(iv,idir)
+        do idir=-3,3
+            ihp = border_partitions_cube(ipx,ipy,ipt)%ahpsr(idir)
             if(ihp.ne.0) then
               nn = halo_partitions_list(ihp)%nn
               mpi_other_rank_count_cube(nn) = mpi_other_rank_count_cube(nn)+1
             endif
-          enddo
         enddo
       enddo
     enddo
@@ -170,9 +168,8 @@ program test_partitioning
   ! checking the list version - border
   mpi_other_rank_count_list = 0
   do ipart=1,26
-    do idir=1,3
-      do iv=1,2
-        ihp = border_partitions_list(ipart)%ahpsr(iv,idir)
+    do idir=-3,3
+        ihp = border_partitions_list(ipart)%ahpsr(idir)
         if(ihp.ne.0) then
           nn = halo_partitions_list(ihp)%nn
           mpi_other_rank_count_list(nn) = mpi_other_rank_count_list(nn)+1

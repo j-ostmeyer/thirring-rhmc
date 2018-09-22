@@ -13,10 +13,12 @@ module partitioning
     ! Associated Halo PartitionS to Send
     ! Can be useful for sinchronisation?
     integer :: ahpss(3) 
-    ! Associated Halo PartitionS to Recv. They are ALWAYS 2x3
-    ! [verse] x [mu] := [down=1,up=2]x[x,y,t]
-    ! When there is no Halo partition to receive from, value is 0.
-    integer :: ahpsr(2,3) 
+    ! Associated Halo PartitionS to Recv. They are ALWAYS [7]
+    ! [verse] x [mu] := [down=-1,up=1]*[x=1,y=2,t=3]
+    ! -3 <= mu <= -3
+    ! When there is no Halo partition to receive from, value is 0 
+    ! (e.g. ahpsr(0) == 0 always)
+    integer :: ahpsr(-3:3) 
   end type localpart
 
   type halopart
@@ -245,7 +247,6 @@ contains
     integer :: idir
     integer :: ibp
     integer :: neighidx
-    integer :: verse
     integer ::ipx,ipy,ipz
 
     do ibp=1,26
@@ -262,8 +263,7 @@ contains
           ! taking care of ahpsr
           hips = ips
           hips(idir) = 2*ips(idir) ! going on the halo on the same side
-          verse = (ips(idir)+1)/2+1 ! verse [1,2]
-          tpart%ahpsr(verse,idir) = th_cl(hips(1),hips(2),hips(3))
+          tpart%ahpsr(idir*ips(idir)) = th_cl(hips(1),hips(2),hips(3))
         endif
       enddo
       tbpl(ibp)=tpart

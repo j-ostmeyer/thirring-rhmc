@@ -187,14 +187,13 @@ function check_ahpsr(hips,bips) result(check)
   logical             :: check
 
   integer :: thips(3)
-  integer :: ibp,ihp,iv
-  integer :: nhp, idhp
+  integer :: ibp,ihp
+  integer :: nhp, idir
 
   ibp = border_cl(bips(1),bips(2),bips(3))
   check = .false.
-  do idhp=1,3
-    do iv=1,2
-      ihp = border_partitions_list(ibp)%ahpsr(iv,idhp)
+  do idir=-3,3
+      ihp = border_partitions_list(ibp)%ahpsr(idir)
       if(ihp.ne.0)then
         thips = halo_lc(:,ihp)
         if(all(thips.eq.hips)) then
