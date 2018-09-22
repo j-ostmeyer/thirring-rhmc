@@ -194,14 +194,13 @@ function check_ahpsr(hips,bips) result(check)
   ibp = border_cl(bips(1),bips(2),bips(3))
   check = .false.
   do idir=-3,3
-      ihp = border_partitions_list(ibp)%ahpsr(idir)
-      if(ihp.ne.0)then
-        thips = halo_lc(:,ihp)
-        if(all(thips.eq.hips)) then
-          check = .true.
-        endif
+    ihp = border_partitions_list(ibp)%ahpsr(idir)
+    if(ihp.ne.0)then
+      thips = halo_lc(:,ihp)
+      if(all(thips.eq.hips)) then
+        check = .true.
       endif
-    enddo
+    endif
   enddo
 end function
 

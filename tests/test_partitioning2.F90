@@ -14,7 +14,7 @@ program test_partitioning
   integer,allocatable :: expected_mpi_other_rank_count(:)
 
   integer :: ipxs(2,3)
-  integer :: idir,iv
+  integer :: idir
   integer :: ipx,ipy,ipt
   integer :: ihp
 
@@ -169,12 +169,11 @@ program test_partitioning
   mpi_other_rank_count_list = 0
   do ipart=1,26
     do idir=-3,3
-        ihp = border_partitions_list(ipart)%ahpsr(idir)
-        if(ihp.ne.0) then
-          nn = halo_partitions_list(ihp)%nn
-          mpi_other_rank_count_list(nn) = mpi_other_rank_count_list(nn)+1
-        endif
-      enddo
+      ihp = border_partitions_list(ipart)%ahpsr(idir)
+      if(ihp.ne.0) then
+        nn = halo_partitions_list(ihp)%nn
+        mpi_other_rank_count_list(nn) = mpi_other_rank_count_list(nn)+1
+      endif
     enddo
   enddo
 
