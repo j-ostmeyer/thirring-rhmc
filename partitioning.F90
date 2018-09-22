@@ -7,7 +7,8 @@ module partitioning
   type localpart
     integer :: chunk(2,3)
     integer :: nn ! number of neighbours the partition must be sent to (0..3)
-    integer :: nns(3) ! ranks of the nearest neighbours
+    ! ranks of the nearest neighbours the partition must be sent to
+    integer :: nns(3) 
     integer :: tags(3) ! tags for the partition in all sends
     ! index (in halo_partitions_list) of the associated Halo Partitions
     ! Associated Halo PartitionS to Send
@@ -246,7 +247,7 @@ contains
     integer :: ibp
     integer :: neighidx
     integer :: verse
-    integer ::ipx,ipy,ipz
+    integer :: ipx,ipy,ipt
 
     do ibp=1,26
       ips = tb_lc(:,ibp)
@@ -267,9 +268,9 @@ contains
         endif
       enddo
       tbpl(ibp)=tpart
-      ipx = tb_cl(1,ipb)
-      ipy = tb_cl(1,ipb)
-      ipt = tb_cl(1,ipb)
+      ipx = tb_lc(1,ibp)
+      ipy = tb_lc(2,ibp)
+      ipt = tb_lc(3,ibp)
       tbpc(ipx,ipy,ipt)=tbpl(ibp)
     enddo
   end subroutine
