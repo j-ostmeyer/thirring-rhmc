@@ -75,9 +75,9 @@ contains
         call MPI_Wait(tdhrr(halo_to_wait_for),MPI_STATUS_IGNORE,ierr)
       endif
       if(mu.gt.0) then
-        call dslash_split_nonlocal(Phi,R,u,chunk,mu,2,init)
+        call dslash_split_nonlocal(Phi,R,u,chunk,mu,1,init)
       else if(mu.lt.0) then
-        call dslash_split_nonlocal(Phi,R,u,chunk,-mu,1,init)
+        call dslash_split_nonlocal(Phi,R,u,chunk,-mu,-1,init)
 
       endif
     endif
@@ -87,7 +87,8 @@ contains
 
   end subroutine
 
-  pure subroutine dslash_split_nonlocal(Phi,R,u,chunk,mu,v,init)
+  !pure subroutine dslash_split_nonlocal(Phi,R,u,chunk,mu,v,init)
+  subroutine dslash_split_nonlocal(Phi,R,u,chunk,mu,v,init)
     use dirac
     implicit none
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -295,9 +296,9 @@ contains
         call MPI_Wait(tdhrr(halo_to_wait_for),MPI_STATUS_IGNORE,ierr)
       endif
       if(mu.gt.0) then
-        call dslashd_split_nonlocal(Phi,R,u,chunk,mu,2,init)
+        call dslashd_split_nonlocal(Phi,R,u,chunk,mu,1,init)
       else if(mu.lt.0) then
-        call dslashd_split_nonlocal(Phi,R,u,chunk,-mu,1,init)
+        call dslashd_split_nonlocal(Phi,R,u,chunk,-mu,-1,init)
 
       endif
     endif
@@ -343,7 +344,7 @@ contains
                 &    -akappa*(u(ix,iy,it,mu) &
                   &              * R(:, ix+ixup, iy+iyup, it+itup, idirac)) &
                   ! Dirac term (antihermitian)
-                &     + gamval(mu,idirac) * &
+                &     - gamval(mu,idirac) * &
                   &       (u(ix,iy,it,mu) &
                   &         * R(:, ix+ixup, iy+iyup, it+itup, igork) )
               enddo
@@ -361,7 +362,7 @@ contains
                 &    -akappa*( conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
                   &              * R(:, ix-ixup, iy-iyup, it-itup, idirac)) &
                   ! Dirac term (antihermitian)
-                &     + gamval(mu,idirac) * &
+                &     - gamval(mu,idirac) * &
                   &       (- conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
                   &         * R(:, ix-ixup, iy-iyup, it-itup, igork))
               enddo
@@ -381,7 +382,7 @@ contains
                 &    -akappa*(u(ix,iy,it,mu) &
                   &              * R(:, ix+ixup, iy+iyup, it+itup, idirac)) &
                   ! Dirac term (antihermitian)
-                &     + gamval(mu,idirac) * &
+                &     - gamval(mu,idirac) * &
                   &       (u(ix,iy,it,mu) &
                   &         * R(:, ix+ixup, iy+iyup, it+itup, igork) )
               enddo
@@ -399,7 +400,7 @@ contains
                 &    -akappa*( conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
                   &              * R(:, ix-ixup, iy-iyup, it-itup, idirac)) &
                   ! Dirac term (antihermitian)
-                &     + gamval(mu,idirac) * &
+                &     - gamval(mu,idirac) * &
                   &       (- conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
                   &         * R(:, ix-ixup, iy-iyup, it-itup, igork))
               enddo
