@@ -6,9 +6,6 @@ module dirac_split
   implicit none
   save
 
-  complex(dp) :: gamval(6,4)
-  integer :: gamin(6,4)
-
   logical :: dslash_swd(-3:3,-1:1,-1:1,-1:1)  ! DSLASH Split Work Done
   logical :: dslashd_swd(-3:3,-1:1,-1:1,-1:1) ! DSLASHD Split Work Done
 
@@ -87,13 +84,12 @@ contains
 
   end subroutine
 
-  pure subroutine dslash_split_nonlocal(Phi,R,u,am,imass,chunk,mu,v,init)
+  pure subroutine dslash_split_nonlocal(Phi,R,u,chunk,mu,v,init)
+    use dirac
     implicit none
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
-    real, intent(in) :: am
-    integer, intent(in) :: imass
     integer, intent(in) :: chunk(2,3) ! portion of array to operate on
     integer, intent(in) :: mu ! 1 <= mu <= 3
     integer, intent(in) :: v
@@ -309,13 +305,12 @@ contains
 
 
 
-  pure subroutine dslashd_split_nonlocal(Phi,R,u,am,imass,chunk,mu,v,init)
+    pure subroutine dslashd_split_nonlocal(Phi,R,u,chunk,mu,v,init)
+    use dirac
     implicit none
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
-    real, intent(in) :: am
-    integer, intent(in) :: imass
     integer, intent(in) :: chunk(2,3) ! portion of array to operate on
     integer, intent(in) :: mu
     integer, intent(in) :: v
