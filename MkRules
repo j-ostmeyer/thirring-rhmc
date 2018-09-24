@@ -37,7 +37,8 @@ $(info FCFLAGS : $(FCFLAGS))
 LIBOBJS = avgitercounts.o dirac.o dum1.o dwf3d_lib.o \
        gauge.o gaussian.o gforce.o measure_module.o params.o \
        qmrherm_module.o remez.o remezg.o trial.o vector.o\
-       comms.o random.o partitioning.o comms_partitioning.o
+       comms.o random.o partitioning.o comms_partitioning.o \
+       dirac_split.o
 
 
 .PHONY: clean
@@ -63,6 +64,10 @@ comms_partitioning.o : $(TOPDIR)/comms_partitioning.F90 .makefile.uptodate \
 	$(COMPILE) -o $*.o $<
 
 dirac.o : $(TOPDIR)/dirac.F90 .makefile.uptodate params.mod comms.mod
+	$(COMPILE) -o $*.o $<
+
+dirac_split.o : $(TOPDIR)/dirac_split.F90 .makefile.uptodate params.mod \
+    comms.mod dirac.mod partitioning.mod
 	$(COMPILE) -o $*.o $<
 
 avgitercounts.o : $(TOPDIR)/avgitercounts.F90 \
