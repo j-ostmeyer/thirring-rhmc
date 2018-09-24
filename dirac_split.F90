@@ -35,7 +35,8 @@ contains
     endif
   end subroutine
 
-! DSLASH
+! DSLASH 
+
   subroutine dslash_split(Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr)
     use partitioning
     use mpi_f08
@@ -255,7 +256,6 @@ contains
     return
   end subroutine dslash_split_local
 
-
 ! DSLASHD
   subroutine dslashd_split(Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr)
     use partitioning
@@ -411,7 +411,7 @@ contains
 
   end subroutine dslashd_split_nonlocal 
 
-  pure subroutine dslash_split_local(Phi,R,am,imass,chunk,init)
+  pure subroutine dslashd_split_local(Phi,R,am,imass,chunk,init)
     implicit none
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -433,49 +433,48 @@ contains
     diag=(3.0-am3)+1.0
     if(init)then
       Phi(:,xd:xu,yd:yu,td:tu,:) = diag * R(:,xd:xu,yd:yu,td:tu,:)
-    else! not init
-      Phi(:,xd:xu,yd:yu,td:tu,:) = Phi(:,xd:xu,yd:yu,td:tu,:) + &
-       & diag * R(:,xd:xu,yd:yu,td:tu,:)
+    else ! not init
+      Phi(:,xd:xu,yd:yu,td:tu,:) = Phi(:,xd:xu,yd:yu,td:tu,:) +&
+        & diag * R(:,xd:xu,yd:yu,td:tu,:)
     endif
-    !      
-    !  s-like term exploiting projection
-    Phi(1:kthird-1, xd:xu, yd:yu, td:tu, 3:4) &
-      & = Phi(1:kthird-1, xd:xu, yd:yu, td:tu, 3:4) &
-      & - R(2:kthird, xd:xu, yd:yu, td:tu, 3:4)
-    Phi(2:kthird, xd:xu, yd:yu, td:tu, 1:2) &
-      & = Phi(2:kthird, xd:xu, yd:yu, td:tu, 1:2) &
-      & - R(1:kthird-1, xd:xu, yd:yu, td:tu, 1:2)
-    !
-    !  Mass term (couples the two walls unless imass=5)
-    if (imass.eq.1) then
-      zkappa=cmplx(am,0.0)
-      Phi(kthird, xd:xu, yd:yu, td:tu, 3:4) = &
-        & Phi(kthird, xd:xu, yd:yu, td:tu, 3:4) &
-        & + zkappa * R(1, xd:xu, yd:yu, td:tu, 3:4)
-      Phi(1, xd:xu, yd:yu, td:tu, 1:2) = &
-        & Phi(1, xd:xu, yd:yu, td:tu, 1:2) + &
-        & zkappa * R(kthird, xd:xu, yd:yu, td:tu, 1:2)
-    elseif (imass.eq.3) then
-      zkappa=cmplx(0.0,-am)
-      Phi(kthird, xd:xu, yd:yu, td:tu, 3:4) = &
-        & Phi(kthird, xd:xu, yd:yu, td:tu, 3:4) &
-        & - zkappa * R(1, xd:xu, yd:yu, td:tu, 3:4)
-      Phi(1, xd:xu, yd:yu, td:tu, 1:2) = &
-        & Phi(1, xd:xu, yd:yu, td:tu, 1:2) &
-        & + zkappa * R(kthird, xd:xu, yd:yu, td:tu, 1:2)
-    elseif (imass.eq.5) then
-      zkappa=cmplx(0.0,-am)
-      Phi(kthird, xd:xu, yd:yu, td:tu, 3:4) = &
-        & Phi(kthird, xd:xu, yd:yu, td:tu, 3:4) &
-        & - zkappa * R(kthird, xd:xu, yd:yu, td:tu, 1:2)
-      Phi(1, xd:xu, yd:yu, td:tu, 1:2) = &
-        & Phi(1, xd:xu, yd:yu, td:tu, 1:2) &
-        & - zkappa * R(1, xd:xu, yd:yu, td:tu, 3:4)
-    endif
-    !
-    return
-  end subroutine dslash_split_local
 
+    !   s-like term exploiting projection
+    Phi(1:kthird-1, xd:xu, yd:yu, td:tu, 1:2) &
+      & = Phi(1:kthird-1, xd:xu, yd:yu, td:tu, 1:2) &
+      & - R(2:kthird, xd:xu, yd:yu, td:tu, 1:2)
+    Phi(2:kthird, xd:xu, yd:yu, td:tu, 3:4) &
+      & = Phi(2:kthird, xd:xu, yd:yu, td:tu, 3:4) &
+      & - R(1:kthird-1, xd:xu, yd:yu, td:tu, 3:4)
+    !
+    !   Mass term (couples the two walls unless imass=5) 
+    if(imass.eq.1)then
+      zkappa=cmplx(am,0.0)
+      Phi(kthird, xd:xu, yd:yu, td:tu, 1:2) = &
+        & Phi(kthird, xd:xu, yd:yu, td:tu, 1:2) &
+        & + zkappa * R(1, xd:xu, yd:yu, td:tu, 1:2)
+      Phi(1, xd:xu, yd:yu, td:tu, 3:4) = &
+        & Phi(1, xd:xu, yd:yu, td:tu, 3:4) &
+        & + zkappa * R(kthird, xd:xu, yd:yu, td:tu, 3:4)
+    elseif(imass.eq.3)then
+      zkappa = cmplx(0.0,am)
+      Phi(kthird, xd:xu, yd:yu, td:tu, 1:2) = &
+        & Phi(kthird, xd:xu, yd:yu, td:tu, 1:2) &
+        & + zkappa * R(1, xd:xu, yd:yu, td:tu, 1:2)
+      Phi(1, xd:xu, yd:yu, td:tu, 3:4) = &
+        & Phi(1, xd:xu, yd:yu, td:tu, 3:4) &
+        & - zkappa * R(kthird, xd:xu, yd:yu, td:tu, 3:4)
+    elseif(imass.eq.5)then
+      zkappa = cmplx(0.0,am)
+      Phi(kthird, xd:xu, yd:yu, td:tu, 1:2) = &
+        & Phi(kthird, xd:xu, yd:yu, td:tu, 1:2) &
+        & - zkappa * R(kthird, xd:xu, yd:yu, td:tu, 3:4)
+      Phi(1, xd:xu, yd:yu, td:tu, 3:4) = &
+        & Phi(1,xd:xu, yd:yu, td:tu, 3:4) &
+        & - zkappa * R(1, xd:xu, yd:yu, td:tu, 1:2)
+    endif
+
+    return 
+  end subroutine dslashd_split_local
 
 end module dirac_split
 
