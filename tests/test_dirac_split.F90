@@ -39,7 +39,7 @@ program test_dirac_split
 
   ! check u=1
   u  = 1 ! so it's just a translation
-  do slicedir=1,1!3
+  do slicedir=1,3!3
     if(slicedir.eq.1)then
       do ix=0,ksizex_l+1
         r(:,ix,:,:,:) = ix
@@ -53,13 +53,10 @@ program test_dirac_split
         r(:,:,:,it,:) = it
       enddo
     endif
-    do ibpx=-1,-1!1
-      do ibpy=-1,-1!1
-        do ibpt=-1,-1!1
+    do ibpx=-1,1
+      do ibpy=-1,1
+        do ibpt=-1,1
           tchunk = border_partitions_cube(ibpx,ibpy,ibpt)%chunk
-          if(ip_global.eq.0)then
-            print*,tchunk
-          endif
           allocate(res(kthird,&
             tchunk(1,1):tchunk(2,1),&
             tchunk(1,2):tchunk(2,2),&
@@ -69,14 +66,11 @@ program test_dirac_split
             tchunk(1,2):tchunk(2,2),&
             tchunk(1,3):tchunk(2,3), 4))
 
-          do mu=1,2!3
+          do mu=1,3!3
             do iv=-1,1,2
               ! shifted tchunk
               tchunk_s = tchunk
               tchunk_s(:,mu) = tchunk(:,mu) + iv
-              if(ip_global.eq.0)then
-                print*,"tcs",tchunk_s
-              endif
 
               ! the modified portion of phi
               phimod => phi(:, tchunk(1,1):tchunk(2,1), &
@@ -93,25 +87,18 @@ program test_dirac_split
               res = r(:, tchunk_s(1,1):tchunk_s(2,1), &
                 tchunk_s(1,2):tchunk_s(2,2), &
                 tchunk_s(1,3):tchunk_s(2,3),:)
-              !if(ip_global.eq.0)then
-              !  print*,res(1,:,:,:,:)
-              !  print*,"----------------"
-              !  print*,"tchunk",tchunk
-              !  print*,"tchunk_s",tchunk_s
-              !  print*,'r011',r(1,0,1,1,:)
-              !  print*,'r211',r(1,2,1,1,:)
-              !endif
-
 
               do idirac=1,4
                 igork=gamin(mu,idirac)
-                tres(:,:,:,:,idirac)=gamval(mu,idirac)*res(:,:,:,:,igork)
+                tres(:,:,:,:,idirac)=iv*gamval(mu,idirac)*res(:,:,:,:,igork)
               enddo
+             
               res = -akappa*res + tres
 
               if(.not.all(phimod.eq.res).and.(ip_global.eq.0))then
                 write(6,"(A25,6I4)") "issue 1 with partition,dir,v",&
                 &                slicedir,ibpx,ibpy,ibpt,mu,iv
+                print*,"tres",tres(1,:,:,:,:)
                 print*,"exp",res(1,:,:,:,:)
                 print*,"phi",phimod(1,:,:,:,:)
               endif
@@ -160,7 +147,7 @@ program test_dirac_split
                 tchunk_s(1,3):tchunk_s(2,3),:)
               do idirac=1,4
                 igork=gamin(mu,idirac)
-                tres(:,:,:,:,idirac)=-gamval(mu,idirac)*res(:,:,:,:,igork)
+                tres(:,:,:,:,idirac)=-iv*gamval(mu,idirac)*res(:,:,:,:,igork)
               enddo
               res = -akappa*res + tres
 
