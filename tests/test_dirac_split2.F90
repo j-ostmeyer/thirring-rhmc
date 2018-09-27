@@ -1,6 +1,6 @@
 ! Checking that the nonlocal parts of dirac split work as intended
 ! NO MPI really used here
-! only u = 1 case
+! phi=1 here
 #include "test_utils.fh"
 program test_dirac_split
   use dwf3d_lib, only : init
@@ -17,6 +17,7 @@ program test_dirac_split
   integer :: tchunk(2,3)
   integer :: tchunk_s(2,3) ! tchunk Shifted
   integer :: slicedir
+  integer :: idir
 
   integer :: idirac,igork
 
@@ -39,21 +40,23 @@ program test_dirac_split
   call init_partitioning()
 
   ! check u=1
-  u  = 1 ! so it's just a translation
-  do slicedir=1,3!3
-    if(slicedir.eq.1)then
-      do ix=0,ksizex_l+1
-        r(:,ix,:,:,:) = ix
-      enddo
-    elseif(slicedir.eq.2)then
-      do iy=0,ksizey_l+1
-        r(:,:,iy,:,:) = iy
-      enddo
-    elseif(slicedir.eq.3)then
-      do it=0,ksizet_l+1
-        r(:,:,:,it,:) = it
-      enddo
-    endif
+  r = 1 ! so the result will be just u
+  do slicedir=1,3
+    do idir=1,3
+      if(slicedir.eq.1)then
+        do ix=0,ksizex_l+1
+          u(ix,:,:,idir) = complex(ix*idir,ix*idir)
+        enddo
+      elseif(slicedir.eq.2)then
+        do iy=0,ksizey_l+1
+          u(:,iy,:,idir) = complex(iy*idir,iy*idir)
+        enddo
+      elseif(slicedir.eq.3)then
+        do it=0,ksizet_l+1
+          u(:,:,it,idir) = complex(it*idir,it*idir)
+        enddo
+      endif
+    enddo
     do ibpx=-1,1
       do ibpy=-1,1
         do ibpt=-1,1
@@ -85,9 +88,19 @@ program test_dirac_split
               call dslash_split_nonlocal(phi,r,u,tchunk,mu,iv,.true.)
 
               ! computing expected result
-              res = r(:, tchunk_s(1,1):tchunk_s(2,1), &
+              res(1,:,:,:,1) = u(tchunk_s(1,1):tchunk_s(2,1), &
                 tchunk_s(1,2):tchunk_s(2,2), &
-                tchunk_s(1,3):tchunk_s(2,3),:)
+                tchunk_s(1,3):tchunk_s(2,3),mu)
+              do ithird=2,kthird
+                res(ithird,:,:,:,1) = res(1,:,:,:,1)
+              enddo
+              do idirac=1,4
+                res(:,:,:,:,idirac) = res(:,:,:,:,idirac)
+              enddo
+
+              if(iv.eq.-1)then
+                res = conjg(res)
+              endif
 
               do idirac=1,4
                 igork=gamin(mu,idirac)
@@ -143,13 +156,26 @@ program test_dirac_split
               call dslashd_split_nonlocal(phi,r,u,tchunk,mu,iv,.true.)
 
               ! computing expected result
-              res = r(:,tchunk_s(1,1):tchunk_s(2,1), &
+
+              res(1,:,:,:,1) = u(tchunk_s(1,1):tchunk_s(2,1), &
                 tchunk_s(1,2):tchunk_s(2,2), &
-                tchunk_s(1,3):tchunk_s(2,3),:)
+                tchunk_s(1,3):tchunk_s(2,3),mu)
+              do ithird=2,kthird
+                res(ithird,:,:,:,1) = res(1,:,:,:,1)
+              enddo
+              do idirac=1,4
+                res(:,:,:,:,idirac) = res(:,:,:,:,idirac)
+              enddo
+              if(iv.eq.1)then
+                res = conjg(res)
+              endif
+
+
               do idirac=1,4
                 igork=gamin(mu,idirac)
                 tres(:,:,:,:,idirac)=-iv*gamval(mu,idirac)*res(:,:,:,:,igork)
               enddo
+
               res = -akappa*res + tres
 
 
