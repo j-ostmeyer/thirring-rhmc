@@ -53,7 +53,7 @@ contains
     ! Temp DSlash Split Work Done
     logical, intent(inout) :: tdsswd(-3:3,-1:1,-1:1,-1:1)
     ! Temp Dirac Halo Recv Requests
-    type(MPI_Request),intent(in) :: tdhrr(54)
+    type(MPI_Request),intent(inout) :: tdhrr(54)
 
     integer :: chunk(2,3)
     logical :: init
@@ -274,7 +274,7 @@ contains
     ! Temp DSlash Split Work Done
     logical, intent(inout) :: tdsswd(-3:3,-1:1,-1:1,-1:1)
     ! Temp Dirac Halo Recv Requests
-    type(MPI_Request),intent(in) :: tdhrr(54)
+    type(MPI_Request),intent(inout) :: tdhrr(54)
 
     integer :: chunk(2,3)
     logical :: init

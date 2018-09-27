@@ -1,3 +1,5 @@
+#include "test_utils.fh"
+program test_dslash_split
   use mpi_f08
   use params
   use dwf3d_lib
@@ -90,7 +92,7 @@
     call update_halo_5(4, Phi)
 #endif
   end do
-  ! check output
+!  ! check output
   if (generate) then
     write_file(Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_dslash_1.dat', MPI_Double_Complex)
   else
@@ -119,6 +121,7 @@ subroutine dslash(phi,r,u,am,imass)
   integer, intent(in) :: imass
 
   integer :: ichunk(3)
+  integer :: ipx,ipy,ipt
   integer :: mu
 
   type(MPI_Request) :: dirac_border_send_reqs(54) 
@@ -132,17 +135,21 @@ subroutine dslash(phi,r,u,am,imass)
   call get_dirac_recvreqs(dirac_halo_recv_reqs,R)
 
   call MPI_StartAll(54,dirac_border_send_reqs,ierr)
-  call MPI_StartAll(54,dirac_border_recv_reqs,ierr)
+  call MPI_StartAll(54,dirac_halo_recv_reqs,ierr)
 
   dslash_swd = .false.
-  do ichunk(1)=-1,1
-    do ichunk(2)=-1,1
-      do ichunk(3)=-1,1
+  do ipt=-1,1
+    do ipy=-1,1
+      do ipx=-1,1
+        ichunk = (/ipx,ipy,ipt/)
         do mu=-3,3
           call dslash_split(Phi,R,u,am,imass,ichunk,mu,border_partitions_cube,&
-                  &         dslash_swd,dirac_border_recv_reqs)
+                  &         dslash_swd,dirac_halo_recv_reqs)
         enddo
       enddo
     enddo
   enddo
+  if(.not.all(dslash_swd))then
+    print*,"Some work not done"
+  endif
 end subroutine dslash
