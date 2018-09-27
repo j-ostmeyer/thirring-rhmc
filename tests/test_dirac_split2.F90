@@ -18,6 +18,7 @@ program test_dirac_split
   integer :: tchunk_s(2,3) ! tchunk Shifted
   integer :: slicedir
   integer :: idir
+  integer :: ithird
 
   integer :: idirac,igork
 
@@ -41,25 +42,25 @@ program test_dirac_split
 
   ! check u=1
   r = 1 ! so the result will be just u
-  do slicedir=1,3
+  do slicedir=1,3!3
     do idir=1,3
       if(slicedir.eq.1)then
         do ix=0,ksizex_l+1
-          u(ix,:,:,idir) = complex(ix*idir,ix*idir)
+          u(ix,:,:,idir) = cmplx(ix*idir,ix*idir)
         enddo
       elseif(slicedir.eq.2)then
         do iy=0,ksizey_l+1
-          u(:,iy,:,idir) = complex(iy*idir,iy*idir)
+          u(:,iy,:,idir) = cmplx(iy*idir,iy*idir)
         enddo
       elseif(slicedir.eq.3)then
         do it=0,ksizet_l+1
-          u(:,:,it,idir) = complex(it*idir,it*idir)
+          u(:,:,it,idir) = cmplx(it*idir,it*idir)
         enddo
       endif
     enddo
-    do ibpx=-1,1
-      do ibpy=-1,1
-        do ibpt=-1,1
+    do ibpx=-1,1!1
+      do ibpy=-1,1!1
+        do ibpt=-1,1!1
           tchunk = border_partitions_cube(ibpx,ibpy,ibpt)%chunk
           allocate(res(kthird,&
             tchunk(1,1):tchunk(2,1),&
@@ -71,7 +72,7 @@ program test_dirac_split
             tchunk(1,3):tchunk(2,3), 4))
 
           do mu=1,3!3
-            do iv=-1,1,2
+            do iv=-1,1,2!1
               ! shifted tchunk
               tchunk_s = tchunk
               tchunk_s(:,mu) = tchunk(:,mu) + iv
@@ -88,14 +89,22 @@ program test_dirac_split
               call dslash_split_nonlocal(phi,r,u,tchunk,mu,iv,.true.)
 
               ! computing expected result
-              res(1,:,:,:,1) = u(tchunk_s(1,1):tchunk_s(2,1), &
-                tchunk_s(1,2):tchunk_s(2,2), &
-                tchunk_s(1,3):tchunk_s(2,3),mu)
+
+              if(iv.eq.-1)then
+                res(1,:,:,:,1) = u(tchunk_s(1,1):tchunk_s(2,1), &
+                  tchunk_s(1,2):tchunk_s(2,2), &
+                  tchunk_s(1,3):tchunk_s(2,3),mu)
+              else
+                res(1,:,:,:,1) = u(tchunk(1,1):tchunk(2,1), &
+                  tchunk(1,2):tchunk(2,2), &
+                  tchunk(1,3):tchunk(2,3),mu)
+              endif
+
               do ithird=2,kthird
                 res(ithird,:,:,:,1) = res(1,:,:,:,1)
               enddo
-              do idirac=1,4
-                res(:,:,:,:,idirac) = res(:,:,:,:,idirac)
+              do idirac=2,4
+                res(:,:,:,:,idirac) = res(:,:,:,:,1)
               enddo
 
               if(iv.eq.-1)then
@@ -157,16 +166,23 @@ program test_dirac_split
 
               ! computing expected result
 
-              res(1,:,:,:,1) = u(tchunk_s(1,1):tchunk_s(2,1), &
-                tchunk_s(1,2):tchunk_s(2,2), &
-                tchunk_s(1,3):tchunk_s(2,3),mu)
+              if(iv.eq.-1)then
+                res(1,:,:,:,1) = u(tchunk_s(1,1):tchunk_s(2,1), &
+                  tchunk_s(1,2):tchunk_s(2,2), &
+                  tchunk_s(1,3):tchunk_s(2,3),mu)
+              else
+                res(1,:,:,:,1) = u(tchunk(1,1):tchunk(2,1), &
+                  tchunk(1,2):tchunk(2,2), &
+                  tchunk(1,3):tchunk(2,3),mu)
+              endif
+
               do ithird=2,kthird
                 res(ithird,:,:,:,1) = res(1,:,:,:,1)
               enddo
-              do idirac=1,4
-                res(:,:,:,:,idirac) = res(:,:,:,:,idirac)
+              do idirac=2,4
+                res(:,:,:,:,idirac) = res(:,:,:,:,1)
               enddo
-              if(iv.eq.1)then
+              if(iv.eq.-1)then
                 res = conjg(res)
               endif
 
