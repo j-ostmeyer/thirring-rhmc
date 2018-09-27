@@ -1,6 +1,6 @@
 ! Checking that the MPI_datatype sizes match the sizes of the partitions
 #include "test_utils.fh"
-program test_partitioning
+program test_comms_partitioning
   use mpi_f08
   use params
   use partitioning
