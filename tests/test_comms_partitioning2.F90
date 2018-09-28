@@ -53,8 +53,6 @@ program test_partitioning
   if(.not.check_cube_eq(buftr,bufts))then
     print *,"X dir:problem on rank",ip_x,ip_y,ip_t,sum((buftr-bufts)**2)
     print*,int(real(buftr(1,:,1,1,1))),ip_x
-  else
-    print *,"X dir: ok on rank",ip_x,ip_y,ip_t
   endif
 
 
@@ -76,8 +74,6 @@ program test_partitioning
 
   if(.not.check_cube_eq(buftr,bufts))then
     print *,"Y dir:problem on rank",ip_x,ip_y,ip_t,sum((buftr-bufts)**2)
-  else
-    print *,"Y dir:ok on rank",ip_x,ip_y,ip_t
   endif
 
   ! test t-dir
@@ -98,8 +94,6 @@ program test_partitioning
 
   if(.not.check_cube_eq(buftr,bufts))then
     print *,"T dir:problem on rank",ip_x,ip_y,ip_t,sum((buftr-bufts)**2)
-  else
-    print *,"T dir:ok on rank",ip_x,ip_y,ip_t
   endif
 
 #ifdef MPI

@@ -33,7 +33,6 @@ program test_comms_partitioning
 
 
   call MPI_Barrier(comm,ierr)
-  print*,"Initializing border types"
   call MPI_Barrier(comm,ierr)
   call init_dirac_border_types(dirac_border_dts,border_partitions_list)
 
@@ -61,7 +60,6 @@ program test_comms_partitioning
   endif
 
   call MPI_Barrier(comm,ierr)
-  print*,"Initializing halo types"
   call MPI_Barrier(comm,ierr)
   call init_dirac_halo_types(dirac_halo_dts,halo_partitions_list)
 
