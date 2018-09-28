@@ -147,7 +147,7 @@ subroutine dslashd(phi,r,u,am,imass)
         ichunk = (/ipx,ipy,ipt/)
         do mu=-3,3
           call dslashd_split(Phi,R,u,am,imass,ichunk,mu,border_partitions_cube,&
-                  &         dslashd_swd,dirac_halo_recv_reqs)
+                  &    dslashd_swd,dirac_halo_recv_reqs,dirac_border_send_reqs)
         enddo
       enddo
     enddo
@@ -155,4 +155,5 @@ subroutine dslashd(phi,r,u,am,imass)
   if(.not.all(dslashd_swd))then
     print*,"Some work not done"
   endif
+  call MPI_WaitAll(54,dirac_border_send_reqs,ierr)
 end subroutine dslashd

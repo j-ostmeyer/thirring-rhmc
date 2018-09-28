@@ -19,33 +19,9 @@ module dirac_split
 
 contains 
 
-  subroutine check_work_and_start_transfer(tdswd,tbpc,ichunk,sreqs)
-    use mpi_f08
-    use partitioning
-    implicit none
-    !Temp DSLASH(D) Split Work Done
-    logical, intent(in) :: tdswd(-3:3,-1:1,-1:1,-1:1) 
-    ! Temp Border Partition Cube
-    type(localpart), intent(in) :: tbpc(-1:1,-1:1,-1:1)
-    integer,intent(in) :: ichunk(3) ! portion of array to operate on 
-    type(MPI_Request) :: sreqs(54) ! persistent Send REQuestS
-
-    integer :: nn,inn
-    type(localpart) :: tpart
-    integer :: ierr
-
-    if(all(tdswd(:,ichunk(1),ichunk(2),ichunk(3))))then
-      tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
-      nn = tpart%nn
-      do inn=1,nn
-        call MPI_Start(sreqs(tpart%ahpss(inn)),ierr)
-      enddo
-    endif
-  end subroutine
-
 ! DSLASH 
 
-  subroutine dslash_split(Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr)
+  subroutine dslash_split(Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr,tdbsr)
     use partitioning
     use mpi_f08
     implicit none
@@ -62,6 +38,9 @@ contains
     logical, intent(inout) :: tdsswd(-3:3,-1:1,-1:1,-1:1)
     ! Temp Dirac Halo Recv Requests
     type(MPI_Request),intent(inout) :: tdhrr(54)
+    ! Temp Dirac Border Send Requests
+    type(MPI_Request),intent(inout) :: tdbsr(54)
+
 
     integer :: chunk(2,3)
     logical :: init
@@ -92,6 +71,16 @@ contains
 
     ! flagging work done
     tdsswd(mu,ichunk(1),ichunk(2),ichunk(3)) = .true.
+    ! checking whether to send the partition already or not
+    if(all(tdswd(:,ichunk(1),ichunk(2),ichunk(3))))then
+      tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
+      do inn=1,tpart%nn
+        ! clearing send requests
+        call MPI_Wait(tdbsr(tpart%ahpss(inn)),MPI_STATUS_IGNORE,ierr)
+        ! restarting send request
+        call MPI_Start(tdbsr(tpart%ahpss(inn)),ierr)
+      enddo
+    endif
 
   end subroutine
 
@@ -266,7 +255,7 @@ contains
   end subroutine dslash_split_local
 
 ! DSLASHD
-  subroutine dslashd_split(Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr)
+  subroutine dslashd_split(Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr,tdbsr)
     use partitioning
     use mpi_f08
     implicit none
@@ -283,6 +272,10 @@ contains
     logical, intent(inout) :: tdsswd(-3:3,-1:1,-1:1,-1:1)
     ! Temp Dirac Halo Recv Requests
     type(MPI_Request),intent(inout) :: tdhrr(54)
+    ! Temp Dirac Border Send Requests
+    type(MPI_Request),intent(inout) :: tdbsr(54)
+
+
 
     integer :: chunk(2,3)
     logical :: init
@@ -313,6 +306,17 @@ contains
 
     ! flagging work done
     tdsswd(mu,ichunk(1),ichunk(2),ichunk(3)) = .true. 
+    ! checking whether to send the partition already or not
+    if(all(tdswd(:,ichunk(1),ichunk(2),ichunk(3))))then
+      tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
+      do inn=1,tpart%nn
+        ! clearing send requests
+        call MPI_Wait(tdbsr(tpart%ahpss(inn)),MPI_STATUS_IGNORE,ierr)
+        ! restarting send request
+        call MPI_Start(tdbsr(tpart%ahpss(inn)),ierr)
+      enddo
+    endif
+
 
   end subroutine
 
