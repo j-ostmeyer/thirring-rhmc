@@ -91,6 +91,12 @@ contains
     enddo
   end subroutine
 
+  subroutine init_dirac_hb_types()
+    use partitioning
+    call init_dirac_halo_types(dirac_halo_dts,halo_partitions_list)
+    call init_dirac_border_types(dirac_border_dts,border_partitions_list)
+  end subroutine
+
   ! for convenience. GLOBAL data structures must be initialised first!
   subroutine get_dirac_sendreqs(sreqs,bufts)
     use partitioning
@@ -137,11 +143,6 @@ contains
     call create_dprreqs(rreqs,buftr,dirac_halo_dts,halo_partitions_list)
   end subroutine
 
-  subroutine init_dirac_hb_types()
-    use partitioning
-    call init_dirac_halo_types(dirac_halo_dts,halo_partitions_list)
-    call init_dirac_border_types(dirac_border_dts,border_partitions_list)
-  end subroutine
 
 
 
