@@ -12,10 +12,10 @@ module dirac_split
   ! list of partitions, indexed by ipx,ipy and ipt partition coordinates, 
   ! and mu.
   ! with  -1 <= ip[xyt] <= 1, -3 <= mu <= 3
-  ! we assume the same ordering for dslash and dslashd for simplicity
-  ! in principle it can differ for dslash and dslashd and also depend on 
-  ! the subroutine they are used in (qmrherm or congrad)
+  ! in principle it can also depend on the subroutine they are used in 
+  ! (qmrherm or congrad)
   integer :: dslash_work_ordering(4,27*7)
+  integer :: dslashd_work_ordering(4,27*7)
 
 contains 
 
@@ -491,18 +491,24 @@ contains
 
 
   ! A guess at the best ordering for computing pieces for work to do.
-  subroutine get_dslash_work_ordering(tdswo)
+  subroutine get_dslash_work_ordering(tdswo,bbf)
+    use comms
     implicit none
     ! Temp DSlash Work Ordering
     integer, intent(out) :: tdswo(4,27*7)
+    ! Bulk Before Flag
+    logical, intent(in) :: bbf
     ! Work Partition Count 
     integer :: wpc 
     integer :: ipx,ipy,ipt
     integer :: ips(3)
     integer :: ip2sum
     integer :: mu,musign,muabs
-    logical :: need_comms(-3:3,-1:1,-1:1,-1:1)
-
+    logical :: needs_comms_before(-3:3,-1:1,-1:1,-1:1)
+    ! Process Parity
+    ! It is actually not defined for odd-sized grids, but there's nothing 
+    ! better.
+    integer :: pp
 
     ! ARBITRARY, the order could be done differently
     ! e.g., all chunks that do not need communication first and then 
@@ -514,20 +520,30 @@ contains
           ! determining first wheter or not a workload needs communications
           do mu=-3,3
             if(mu.eq.0) then
-              need_comms(mu,ipx,ipy,ipt) = .false.
+              needs_comms_before(mu,ipx,ipy,ipt) = .false.
             else
               musign = sign(1,mu)
               muabs = abs(mu)
-              need_comms(mu,ipx,ipy,ipt) = musign.eq.ips(muabs)
+              needs_comms_before(mu,ipx,ipy,ipt) = musign.eq.ips(muabs)
             endif
           enddo
         enddo
       enddo
     enddo
 
-    ! selecting first the directions that don't need communications
-    ! vertices first, then edges, then faces, then bulk
-    do ip2sum=3,0,-1
+
+    wpc = 0
+
+    if(bbf)then ! Taking care of the bulk first
+      do mu=-3,3
+        wpc = wpc + 1
+        tdswo(:,wpc) = (/0,0,0,mu/)
+      enddo
+    endif
+
+    ! selecting first the directions that don't need communications before
+    ! vertices first, then edges, then faces (bulk treated separately)
+    do ip2sum=3,1,-1
       do ipt=-1,1
         do ipy=-1,1
           do ipx=-1,1
@@ -535,7 +551,8 @@ contains
             if((ipx**2+ipy**2+ipt**2).eq.ip2sum)then
               do mu=-3,3
                 ! selecting first the directions that don't need communications
-                if(.not.need_comms(mu,ipx,ipy,ipt))then
+                ! before
+                if(.not.needs_comms_before(mu,ipx,ipy,ipt))then
                   wpc = wpc + 1
                   tdswo(:,wpc) = (/ipx,ipy,ipt,mu/)
                 endif
@@ -546,17 +563,20 @@ contains
       enddo
     enddo
 
-    ! and then the directions that do
-    ! vertices first, then edges, then faces, then bulk
-    do ip2sum=3,0,-1
-      do ipt=-1,1
-        do ipy=-1,1
-          do ipx=-1,1
+    ! and then the directions that do need communications before
+    ! vertices first, then edges, then faces (bulk does not need communications
+    ! before)
+    ! trying to switch order in a red-black-grid-like fashion
+    pp = 2*mod(ip_x+ip_y+ip_t,2)-1
+    do ip2sum=3,1,-1
+      do ipt=-pp,pp,pp
+        do ipy=-pp,pp,pp
+          do ipx=-pp,pp,pp
             ! selecting vertices/edges/faces/bulk according to ip2sum
             if((ipx**2+ipy**2+ipt**2).eq.ip2sum)then
               do mu=-3,3
-                ! and then the directions that do
-                if(need_comms(mu,ipx,ipy,ipt))then
+                ! and then the directions that do need communications before
+                if(needs_comms_before(mu,ipx,ipy,ipt))then
                   wpc = wpc + 1
                   tdswo(:,wpc) = (/ipx,ipy,ipt,mu/)
                 endif
@@ -566,6 +586,15 @@ contains
         enddo
       enddo
     enddo
+
+  if(.not.bbf)then ! Taking care of the bulk last
+    do mu=-3,3
+      wpc = wpc + 1
+      tdswo(:,wpc) = (/0,0,0,mu/)
+    enddo
+  endif
+
+
 
   end subroutine
 
