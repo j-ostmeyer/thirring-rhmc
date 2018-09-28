@@ -8,16 +8,19 @@ program test_dirac_split
   use dirac_split
   implicit none
   integer :: lc
+  integer :: ierr
 
 #ifdef MPI
   call init_MPI
 #endif
-  if(ip_global.eq.0)then
-    call get_dslash_work_ordering(dslash_work_ordering)
-    do lc=1,27*7
-      print*,dslash_work_ordering(:,lc)
-    enddo
-  endif
+  call get_dslash_work_ordering(dslash_work_ordering,.false.)
+  call get_dslash_work_ordering(dslashd_work_ordering,.true.)
+  do lc=1,27*7
+    write(20+ip_global,"(4I4)") dslash_work_ordering(:,lc)
+  enddo
+  do lc=1,27*7
+    write(60+ip_global,"(4I4)") dslashd_work_ordering(:,lc)
+  enddo
  
 #ifdef MPI
   call MPI_Finalize(ierr)
