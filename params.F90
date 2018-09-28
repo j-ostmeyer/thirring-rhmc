@@ -39,8 +39,8 @@ module params
 #endif
 
   ! Control parameters
-  integer, parameter :: istart=1    !
-  integer, parameter :: iread=1      ! 
+  integer, parameter :: istart=-1   !
+  integer, parameter :: iread=0      ! 
   integer, parameter :: iwrite=1     !
   integer, parameter :: iprint=1     !
   integer, parameter :: iseed=0      ! 

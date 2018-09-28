@@ -10,8 +10,8 @@ module params
   ! benchmarking/profiling parameters
   integer :: timing_loops = 10
   ! Lattice parameters
-  #define KSIZE SEDKSIZE
-  #define KSIZET SEDKSIZE 
+#define KSIZE SEDKSIZE
+#define KSIZET SEDKSIZE 
   integer, parameter :: ksize=KSIZE, ksizet=KSIZET
   integer, parameter :: kthird=24
   integer, parameter :: kvol=ksize*ksize*ksizet
