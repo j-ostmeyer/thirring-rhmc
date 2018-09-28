@@ -9,6 +9,14 @@ module dirac_split
   logical :: dslash_swd(-3:3,-1:1,-1:1,-1:1)  ! DSLASH Split Work Done
   logical :: dslashd_swd(-3:3,-1:1,-1:1,-1:1) ! DSLASHD Split Work Done
 
+  ! list of partitions, indexed by ipx,ipy and ipt partition coordinates, 
+  ! and mu.
+  ! with  -1 <= ip[xyt] <= 1, -3 <= mu <= 3
+  ! we assume the same ordering for dslash and dslashd for simplicity
+  ! in principle it can differ for dslash and dslashd and also depend on 
+  ! the subroutine they are used in (qmrherm or congrad)
+  integer :: dslash_work_ordering(4,27*7)
+
 contains 
 
   subroutine check_work_and_start_transfer(tdswd,tbpc,ichunk,sreqs)
@@ -67,14 +75,14 @@ contains
     halo_to_wait_for = tpart%ahpsr(mu)
     ! checking if some work on the partition has already been done
     init = .not.any(tdsswd(:,ichunk(1),ichunk(2),ichunk(3)))
-
+    
+    if(halo_to_wait_for.ne.0) then
+      call MPI_Wait(tdhrr(halo_to_wait_for),MPI_STATUS_IGNORE,ierr)
+    endif
     if(mu.eq.0)then
       call dslash_split_local(Phi,R,am,imass,chunk,init)
     else 
-      if(halo_to_wait_for.ne.0) then
-        call MPI_Wait(tdhrr(halo_to_wait_for),MPI_STATUS_IGNORE,ierr)
-      endif
-      if(mu.gt.0) then
+     if(mu.gt.0) then
         call dslash_split_nonlocal(Phi,R,u,chunk,mu,1,init)
       else if(mu.lt.0) then
         call dslash_split_nonlocal(Phi,R,u,chunk,-mu,-1,init)
@@ -288,14 +296,14 @@ contains
     halo_to_wait_for = tpart%ahpsr(mu)
     ! checking if some work on the partition has already been done
     init = .not.any(tdsswd(:,ichunk(1),ichunk(2),ichunk(3)))
-
+    
+    if(halo_to_wait_for.ne.0) then
+      call MPI_Wait(tdhrr(halo_to_wait_for),MPI_STATUS_IGNORE,ierr)
+    endif
     if(mu.eq.0)then
       call dslashd_split_local(Phi,R,am,imass,chunk,init)
     else 
-      if(halo_to_wait_for.ne.0) then
-        call MPI_Wait(tdhrr(halo_to_wait_for),MPI_STATUS_IGNORE,ierr)
-      endif
-      if(mu.gt.0) then
+     if(mu.gt.0) then
         call dslashd_split_nonlocal(Phi,R,u,chunk,mu,1,init)
       else if(mu.lt.0) then
         call dslashd_split_nonlocal(Phi,R,u,chunk,-mu,-1,init)
@@ -477,9 +485,90 @@ contains
     return 
   end subroutine dslashd_split_local
 
+
+  ! A guess at the best ordering for computing pieces for work to do.
+  subroutine get_dslash_work_ordering(tdswo)
+    implicit none
+    ! Temp DSlash Work Ordering
+    integer, intent(out) :: tdswo(4,27*7)
+    ! Work Partition Count 
+    integer :: wpc 
+    integer :: ipx,ipy,ipt
+    integer :: ips(3)
+    integer :: ip2sum
+    integer :: mu,musign,muabs
+    logical :: need_comms(-3:3,-1:1,-1:1,-1:1)
+
+
+    ! ARBITRARY, the order could be done differently
+    ! e.g., all chunks that do not need communication first and then 
+    ! the ones that do.
+    do ipt=-1,1
+      do ipy=-1,1
+        do ipx=-1,1
+          ips = (/ipx,ipy,ipt/)
+          ! determining first wheter or not a workload needs communications
+          do mu=-3,3
+            if(mu.eq.0) then
+              need_comms(mu,ipx,ipy,ipt) = .false.
+            else
+              musign = sign(1,mu)
+              muabs = abs(mu)
+              need_comms(mu,ipx,ipy,ipt) = musign.eq.ips(muabs)
+            endif
+          enddo
+        enddo
+      enddo
+    enddo
+
+    ! selecting first the directions that don't need communications
+    ! vertices first, then edges, then faces, then bulk
+    do ip2sum=3,0,-1
+      do ipt=-1,1
+        do ipy=-1,1
+          do ipx=-1,1
+            ! selecting vertices/edges/faces/bulk according to ip2sum
+            if((ipx**2+ipy**2+ipt**2).eq.ip2sum)then
+              do mu=-3,3
+                ! selecting first the directions that don't need communications
+                if(.not.need_comms(mu,ipx,ipy,ipt))then
+                  wpc = wpc + 1
+                  tdswo(:,wpc) = (/ipx,ipy,ipt,mu/)
+                endif
+              enddo
+            endif
+          enddo
+        enddo
+      enddo
+    enddo
+
+    ! and then the directions that do
+    ! vertices first, then edges, then faces, then bulk
+    do ip2sum=3,0,-1
+      do ipt=-1,1
+        do ipy=-1,1
+          do ipx=-1,1
+            ! selecting vertices/edges/faces/bulk according to ip2sum
+            if((ipx**2+ipy**2+ipt**2).eq.ip2sum)then
+              do mu=-3,3
+                ! and then the directions that do
+                if(need_comms(mu,ipx,ipy,ipt))then
+                  wpc = wpc + 1
+                  tdswo(:,wpc) = (/ipx,ipy,ipt,mu/)
+                endif
+              enddo
+            endif
+          enddo
+        enddo
+      enddo
+    enddo
+
+  end subroutine
+
+
 end module dirac_split
 
 
 
 
-
+ 
