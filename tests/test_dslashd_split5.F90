@@ -155,4 +155,4 @@ subroutine dslashd(phi,r,u,am,imass)
   if(.not.all(dslashd_swd))then
     print*,"Some work not done"
   endif
-end subroutine dslash
+end subroutine dslashd
