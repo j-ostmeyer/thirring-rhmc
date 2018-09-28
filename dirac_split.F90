@@ -46,6 +46,7 @@ contains
     logical :: init
     integer :: halo_to_wait_for
     type(localpart) :: tpart
+    integer :: inn
     integer :: ierr
 
 
@@ -72,7 +73,7 @@ contains
     ! flagging work done
     tdsswd(mu,ichunk(1),ichunk(2),ichunk(3)) = .true.
     ! checking whether to send the partition already or not
-    if(all(tdswd(:,ichunk(1),ichunk(2),ichunk(3))))then
+    if(all(tdsswd(:,ichunk(1),ichunk(2),ichunk(3))))then
       tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
       do inn=1,tpart%nn
         ! clearing send requests
@@ -281,6 +282,7 @@ contains
     logical :: init
     integer :: halo_to_wait_for
     type(localpart) :: tpart
+    integer :: inn
     integer :: ierr
 
 
@@ -307,7 +309,7 @@ contains
     ! flagging work done
     tdsswd(mu,ichunk(1),ichunk(2),ichunk(3)) = .true. 
     ! checking whether to send the partition already or not
-    if(all(tdswd(:,ichunk(1),ichunk(2),ichunk(3))))then
+    if(all(tdsswd(:,ichunk(1),ichunk(2),ichunk(3))))then
       tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
       do inn=1,tpart%nn
         ! clearing send requests

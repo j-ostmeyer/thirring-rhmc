@@ -152,5 +152,5 @@ subroutine dslash(phi,r,u,am,imass)
   if(.not.all(dslash_swd))then
     print*,"Some work not done"
   endif
-  call MPI_WaitAll(54,dirac_border_send_reqs,ierr)
+  call MPI_WaitAll(54,dirac_border_send_reqs,MPI_STATUSES_IGNORE,ierr)
 end subroutine dslash
