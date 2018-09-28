@@ -1,5 +1,9 @@
 #!/usr/bin/python
 '''
+This script must be called with a 'stepname' as argument. Possible stepnames are
+written in the 'modes' dictionary, and should be invoked sequentially.
+Read all the notes.
+
 Fake mode: activated adding the word 'fake' to the argument list, uses MPI=fake
            in MkFlags.
 Detailed mode: activated adding the word 'detailed' to the argument list,
@@ -17,7 +21,8 @@ ksizes = [4,6,8,10,12,16]
 ####
        This is just to keep parameters out of the version control system.
 
-NOTE1: modes must be specified in all three phases, that is 'createdir', 'prepare' and 'run'.
+NOTE1: modes must be specified in all three phases, that is 'createdir', 'prepare', 
+       'writescripts' and 'run'.
 
 NOTE2: This script has many flaws. But it was built "on the way" without a precise idea
        of the final destination. E.g. : violation of the interface segregation principle.
@@ -195,7 +200,7 @@ def run(divs,ssize):
 modes = {
     'createdir' : createdir,
     'prepare': create_work_in_dir(prepare),
-    'runscripts' : create_work_in_dir(write_runscripts),
+    'writescripts' : create_work_in_dir(write_runscripts),
     'run' : create_work_in_dir(run)
 } 
 
