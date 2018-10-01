@@ -59,15 +59,20 @@ contains
     type(MPI_Request) :: Rsreqs(54), Rrreqs(54)
     type(MPI_Request) :: vtildsreqs(54), vtildrreqs(54)
 #endif
+    integer :: ichunk(3)
+    integer :: wpc
     ! initialize communications     
     call init_partitioning
+    ! MPI datatypes for send and receive
     call init_dirac_hb_types
+    ! MPI_requests
     call get_dirac_recvreqs(Rrreqs,R)
     call get_dirac_sendreqs(Rsreqs,R)
     call get_dirac_recvreqs(vtildrreqs,vtild)
     call get_dirac_sendreqs(vtildsreqs,vtild)
-
-
+    ! list of work 
+    call get_dslash_work_ordering(dslash_work_ordering,.false.) 
+    call get_dslash_work_ordering(dslashd_work_ordering,.true.)
 
     
     resid=sqrt(kthird*ksize*ksize*ksizet*4*res*res)
@@ -93,52 +98,50 @@ contains
     !do niter=1,20
     niter = 0
     go_on = .true.
+    call MPI_StartAll(54,Rrreqs,ierr)
+    call MPI_StartAll(54,Rsreqs,ierr)
+
     do while(niter.lt.max_qmr_iters .and. go_on )
       niter=niter+1
       itercg=itercg+1
       !
       !  Lanczos steps
       !
-      q = R / betaq
+      ! on the local lattice
+      q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = &
+        & R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) / betaq
+      ! q = R / betaq on the halo && call dslash(vtild,q,u,am,imass)
 
-      call dslash(vtild,q,u,am,imass)
+      ! starting recv requests for vtild
+      call MPI_StartAll(54,vtildrreqs,ierr)
+      dslash_swd = .false.
+      do wpc=1,27*7
+        ichunk = dslash_work_ordering(1:3,wpc)
+        mu = dslash_work_ordering(4,wpc)
+        call hbetaqdiv_dslash_split(q,betaq,vtild,R,u,am,imass,ichunk,mu,&
+          & border_partitions_cube,dslash_swd,Rreqs,vtildsreqs)
+      enddo
+
       alphatild = sum(real(conjg(vtild(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
         &                * vtild(:,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
-#ifdef MPI
-      !call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
-      call MPI_AllReduce(alphatild, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
-      alphatild = dp_reduction ! DEBUG
-#endif
- 
-#ifdef MPI
-      ! No way to hide communications here unfortunately
-      call dslashd(x3,vtild,u,am,imass,reqs_vtild)
-#else
-      call update_halo_5(4, vtild)
-      call dslashd(x3,vtild,u,am,imass)
-#endif
+      call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
 
-      R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = &
-        & x3(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
-        & - alphatild * q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
-        & - betaq * qm1
-#ifdef MPI
-      ! R will be needed at the start of the next iteration to compute q
-      ! so start updating the boundary
-      call MPI_Startall(12,reqs_R,ierr)
-      !call start_halo_update_5(4, R, 2, reqs_R)
-#else
-      call update_halo_5(4, R)
-#endif
+      ! starting recv requests for R
+      call MPI_StartAll(54,Rrreqs,ierr)
+      dslashd_swd = .false.
+      do wpc=1,27*7
+        ichunk = dslashd_work_ordering(1:3,wpc)
+        mu = dslash_work_ordering(4,wpc)
+        call dslashd_Rcomp_split(R,x3,alphatild,q,betaq,qm1,vtild,u,am,imass,ichunk,mu,&
+          & border_partitions_cube,dslashd_swd,vtildrreqs,Rsreqs)
+      enddo
+
       qm1 = q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
       !
       betaq0 = betaq
       betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:)) ** 2)
-#ifdef MPI
-      !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
-      call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
-      betaq = dp_reduction ! DEBUG
-#endif
+
+      call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
       betaq = sqrt(betaq)
       !
       alpha = alphatild + aden
@@ -184,11 +187,6 @@ contains
         endif
       endif
       !     
-#ifdef MPI
-      ! R will be needed at the start of the next iteration to compute q
-      ! so start updating the bounddary
-      call complete_halo_update(reqs_R)
-#endif
     enddo! do while(niter.lt.max_qmr_iters .and. go_on )
 
 
@@ -387,7 +385,9 @@ contains
 
 
   ! this subroutine merges the q = R / betaq step and dslash application
-  subroutine betaqdiv_dslash_split(tq,betaq,Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr,tdbsr)
+  ! WARNING: the q = R/ betaq is performed only on the halo,
+  !          it is assumed that q is already computed on the local lattice.
+  subroutine hbetaqdiv_dslash_split(tq,betaq,Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr,tdbsr)
     use partitioning
     use mpi_f08
     implicit none
@@ -409,6 +409,8 @@ contains
     type(MPI_Request),intent(inout) :: tdbsr(54)
 
     integer :: chunk(2,3)
+    ! CHUNK Shifted
+    integer :: chunk_s(2,3)
     logical :: init
     integer :: halo_to_wait_for
     type(localpart) :: tpart
@@ -422,28 +424,30 @@ contains
     halo_to_wait_for = tpart%ahpsr(mu)
     ! checking if some work on the partition has already been done
     init = .not.any(tdsswd(:,ichunk(1),ichunk(2),ichunk(3)))
-    
+
     if(halo_to_wait_for.ne.0) then
       call MPI_Wait(tdhrr(halo_to_wait_for),MPI_STATUS_IGNORE,ierr)
+
+      ! performing q = R/betaq first
+      chunk_s = chunk
+      chunk_s(:,abs(mu)) = chunk_s(:,abs(mu)) + sign(1,mu)
+      xd=chunk_s(1,1)
+      xu=chunk_s(2,1)
+      yd=chunk_s(1,2)
+      yu=chunk_s(2,2)
+      td=chunk_s(1,3)
+      tu=chunk_s(2,3)
+
+      tq(:,xd:xu,yd:yu,td:tu,:)=R(:,xd:xu,yd:yu,td:tu,:)/ betaq 
     endif
 
-    ! performing q = R/betaq first
-    xd=chunk(1,1)
-    xu=chunk(2,1)
-    yd=chunk(1,2)
-    yu=chunk(2,2)
-    td=chunk(1,3)
-    tu=chunk(2,3)
-
-    tq(:,xd:xu,yd:yu,td:tu,:)=R(:,xd:xu,yd:yu,td:tu,:)/ betaq 
-
     if(mu.eq.0)then
-      call dslash_split_local(Phi,q,am,imass,chunk,init)
+      call dslash_split_local(Phi,tq,am,imass,chunk,init)
     else 
       if(mu.gt.0) then
-        call dslash_split_nonlocal(Phi,q,u,chunk,mu,1,init)
+        call dslash_split_nonlocal(Phi,tq,u,chunk,mu,1,init)
       else if(mu.lt.0) then
-        call dslash_split_nonlocal(Phi,q,u,chunk,-mu,-1,init)
+        call dslash_split_nonlocal(Phi,tq,u,chunk,-mu,-1,init)
       endif
     endif
 
@@ -464,7 +468,7 @@ contains
   ! this subroutine merges the dslashd application and the 
   ! R = x3 - alphatild * q - betaq * qm1 
   ! steps
-  subroutine dslashd_split(R,x3,alphatild,tq,betaq,tqm1,vtild,u,am,imass,&
+  subroutine dslashd_Rcomp_split(R,x3,alphatild,tq,betaq,tqm1,vtild,u,am,imass,&
                           & ichunk,mu,tbpc,tdsswd,tdhrr,tdbsr)
     use partitioning
     use mpi_f08
@@ -490,8 +494,6 @@ contains
     ! Temp Dirac Border Send Requests
     type(MPI_Request),intent(inout) :: tdbsr(54)
 
-
-
     integer :: chunk(2,3)
     logical :: init
     integer :: halo_to_wait_for
@@ -499,7 +501,6 @@ contains
     integer :: inn
     integer :: xd,xu,yd,yu,td,tu ! portion of array to operate on
     integer :: ierr
-
 
     tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
     chunk = tpart%chunk
@@ -530,6 +531,9 @@ contains
     td=chunk(1,3)
     tu=chunk(2,3)
 
+    R(:,xd:xu,yd:yu,td:tu,:)=x3(:,xd:xu,yd:yu,td:tu,:) - &
+      & alphatild * tq(:,xd:xu,yd:yu,td:tu,:) - &
+      & betaq * tqm1(:,xd:xu,yd:yu,td:tu,:) 
 
     ! flagging work done
     tdsswd(mu,ichunk(1),ichunk(2),ichunk(3)) = .true. 
@@ -543,7 +547,6 @@ contains
         call MPI_Start(tdbsr(tpart%ahpss(inn)),ierr)
       enddo
     endif
-
 
   end subroutine
 
