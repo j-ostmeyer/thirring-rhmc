@@ -1,4 +1,4 @@
-module qmrherm_module
+module qmrherm_module_split
   use params
   implicit none
   complex(dp) :: vtild(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -86,12 +86,10 @@ contains
     x = anum(0) * Phi
 
     betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
-#ifdef MPI
     !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
     call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
     betaq = dp_reduction
 
-#endif 
     betaq = sqrt(betaq)
     phimod=betaq
     !
@@ -113,6 +111,7 @@ contains
       ! q = R / betaq on the halo && call dslash(vtild,q,u,am,imass)
 
       ! starting recv requests for vtild
+      ! send requests are started in hbetaqdiv_dslash_split
       call MPI_StartAll(54,vtildrreqs,ierr)
       dslash_swd = .false.
       do wpc=1,27*7
@@ -124,9 +123,12 @@ contains
 
       alphatild = sum(real(conjg(vtild(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
         &                * vtild(:,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
-      call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+      !call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+      call MPI_AllReduce(dp_reduction, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+      alphatil = dp_reduction
 
       ! starting recv requests for R
+      ! send requests are started in dslashd_Rcomp_split
       call MPI_StartAll(54,Rrreqs,ierr)
       dslashd_swd = .false.
       do wpc=1,27*7
@@ -141,7 +143,9 @@ contains
       betaq0 = betaq
       betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:)) ** 2)
 
-      call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+      !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+      call MPI_AllReduce(dp_reduction, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+      betaq =  dp_reduction
       betaq = sqrt(betaq)
       !
       alpha = alphatild + aden
@@ -387,6 +391,11 @@ contains
   ! this subroutine merges the q = R / betaq step and dslash application
   ! WARNING: the q = R/ betaq is performed only on the halo,
   !          it is assumed that q is already computed on the local lattice.
+  !          This complication arises from the fact that the values of q needed
+  !          for the dslash_calculation can be in a different partition from 
+  !          the one specified by ichunk - shifted by +-1 site in one of the 3 
+  !          directions.
+
   subroutine hbetaqdiv_dslash_split(tq,betaq,Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr,tdbsr)
     use partitioning
     use mpi_f08
@@ -415,7 +424,7 @@ contains
     integer :: halo_to_wait_for
     type(localpart) :: tpart
     integer :: inn
-    integer :: xd,xu,yd,yu,td,tu ! portion of array to operate on
+    integer :: xd,xu,yd,yu,td,tu ! portion of array to operate on (Phi)
     integer :: ierr
 
 
@@ -550,4 +559,4 @@ contains
 
   end subroutine
 
-end module qmrherm_module
+end module qmrherm_module_split
