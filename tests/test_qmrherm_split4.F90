@@ -2,7 +2,7 @@
 program test_qmrherm_4
   use inverter_checks
   use dwf3d_lib
-  use qmrherm_module_split, only : qmrherm, phi0, R, x1, qmrhprint => printall
+  use qmrherm_module_split, only : qmrherm_split, phi0, R, x1, qmrhprint => printall
   use trial
   use gforce
   use comms

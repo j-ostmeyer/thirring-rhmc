@@ -35,6 +35,7 @@ contains
     use partitioning
     use comms_partitioning
     use dirac_split
+    use dirac
     complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     integer, intent(in) :: imass, ndiagq, iflag, isweep, iter
     real(dp), intent(in) :: anum(0:ndiagq), aden(ndiagq)
@@ -52,14 +53,14 @@ contains
     integer :: niter, idiag
     logical :: go_on
 #ifdef MPI
-    type(MPI_Request), dimension(12) :: reqs_X2, reqs_vtild, reqs_Phi0, reqs_R, reqs_x
+    type(MPI_Request), dimension(12) :: reqs_X2, reqs_Phi0, reqs_R, reqs_x
     integer :: ierr
     real(dp) :: dp_reduction ! DEBUG
     ! For dirac split
     type(MPI_Request) :: Rsreqs(54), Rrreqs(54)
     type(MPI_Request) :: vtildsreqs(54), vtildrreqs(54)
 #endif
-    integer :: ichunk(3)
+    integer :: ichunk(3),mu
     integer :: wpc
     ! initialize communications     
     call init_partitioning
@@ -118,14 +119,18 @@ contains
         ichunk = dslash_work_ordering(1:3,wpc)
         mu = dslash_work_ordering(4,wpc)
         call hbetaqdiv_dslash_split(q,betaq,vtild,R,u,am,imass,ichunk,mu,&
-          & border_partitions_cube,dslash_swd,Rreqs,vtildsreqs)
+          & border_partitions_cube,dslash_swd,Rrreqs,vtildsreqs)
       enddo
 
       alphatild = sum(real(conjg(vtild(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
         &                * vtild(:,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
+      print *,"DIOCANE",alphatild
+      call MPI_Barrier(comm,ierr)
       !call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
       call MPI_AllReduce(dp_reduction, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
-      alphatil = dp_reduction
+      alphatild = dp_reduction
+  
+      print *,alphatild
 
       ! starting recv requests for R
       ! send requests are started in dslashd_Rcomp_split
@@ -133,7 +138,7 @@ contains
       dslashd_swd = .false.
       do wpc=1,27*7
         ichunk = dslashd_work_ordering(1:3,wpc)
-        mu = dslash_work_ordering(4,wpc)
+        mu = dslashd_work_ordering(4,wpc)
         call dslashd_Rcomp_split(R,x3,alphatild,q,betaq,qm1,vtild,u,am,imass,ichunk,mu,&
           & border_partitions_cube,dslashd_swd,vtildrreqs,Rsreqs)
       enddo
@@ -141,14 +146,18 @@ contains
       qm1 = q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
       !
       betaq0 = betaq
-      betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:)) ** 2)
 
+      betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:)) ** 2)
       !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
       call MPI_AllReduce(dp_reduction, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
       betaq =  dp_reduction
       betaq = sqrt(betaq)
+      print*,'betaq',betaq,ip_global
       !
       alpha = alphatild + aden
+      print*,'alpha',alpha,ip_global
+      call MPI_Barrier(comm,ierr)
+
       !
       if(niter.eq.1)then
         d = alpha
@@ -171,6 +180,7 @@ contains
         pm1 = p
         !     Convergence criterion (a bit ad hoc for now...)
         rhomax = real(maxval(abs(phimod * rho)))
+        print *,"RHOMAX:", rhomax, ip_global
         rhom1 = rho
         do idiag = 1, ndiagq
           x1(:, :, :, :, :, idiag) = &
@@ -302,7 +312,7 @@ contains
       write(6,*) "Qmrherm iterations,res:", itercg, res
     endif
     return
-  end subroutine qmrherm
+  end subroutine qmrherm_split
   !**********************************************************************
   !  iflag = 0 : evaluates Rdagger*(Mdagger)'*X2
   !  iflag = 1 : evaluates Rdagger*(M)'*X2
@@ -397,8 +407,10 @@ contains
   !          directions.
 
   subroutine hbetaqdiv_dslash_split(tq,betaq,Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr,tdbsr)
+    use params
     use partitioning
     use mpi_f08
+    use dirac_split
     implicit none
     complex(dp), intent(inout) :: tq(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real(dp), intent(in) :: betaq
@@ -481,13 +493,15 @@ contains
                           & ichunk,mu,tbpc,tdsswd,tdhrr,tdbsr)
     use partitioning
     use mpi_f08
+    use dirac_split
+    use comms ! DEBUG
     implicit none
     complex(dp), intent(out) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(out) :: x3(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real(dp), intent(in) :: alphatild
     complex(dp), intent(in) :: tq(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real(dp), intent(in) :: betaq
-    complex(dp), intent(in) :: tqm1(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: tqm1(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
     complex(dp), intent(in) :: vtild(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
     real, intent(in) :: am
@@ -530,7 +544,7 @@ contains
 
       endif
     endif
-    ! TODO: perform 
+
     ! R = x3 - alphatild * q - betaq * qm1 
     ! on the required partition
     xd=chunk(1,1)

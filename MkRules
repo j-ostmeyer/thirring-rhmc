@@ -39,7 +39,7 @@ LIBOBJS = avgitercounts.o dirac.o dum1.o dwf3d_lib.o \
        gauge.o gaussian.o gforce.o measure_module.o params.o \
        qmrherm_module.o remez.o remezg.o trial.o vector.o\
        comms.o random.o partitioning.o comms_partitioning.o \
-       dirac_split.o
+       dirac_split.o qmrherm_module_split.o
 
 
 .PHONY: clean

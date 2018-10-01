@@ -22,6 +22,7 @@ contains
 ! DSLASH 
 
   subroutine dslash_split(Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr,tdbsr)
+    use params
     use partitioning
     use mpi_f08
     implicit none
@@ -87,6 +88,7 @@ contains
 
   !pure subroutine dslash_split_nonlocal(Phi,R,u,chunk,mu,v,init)
   subroutine dslash_split_nonlocal(Phi,R,u,chunk,mu,v,init)
+    use params
     use dirac
     implicit none
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -191,6 +193,7 @@ contains
   end subroutine dslash_split_nonlocal 
 
   pure subroutine dslash_split_local(Phi,R,am,imass,chunk,init)
+    use params
     implicit none
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -257,6 +260,7 @@ contains
 
 ! DSLASHD
   subroutine dslashd_split(Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr,tdbsr)
+    use params
     use partitioning
     use mpi_f08
     implicit none
@@ -323,6 +327,7 @@ contains
   end subroutine
 
   pure subroutine dslashd_split_nonlocal(Phi,R,u,chunk,mu,v,init)
+    use params
     use dirac
     implicit none
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -427,6 +432,7 @@ contains
   end subroutine dslashd_split_nonlocal 
 
   pure subroutine dslashd_split_local(Phi,R,am,imass,chunk,init)
+    use params
     implicit none
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -494,6 +500,7 @@ contains
 
   ! A guess at the best ordering for computing pieces for work to do.
   subroutine get_dslash_work_ordering(tdswo,bbf)
+    use params
     use comms
     implicit none
     ! Temp DSlash Work Ordering
