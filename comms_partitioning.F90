@@ -12,6 +12,7 @@ module comms_partitioning
 contains
 
   subroutine init_dirac_halo_types(tdhdts,thpl)
+    use params
     use partitioning
     use mpi_f08
     implicit none
@@ -39,6 +40,7 @@ contains
   end subroutine
 
   subroutine init_dirac_border_types(tdbdts,tbpl)
+    use params
     use partitioning
     use mpi_f08
     implicit none
@@ -99,6 +101,7 @@ contains
 
   ! for convenience. GLOBAL data structures must be initialised first!
   subroutine get_dirac_sendreqs(sreqs,bufts)
+    use params
     use partitioning
     implicit none
     type(MPI_Request), intent(out) :: sreqs(54)! Send REQuestS
@@ -134,6 +137,7 @@ contains
  
   ! for convenience. GLOBAL data structures must be initialised first!
   subroutine get_dirac_recvreqs(rreqs,buftr)
+    use params
     use partitioning
     implicit none
     type(MPI_Request), intent(out) :: rreqs(54)! Recv REQuestS

@@ -85,12 +85,6 @@ program test_dslash_split
   ! call function
   do i = 1,timing_loops
     call dslash(Phi, R, u, am, imass)
-#ifdef MPI
-    call start_halo_update_5(4, Phi, 2, reqs_Phi)
-    call complete_halo_update(reqs_Phi)
-#else
-    call update_halo_5(4, Phi)
-#endif
   end do
 !  ! check output
   if (generate) then
@@ -109,6 +103,7 @@ end program
 
 
 subroutine dslash(phi,r,u,am,imass)
+  use params
   use dirac_split
   use partitioning
   use comms_partitioning
@@ -152,5 +147,7 @@ subroutine dslash(phi,r,u,am,imass)
   if(.not.all(dslash_swd))then
     print*,"Some work not done"
   endif
+  call MPI_StartAll(54,dirac_halo_recv_reqs,ierr)
+  call MPI_WaitAll(54,dirac_halo_recv_reqs,MPI_STATUSES_IGNORE,ierr) 
   call MPI_WaitAll(54,dirac_border_send_reqs,MPI_STATUSES_IGNORE,ierr)
 end subroutine dslash

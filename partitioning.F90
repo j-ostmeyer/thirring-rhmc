@@ -157,6 +157,14 @@ contains
               facecoord(1:idir-1)=ips(1:idir-1)
               facecoord(idir:2)=ips(idir+1:3)
               tag = 1+(facecoord(1)+1)+(facecoord(2)+1)*3
+              ! we need to distinguish between partitions on opposite faces
+              ! when they get sent to the sme rank (e.g., np_x == 1 or 2)
+              ! choosing to increment by 9 when sending to neighbour in the positive
+              ! direction
+              if(ips(idir).eq.1)then
+                 tag = tag + 9
+              endif
+              tag = tag + 18*idir
               
               tpart%tags(neighidx) = tag
 
@@ -187,7 +195,7 @@ contains
     integer :: tap(2,3,-2:2,-2:2,-2:2) ! Temp All Partitions
     integer :: ipx,ipy,ipt
     integer :: ipn,ipw ! ipw not actually used
-    integer :: ipxs(3)
+    integer :: ips(3)
     integer :: idir
     integer :: facecoord(2),tag
     integer :: ierr
@@ -201,22 +209,30 @@ contains
     do ipx=-2,2
       do ipy=-2,2
         do ipt=-2,2
-          ipxs = (/ ipx, ipy, ipt /)
-          discr = sum(ipxs**2)
+          ips = (/ ipx, ipy, ipt /)
+          discr = sum(ips**2)
           if((discr.ge.4).and.(discr.le.6)) then 
             tpart%chunk = tap(:,:,ipx,ipy,ipt)
             ! then we are in the halo. but not on the edges or on the vertices
             do idir=1,3 ! scanning for ipdx(idir)=+-2
-              if(ipxs(idir)**2.eq.4) then 
+              if(ips(idir)**2.eq.4) then 
                 ! getting neighbour
-                call MPI_Cart_Shift(comm, idir-1, ipxs(idir)/2, ipw, ipn,ierr)
+                call MPI_Cart_Shift(comm, idir-1, ips(idir)/2, ipw, ipn,ierr)
                 tpart%nn = ipn
 
                 ! computing tag
-                facecoord(1:idir-1)=ipxs(1:idir-1)
-                facecoord(idir:2)=ipxs(idir+1:3)
+                facecoord(1:idir-1)=ips(1:idir-1)
+                facecoord(idir:2)=ips(idir+1:3)
                 tag = 1+(facecoord(1)+1)+(facecoord(2)+1)*3
-
+                ! we need to distinguish between partitions on opposite faces
+                ! when they get sent to the sme rank (e.g., np_x == 1 or 2)
+                ! choosing to increment by 9 when sending to neighbour in the positive
+                ! direction 
+                if(ips(idir).eq.-2)then
+                   tag = tag + 9
+                endif
+                tag = tag + 18*idir
+ 
                 tpart%tag = tag
                 write(7+ip_global,"(5I4)"),ipx,ipy,ipt,ipn,tag
               endif

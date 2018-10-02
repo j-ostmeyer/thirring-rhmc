@@ -155,5 +155,7 @@ subroutine dslashd(phi,r,u,am,imass)
   if(.not.all(dslashd_swd))then
     print*,"Some work not done"
   endif
+  call MPI_StartAll(54,dirac_halo_recv_reqs,ierr)
+  call MPI_WaitAll(54,dirac_halo_recv_reqs,MPI_STATUSES_IGNORE,ierr) 
   call MPI_WaitAll(54,dirac_border_send_reqs,MPI_STATUSES_IGNORE,ierr)
 end subroutine dslashd
