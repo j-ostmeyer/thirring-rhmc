@@ -28,6 +28,7 @@ contains
   !*****************************************************************m
   subroutine qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, &
       & iter)
+    use params
     use trial, only: u
     use vector
     use gforce
@@ -90,16 +91,21 @@ contains
       itercg=itercg+1
       !
       !  Lanczos steps
-      !
+ 
+      call MPI_Barrier(comm,ierr)
+
       q = R / betaq
 
       call dslash(vtild,q,u,am,imass)
+
 #ifdef MPI
       ! No way to hide communications here unfortunately
       !call start_halo_update_5(4, vtild, 1, reqs_vtild)
       call MPI_Startall(12,reqs_vtild,ierr)
       !call complete_halo_update(reqs_vtild) ! Now this call happens in dslashd
+
       call dslashd(x3,vtild,u,am,imass,reqs_vtild)
+
 #else
       call update_halo_5(4, vtild)
       call dslashd(x3,vtild,u,am,imass)
@@ -108,16 +114,20 @@ contains
       !
       alphatild = sum(real(conjg(q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
         &                * x3(:,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
+
+
 #ifdef MPI
       !call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
       call MPI_AllReduce(alphatild, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
       alphatild = dp_reduction ! DEBUG
 #endif
-      !
+     !
       R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = &
         & x3(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
         & - alphatild * q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
         & - betaq * qm1
+      call MPI_Barrier(comm,ierr)
+
 #ifdef MPI
       ! R will be needed at the start of the next iteration to compute q
       ! so start updating the boundary

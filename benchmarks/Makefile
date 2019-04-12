@@ -17,7 +17,7 @@ endif
 
 
 
-BENCHMARKS = benchmark_congrad benchmark_qmrherm_1
+BENCHMARKS = benchmark_congrad benchmark_qmrherm_1 benchmark_qmrherm_split1
 
 default: $(BENCHMARKS)
 benchmarks: $(BENCHMARKS)

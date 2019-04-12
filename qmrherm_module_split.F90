@@ -28,6 +28,7 @@ contains
   !*****************************************************************m
   subroutine qmrherm_split(Phi, res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, &
       & iter)
+    use params
     use trial, only: u
     use vector
     use gforce
@@ -85,8 +86,8 @@ contains
     R = Phi
     qm1 = cmplx(0.0, 0.0)
     x = anum(0) * Phi
-
     betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
+
     !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
     call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
     betaq = dp_reduction
@@ -110,7 +111,6 @@ contains
       q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = &
         & R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) / betaq
       ! q = R / betaq on the halo && call dslash(vtild,q,u,am,imass)
-
       ! starting recv requests for vtild
       ! send requests are started in hbetaqdiv_dslash_split
       call MPI_StartAll(54,vtildrreqs,ierr)
@@ -121,16 +121,14 @@ contains
         call hbetaqdiv_dslash_split(q,betaq,vtild,R,u,am,imass,ichunk,mu,&
           & border_partitions_cube,dslash_swd,Rrreqs,vtildsreqs)
       enddo
-
-      alphatild = sum(real(conjg(vtild(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
-        &                * vtild(:,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
-      print *,"DIOCANE",alphatild
       call MPI_Barrier(comm,ierr)
+ 
+
+      alphatild = sum(abs(vtild(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
       !call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
-      call MPI_AllReduce(dp_reduction, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+      call MPI_AllReduce(alphatild,dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
       alphatild = dp_reduction
   
-      print *,alphatild
 
       ! starting recv requests for R
       ! send requests are started in dslashd_Rcomp_split
@@ -142,6 +140,8 @@ contains
         call dslashd_Rcomp_split(R,x3,alphatild,q,betaq,qm1,vtild,u,am,imass,ichunk,mu,&
           & border_partitions_cube,dslashd_swd,vtildrreqs,Rsreqs)
       enddo
+ 
+      call MPI_Barrier(comm,ierr)
 
       qm1 = q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
       !
@@ -149,13 +149,13 @@ contains
 
       betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:)) ** 2)
       !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
-      call MPI_AllReduce(dp_reduction, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+      call MPI_AllReduce(betaq,dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
       betaq =  dp_reduction
       betaq = sqrt(betaq)
-      print*,'betaq',betaq,ip_global
+      !print*,'betaq',betaq,ip_global
       !
       alpha = alphatild + aden
-      print*,'alpha',alpha,ip_global
+      !print*,'alpha',alpha,ip_global
       call MPI_Barrier(comm,ierr)
 
       !
@@ -180,7 +180,6 @@ contains
         pm1 = p
         !     Convergence criterion (a bit ad hoc for now...)
         rhomax = real(maxval(abs(phimod * rho)))
-        print *,"RHOMAX:", rhomax, ip_global
         rhom1 = rho
         do idiag = 1, ndiagq
           x1(:, :, :, :, :, idiag) = &
@@ -491,6 +490,7 @@ contains
   ! steps
   subroutine dslashd_Rcomp_split(R,x3,alphatild,tq,betaq,tqm1,vtild,u,am,imass,&
                           & ichunk,mu,tbpc,tdsswd,tdhrr,tdbsr)
+    use params
     use partitioning
     use mpi_f08
     use dirac_split
@@ -541,7 +541,6 @@ contains
         call dslashd_split_nonlocal(x3,vtild,u,chunk,mu,1,init)
       else if(mu.lt.0) then
         call dslashd_split_nonlocal(x3,vtild,u,chunk,-mu,-1,init)
-
       endif
     endif
 

@@ -2,3 +2,4 @@
 *.prot
 benchmark_congrad
 benchmark_qmrherm_1
+benchmark_qmrherm_split1
