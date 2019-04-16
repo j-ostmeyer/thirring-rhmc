@@ -29,7 +29,7 @@ module partitioning
 
   ! partitions as lists (contains only useful ones, but difficult to access)
   type(localpart) border_partitions_list(26)
-  type(halopart) halo_partitions_list(54)
+  type(halopart) halo_partitions_list(54) ! 6*9
 
   ! partitions as a cube (contains also useless ones, but easier to access)
   type(localpart) border_partitions_cube(-1:1,-1:1,-1:1)

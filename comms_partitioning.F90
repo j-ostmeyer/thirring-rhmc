@@ -74,7 +74,7 @@ contains
     use params
     use partitioning
     implicit none
-    type(MPI_Request), intent(out) :: sreqs(54)! Send REQuestS
+    type(MPI_Request), intent(out) :: sreqs(54)! Send REQuestS , 6*9
     !BUFfer To Send
     complex(dp),intent(in) :: bufts(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
     type(MPI_Datatype),intent(in) :: tsbdts(26) ! Temp Send Border Data TypeS
@@ -119,7 +119,7 @@ contains
     use params
     use partitioning
     implicit none
-    type(MPI_Request), intent(out) :: rreqs(54)! Recv REQuestS
+    type(MPI_Request), intent(out) :: rreqs(54)! Recv REQuestS, 6*9
     !BUFfer To Recv
     complex(dp),intent(in) :: buftr(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
     type(MPI_Datatype),intent(in) :: trhdts(54) ! Temp Recv Halo Data TypeS

@@ -114,12 +114,10 @@ contains
       ! starting recv requests for vtild
       ! send requests are started in hbetaqdiv_dslash_split
       call MPI_StartAll(54,vtildrreqs,ierr)
-      dslash_swd = .false.
-      do wpc=1,27*7
-        ichunk = dslash_work_ordering(1:3,wpc)
-        mu = dslash_work_ordering(4,wpc)
-        call hbetaqdiv_dslash_split(q,betaq,vtild,R,u,am,imass,ichunk,mu,&
-          & border_partitions_cube,dslash_swd,Rrreqs,vtildsreqs)
+      do wpc=1,27
+        ichunk = dslash_work_ordering(:,wpc)
+        call hbetaqdiv_dslash_split(q,betaq,vtild,R,u,am,imass,ichunk,&
+          & border_partitions_cube,Rrreqs,vtildsreqs)
       enddo
       call MPI_Barrier(comm,ierr)
  
@@ -133,12 +131,10 @@ contains
       ! starting recv requests for R
       ! send requests are started in dslashd_Rcomp_split
       call MPI_StartAll(54,Rrreqs,ierr)
-      dslashd_swd = .false.
-      do wpc=1,27*7
-        ichunk = dslashd_work_ordering(1:3,wpc)
-        mu = dslashd_work_ordering(4,wpc)
+      do wpc=1,27
+        ichunk = dslashd_work_ordering(:,wpc)
         call dslashd_Rcomp_split(R,x3,alphatild,q,betaq,qm1,vtild,u,am,imass,ichunk,mu,&
-          & border_partitions_cube,dslashd_swd,vtildrreqs,Rsreqs)
+          & border_partitions_cube,vtildrreqs,Rsreqs)
       enddo
  
       call MPI_Barrier(comm,ierr)
@@ -405,7 +401,7 @@ contains
   !          the one specified by ichunk - shifted by +-1 site in one of the 3 
   !          directions.
 
-  subroutine hbetaqdiv_dslash_split(tq,betaq,Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr,tdbsr)
+  subroutine hbetaqdiv_dslash_split(tq,betaq,Phi,R,u,am,imass,ichunk,tbpc,tdhrr,tdbsr)
     use params
     use partitioning
     use mpi_f08
@@ -419,11 +415,8 @@ contains
     real, intent(in) :: am
     integer, intent(in) :: imass
     integer,intent(in) :: ichunk(3) ! portion of array to operate on 
-    integer,intent(in) :: mu ! -3 <= mu <= 3
     ! Temp Border Partition Cube
     type(localpart),intent(in) :: tbpc(-1:1,-1:1,-1:1)
-    ! Temp DSlash Split Work Done
-    logical, intent(inout) :: tdsswd(-3:3,-1:1,-1:1,-1:1)
     ! Temp Dirac Halo Recv Requests
     type(MPI_Request),intent(inout) :: tdhrr(54)
     type(MPI_Request),intent(inout) :: tdbsr(54)
@@ -431,57 +424,46 @@ contains
     integer :: chunk(2,3)
     ! CHUNK Shifted
     integer :: chunk_s(2,3)
-    logical :: init
     integer :: halo_to_wait_for
     type(localpart) :: tpart
     integer :: inn
     integer :: xd,xu,yd,yu,td,tu ! portion of array to operate on (Phi)
     integer :: ierr
+    integer :: mu
 
 
     tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
     chunk = tpart%chunk
+    do mu=-3,3
     halo_to_wait_for = tpart%ahpsr(mu)
     ! checking if some work on the partition has already been done
-    init = .not.any(tdsswd(:,ichunk(1),ichunk(2),ichunk(3)))
+      if(halo_to_wait_for.ne.0) then
+        call MPI_Wait(tdhrr(halo_to_wait_for),MPI_STATUS_IGNORE,ierr)
 
-    if(halo_to_wait_for.ne.0) then
-      call MPI_Wait(tdhrr(halo_to_wait_for),MPI_STATUS_IGNORE,ierr)
+        ! performing q = R/betaq first on the halo parts
+        chunk_s = chunk
+        chunk_s(:,abs(mu)) = chunk_s(:,abs(mu)) + sign(1,mu)
+        xd=chunk_s(1,1)
+        xu=chunk_s(2,1)
+        yd=chunk_s(1,2)
+        yu=chunk_s(2,2)
+        td=chunk_s(1,3)
+        tu=chunk_s(2,3)
 
-      ! performing q = R/betaq first
-      chunk_s = chunk
-      chunk_s(:,abs(mu)) = chunk_s(:,abs(mu)) + sign(1,mu)
-      xd=chunk_s(1,1)
-      xu=chunk_s(2,1)
-      yd=chunk_s(1,2)
-      yu=chunk_s(2,2)
-      td=chunk_s(1,3)
-      tu=chunk_s(2,3)
-
-      tq(:,xd:xu,yd:yu,td:tu,:)=R(:,xd:xu,yd:yu,td:tu,:)/ betaq 
-    endif
-
-    if(mu.eq.0)then
-      call dslash_split_local(Phi,tq,am,imass,chunk,init)
-    else 
-      if(mu.gt.0) then
-        call dslash_split_nonlocal(Phi,tq,u,chunk,mu,1,init)
-      else if(mu.lt.0) then
-        call dslash_split_nonlocal(Phi,tq,u,chunk,-mu,-1,init)
+        tq(:,xd:xu,yd:yu,td:tu,:)=R(:,xd:xu,yd:yu,td:tu,:)/ betaq 
       endif
-    endif
+    enddo
+
+    call dslash_split_work(Phi,tq,am,imass,u,chunk)
 
     ! flagging work done
-    tdsswd(mu,ichunk(1),ichunk(2),ichunk(3)) = .true.
-    if(all(tdsswd(:,ichunk(1),ichunk(2),ichunk(3))))then
-      tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
-      do inn=1,tpart%nn
-        ! clearing send requests
-        call MPI_Wait(tdbsr(tpart%ahpss(inn)),MPI_STATUS_IGNORE,ierr)
-        ! restarting send request
-        call MPI_Start(tdbsr(tpart%ahpss(inn)),ierr)
-      enddo
-    endif
+    tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
+    do inn=1,tpart%nn
+      ! clearing send requests
+      call MPI_Wait(tdbsr(tpart%ahpss(inn)),MPI_STATUS_IGNORE,ierr)
+      ! restarting send request
+      call MPI_Start(tdbsr(tpart%ahpss(inn)),ierr)
+    enddo
 
   end subroutine
 
@@ -489,7 +471,7 @@ contains
   ! R = x3 - alphatild * q - betaq * qm1 
   ! steps
   subroutine dslashd_Rcomp_split(R,x3,alphatild,tq,betaq,tqm1,vtild,u,am,imass,&
-                          & ichunk,mu,tbpc,tdsswd,tdhrr,tdbsr)
+                          & ichunk,tbpc,tdhrr,tdbsr)
     use params
     use partitioning
     use mpi_f08
@@ -507,42 +489,31 @@ contains
     real, intent(in) :: am
     integer, intent(in) :: imass
     integer,intent(in) :: ichunk(3) ! portion of array to operate on 
-    integer,intent(in) :: mu ! -3 <= mu <= 3
     ! Temp Border Partition Cube
     type(localpart),intent(in) :: tbpc(-1:1,-1:1,-1:1)
-    ! Temp DSlash Split Work Done
-    logical, intent(inout) :: tdsswd(-3:3,-1:1,-1:1,-1:1)
     ! Temp Dirac Halo Recv Requests
     type(MPI_Request),intent(inout) :: tdhrr(54)
     ! Temp Dirac Border Send Requests
     type(MPI_Request),intent(inout) :: tdbsr(54)
 
     integer :: chunk(2,3)
-    logical :: init
     integer :: halo_to_wait_for
     type(localpart) :: tpart
     integer :: inn
     integer :: xd,xu,yd,yu,td,tu ! portion of array to operate on
     integer :: ierr
+    integer :: mu
 
     tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
     chunk = tpart%chunk
-    halo_to_wait_for = tpart%ahpsr(mu)
-    ! checking if some work on the partition has already been done
-    init = .not.any(tdsswd(:,ichunk(1),ichunk(2),ichunk(3)))
-    
-    if(halo_to_wait_for.ne.0) then
-      call MPI_Wait(tdhrr(halo_to_wait_for),MPI_STATUS_IGNORE,ierr)
-    endif
-    if(mu.eq.0)then
-      call dslashd_split_local(x3,vtild,am,imass,chunk,init)
-    else 
-     if(mu.gt.0) then
-        call dslashd_split_nonlocal(x3,vtild,u,chunk,mu,1,init)
-      else if(mu.lt.0) then
-        call dslashd_split_nonlocal(x3,vtild,u,chunk,-mu,-1,init)
+    do mu=-3,3
+      halo_to_wait_for = tpart%ahpsr(mu)
+      if(halo_to_wait_for.ne.0) then
+        call MPI_Wait(tdhrr(halo_to_wait_for),MPI_STATUS_IGNORE,ierr)
       endif
-    endif
+    enddo
+
+    call dslashd_split_work(x3,vtild,am,imass,u,chunk)
 
     ! R = x3 - alphatild * q - betaq * qm1 
     ! on the required partition
@@ -558,17 +529,14 @@ contains
       & betaq * tqm1(:,xd:xu,yd:yu,td:tu,:) 
 
     ! flagging work done
-    tdsswd(mu,ichunk(1),ichunk(2),ichunk(3)) = .true. 
     ! checking whether to send the partition already or not
-    if(all(tdsswd(:,ichunk(1),ichunk(2),ichunk(3))))then
-      tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
-      do inn=1,tpart%nn
-        ! clearing send requests
-        call MPI_Wait(tdbsr(tpart%ahpss(inn)),MPI_STATUS_IGNORE,ierr)
-        ! restarting send request
-        call MPI_Start(tdbsr(tpart%ahpss(inn)),ierr)
-      enddo
-    endif
+    tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
+    do inn=1,tpart%nn
+      ! clearing send requests
+      call MPI_Wait(tdbsr(tpart%ahpss(inn)),MPI_STATUS_IGNORE,ierr)
+      ! restarting send request
+      call MPI_Start(tdbsr(tpart%ahpss(inn)),ierr)
+    enddo
 
   end subroutine
 
