@@ -95,78 +95,78 @@ contains
     td=chunk(1,3)
     tu=chunk(2,3)
 
-
     diag=(3.0-am3)+1.0
-    ixup = kdelta(1, mu)
-    iyup = kdelta(2, mu)
-    itup = kdelta(3, mu)
-    do idirac=1,4
-      do it = td,tu
-        do iy = yd,yu
-          do ix = xd,xu
-            ! local term
+    do it = td,tu
+      do iy = yd,yu
+        do ix = xd,xu
+          ! local term (initialization)
+          do idirac=1,4
             Phi(:,ix,iy,it,idirac) = diag * R(:,ix,iy,it,idirac)
 
-            !      
-            !  s-like term exploiting projection
-            Phi(1:kthird-1, ix, iy, it, 3:4) &
-              & = Phi(1:kthird-1, ix, iy, it, 3:4) &
-              & - R(2:kthird, ix, iy, it, 3:4)
-            Phi(2:kthird, ix, iy, it, 1:2) &
-              & = Phi(2:kthird, ix, iy, it, 1:2) &
-              & - R(1:kthird-1, ix, iy, it, 1:2)
-            !
-            !  Mass term (couples the two walls unless imass=5)
-            if (imass.eq.1) then
-              zkappa=cmplx(am,0.0)
-              Phi(kthird, ix, iy, it, 3:4) = &
-                & Phi(kthird, ix, iy, it, 3:4) &
-                & + zkappa * R(1, ix, iy, it, 3:4)
-              Phi(1, ix, iy, it, 1:2) = &
-                & Phi(1, ix, iy, it, 1:2) + &
-                & zkappa * R(kthird, ix, iy, it, 1:2)
-            elseif (imass.eq.3) then
-              zkappa=cmplx(0.0,-am)
-              Phi(kthird, ix, iy, it, 3:4) = &
-                & Phi(kthird, ix, iy, it, 3:4) &
-                & - zkappa * R(1, ix, iy, it, 3:4)
-              Phi(1, ix, iy, it, 1:2) = &
-                & Phi(1, ix, iy, it, 1:2) &
-                & + zkappa * R(kthird, ix, iy, it, 1:2)
-            elseif (imass.eq.5) then
-              zkappa=cmplx(0.0,-am)
-              Phi(kthird, ix, iy, it, 3:4) = &
-                & Phi(kthird, ix, iy, it, 3:4) &
-                & - zkappa * R(kthird, ix, iy, it, 1:2)
-              Phi(1, ix, iy, it, 1:2) = &
-                & Phi(1, ix, iy, it, 1:2) &
-                & - zkappa * R(1, ix, iy, it, 3:4)
-            endif
- 
             ! nonlocal term
             do mu=1,3
-              igork=gamin(mu,idirac)
               ixup = kdelta(1, mu)
               iyup = kdelta(2, mu)
               itup = kdelta(3, mu)
+              igork=gamin(mu,idirac)
 
               Phi(:,ix,iy,it,idirac)=Phi(:,ix,iy,it,idirac) &
-                  ! Wilson term (hermitian)
-                &    -akappa*(u(ix,iy,it,mu) &
-                  &              * R(:, ix+ixup, iy+iyup, it+itup, idirac)&
-                  &           +conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
-                  &              * R(:, ix-ixup, iy-iyup, it-itup, idirac)) &
-                  ! Dirac term (antihermitian)
-                &     + gamval(mu,idirac) * &
-                  &       (u(ix,iy,it,mu) &
-                  &         * R(:, ix+ixup, iy+iyup, it+itup, igork)&
-                  &        - conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
-                  &         * R(:, ix-ixup, iy-iyup, it-itup, igork) )
-            enddo
-          enddo
-        enddo
-      enddo
-    enddo
+                ! Wilson term (hermitian)
+              &    -akappa*(u(ix,iy,it,mu) &
+                &              * R(:, ix+ixup, iy+iyup, it+itup, idirac) &
+                &             + conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
+                &              * R(:, ix-ixup, iy-iyup, it-itup, idirac)) &
+                ! Dirac term (antihermitian)
+              &     + gamval(mu,idirac) * &
+                &       (u(ix,iy,it,mu) &
+                &         * R(:, ix+ixup, iy+iyup, it+itup, igork) &
+                &        - conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
+                &         * R(:, ix-ixup, iy-iyup, it-itup, igork))
+           
+            enddo !do mu=1,3
+          enddo !do idirac=1,4
+
+          ! Local term
+          !      
+          !  s-like term exploiting projection
+          Phi(1:kthird-1, ix, iy, it, 3:4) &
+            & = Phi(1:kthird-1, ix, iy, it, 3:4) &
+            & - R(2:kthird, ix, iy, it, 3:4)
+          Phi(2:kthird, ix, iy, it, 1:2) &
+            & = Phi(2:kthird, ix, iy, it, 1:2) &
+            & - R(1:kthird-1, ix, iy, it, 1:2)
+          !
+          !  Mass term (couples the two walls unless imass=5)
+          if (imass.eq.1) then
+            zkappa=cmplx(am,0.0)
+            Phi(kthird, ix, iy, it, 3:4) = &
+              & Phi(kthird, ix, iy, it, 3:4) &
+              & + zkappa * R(1, ix, iy, it, 3:4)
+            Phi(1, ix, iy, it, 1:2) = &
+              & Phi(1, ix, iy, it, 1:2) + &
+              & zkappa * R(kthird, ix, iy, it, 1:2)
+          elseif (imass.eq.3) then
+            zkappa=cmplx(0.0,-am)
+            Phi(kthird, ix, iy, it, 3:4) = &
+              & Phi(kthird, ix, iy, it, 3:4) &
+              & - zkappa * R(1, ix, iy, it, 3:4)
+            Phi(1, ix, iy, it, 1:2) = &
+              & Phi(1, ix, iy, it, 1:2) &
+              & + zkappa * R(kthird, ix, iy, it, 1:2)
+          elseif (imass.eq.5) then
+            zkappa=cmplx(0.0,-am)
+            Phi(kthird, ix, iy, it, 3:4) = &
+              & Phi(kthird, ix, iy, it, 3:4) &
+              & - zkappa * R(kthird, ix, iy, it, 1:2)
+            Phi(1, ix, iy, it, 1:2) = &
+              & Phi(1, ix, iy, it, 1:2) &
+              & - zkappa * R(1, ix, iy, it, 3:4)
+          endif
+ 
+        enddo! do ix = xd,xu
+      enddo! do iy = yd,yu
+    enddo! do it = td,tu
+ 
   end subroutine
 
 
@@ -243,81 +243,69 @@ contains
 
 
     diag=(3.0-am3)+1.0
-    ixup = kdelta(1, mu)
-    iyup = kdelta(2, mu)
-    itup = kdelta(3, mu)
-    do idirac=1,4
-      do it = td,tu
-        do iy = yd,yu
-          do ix = xd,xu
-            ! local term
-            Phi(:,ix,iy,it,:) = diag * R(:,ix,iy,it,:)
-
-            !   s-like term exploiting projection
-            Phi(1:kthird-1, ix, iy, it, 1:2) &
-              & = Phi(1:kthird-1, ix, iy, it, 1:2) &
-              & - R(2:kthird, ix, iy, it, 1:2)
-            Phi(2:kthird, ix, iy, it, 3:4) &
-              & = Phi(2:kthird, ix, iy, it, 3:4) &
-              & - R(1:kthird-1, ix, iy, it, 3:4)
-            !
-            !   Mass term (couples the two walls unless imass=5) 
-            if(imass.eq.1)then
-              zkappa=cmplx(am,0.0)
-              Phi(kthird, ix, iy, it, 1:2) = &
-                & Phi(kthird, ix, iy, it, 1:2) &
-                & + zkappa * R(1, ix, iy, it, 1:2)
-              Phi(1, ix, iy, it, 3:4) = &
-                & Phi(1, ix, iy, it, 3:4) &
-                & + zkappa * R(kthird, ix, iy, it, 3:4)
-            elseif(imass.eq.3)then
-              zkappa = cmplx(0.0,am)
-              Phi(kthird, ix, iy, it, 1:2) = &
-                & Phi(kthird, ix, iy, it, 1:2) &
-                & + zkappa * R(1, ix, iy, it, 1:2)
-              Phi(1, ix, iy, it, 3:4) = &
-                & Phi(1, ix, iy, it, 3:4) &
-                & - zkappa * R(kthird, ix, iy, it, 3:4)
-            elseif(imass.eq.5)then
-              zkappa = cmplx(0.0,am)
-              Phi(kthird, ix, iy, it, 1:2) = &
-                & Phi(kthird, ix, iy, it, 1:2) &
-                & - zkappa * R(kthird, ix, iy, it, 3:4)
-              Phi(1, ix, iy, it, 3:4) = &
-                & Phi(1,ix, iy, it, 3:4) &
-                & - zkappa * R(1, ix, iy, it, 1:2)
-            endif
-
-
+    do it = td,tu
+      do iy = yd,yu
+        do ix = xd,xu
+          do idirac=1,4
+            ! local term (initialisation)
+            Phi(:,ix,iy,it,idirac) = diag * R(:,ix,iy,it,idirac)
             ! nonlocal term
             do mu=1,3
               igork=gamin(mu,idirac)
               ixup = kdelta(1, mu)
               iyup = kdelta(2, mu)
               itup = kdelta(3, mu)
-              Phi(:,ix,iy,it,idirac)=Phi(:,ix,iy,it,idirac) &
-                  ! Wilson term (hermitian)
-                &    -akappa*(u(ix,iy,it,mu) &
-                  &              * R(:, ix+ixup, iy+iyup, it+itup, idirac)&
-                  &          +conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
-                  &              * R(:, ix-ixup, iy-iyup, it-itup, idirac)) &
-                  ! Dirac term (antihermitian)
-                &     - gamval(mu,idirac) * &
-                  &       (u(ix,iy,it,mu) &
-                  &         * R(:, ix+ixup, iy+iyup, it+itup, igork)&
-                  &      - conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
-                  &         * R(:, ix-ixup, iy-iyup, it-itup, igork))
 
-               Phi(:,ix,iy,it,idirac)=Phi(:,ix,iy,it,idirac) &
-                  ! Wilson term (hermitian)
-                &    -akappa*( conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
-                  &              * R(:, ix-ixup, iy-iyup, it-itup, idirac)) &
-                  ! Dirac term (antihermitian)
-                &     - gamval(mu,idirac) * &
-                  &       (- conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
-                  &         * R(:, ix-ixup, iy-iyup, it-itup, igork))
-            enddo
-          enddo
+              Phi(:,ix,iy,it,idirac)=Phi(:,ix,iy,it,idirac) &
+                !   wilson term (hermitian)
+                &    - akappa * (u(ix,iy,it,mu) &
+                &              * R(:, ix+ixup, iy+iyup, it+itup, idirac) &
+                &             + conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
+                &              * R(:, ix-ixup, iy-iyup, it-itup, idirac)) &
+                !   dirac term (antihermitian)
+                &    - gamval(mu,idirac) * &
+                &       (u(ix,iy,it,mu) &
+                &         * R(:, ix+ixup, iy+iyup, it+itup, igork) &
+                &        - conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
+                &         * R(:, ix-ixup, iy-iyup, it-itup, igork))
+            enddo! do mu=1,3
+          enddo! do idirac=1,4
+ 
+          ! local term
+          !   s-like term exploiting projection
+          Phi(1:kthird-1, ix, iy, it, 1:2) &
+            & = Phi(1:kthird-1, ix, iy, it, 1:2) &
+            & - R(2:kthird, ix, iy, it, 1:2)
+          Phi(2:kthird, ix, iy, it, 3:4) &
+            & = Phi(2:kthird, ix, iy, it, 3:4) &
+            & - R(1:kthird-1, ix, iy, it, 3:4)
+          !
+          !   Mass term (couples the two walls unless imass=5) 
+          if(imass.eq.1)then
+            zkappa=cmplx(am,0.0)
+            Phi(kthird, ix, iy, it, 1:2) = &
+              & Phi(kthird, ix, iy, it, 1:2) &
+              & + zkappa * R(1, ix, iy, it, 1:2)
+            Phi(1, ix, iy, it, 3:4) = &
+              & Phi(1, ix, iy, it, 3:4) &
+              & + zkappa * R(kthird, ix, iy, it, 3:4)
+          elseif(imass.eq.3)then
+            zkappa = cmplx(0.0,am)
+            Phi(kthird, ix, iy, it, 1:2) = &
+              & Phi(kthird, ix, iy, it, 1:2) &
+              & + zkappa * R(1, ix, iy, it, 1:2)
+            Phi(1, ix, iy, it, 3:4) = &
+              & Phi(1, ix, iy, it, 3:4) &
+              & - zkappa * R(kthird, ix, iy, it, 3:4)
+          elseif(imass.eq.5)then
+            zkappa = cmplx(0.0,am)
+            Phi(kthird, ix, iy, it, 1:2) = &
+              & Phi(kthird, ix, iy, it, 1:2) &
+              & - zkappa * R(kthird, ix, iy, it, 3:4)
+            Phi(1, ix, iy, it, 3:4) = &
+              & Phi(1,ix, iy, it, 3:4) &
+              & - zkappa * R(1, ix, iy, it, 1:2)
+          endif
         enddo
       enddo
     enddo
