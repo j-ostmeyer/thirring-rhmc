@@ -32,7 +32,7 @@ program test_partitioning
                 p2 = all_partitions(:,:,ipx2,ipy2,ipt2)
                 if (ip_global.eq.0) then
                   if(partition_intersect(p1,p2)) then
-                    write(6,"(A25,6I4)"), "Intersection not null:",ipx1,ipy1,ipt1,ipx2,ipy2,ipt2
+                    write(6,"(A25,6I4)") "Intersection not null:",ipx1,ipy1,ipt1,ipx2,ipy2,ipt2
                     print *, p1
                     print *, p2
                   endif

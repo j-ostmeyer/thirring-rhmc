@@ -6,8 +6,8 @@ module dirac_split
   implicit none
   save
 
-  logical :: dslash_swd(-1:1,-1:1,-1:1)  ! DSLASH Split Work Done
-  logical :: dslashd_swd(-1:1,-1:1,-1:1) ! DSLASHD Split Work Done
+  !logical :: dslash_swd(-1:1,-1:1,-1:1)  ! DSLASH Split Work Done
+  !logical :: dslashd_swd(-1:1,-1:1,-1:1) ! DSLASHD Split Work Done
 
   ! list of partitions, indexed by ipx,ipy and ipt partition coordinates, 
   ! and mu.

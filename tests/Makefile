@@ -25,7 +25,7 @@ TESTS = test_dslash_1 test_dslash_3 test_dslash_5 test_dslashd_1 test_dslashd_3 
        test_dslashd_1_reqs test_dslashd_3_reqs test_dslashd_5_reqs \
        test_partitioning test_partitioning2 test_partitioning3 \
        test_comms_partitioning test_comms_partitioning2 \
-       test_dirac_split test_dirac_split2 test_dirac_split_ordering \
+       test_dirac_split_ordering \
        test_dslash_split1 test_dslash_split3 test_dslash_split5 \
        test_dslashd_split1 test_dslashd_split3 test_dslashd_split5 test_qmrherm_split4
 

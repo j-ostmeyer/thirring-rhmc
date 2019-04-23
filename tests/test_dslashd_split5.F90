@@ -125,7 +125,6 @@ subroutine dslashd(phi,r,u,am,imass)
 
   integer :: ichunk(3)
   integer :: ipx,ipy,ipt
-  integer :: mu
 
   type(MPI_Request) :: dirac_border_send_reqs(54) 
   type(MPI_Request) :: dirac_halo_recv_reqs(54) 
@@ -140,21 +139,15 @@ subroutine dslashd(phi,r,u,am,imass)
   call MPI_StartAll(54,dirac_border_send_reqs,ierr)
   call MPI_StartAll(54,dirac_halo_recv_reqs,ierr)
 
-  dslashd_swd = .false.
   do ipt=-1,1
     do ipy=-1,1
       do ipx=-1,1
         ichunk = (/ipx,ipy,ipt/)
-        do mu=-3,3
-          call dslashd_split(Phi,R,u,am,imass,ichunk,mu,border_partitions_cube,&
-                  &    dslashd_swd,dirac_halo_recv_reqs,dirac_border_send_reqs)
-        enddo
+        call dslashd_split(Phi,R,u,am,imass,ichunk,border_partitions_cube,&
+                &dirac_halo_recv_reqs,dirac_border_send_reqs)
       enddo
     enddo
   enddo
-  if(.not.all(dslashd_swd))then
-    print*,"Some work not done"
-  endif
   call MPI_StartAll(54,dirac_halo_recv_reqs,ierr)
   call MPI_WaitAll(54,dirac_halo_recv_reqs,MPI_STATUSES_IGNORE,ierr) 
   call MPI_WaitAll(54,dirac_border_send_reqs,MPI_STATUSES_IGNORE,ierr)
