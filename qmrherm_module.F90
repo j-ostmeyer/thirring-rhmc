@@ -210,7 +210,7 @@ contains
 #endif
     endif
     !  
-    8   continue
+    !8   continue
     if(iflag.lt.2)then
       !     Now evaluate solution x=(MdaggerM)^p * Phi
       do idiag=1,ndiagq

@@ -85,6 +85,8 @@ contains
     integer :: mu
     integer :: xd,xu,yd,yu,td,tu ! portion of array to operate on
     integer :: ixup, iyup, itup, ix, iy, it, idirac, igork
+    real(dp) :: diag
+    complex(dp) :: zkappa
 
     xd=chunk(1,1)
     xu=chunk(2,1)
@@ -188,7 +190,6 @@ contains
 
 
     integer :: chunk(2,3)
-    logical :: init
     integer :: halo_to_wait_for
     type(localpart) :: tpart
     integer :: inn
@@ -230,6 +231,8 @@ contains
     integer :: mu
     integer :: xd,xu,yd,yu,td,tu ! portion of array to operate on
     integer :: ixup, iyup, itup, ix, iy, it, idirac, igork
+    real(dp) :: diag
+    complex(dp) :: zkappa
 
     xd=chunk(1,1)
     xu=chunk(2,1)
@@ -332,9 +335,7 @@ contains
     ! Work Partition Count 
     integer :: wpc 
     integer :: ipx,ipy,ipt
-    integer :: ips(3)
     integer :: ip2sum
-    integer :: mu,musign,muabs
     logical :: needs_comms_before(-1:1,-1:1,-1:1)
     ! Process Parity
     ! It is actually not defined for odd-sized grids, but there's nothing 
@@ -351,7 +352,7 @@ contains
 
     if(bbf)then ! Taking care of the bulk first
       wpc = wpc + 1
-      tdswo(:,wpc) = (/0,0,0,/)
+      tdswo(:,wpc) = (/0,0,0/)
     endif
 
     ! and then the surfaces, that do need communications before

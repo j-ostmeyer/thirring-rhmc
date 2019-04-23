@@ -234,7 +234,7 @@ contains
                 tag = tag + 18*idir
  
                 tpart%tag = tag
-                write(7+ip_global,"(5I4)"),ipx,ipy,ipt,ipn,tag
+                write(7+ip_global,"(5I4)")ipx,ipy,ipt,ipn,tag
               endif
             enddo
             thp_cube(ipx,ipy,ipt) = tpart

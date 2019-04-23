@@ -61,7 +61,7 @@ contains
     type(MPI_Request) :: Rsreqs(54), Rrreqs(54)
     type(MPI_Request) :: vtildsreqs(54), vtildrreqs(54)
 #endif
-    integer :: ichunk(3),mu
+    integer :: ichunk(3)
     integer :: wpc
     ! initialize communications     
     call init_partitioning
@@ -133,8 +133,8 @@ contains
       call MPI_StartAll(54,Rrreqs,ierr)
       do wpc=1,27
         ichunk = dslashd_work_ordering(:,wpc)
-        call dslashd_Rcomp_split(R,x3,alphatild,q,betaq,qm1,vtild,u,am,imass,ichunk,mu,&
-          & border_partitions_cube,vtildrreqs,Rsreqs)
+        call dslashd_Rcomp_split(R,x3,alphatild,q,betaq,qm1,vtild,u,am,imass,&
+          & ichunk,border_partitions_cube,vtildrreqs,Rsreqs)
       enddo
  
       call MPI_Barrier(comm,ierr)
@@ -211,7 +211,7 @@ contains
 #endif
     endif
     !  
-    8   continue
+    !8   continue
     if(iflag.lt.2)then
       !     Now evaluate solution x=(MdaggerM)^p * Phi
       do idiag=1,ndiagq

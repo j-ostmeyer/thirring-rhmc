@@ -389,7 +389,7 @@ contains
     !    complex :: prop0Ln(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
     !    complex :: cpmn(0:ksizet-1),cmmn(0:ksizet-1)
     !    real :: ps(ksizex_l, ksizey_l, ksizet_l, 2)
-    real :: chim, chip
+    real(dp) :: chim, chip
     integer :: ip_xxx, ip_yyy, ip_ttt, ixxx_l, iyyy_l, ittt_l
     integer :: ixxx,iyyy,ittt
     !     write(6,*) 'hi from meson'

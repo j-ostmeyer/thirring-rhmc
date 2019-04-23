@@ -730,7 +730,7 @@ contains
       open(unit=31, file='con', status='old', form='unformatted', access='stream')
       call fseek(31, 3 * ksize * ksize * ksizet * 4 + 4, 0)
 ! Manually compute the effective record length to be compatible with serial Fortran
-      write (31), seed, 3 * ksize * ksize * ksizet * 4 + 8
+      write (31) seed, 3 * ksize * ksize * ksizet * 4 + 8
       close(31)
       open(unit=40,file='random_seed',status='replace')
       write(40,*) seed
