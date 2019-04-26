@@ -2,7 +2,7 @@
 ! but that the sum of the volumes is correct
 #include "test_utils.fh"
 program test_partitioning
-  use mpi_f08
+  use mpi
   use params
   use partitioning
   use comms

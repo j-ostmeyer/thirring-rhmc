@@ -35,7 +35,7 @@ program benchmark_qmrherm_split1
   integer :: t1i(2), t2i(2)
   double precision :: dt
 #ifdef MPI
-  type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
+  integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
   integer :: ierr
   call init_MPI
 #endif

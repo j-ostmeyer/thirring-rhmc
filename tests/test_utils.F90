@@ -12,16 +12,16 @@ contains
   subroutine rw_file_mpi(array, array_shape, rank, filename, mpi_dtype, write_out)
     integer, intent(in) :: array_shape(:), rank
     type(*), dimension(..), intent(inout) :: array
-    type(MPI_Datatype), intent(in) :: mpi_dtype
+    integer, intent(in) :: mpi_dtype
     character(len=*), intent(in) :: filename
     logical, intent(in) :: write_out
     integer, dimension(rank) :: global_size, local_size, start  
     integer :: size_index
     integer :: count
     integer :: offset
-    type(MPI_File) :: mpi_fh
-    type(MPI_Datatype) :: local_mpiio_type
-    type(MPI_Status) :: status
+    integer :: mpi_fh
+    integer :: local_mpiio_type
+    integer :: status
     integer :: mode
     integer :: ierr
 

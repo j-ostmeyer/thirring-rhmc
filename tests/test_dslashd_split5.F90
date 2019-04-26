@@ -31,7 +31,7 @@ program test_dslashd_split
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
   integer :: idx
 #ifdef MPI
-  type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi
+  integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi
   integer :: ierr
   call init_MPI
 #endif
@@ -115,7 +115,7 @@ subroutine dslashd(phi,r,u,am,imass)
   use dirac_split
   use partitioning
   use comms_partitioning
-  use mpi_f08
+  use mpi
   implicit none
   complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
   complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -126,8 +126,8 @@ subroutine dslashd(phi,r,u,am,imass)
   integer :: ichunk(3)
   integer :: ipx,ipy,ipt
 
-  type(MPI_Request) :: dirac_border_send_reqs(54) 
-  type(MPI_Request) :: dirac_halo_recv_reqs(54) 
+  integer :: dirac_border_send_reqs(54) 
+  integer :: dirac_halo_recv_reqs(54) 
 
   integer :: ierr
 

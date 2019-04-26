@@ -115,7 +115,7 @@ contains
 
   subroutine get_all_local_partitions_neighbors(tbp_cube,tbp_list,tb_cl,tb_lc)
     use comms
-    use mpi_f08
+    use mpi
     implicit none
     type(localpart),intent(out) :: tbp_cube(-1:1,-1:1,-1:1)!Temp Border Partitions
     type(localpart),intent(out) :: tbp_list(26)
@@ -185,7 +185,7 @@ contains
 
   subroutine get_all_halo_partitions_neighbors(thp_cube,thp_list,th_cl,th_lc)
     use comms
-    use mpi_f08
+    use mpi
     implicit none
     type(halopart),intent(out) :: thp_cube(-2:2,-2:2,-2:2)!Temp Halo Partitions
     type(halopart),intent(out) :: thp_list(54)             

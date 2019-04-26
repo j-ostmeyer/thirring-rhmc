@@ -3,7 +3,7 @@
 ! phi=1 here
 #include "test_utils.fh"
 program test_dirac_split
-  use mpi_f08
+  use mpi
   use comms
   use dirac_split
   implicit none

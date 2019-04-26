@@ -11,8 +11,8 @@ program test_partitioning
   !BUFfer To Recv
   complex(dp) :: buftr(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
 
-  type(MPI_Request) :: rreqs(54)! Recv REQuestS
-  type(MPI_Request) :: sreqs(54)! Send REQuestS
+  integer :: rreqs(54)! Recv REQuestS
+  integer :: sreqs(54)! Send REQuestS
 
   integer :: ix0,iy0,it0
   integer :: ix,iy,it

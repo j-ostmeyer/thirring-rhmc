@@ -26,10 +26,11 @@ program benchmark_congrad
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
   integer :: idx = 0
   integer :: iterations
-  integer :: t1i(2), t2i(2)
+  !integer :: t1i(2), t2i(2)
+  double precision :: t1i, t2i
   double precision :: dt
 #ifdef MPI
-  type(MPI_Request), dimension(12) :: reqs_X, reqs_Phi, reqs_u
+  integer, dimension(12) :: reqs_X, reqs_Phi, reqs_u
   integer :: ierr
 
   call init_MPI
@@ -96,7 +97,8 @@ program benchmark_congrad
   Phi0 = Phi
   X0 = X
 
-  call gettimeofday(t1i,ierr)
+  !call gettimeofday(t1i,ierr)
+  t1i = MPI_Wtime()
   do i = 1,timing_loops
     Phi=Phi0
     X = X0
@@ -109,8 +111,10 @@ program benchmark_congrad
     endif
 #endif
   end do
-  call gettimeofday(t2i,ierr)
-  dt = t2i(1)-t1i(1) + 1.0d-6 * (t2i(2)-t1i(2))
+  !call gettimeofday(t2i,ierr)
+  t2i = MPI_Wtime()
+  !dt = t2i(1)-t1i(1) + 1.0d-6 * (t2i(2)-t1i(2))
+  dt = t2i-t1i
   dt = dt / timing_loops / iterations
 #ifdef MPI
   if(ip_global.eq.0) then

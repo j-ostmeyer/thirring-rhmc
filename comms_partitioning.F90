@@ -1,22 +1,22 @@
 module comms_partitioning
   use partitioning
-  use mpi_f08
+  use mpi
   implicit none
 
-  type(MPI_Datatype) :: dirac_halo_dts(54)   ! Data TypeS
-  type(MPI_Datatype) :: dirac_border_dts(26) ! Data TypeS
+  integer :: dirac_halo_dts(54)   ! Data TypeS
+  integer :: dirac_border_dts(26) ! Data TypeS
 
-  !type(MPI_Request) :: dirac_border_send_reqs(54) 
-  !type(MPI_Request) :: dirac_halo_recv_reqs(54) 
+  !integer :: dirac_border_send_reqs(54) 
+  !integer :: dirac_halo_recv_reqs(54) 
 
 contains
 
   subroutine init_dirac_halo_types(tdhdts,thpl)
     use params
     use partitioning
-    use mpi_f08
+    use mpi
     implicit none
-    type(MPI_Datatype),intent(out) :: tdhdts(54) ! Temp Dirac Halo Data TypeS
+    integer,intent(out) :: tdhdts(54) ! Temp Dirac Halo Data TypeS
     type(halopart),intent(in)     :: thpl(54)   ! Temp Halo Partition List
     integer :: ih
     integer :: chunk(2,3)
@@ -42,9 +42,9 @@ contains
   subroutine init_dirac_border_types(tdbdts,tbpl)
     use params
     use partitioning
-    use mpi_f08
+    use mpi
     implicit none
-    type(MPI_Datatype),intent(out) :: tdbdts(26) ! Temp Dirac Border Data TypeS
+    integer,intent(out) :: tdbdts(26) ! Temp Dirac Border Data TypeS
     type(localpart),intent(in)     :: tbpl(26)   ! Temp Border Partition List
     integer :: ib
     integer :: chunk(2,3)
@@ -69,15 +69,15 @@ contains
 
   ! CREATE Dirac Persistent Send REQuestS
   subroutine create_dpsreqs(sreqs,bufts,tsbdts,tbpl)
-    use mpi_f08
+    use mpi
     use comms
     use params
     use partitioning
     implicit none
-    type(MPI_Request), intent(out) :: sreqs(54)! Send REQuestS , 6*9
+    integer, intent(out) :: sreqs(54)! Send REQuestS
     !BUFfer To Send
     complex(dp),intent(in) :: bufts(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
-    type(MPI_Datatype),intent(in) :: tsbdts(26) ! Temp Send Border Data TypeS
+    integer,intent(in) :: tsbdts(26) ! Temp Send Border Data TypeS
     type(localpart),intent(in) :: tbpl(26) ! Temp Border Partition List 
     integer :: ibp ! Index Border Partition
     integer :: ibhas ! Index Border Halo ASsociation
@@ -104,7 +104,7 @@ contains
     use params
     use partitioning
     implicit none
-    type(MPI_Request), intent(out) :: sreqs(54)! Send REQuestS
+    integer, intent(out) :: sreqs(54)! Send REQuestS
     !BUFfer To Send
     complex(dp),intent(in) :: bufts(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
 
@@ -114,15 +114,15 @@ contains
 
   ! CREATE Dirac Persistent Rrecv REQuestS
   subroutine create_dprreqs(rreqs,buftr,trhdts,thpl)
-    use mpi_f08
+    use mpi
     use comms
     use params
     use partitioning
     implicit none
-    type(MPI_Request), intent(out) :: rreqs(54)! Recv REQuestS, 6*9
+    integer, intent(out) :: rreqs(54)! Recv REQuestS
     !BUFfer To Recv
     complex(dp),intent(in) :: buftr(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
-    type(MPI_Datatype),intent(in) :: trhdts(54) ! Temp Recv Halo Data TypeS
+    integer,intent(in) :: trhdts(54) ! Temp Recv Halo Data TypeS
     type(halopart),intent(in) :: thpl(54) ! Temp Halo Partition List 
     integer :: ihp ! Index Halo Partition
 
@@ -140,7 +140,7 @@ contains
     use params
     use partitioning
     implicit none
-    type(MPI_Request), intent(out) :: rreqs(54)! Recv REQuestS
+    integer, intent(out) :: rreqs(54)! Recv REQuestS
     !BUFfer To Recv
     complex(dp),intent(in) :: buftr(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
 

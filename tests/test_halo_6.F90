@@ -16,7 +16,7 @@ program test_halo_6
   integer :: passed_basic = 0
   complex(dp) :: test_array(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 12)
 #ifdef MPI
-  type(MPI_Request) :: reqs(12)
+  integer :: reqs(12)
   integer :: ierr
   call init_MPI
 #endif
