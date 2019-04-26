@@ -1,7 +1,7 @@
 ! Checking that the MPI_datatype sizes match the sizes of the partitions
 #include "test_utils.fh"
 program test_comms_partitioning
-  use mpi_f08
+  use mpi
   use params
   use partitioning
   use comms_partitioning
@@ -45,7 +45,7 @@ program test_comms_partitioning
 
   total_border_datasize = 0
   do ib=1,26
-    call MPI_type_size(dirac_border_dts(ib),tempbds)
+    call MPI_type_size(dirac_border_dts(ib),tempbds,ierr)
     total_border_datasize = tempbds + total_border_datasize
     tempes = partition_volume(border_partitions_list(ib)%chunk)*size_factor
     if((tempes.ne.tempbds).and.(ip_global.eq.0))then
@@ -72,7 +72,7 @@ program test_comms_partitioning
   exp_total_halo_datasize = exp_total_halo_datasize * size_factor
   total_halo_datasize = 0
   do ih=1,54
-    call MPI_type_size(dirac_halo_dts(ih),temphds)
+    call MPI_type_size(dirac_halo_dts(ih),temphds,ierr)
     total_halo_datasize = temphds + total_halo_datasize
     tempes = partition_volume(halo_partitions_list(ih)%chunk)*size_factor
     if((tempes.ne.temphds).and.(ip_global.eq.0))then

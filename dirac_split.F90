@@ -24,7 +24,7 @@ contains
   subroutine dslash_split(Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr,tdbsr)
     use params
     use partitioning
-    use mpi_f08
+    use mpi
     implicit none
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -38,9 +38,9 @@ contains
     ! Temp DSlash Split Work Done
     logical, intent(inout) :: tdsswd(-3:3,-1:1,-1:1,-1:1)
     ! Temp Dirac Halo Recv Requests
-    type(MPI_Request),intent(inout) :: tdhrr(54)
+    integer,intent(inout) :: tdhrr(54)
     ! Temp Dirac Border Send Requests
-    type(MPI_Request),intent(inout) :: tdbsr(54)
+    integer,intent(inout) :: tdbsr(54)
 
 
     integer :: chunk(2,3)
@@ -262,7 +262,7 @@ contains
   subroutine dslashd_split(Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr,tdbsr)
     use params
     use partitioning
-    use mpi_f08
+    use mpi
     implicit none
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -276,9 +276,9 @@ contains
     ! Temp DSlash Split Work Done
     logical, intent(inout) :: tdsswd(-3:3,-1:1,-1:1,-1:1)
     ! Temp Dirac Halo Recv Requests
-    type(MPI_Request),intent(inout) :: tdhrr(54)
+    integer,intent(inout) :: tdhrr(54)
     ! Temp Dirac Border Send Requests
-    type(MPI_Request),intent(inout) :: tdbsr(54)
+    integer,intent(inout) :: tdbsr(54)
 
 
 

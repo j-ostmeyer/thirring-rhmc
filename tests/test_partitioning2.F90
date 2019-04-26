@@ -2,7 +2,7 @@
 ! in the global structures in the partitioning module
 #include "test_utils.fh"
 program test_partitioning
-  use mpi_f08
+  use mpi
   use params
   use partitioning
   use comms

@@ -4,7 +4,7 @@
 #include "test_utils.fh"
 program test_dirac_split
   use dwf3d_lib, only : init
-  use mpi_f08
+  use mpi
   use params
   use partitioning
   use dirac_split
