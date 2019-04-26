@@ -17,6 +17,13 @@ INTEL_MPIFC  =mpiifort
 INTEL_FC     =ifort 
 INTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g -warn all
 
+#CRAY SETTINGS
+CRAY_MPIFC    = ftn
+CRAY_FC       = ftn
+CRAY_FCFLAGS  = -O3
+
+
+
 ifeq ($(COMPILER), GNU)
 MPIFC  =$(GNU_MPIFC)
 FC     =$(GNU_FC)
@@ -25,9 +32,14 @@ else ifeq ($(COMPILER), INTEL)
 MPIFC  =$(INTEL_MPIFC)
 FC     =$(INTEL_FC)
 FCFLAGS=$(INTEL_FCFLAGS)
+else ifeq ($(COMPILER), CRAY)
+MPIFC  =$(CRAY_MPIFC)
+FC     =$(CRAY_FC)
+FCFLAGS=$(CRAY_FCFLAGS)
 else 
 $(error COMPILER not correctly specified (watch for whitespaces)) 
 endif
+
 $(info COMPILER: $(COMPILER))
 $(info MPIFC   : $(MPIFC))
 $(info FC      : $(FC))
