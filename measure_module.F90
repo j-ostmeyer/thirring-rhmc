@@ -29,7 +29,7 @@ contains
     real(dp) :: betacg, betacgn, betacgd, alpha, alphan, alphad
     integer :: nx
 #ifdef MPI
-    type(MPI_Request), dimension(12) :: reqs_x1, reqs_r
+    integer, dimension(12) :: reqs_x1, reqs_r
     integer :: ierr
 !#else
     !    integer :: reqs_x1, reqs_r
@@ -169,7 +169,7 @@ contains
     integer :: iter, itercg
     real :: susclsing
 #ifdef MPI
-    type(MPI_Request), dimension(12) :: reqs_ps, reqs_pt, reqs_Phi
+    integer, dimension(12) :: reqs_ps, reqs_pt, reqs_Phi
     integer :: ierr
 #endif
     !     write(6,*) 'hi from measure'
@@ -400,7 +400,7 @@ contains
     integer :: iter, idsource, ksource, ismear, isign
     integer :: it, itt, ittl, idd
 #ifdef MPI
-    type(MPI_Request), dimension(12) :: mpireqs
+    integer, dimension(12) :: mpireqs
     integer :: ierr
 #endif
     !

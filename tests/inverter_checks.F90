@@ -27,7 +27,7 @@ contains
     integer, intent(in) :: imass
 
 #ifdef MPI
-    type(MPI_Request), dimension(12) :: reqs_xtemp, reqs_xout
+    integer, dimension(12) :: reqs_xtemp, reqs_xout
 #endif
     complex(dp) :: xtemp(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 

@@ -15,7 +15,7 @@ program test_gaussp
 
   ! initialise MPI
 #ifdef MPI
-  type(MPI_Request) :: reqs(12)
+  integer :: reqs(12)
   integer :: ierr
   call init_MPI
 #endif

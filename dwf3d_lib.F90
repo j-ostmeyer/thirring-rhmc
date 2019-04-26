@@ -86,7 +86,7 @@ contains
 !     variables to keep track of MPI requests
 !*******************************************************************
 #ifdef MPI
-    type(MPI_Request) :: reqs_ps(12)
+    integer :: reqs_ps(12)
     integer :: ierr
 #endif
 !
@@ -680,8 +680,8 @@ contains
     use gauge
 #ifdef MPI
     use comms
-    type(MPI_File) :: mpi_fh
-    type(MPI_Status) :: status
+    integer :: mpi_fh
+    integer :: status
     integer :: ierr
     
     call MPI_File_Open(comm, 'con', MPI_Mode_Rdonly, &
@@ -695,6 +695,7 @@ contains
 ! Get the see,ierrd
     if (ip_global.eq.0) then
       open(unit=10, file='con', status='old', form='unformatted', access='stream')
+      !print*,"FSEEK CALL COMMENTED OUT, THIS WILL FAIL"
       call fseek(10, 3 * ksize * ksize * ksizet * 4 + 4, 0)
       read (10) seed
       close(10)
@@ -712,8 +713,8 @@ contains
     use gauge
 #ifdef MPI
     use comms
-    type(MPI_File) :: mpi_fh
-    type(MPI_Status) :: status
+    integer :: mpi_fh
+    integer :: status
     integer :: ierr
     
 ! Write theta
@@ -728,9 +729,10 @@ contains
 ! Write seed in serial
     if (ip_global.eq.0) then
       open(unit=31, file='con', status='old', form='unformatted', access='stream')
+      !print*,"FSEEK CALL COMMENTED OUT, THIS WILL FAIL"
       call fseek(31, 3 * ksize * ksize * ksizet * 4 + 4, 0)
 ! Manually compute the effective record length to be compatible with serial Fortran
-      write (31), seed, 3 * ksize * ksize * ksizet * 4 + 8
+      write (31) seed, 3 * ksize * ksize * ksizet * 4 + 8
       close(31)
       open(unit=40,file='random_seed',status='replace')
       write(40,*) seed
@@ -921,7 +923,7 @@ contains
     complex(dp), intent(out) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
     real, intent(in) :: theta(ksizex_l, ksizey_l, ksizet_l, 3)
 #ifdef MPI
-      type(MPI_Request), dimension(12) :: reqs_u
+      integer, dimension(12) :: reqs_u
 #endif
 
 !     u(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = exp(cmplx(0.0, theta))

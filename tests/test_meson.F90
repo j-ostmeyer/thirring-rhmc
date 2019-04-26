@@ -31,7 +31,7 @@ program test_measure
   real :: res, am
   integer :: imass, isweep, itercg, iter
 #ifdef MPI
-  type(MPI_Request), dimension(12) :: reqs_Phi, reqs_u
+  integer, dimension(12) :: reqs_Phi, reqs_u
   integer :: ierr
 
   call init_MPI
