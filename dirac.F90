@@ -179,7 +179,7 @@ contains
     !real :: diag
     integer :: ixup, iyup, itup, ix, iy, it, idirac, mu, igork
 #ifdef MPI
-    type(MPI_request), dimension(12),intent(inout), optional :: reqs_R
+    integer, dimension(12),intent(inout), optional :: reqs_R
 #endif
     !
     !   taking care of the part that does not need the halo

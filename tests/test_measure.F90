@@ -24,7 +24,7 @@ program test_measure
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
   integer :: idx = 0
 #ifdef MPI
-  type(MPI_Request), dimension(12) :: reqs_x, reqs_u
+  integer, dimension(12) :: reqs_x, reqs_u
   integer :: ierr
   call init_MPI
 #endif

@@ -51,7 +51,7 @@ contains
     integer :: niter, idiag
     logical :: go_on
 #ifdef MPI
-    type(MPI_Request), dimension(12) :: reqs_X2, reqs_vtild, reqs_Phi0, reqs_R, reqs_x
+    integer, dimension(12) :: reqs_X2, reqs_vtild, reqs_Phi0, reqs_R, reqs_x
     integer :: ierr
     real(dp) :: dp_reduction ! DEBUG
 #endif

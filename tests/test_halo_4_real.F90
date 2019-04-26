@@ -18,7 +18,7 @@ program test_halo_4_real
   real :: test_array(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
   real :: test_array_2(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 2)
 #ifdef MPI
-  type(MPI_Request), dimension(12) :: reqs, reqs2
+  integer, dimension(12) :: reqs, reqs2
   integer :: ierr
   call init_MPI
 #endif

@@ -32,10 +32,11 @@ program benchmark_qmrherm_1
   integer :: i, j, l, ix, iy, it, ithird
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
   integer :: idx = 0
-  integer :: t1i(2), t2i(2)
+  !integer :: t1i(2), t2i(2)
+  double precision :: t1i, t2i
   double precision :: dt
 #ifdef MPI
-  type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
+  integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
   integer :: ierr
   call init_MPI
 #endif
@@ -115,13 +116,16 @@ program benchmark_qmrherm_1
 
   call init(istart)
   ! call function
-  call gettimeofday(t1i,ierr)
+  !call gettimeofday(t1i,ierr)
+  t1i = MPI_Wtime()
   do i = 1,timing_loops
     Phi0 = Phi0_orig
     call qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter)
   end do
-  call gettimeofday(t2i,ierr)
-  dt = t2i(1)-t1i(1) + 1.0d-6 * (t2i(2)-t1i(2))
+  !call gettimeofday(t2i,ierr)
+  t2i = MPI_Wtime()
+  !dt = t2i(1)-t1i(1) + 1.0d-6 * (t2i(2)-t1i(2))
+  dt = t2i-t1i
   dt = dt / timing_loops / itercg
 #ifdef MPI
   if(ip_global.eq.0) then

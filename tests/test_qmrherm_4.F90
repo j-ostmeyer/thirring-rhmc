@@ -34,8 +34,8 @@ program test_qmrherm_4
   integer :: idx = 0, idiag
 
 #ifdef MPI
-  type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
-  type(MPI_Request), dimension(12) :: reqs_xin
+  integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
+  integer, dimension(12) :: reqs_xin
   integer :: ierr
   call init_MPI
 #endif

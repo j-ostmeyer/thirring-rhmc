@@ -31,7 +31,7 @@ program test_dslash2d
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet
   integer :: idx
 #ifdef MPI
-  type(MPI_Request), dimension(12) :: reqs_R, reqs_u, reqs_Phi
+  integer, dimension(12) :: reqs_R, reqs_u, reqs_Phi
   integer :: ierr
   call init_MPI
 #endif

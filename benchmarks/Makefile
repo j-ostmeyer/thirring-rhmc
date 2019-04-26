@@ -59,5 +59,5 @@ benchmark_%.o: benchmark_%.F90 .makefile.uptodate $(MODS)
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o $@ $<
 
 $(BENCHMARKS) : % : %.o $(LIBOBJS) 
-	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -o $@ $^
+	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -dynamic -o $@ $^
 

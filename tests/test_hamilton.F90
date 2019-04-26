@@ -32,7 +32,7 @@ program test_hamilton
   integer :: idx = 0
 
 #ifdef MPI
-  type(MPI_Request), dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
+  integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
   call init_MPI
 #endif
   qmrhprint = .false.

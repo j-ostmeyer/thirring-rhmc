@@ -32,7 +32,7 @@ program test_derivs
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
   integer :: idx = 0
 #ifdef MPI
-  type(MPI_Request), dimension(12) :: reqs_R, reqs_Phi, reqs_X2
+  integer, dimension(12) :: reqs_R, reqs_Phi, reqs_X2
   integer :: ierr
   call init_MPI
 #endif
