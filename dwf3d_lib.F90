@@ -681,7 +681,7 @@ contains
 #ifdef MPI
     use comms
     integer :: mpi_fh
-    integer :: status
+    integer :: status(mpi_status_size)
     integer :: ierr
     
     call MPI_File_Open(comm, 'con', MPI_Mode_Rdonly, &
@@ -714,7 +714,7 @@ contains
 #ifdef MPI
     use comms
     integer :: mpi_fh
-    integer :: status
+    integer :: status(mpi_status_size)
     integer :: ierr
     
 ! Write theta
