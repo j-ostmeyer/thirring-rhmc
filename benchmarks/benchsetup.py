@@ -1,6 +1,16 @@
 #!/usr/bin/python
 '''
-This script must be called with a 'stepname' as argument. Possible stepnames are
+This script creates and configures a number of benchmarks, compiling different 
+versions of the benchmarks for different geometries. The workflow happens by 
+ - first creating the directories, 
+ - then preparing the content of each directory,
+ - then writing the scripts
+ - optionally run them locally.
+If scripts are created, then we want to execute them together in a batch script.
+See benchmark1n.sh for this.
+
+It must be called with a 'stepname' as argument, in the directory 
+above this one. Possible stepnames are
 written in the 'modes' dictionary, and should be invoked sequentially.
 Read all the notes.
 
@@ -50,6 +60,10 @@ def cd(newdir):
         os.chdir(prevdir)
 
 def create_work_in_dir(func):
+    '''
+    This function creates a function that consists of the argument
+    run in a group of directories.
+    '''
     def work_in_dir(size,directory,possible_subsizes):
         with cd(directory):
             #os.system('make clean')
@@ -213,7 +227,13 @@ if __name__ == "__main__" :
         detailed_mode = True
         argv.remove('detailed')
  
-    cycle(modes[argv[1]])
+    try:
+       cycle(modes[argv[1]])
+    except KeyError:
+       print("'{}' step name not recognized.".format(argv[1]))
+       print("Possible step names:")
+       print(modes.keys())
+       
 
     
 
