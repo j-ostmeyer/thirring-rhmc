@@ -8,7 +8,7 @@ module params
   integer, parameter :: sp=kind(1.)
 
   ! benchmarking/profiling parameters
-  integer :: timing_loops = 10
+  integer :: timing_loops = 50
   ! Lattice parameters
 #define KSIZE 12
 #define KSIZET 12

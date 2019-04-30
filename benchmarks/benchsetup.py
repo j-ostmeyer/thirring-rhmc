@@ -211,8 +211,8 @@ def write_runscripts(divs,ssize):
     script='''
 /usr/bin/time -o timecongrad -p mpirun -n {nrank} ./benchmark_congrad > congradoutput
 /usr/bin/time -o timeqmr -p mpirun -n {nrank} ./benchmark_qmrherm_1 > qmroutput
-/usr/bin/time -o timeqmr -p mpirun -n {nrank} ./benchmark_qmrherm_split1 > qmrsplitoutput
-/usr/bin/time -o timeqmr -p mpirun -n {nrank} ./benchmark_qmrherm_split_nodir1 > qmrsplitnodiroutput
+/usr/bin/time -o timeqmr_split -p mpirun -n {nrank} ./benchmark_qmrherm_split1 > qmrsplitoutput
+/usr/bin/time -o timeqmr_split_nodir -p mpirun -n {nrank} ./benchmark_qmrherm_split_nodir1 > qmrsplitnodiroutput
 '''.format(div = divs, nrank = nranks)
 
     suffix = str(int(math.ceil(float(nranks)/ranks_per_node)))
