@@ -47,11 +47,12 @@ $(info MPIFC   : $(MPIFC))
 $(info FC      : $(FC))
 $(info FCFLAGS : $(FCFLAGS))
 
-LIBOBJS = avgitercounts.o dirac.o dum1.o dwf3d_lib.o \
+LIBOBJS = avgitercounts.o derivs_module.o dirac.o dum1.o dwf3d_lib.o \
        gauge.o gaussian.o gforce.o measure_module.o params.o \
        qmrherm_module.o remez.o remezg.o trial.o vector.o\
        comms.o random.o partitioning.o comms_partitioning.o \
-       dirac_split.o qmrherm_module_split.o
+       dirac_split.o qmrherm_module_split.o \
+       dirac_split_nodir.o qmrherm_module_split_nodir.o 
 
 
 .PHONY: clean
@@ -62,7 +63,7 @@ COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -c
 # MODULES AND OBJECT FILES
 # generic rule for all modules
 %.mod : %.o
-	touch $@
+	#touch $@
 
 # generic rule for dum,gauge,gforce,remez,remezg,trial,vector,partitioning
 %.o : $(TOPDIR)/%.F90 .makefile.uptodate params.mod
@@ -73,48 +74,60 @@ partitioning.o : $(TOPDIR)/partitioning.F90 .makefile.uptodate params.mod \
 	$(COMPILE) -o $*.o $<
 
 comms_partitioning.o : $(TOPDIR)/comms_partitioning.F90 .makefile.uptodate \
-        params.mod partitioning.mod
+                       params.mod partitioning.mod
+	$(COMPILE) -o $*.o $<
+
+derivs_module.o : $(TOPDIR)/derivs_module.F90 .makefile.uptodate gforce.mod \
+                  dirac.mod
 	$(COMPILE) -o $*.o $<
 
 dirac.o : $(TOPDIR)/dirac.F90 .makefile.uptodate params.mod comms.mod
 	$(COMPILE) -o $*.o $<
 
 dirac_split.o : $(TOPDIR)/dirac_split.F90 .makefile.uptodate params.mod \
-    comms.mod dirac.mod partitioning.mod
+                comms.mod dirac.mod partitioning.mod
 	$(COMPILE) -o $*.o $<
 
-avgitercounts.o : $(TOPDIR)/avgitercounts.F90 \
-        .makefile.uptodate
+dirac_split_nodir.o : $(TOPDIR)/dirac_split_nodir.F90 .makefile.uptodate \
+                      params.mod comms.mod dirac.mod partitioning.mod
+	$(COMPILE) -o $*.o $<
+
+avgitercounts.o : $(TOPDIR)/avgitercounts.F90 .makefile.uptodate
 	$(COMPILE) -o avgitercounts.o $<
 
-qmrherm_module.o : $(TOPDIR)/qmrherm_module.F90 \
-        .makefile.uptodate params.mod vector.mod gforce.mod \
-        comms.mod dirac.mod
+qmrherm_module.o : $(TOPDIR)/qmrherm_module.F90 .makefile.uptodate params.mod \
+                   vector.mod gforce.mod comms.mod dirac.mod derivs_module.mod
 	$(COMPILE) -o qmrherm_module.o $<
 
 qmrherm_module_split.o : $(TOPDIR)/qmrherm_module_split.F90 \
-        .makefile.uptodate params.mod vector.mod gforce.mod \
-        comms.mod dirac_split.mod dirac.mod
+                         .makefile.uptodate params.mod vector.mod gforce.mod \
+                         comms.mod dirac_split.mod dirac.mod derivs_module.mod
 	$(COMPILE) -o qmrherm_module_split.o $<
+
+qmrherm_module_split_nodir.o : $(TOPDIR)/qmrherm_module_split_nodir.F90 \
+                              .makefile.uptodate params.mod vector.mod \
+                              gforce.mod comms.mod dirac_split_nodir.mod \
+                              dirac.mod derivs_module.mod
+	$(COMPILE) -o qmrherm_module_split_nodir.o $<
 
 bulk_rhmc.o : $(TOPDIR)/bulk_rhmc.f90 .makefile.uptodate \
         dwf3d_lib.mod
 	$(COMPILE) -o $*.o $<
 
 dwf3d_lib.o : $(TOPDIR)/dwf3d_lib.F90 \
-    .makefile.uptodate avgitercounts.mod comms.mod dirac.mod \
-    dum1.mod gauge.mod gaussian.mod gforce.mod measure_module.mod \
-    params.mod qmrherm_module.mod random.mod remez.mod remezg.mod \
-    trial.mod vector.mod
+              .makefile.uptodate avgitercounts.mod comms.mod dirac.mod \
+              dum1.mod gauge.mod gaussian.mod gforce.mod measure_module.mod \
+              params.mod qmrherm_module.mod random.mod remez.mod remezg.mod \
+              trial.mod vector.mod
 	$(COMPILE) -o dwf3d_lib.o $<
 
 gaussian.o : $(TOPDIR)/gaussian.F90 .makefile.uptodate \
-        comms.mod params.mod random.mod 
+             comms.mod params.mod random.mod 
 	$(COMPILE) -o gaussian.o $<
 
 measure_module.o : $(TOPDIR)/measure_module.F90 \
-        .makefile.uptodate params.mod gaussian.mod trial.mod \
-        vector.mod comms.mod dirac.mod 
+                  .makefile.uptodate params.mod gaussian.mod trial.mod \
+                  vector.mod comms.mod dirac.mod 
 	$(COMPILE) -o measure_module.o $<
 
 

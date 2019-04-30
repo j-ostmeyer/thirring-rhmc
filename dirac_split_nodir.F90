@@ -1,4 +1,4 @@
-module dirac_split
+module dirac_split_nodir
 ! Versions of the dirac operator subroutines which operate only on a subset 
 ! of the lattice. 
   use params
@@ -372,7 +372,7 @@ contains
   end subroutine
 
 
-end module dirac_split
+end module dirac_split_nodir
 
 
 
