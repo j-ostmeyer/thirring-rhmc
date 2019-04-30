@@ -35,6 +35,7 @@ program benchmark_qmrherm_split1
   !integer :: t1i(2), t2i(2)
   double precision :: t1i, t2i
   double precision :: dt
+  integer ::total_iterations
 #ifdef MPI
   integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
   integer :: ierr
@@ -116,17 +117,19 @@ program benchmark_qmrherm_split1
 
   call init(istart)
   ! call function
+  total_iterations = 0
   !call gettimeofday(t1i,ierr)
   t1i = MPI_Wtime()
   do i = 1,timing_loops
     Phi0 = Phi0_orig
     call qmrherm_split(Phi, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter)
+    total_iterations = total_iterations + itercg
   end do
   !call gettimeofday(t2i,ierr)
   t2i = MPI_Wtime()
   !dt = t2i(1)-t1i(1) + 1.0d-6 * (t2i(2)-t1i(2))
   dt = t2i-t1i
-  dt = dt / timing_loops / itercg
+  dt = dt / total_iterations
 #ifdef MPI
   if(ip_global.eq.0) then
 #endif
