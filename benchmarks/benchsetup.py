@@ -220,6 +220,34 @@ def write_runscripts(divs,ssize):
     print script
     with open(os.path.join(newdirname,scriptname),'w') as f:
         f.write(script)
+
+def write_runscripts_extrae(divs,ssize):
+    newdirname = get_newdirname(divs)
+    nranks = get_nranks(divs)
+    script='''
+module purge
+module use /home/s.michele.mesiti/modules
+module load extrae-gnu-8.1-mpi3.1.1 
+TRACE=$EXTRAE_HOME/share/example/MPI/ld-preload/trace.sh 
+ln -s $EXTRAE_HOME/share/example/MPI/extrae.xml
+for type in congrad qmrherm_1 qmrherm_split1 qmrherm_split_nodir1
+do
+(
+mkdir -p $type
+cd $type
+mpirun -n {nrank} $TRACE ./benchmark_$type              > output_$type &&
+mpirun ${{EXTRAE_HOME}}/bin/mpimpi2prv -syn -f TRACE.mpits -o trace.prv
+)
+done 
+'''.format(div = divs, nrank = nranks)
+
+    suffix = str(int(math.ceil(float(nranks)/ranks_per_node)))
+    scriptname = 'scriptrun'+suffix
+    print script
+    with open(os.path.join(newdirname,scriptname),'w') as f:
+        f.write(script)
+ 
+
  
 def run(divs,ssize):
     newdirname = get_newdirname(divs)
@@ -235,6 +263,7 @@ modes = {
     'createdir' : createdir,
     'prepare': create_work_in_dir(prepare),
     'writescripts' : create_work_in_dir(write_runscripts),
+    'writescripts_extrae' : create_work_in_dir(write_runscripts_extrae),
     'run' : create_work_in_dir(run)
 } 
 
@@ -253,6 +282,11 @@ if __name__ == "__main__" :
        print("'{}' step name not recognized.".format(argv[1]))
        print("Possible step names:")
        print(modes.keys())
+    except IndexError:
+       print("Please specify step.")
+       print("Possible step names:")
+       print(modes.keys())
+   
        
 
     

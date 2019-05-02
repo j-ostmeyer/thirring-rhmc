@@ -1,4 +1,4 @@
-COMPILER=INTEL# either GNU or INTEL
+COMPILER=SPINTEL# See ../MkRules for available options
 MPI=yes#
 NP_X=3
 NP_Y=3

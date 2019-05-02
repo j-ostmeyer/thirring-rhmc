@@ -12,3 +12,8 @@ fort.*
 compile_flags
 bulk_rhmc
 run???/
+*.out
+*.err
+benchmarks*
+time*txt
+

@@ -10,7 +10,7 @@
 #GNU SETTINGS
 GNU_MPIFC    = mpif90
 GNU_FC       = gfortran
-GNU_FCFLAGS  = -O0 -Wall -ffree-line-length-none
+GNU_FCFLAGS  = -O3 -Wall -ffree-line-length-none
 
 #INTEL SETTINGS
 INTEL_MPIFC  =mpiifort 
@@ -23,6 +23,14 @@ INTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays #-g -w
 CRAY_MPIFC    = ftn
 CRAY_FC       = ftn
 CRAY_FCFLAGS  = -O3
+
+#INTEL SETTINGS
+SCOREPINTEL_MPIFC  =scorep --user mpiifort 
+SCOREPINTEL_FC     =scorep --user ifort 
+SCOREPINTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays #-g -warn all
+#INTEL_FCFLAGS=-g -O0 -heap-arrays -warn all -C -traceback
+#INTEL_FCFLAGS=-g -O0 -heap-arrays 
+
 
 
 
@@ -38,6 +46,10 @@ else ifeq ($(COMPILER), CRAY)
 MPIFC  =$(CRAY_MPIFC)
 FC     =$(CRAY_FC)
 FCFLAGS=$(CRAY_FCFLAGS)
+else ifeq ($(COMPILER), SPINTEL)
+MPIFC  =$(SCOREPINTEL_MPIFC)
+FC     =$(SCOREPINTEL_FC)
+FCFLAGS=$(SCOREPINTEL_FCFLAGS)
 else 
 $(error COMPILER not correctly specified (watch for whitespaces)) 
 endif
