@@ -8,7 +8,7 @@ module params
   integer, parameter :: sp=kind(1.)
 
   ! benchmarking/profiling parameters
-  integer :: timing_loops = 10
+  integer :: timing_loops = 5
   ! Lattice parameters
 #define KSIZE SEDKSIZE
 #define KSIZET SEDKSIZE 
@@ -49,8 +49,8 @@ module params
   integer, parameter :: icheck=100
 
   ! Inverter
-  integer :: max_qmr_iters=10    !QMRHERM
-  integer :: niterc=10 !CONGRAD
+  integer :: max_qmr_iters=5    !QMRHERM
+  integer :: niterc=5 !CONGRAD
 
   ! Runtime parameters
   real :: beta

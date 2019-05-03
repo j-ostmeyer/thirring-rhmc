@@ -73,13 +73,13 @@ def create_work_in_dir(func):
                 func(divs,ssize)
     return work_in_dir
 
-def cycle(func):
+def cycle(func,tag):
      ksizes = [4,6,8,10,12,16]
      for size in ksizes:
         if setFake:
-            directory = 'benchmarks_fake'+str(size)
+            directory = tag + '_benchmarks_fake'+str(size)
         else:
-            directory = 'benchmarks'+str(size)
+            directory = tag + '_benchmarks'+str(size)
         
         possible_subsizes = []
 
@@ -229,14 +229,14 @@ module purge
 module use /home/s.michele.mesiti/modules
 module load extrae-gnu-8.1-mpi3.1.1 
 TRACE=$EXTRAE_HOME/share/example/MPI/ld-preload/trace.sh 
-ln -s $EXTRAE_HOME/share/example/MPI/extrae.xml
+ln -s $EXTRAE_HOME/share/example/MPI/extrae_fixed.xml ./extrae.xml
 for type in congrad qmrherm_1 qmrherm_split1 qmrherm_split_nodir1
 do
 (
 mkdir -p $type
 cd $type
-mpirun -n {nrank} $TRACE ./benchmark_$type              > output_$type &&
-mpirun ${{EXTRAE_HOME}}/bin/mpimpi2prv -syn -f TRACE.mpits -o trace.prv
+mpirun -n {nrank} $TRACE ../benchmark_$type              > output_$type &&
+mpirun -n {nrank} ${{EXTRAE_HOME}}/bin/mpimpi2prv -syn -f TRACE.mpits -o trace.prv
 )
 done 
 '''.format(div = divs, nrank = nranks)
@@ -275,19 +275,24 @@ if __name__ == "__main__" :
     if 'detailed' in argv:
         detailed_mode = True
         argv.remove('detailed')
+
+   
+    try:
+       tag = argv[1]
+    except:
+       print("Usage: benchsetup.py tag step")
  
     try:
-       cycle(modes[argv[1]])
+       cycle(modes[argv[2]],tag)
     except KeyError:
        print("'{}' step name not recognized.".format(argv[1]))
        print("Possible step names:")
        print(modes.keys())
     except IndexError:
-       print("Please specify step.")
+       print("Please specify step and tag.")
        print("Possible step names:")
        print(modes.keys())
-   
-       
+      
 
     
 
