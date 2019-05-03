@@ -247,6 +247,29 @@ done
     with open(os.path.join(newdirname,scriptname),'w') as f:
         f.write(script)
  
+def write_runscripts_scalasca(divs,ssize):
+    newdirname = get_newdirname(divs)
+    nranks = get_nranks(divs)
+    script='''
+module purge
+module load scalasca
+for type in congrad qmrherm_1 qmrherm_split1 qmrherm_split_nodir1
+do
+(
+mkdir -p $type
+cd $type
+scalasca -analyse mpirun -n {nrank} ../benchmark_$type > output_$type 
+)
+done 
+'''.format(div = divs, nrank = nranks)
+
+    suffix = str(int(math.ceil(float(nranks)/ranks_per_node)))
+    scriptname = 'scriptrun'+suffix
+    print script
+    with open(os.path.join(newdirname,scriptname),'w') as f:
+        f.write(script)
+ 
+
 
  
 def run(divs,ssize):
@@ -264,6 +287,7 @@ modes = {
     'prepare': create_work_in_dir(prepare),
     'writescripts' : create_work_in_dir(write_runscripts),
     'writescripts_extrae' : create_work_in_dir(write_runscripts_extrae),
+    'writescripts_scalasca' : create_work_in_dir(write_runscripts_scalasca),
     'run' : create_work_in_dir(run)
 } 
 
