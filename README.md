@@ -19,15 +19,15 @@ different versions for it - a 'main' version, a 'test' version in the 'tests'
 directory, and a 'benchmark' version in the 'benchmarks' directory. This 
 does not need to be modified (to my experience).
    * the `MkRules` file: the only version of this file is included in all makefiles
-and contains the rules to build all the components of the program.
+and contains the rules to build all the components of the program. 
 This file does not need to be modified unless one wants to change 
-compiler-specific flags, e.g. the flags for the Intel or GNU compiler.
+compiler-specific flags, e.g. the flags for the compilers.
    * the `MkFlags` file: this is the file that the user is going to modify the most 
 often. It contains the some details about the parallelization of the code. 
 A possible content is the following:
 
 ```
-COMPILER=INTEL# either GNU or INTEL                                             
+COMPILER=INTEL# GNU,INTEL,CRAY,IBM,SPINTEL
 MPI=yes#                                                                        
 NP_X=2#                                                                         
 NP_Y=2#                                                                         
@@ -37,7 +37,16 @@ SITE_RANDOM=yes#
 
 A brief explanation of the options follows.
 
-#### Compiling in parallel
+#### Compiler choice
+The choice of the compiler through the COMPILER variable just defines the 
+compiler executable name and the flags to pass to the fortran compiler.
+These are all defined in MkRules.
+
+Notice that flags have been chosen carefully only for the intel compiler, 
+and that there are no correct variables for the IBM compiler.
+
+
+#### Compiling for parallel
 
 Set `MPI` to `yes` to enable MPI. `NP_X`, `NP_Y`, and `NP_T` must be set as the 
 number of processes
@@ -81,7 +90,6 @@ Other version of the params.F90 file are used for tests and benchmarks - see
 the respective directories.
 
 #### Caveats
-* Only the INTEL compiler works with MPI, for now.
 * When modifying a Makefile or any file include in one, keep in mind that spaces,
 even at the end of words, have a meaning. For example, setting a variable like this
 ```
@@ -105,10 +113,14 @@ current version is known good), by setting the `generate` parameter in each prog
 to `.true.`.
 
 ## Benchmarks
-In order to study the performance of the 'congrad' and 'qmrherm' subroutines,
-which make up most of the computational load of the program, two separate benchmark
-programs have been created, with the scripts and data needed to run them in many possible 
-setups. See che `benchmarks` directory.
+In order to study the performance of the 'congrad' subroutine and of the various versions 
+of the 'qmrherm' subroutine
+(which make up most of the computational load of the program) two separate benchmark
+programs have been created, with scripts and data needed to run them in many possible 
+setups (e.g., benchsetup.py).
+Moreover, a benchmark for the a full molecular dynamics trajectory has
+also been written (it is not yet included in the auto-benchmark suite).
+See the `benchmarks` directory.
 
 ## Machine-Specific options and caveats
 * On the `enhpc` cluster it is necessary to load the `intel` and the `mvapich2`

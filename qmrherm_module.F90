@@ -304,7 +304,7 @@ contains
     endif !if(iflag.lt.2)then , else
 
     if (ip_global .eq. 0 .and. printall) then
-      write(6,*) "Qmrherm iterations,res:", itercg, res
+      print*, "Qmrherm iterations,res:", itercg, res
     endif
     return
   end subroutine qmrherm
