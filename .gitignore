@@ -14,6 +14,6 @@ bulk_rhmc
 run???/
 *.out
 *.err
-benchmarks*
+benchmarks?*
 time*txt
 
