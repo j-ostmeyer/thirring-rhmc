@@ -206,11 +206,11 @@ contains
         do idiag = 1, ndiagq
           p(:, :, :, :, :, idiag) = q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
             & - amu(idiag) * pm1(:, :, :, :, :, idiag)
-          pm1(:, :, :, :, :, idiag) = p(:, :, :, :, :, idiag)
           x1(:, :, :, :, :, idiag) = &
             & x1(:, :, :, :, :, idiag) &
             & + rho(idiag) * p(:, :, :, :, :, idiag)
         enddo
+        pm1(:, :, :, :, :, idiag) = p(:, :, :, :, :, idiag)
         !     Convergence criterion (a bit ad hoc for now...)
         rhomax = real(maxval(abs(phimod * rho)))
         rhom1 = rho
