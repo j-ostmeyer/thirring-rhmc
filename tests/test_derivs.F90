@@ -5,7 +5,7 @@ program test_derivs
   use gforce
   use comms
   use test_utils
-  use qmrherm_module, only: derivs
+  use derivs_module, only: derivs
   implicit none
 
   ! general parameters

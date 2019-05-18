@@ -109,7 +109,7 @@ end program
 
 
 subroutine dslash(phi,r,u,am,imass)
-  use dirac_split
+  use dirac_split_nodir
   use partitioning
   use comms_partitioning
   use mpi
