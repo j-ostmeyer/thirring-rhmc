@@ -206,16 +206,15 @@ contains
         do idiag = 1, ndiagq
           p(:, :, :, :, :, idiag) = q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
             & - amu(idiag) * pm1(:, :, :, :, :, idiag)
-        enddo
-        pm1 = p
-        !     Convergence criterion (a bit ad hoc for now...)
-        rhomax = real(maxval(abs(phimod * rho)))
-        rhom1 = rho
-        do idiag = 1, ndiagq
+          pm1(:, :, :, :, :, idiag) = p(:, :, :, :, :, idiag)
           x1(:, :, :, :, :, idiag) = &
             & x1(:, :, :, :, :, idiag) &
             & + rho(idiag) * p(:, :, :, :, :, idiag)
         enddo
+        !     Convergence criterion (a bit ad hoc for now...)
+        rhomax = real(maxval(abs(phimod * rho)))
+        rhom1 = rho
+ 
 #ifdef SCOREPINST
           SCOREP_USER_REGION_END(post)
 #endif
