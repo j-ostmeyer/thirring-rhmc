@@ -25,7 +25,7 @@ program benchmark_qmrherm_split1
 
 
   integer :: imass, iflag, isweep, iter
-  real(dp) :: anum(0:ndiag), aden(ndiag)
+  real(dp) :: anum(0:ndiagg), aden(ndiagg)
   real :: res, am
   integer :: itercg
 
@@ -55,9 +55,9 @@ program benchmark_qmrherm_split1
   iter = 0
 
   anum(0) = 0.5
-  do i = 1, ndiag
-    anum(i) = real(exp(iunit * i * tau / ndiag))
-    aden(i) = real(exp(-iunit * 0.5 * i * tau / ndiag))
+  do i = 1, ndiagg
+    anum(i) = real(exp(iunit * i * tau / ndiagg))
+    aden(i) = real(exp(-iunit * 0.5 * i * tau / ndiagg))
   enddo
   do j = 1,4
     do it = 1,ksizet_l
@@ -122,7 +122,7 @@ program benchmark_qmrherm_split1
   t1i = MPI_Wtime()
   do i = 1,timing_loops
     Phi0 = Phi0_orig
-    call qmrherm_split(Phi, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter)
+    call qmrherm_split(Phi, res, itercg, am, imass, anum, aden, ndiagg, iflag, isweep, iter)
     total_iterations = total_iterations + itercg
   end do
   !call gettimeofday(t2i,ierr)

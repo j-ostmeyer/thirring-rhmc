@@ -1,3 +1,7 @@
+#ifdef SCOREPINST
+#include "scorep/SCOREP_User.inc"
+#endif
+
 module qmrherm_module
   use params
   implicit none
@@ -56,6 +60,11 @@ contains
     integer :: ierr
     real(dp) :: dp_reduction ! DEBUG
 #endif
+#ifdef SCOREPINST
+    SCOREP_USER_REGION_DEFINE(qmrherm_main_loop)
+#endif
+
+
     !
     !     write(6,111)
     !111 format(' Hi from qmrherm')
@@ -87,15 +96,29 @@ contains
     !do niter=1,20
     niter = 0
     go_on = .true.
+#ifdef SCOREPINST
+    SCOREP_USER_REGION_BEGIN(qmrherm_main_loop,"qmrh_main_loop",&
+      &SCOREP_USER_REGION_TYPE_COMMON)
+#endif
     do while(niter.lt.max_qmr_iters .and. go_on )
       niter=niter+1
       itercg=itercg+1
       !
       !  Lanczos steps
  
-      call MPI_Barrier(comm,ierr)
+      !call MPI_Barrier(comm,ierr)
 
-      q = R / betaq
+      block
+#ifdef SCOREPINST
+        SCOREP_USER_REGION_DEFINE(rescaling1)
+        SCOREP_USER_REGION_BEGIN(rescaling1,'R_rescaling',&
+          &SCOREP_USER_REGION_TYPE_COMMON)
+#endif
+        q = R / betaq
+#ifdef SCOREPINST
+        SCOREP_USER_REGION_END(rescaling1)
+#endif
+      end block
 
       call dslash(vtild,q,u,am,imass)
 
@@ -123,11 +146,21 @@ contains
       alphatild = dp_reduction ! DEBUG
 #endif
      !
+      Rcompute: block 
+#ifdef SCOREPINST
+      SCOREP_USER_REGION_DEFINE(Rcompute)
+      SCOREP_USER_REGION_BEGIN(Rcompute,'Rcompute',&
+        &SCOREP_USER_REGION_TYPE_COMMON)
+#endif
       R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = &
         & x3(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
         & - alphatild * q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
         & - betaq * qm1
-      call MPI_Barrier(comm,ierr)
+#ifdef SCOREPINST
+      SCOREP_USER_REGION_END(Rcompute)
+#endif
+      end block Rcompute
+      !call MPI_Barrier(comm,ierr)
 
 #ifdef MPI
       ! R will be needed at the start of the next iteration to compute q
@@ -164,6 +197,12 @@ contains
         dm1 = d
         d = alpha - betaq0 * amu
         rho = -amu * dm1 * rhom1 / d
+        post: block
+#ifdef SCOREPINST
+          SCOREP_USER_REGION_DEFINE(post)
+          SCOREP_USER_REGION_BEGIN(post,'post',&
+            &SCOREP_USER_REGION_TYPE_COMMON)
+#endif
         do idiag = 1, ndiagq
           p(:, :, :, :, :, idiag) = q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
             & - amu(idiag) * pm1(:, :, :, :, :, idiag)
@@ -177,6 +216,11 @@ contains
             & x1(:, :, :, :, :, idiag) &
             & + rho(idiag) * p(:, :, :, :, :, idiag)
         enddo
+#ifdef SCOREPINST
+          SCOREP_USER_REGION_END(post)
+#endif
+
+        end block post
 
         !     check to see whether the residual is acceptable for all ndiagq....
         !     criterion is a bit ad hoc -- relaxing by a factor arelax improves code
@@ -197,7 +241,10 @@ contains
       call complete_halo_update(reqs_R)
 #endif
     enddo! do while(niter.lt.max_qmr_iters .and. go_on )
-
+#ifdef SCOREPINST
+    SCOREP_USER_REGION_END(qmrherm_main_loop)
+#endif
+ 
 
 
     if (niter.gt.max_qmr_iters) then

@@ -5,3 +5,4 @@ benchmark_qmrherm_1
 benchmark_qmrherm_split1
 benchmark_full_md
 benchmark_qmrherm_split_nodir1
+scorep_benchmark_*

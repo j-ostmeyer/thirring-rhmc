@@ -13,9 +13,10 @@ GNU_FC       = gfortran
 GNU_FCFLAGS  = -O3 -Wall -ffree-line-length-none -g
 
 #INTEL SETTINGS
-INTEL_MPIFC  =mpiifort 
-INTEL_FC     =ifort 
-INTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays #-g -warn all
+INTEL_MPIFC  = mpiifort #mpif90 
+INTEL_FC     = ifort 
+INTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g 
+#INTEL_FCFLAGS= -O2 -heap-arrays #-g -warn all
 #INTEL_FCFLAGS=-g -O0 -heap-arrays -warn all -C -traceback
 #INTEL_FCFLAGS=-g -O0 -heap-arrays 
 
@@ -25,11 +26,16 @@ CRAY_FC       = ftn
 CRAY_FCFLAGS  = -O3
 
 #SCOREPR-INTEL SETTINGS
-SCOREPINTEL_MPIFC  =scorep --user mpiifort 
+SCOREPINTEL_MPIFC  =scorep --user mpif90 #mpiifort 
 SCOREPINTEL_FC     =scorep --user ifort 
-SCOREPINTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays #-g -warn all
+SCOREPINTEL_FCFLAGS= -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g -warn all -DSCOREPINST
 #INTEL_FCFLAGS=-g -O0 -heap-arrays -warn all -C -traceback
 #INTEL_FCFLAGS=-g -O0 -heap-arrays 
+
+#INTEL SETTINGS NO IPO OPENMPI3 - SCOREP 'DRY'
+SCOREPDRYINTEL_MPIFC  = mpif90 
+SCOREPDRYINTEL_FC     = ifort 
+SCOREPDRYINTEL_FCFLAGS= -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g 
 
 #IBM SETTINGS
 IBM_MPIFC  = #SETME
@@ -53,6 +59,10 @@ else ifeq ($(COMPILER), SPINTEL)
 MPIFC  =$(SCOREPINTEL_MPIFC)
 FC     =$(SCOREPINTEL_FC)
 FCFLAGS=$(SCOREPINTEL_FCFLAGS)
+else ifeq ($(COMPILER), SPDRYINTEL)
+MPIFC  =$(SCOREPDRYINTEL_MPIFC)
+FC     =$(SCOREPDRYINTEL_FC)
+FCFLAGS=$(SCOREPDRYINTEL_FCFLAGS)
 else ifeq ($(COMPILER), IBM)
 $(error COMPILER IBM not implemented - set flags in MkRules first.) 
 MPIFC  =$(IBM_MPIFC)
