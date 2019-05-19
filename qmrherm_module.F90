@@ -198,7 +198,9 @@ contains
         d = alpha - betaq0 * amu
         rho = -amu * dm1 * rhom1 / d
         post: block
+          implicit none
           integer :: idirac,it,iy,ix,iz
+          integer, parameter :: shift = 8
 #ifdef SCOREPINST
           SCOREP_USER_REGION_DEFINE(post)
           SCOREP_USER_REGION_BEGIN(post,'post',&
@@ -209,14 +211,13 @@ contains
             do it=1,ksizet_l
               do iy=1,ksizey_l
                 do ix=1,ksizex_l
-                  do iz=1,kthird,4
-!                    p(:, :, :, :, :, idiag) = q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
-                    p(iz:iz+4,ix,iy,it,idirac,idiag) = q(iz:iz+4,ix,iy,it,idirac) &
-                      & - amu(idiag) * pm1(iz:iz+4,ix,iy,it,idirac,idiag)
-                    x1(iz:iz+4,ix,iy,it,idirac,idiag) = &
-                      & x1(iz:iz+4,ix,iy,it,idirac,idiag) &
-                      & + rho(idiag) * p(iz:iz+4,ix,iy,it,idirac,idiag)
-                    pm1(iz:iz+4,ix,iy,it,idirac,idiag) = p(iz:iz+4,ix,iy,it,idirac,idiag)
+                  do iz=1,kthird,shift
+                    p(iz:iz+shift-1,ix,iy,it,idirac,idiag) = q(iz:iz+shift-1,ix,iy,it,idirac) &
+                      & - amu(idiag) * pm1(iz:iz+shift-1,ix,iy,it,idirac,idiag)
+                    pm1(iz:iz+shift-1,ix,iy,it,idirac,idiag) = p(iz:iz+shift-1,ix,iy,it,idirac,idiag)
+                    x1(iz:iz+shift-1,ix,iy,it,idirac,idiag) = &
+                      & x1(iz:iz+shift-1,ix,iy,it,idirac,idiag) &
+                      & + rho(idiag) * p(iz:iz+shift-1,ix,iy,it,idirac,idiag)
                   enddo
                 enddo
               enddo
