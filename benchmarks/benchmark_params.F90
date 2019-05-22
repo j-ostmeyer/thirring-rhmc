@@ -8,12 +8,12 @@ module params
   integer, parameter :: sp=kind(1.)
 
   ! benchmarking/profiling parameters
-  integer :: timing_loops = 50
+  integer :: timing_loops = 10
   ! Lattice parameters
 #define KSIZE 12
 #define KSIZET 12
   integer, parameter :: ksize=KSIZE, ksizet=KSIZET
-  integer, parameter :: kthird=24
+  integer, parameter :: kthird=48
   integer, parameter :: kvol=ksize*ksize*ksizet
   integer, parameter :: ndiag=25, ndiagg=12
   integer, parameter :: Nf=1
@@ -49,7 +49,7 @@ module params
   integer, parameter :: icheck=100
 
   ! Inverter
-  integer :: max_qmr_iters=10    !QMRHERM
+  integer :: max_qmr_iters=100    !QMRHERM
   integer :: niterc=10 !CONGRAD
 
   ! Runtime parameters
