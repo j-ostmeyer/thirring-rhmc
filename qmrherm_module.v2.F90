@@ -27,13 +27,14 @@ contains
     use dirac
     use params 
     use comms
+    use inverter_utils
     ! subroutine parameters
     complex(dp),intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
     real, intent(in) :: am
     integer, intent(in) :: imass
     integer, intent(in) :: ndiagq
     real(dp), intent(in) :: aden(ndiagq)
-    complex(dp) :: output(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, ndiag)
+    complex(dp) :: output(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
     complex(dp) :: input(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real, intent(in) :: res
     integer, intent(in) :: maxcg
@@ -45,7 +46,7 @@ contains
     complex(dp) ::         h(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp) ::         s(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp) ::         p(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp) :: shiftferm(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, ndiag)
+    complex(dp) :: shiftferm(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
 
     ! temporary variables - short vectors
     real(dp) :: zeta_i(ndiag)
@@ -85,7 +86,7 @@ contains
 
     do ishift=1,ndiagq
       flags(ishift) = .true.
-      shiftferm(:,:,:,:,:,ishift) = input
+      shiftferm(:,:,:,:,:,ishift) = input(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:)
       zeta_i(ishift) = 1.0d0
       zeta_ii(ishift) = 1.0d0
       gammas(ishift) = 0.0d0
@@ -96,16 +97,19 @@ contains
 
     do while((maxishift .gt. 0).and.(cg_return.lt.maxcg))
       cg_return = cg_return + 1 
+
+
       ! DIRAC OPERATOR
-      call dslash(h,p,u,am,imass)
-#ifdef MPI
-      call MPI_Startall(12,reqs_h,ierr)
-      !call complete_halo_update(reqs_h) ! Now this call happens in dslashd
-      call dslashd(s,h,u,am,imass,reqs_h)
-#else
-      call update_halo_5(4, h)
-      call dslashd(s,h,u,am,imass)
-#endif
+      call dirac_operator(s,p,u,am,imass)
+!      call dslash(h,p,u,am,imass)
+!#ifdef MPI
+!      call MPI_Startall(12,reqs_h,ierr)
+!      !call complete_halo_update(reqs_h) ! Now this call happens in dslashd
+!      call dslashd(s,h,u,am,imass,reqs_h)
+!#else
+!      call update_halo_5(4, h)
+!      call dslashd(s,h,u,am,imass)
+!#endif
 
       alpha = sum(real(conjg(p(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
         &                * s(:,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
@@ -126,7 +130,8 @@ contains
       enddo
 
       do ishift=1,maxishift
-        output(:,:,:,:,:,ishift) = output(:,:,:,:,:,ishift)-shiftferm(:,:,:,:,:,ishift)*omegas(ishift) 
+        output(:,:,:,:,:,ishift) = output(:,:,:,:,:,ishift)-&
+          &shiftferm(:,:,:,:,:,ishift)*omegas(ishift) 
       enddo
 
       r = r + omega*s
@@ -144,14 +149,48 @@ contains
 
       do ishift=1,maxishift
         shiftferm(:,:,:,:,:,ishift) = shiftferm(:,:,:,:,:,ishift) * gammas(ishift)+&
-         & r * zeta_iii(ishift)
+         & r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:) * zeta_iii(ishift)
       enddo
 
-      maxishift = 0
+      test : block
+        complex(dp) :: xout(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+        complex(dp) :: xin(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+        complex(dp) :: check(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
+#ifdef MPI
+        integer, dimension(12) :: reqs_xin
+#endif
 
+        real(dp) :: checksum
+
+        if(mod(cg_return,10)==0) then
+          do ishift =1,ndiagq
+            xin(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = output(:,:,:,:,:,ishift)
+#ifdef MPI
+            call start_halo_update_5(4, xin, 10, reqs_xin)
+            call complete_halo_update(reqs_xin)
+#else
+            call update_halo_5(4, xin)
+#endif
+            call dirac_op_shifted(xout,xin,u,am,imass,real(aden(ishift)))
+
+            check = input(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
+              & xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
+            checksum = sum(abs(check)**2)
+#ifdef MPI
+            call MPI_AllReduce(checksum, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+            checksum = dp_reduction
+#endif
+            if(ip_global.eq.0) then
+              print*, ishift,sqrt(delta*zeta_i(ishift)**2),checksum,res,real(aden(ishift))
+            endif
+          enddo
+        endif
+      end block test
+ 
+      maxishift = 0
       do ishift=1,ndiagq
         if(flags(ishift))then
-          if(sqrt(delta*zeta_ii(ishift)**2/source_norm) < res) then
+          if(sqrt(delta*zeta_ii(ishift)**2) < res) then
             flags(ishift) = .false.
           else
             maxishift = ishift 
@@ -164,6 +203,10 @@ contains
       delta = lambda
 
       call complete_halo_update(reqs_p)
+
+     if(ip_global.eq.0) then
+        print*, "iteration", cg_return
+      endif
     enddo
 
 
@@ -193,8 +236,8 @@ contains
     integer :: ierr
 #endif
 
-    call multishift_solver(u,am,imass,ndiagq,aden,x1,Phi,res,max_qmr_iters,niter)
-
+    call multishift_solver(u,am,imass,ndiagq,aden,x1,Phi,res,max_qmr_iters,itercg)
+ 
     if(iflag.lt.2)then
       !     Now evaluate solution x=(MdaggerM)^p * Phi
       do idiag=1,ndiagq

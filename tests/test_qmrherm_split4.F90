@@ -1,6 +1,6 @@
 #include "test_utils.fh"
 program test_qmrherm_4
-  use inverter_checks
+  use inverter_utils
   use dwf3d_lib
   use qmrherm_module_split, only : qmrherm_split, phi0, R, x1, qmrhprint => printall
   use trial
@@ -134,7 +134,7 @@ program test_qmrherm_4
     call update_halo_5(4, xin)
 #endif
     adenf = aden(idiag)
-    call dirac_op_shifted(xout,xin,am,imass,adenf)
+    call dirac_op_shifted(xout,xin,u,am,imass,adenf)
 
     delta_Phi = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
       &                xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)

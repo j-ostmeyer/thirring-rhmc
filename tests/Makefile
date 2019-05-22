@@ -63,20 +63,15 @@ TOPDIR = ..
 
 include ../MkRules
 
-LIBOBJS += test_utils.o inverter_checks.o
+LIBOBJS += test_utils.o
 
 MODS=$(patsubst %.o,%.mod,$(LIBOBJS))
 
 .PRECIOUS : %.mod
 
-inverter_checks.o  : inverter_checks.F90 \
-        .makefile.uptodate dirac.mod trial.mod comms.mod
-	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o inverter_checks.o $<
+
 
 test_%.o: test_%.F90 .makefile.uptodate test_utils.F90 test_utils.fh $(MODS)
-	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o $@ $<
-
-test_%.o: test_%.f90 .makefile.uptodate test_utils.F90 test_utils.fh $(MODS)
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o $@ $<
 
 $(TESTS) : % : %.o $(LIBOBJS) 

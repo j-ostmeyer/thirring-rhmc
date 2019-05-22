@@ -82,7 +82,8 @@ LIBOBJS = avgitercounts.o derivs_module.o dirac.o dum1.o dwf3d_lib.o \
        qmrherm_module.o remez.o remezg.o trial.o vector.o\
        comms.o random.o partitioning.o comms_partitioning.o \
        dirac_split.o qmrherm_module_split.o \
-       dirac_split_nodir.o qmrherm_module_split_nodir.o 
+       dirac_split_nodir.o qmrherm_module_split_nodir.o \
+       inverter_utils.o
 
 
 .PHONY: clean
@@ -126,7 +127,8 @@ avgitercounts.o : $(TOPDIR)/avgitercounts.F90 .makefile.uptodate
 	$(COMPILE) -o avgitercounts.o $<
 
 qmrherm_module.o : $(TOPDIR)/qmrherm_module.F90 .makefile.uptodate params.mod \
-                   vector.mod gforce.mod comms.mod dirac.mod derivs_module.mod
+                   vector.mod gforce.mod comms.mod dirac.mod \
+                   derivs_module.mod inverter_utils.mod
 	$(COMPILE) -o qmrherm_module.o $<
 
 qmrherm_module_split.o : $(TOPDIR)/qmrherm_module_split.F90 \
@@ -154,6 +156,10 @@ dwf3d_lib.o : $(TOPDIR)/dwf3d_lib.F90 \
 gaussian.o : $(TOPDIR)/gaussian.F90 .makefile.uptodate \
              comms.mod params.mod random.mod 
 	$(COMPILE) -o gaussian.o $<
+
+inverter_utils.o  : $(TOPDIR)/inverter_utils.F90 \
+        .makefile.uptodate dirac.mod trial.mod comms.mod
+	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o inverter_utils.o $<
 
 measure_module.o : $(TOPDIR)/measure_module.F90 \
                   .makefile.uptodate params.mod gaussian.mod trial.mod \
