@@ -3,6 +3,7 @@ program test_qmrherm_4
   use inverter_utils
   use dwf3d_lib
   use qmrherm_module, only : qmrherm, phi0, R, x1, qmrhprint => printall
+  use vector,only : X
   use trial
   use gforce
   use comms
@@ -123,7 +124,7 @@ program test_qmrherm_4
   ! call function
   Phi0 = Phi0_orig
   max_qmr_iters = 180
-  call qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter)
+  call qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter)
   ! check output
   do idiag=1,ndiag
     xin(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(:,:,:,:,:,idiag)

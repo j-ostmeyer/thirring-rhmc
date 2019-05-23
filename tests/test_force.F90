@@ -121,6 +121,7 @@ program test_force
   hp = 0
   s = 0
   max_qmr_iters = 10000
+  !call gdb_master_wait()
   call hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass)
   print*,s,hg,hp,h
   s_old = s

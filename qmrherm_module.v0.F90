@@ -30,16 +30,16 @@ contains
   !   iflag=2: evaluates DWF force term
   !   iflag=3: evaluates PV force term
   !*****************************************************************m
-  subroutine qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, &
+  subroutine qmrherm(Phi,X,res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, &
       & iter)
     use params
     use trial, only: u
-    use vector
     use gforce
     use comms
     use dirac
     use derivs_module
     complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(out) :: X(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     integer, intent(in) :: imass, ndiagq, iflag, isweep, iter
     real(dp), intent(in) :: anum(0:ndiagq), aden(ndiagq)
     real, intent(in) :: res, am
@@ -65,10 +65,6 @@ contains
 #endif
 
 
-    !
-    !     write(6,111)
-    !111 format(' Hi from qmrherm')
-    !
     resid=sqrt(kthird*ksize*ksize*ksizet*4*res*res)
 
     itercg=0
@@ -78,6 +74,8 @@ contains
     R = Phi
     qm1 = cmplx(0.0, 0.0)
     x = anum(0) * Phi
+
+    print*,"sum phi:", sum(real(Phi))
 
     betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
 #ifdef MPI

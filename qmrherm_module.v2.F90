@@ -214,23 +214,21 @@ contains
   end subroutine multishift_solver
 
 
-  subroutine qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, &
+  subroutine qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, &
       & iter)
     use params
     use trial, only: u
-    use vector
     use gforce
     use comms
     use dirac
     use derivs_module
     complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(out) :: X(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     integer, intent(in) :: imass, ndiagq, iflag, isweep, iter
     real(dp), intent(in) :: anum(0:ndiagq), aden(ndiagq)
     real, intent(in) :: res, am
     integer, intent(out) :: itercg
-    !
     real(dp) :: coeff
-    !      
     integer :: niter, idiag
 #ifdef MPI
     integer, dimension(12) :: reqs_X2, reqs_Phi0, reqs_R, reqs_x
