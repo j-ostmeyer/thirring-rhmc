@@ -152,40 +152,41 @@ contains
          & r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:) * zeta_iii(ishift)
       enddo
 
-      test : block
-        complex(dp) :: xout(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-        complex(dp) :: xin(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-        complex(dp) :: check(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-#ifdef MPI
-        integer, dimension(12) :: reqs_xin
-#endif
-
-        real(dp) :: checksum
-
-        if(mod(cg_return,10)==0) then
-          do ishift =1,ndiagq
-            xin(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = output(:,:,:,:,:,ishift)
-#ifdef MPI
-            call start_halo_update_5(4, xin, 10, reqs_xin)
-            call complete_halo_update(reqs_xin)
-#else
-            call update_halo_5(4, xin)
-#endif
-            call dirac_op_shifted(xout,xin,u,am,imass,real(aden(ishift)))
-
-            check = input(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
-              & xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
-            checksum = sum(abs(check)**2)
-#ifdef MPI
-            call MPI_AllReduce(checksum, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
-            checksum = dp_reduction
-#endif
-            if(ip_global.eq.0) then
-              print*, ishift,sqrt(delta*zeta_i(ishift)**2),checksum,res,real(aden(ishift))
-            endif
-          enddo
-        endif
-      end block test
+!      test : block
+!        ! CHECK : Real residual seems to decrease faster than the one computed...
+!        complex(dp) :: xout(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+!        complex(dp) :: xin(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+!        complex(dp) :: check(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
+!#ifdef MPI
+!        integer, dimension(12) :: reqs_xin
+!#endif
+!
+!        real(dp) :: checksum
+!
+!        if(mod(cg_return,10)==0) then
+!          do ishift =1,ndiagq
+!            xin(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = output(:,:,:,:,:,ishift)
+!#ifdef MPI
+!            call start_halo_update_5(4, xin, 10, reqs_xin)
+!            call complete_halo_update(reqs_xin)
+!#else
+!            call update_halo_5(4, xin)
+!#endif
+!            call dirac_op_shifted(xout,xin,u,am,imass,real(aden(ishift)))
+!
+!            check = input(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
+!              & xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
+!            checksum = sum(abs(check)**2)
+!#ifdef MPI
+!            call MPI_AllReduce(checksum, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+!            checksum = dp_reduction
+!#endif
+!            if(ip_global.eq.0) then
+!              print*, ishift,sqrt(delta*zeta_i(ishift)**2),checksum,res,real(aden(ishift))
+!            endif
+!          enddo
+!        endif
+!      end block test
  
       maxishift = 0
       do ishift=1,ndiagq
@@ -204,9 +205,9 @@ contains
 
       call complete_halo_update(reqs_p)
 
-     if(ip_global.eq.0) then
-        print*, "iteration", cg_return
-      endif
+      !if(ip_global.eq.0) then
+      !   print*, "iteration", cg_return, "of", maxcg
+      !endif
     enddo
 
 
