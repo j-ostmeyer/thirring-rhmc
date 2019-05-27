@@ -5,6 +5,7 @@ program test_force
   use vector
   use dirac
   use gforce
+  use remez
   use remezg
   use avgitercounts
   use comms
@@ -53,16 +54,42 @@ program test_force
   isweep = 1
   iter = 0
 
-  anum2g(0) = 0.5
-  anum4g(0) = 0.51
-  bnum2g(0) = 0.49
-  bnum4g(0) = 0.53
-  do i = 1, ndiagg
-    anum2g(i) = 0.4 * real(exp(iunit * i * tau / ndiagg))
-    aden2g(i) = 0.4 * real(exp(-iunit * 0.5 * i * tau / ndiagg))
-    anum4g(i) = 0.41 * real(exp(iunit * i * tau / ndiagg))
-    aden4g(i) = 0.41 * real(exp(-iunit * 0.5 * i * tau / ndiagg))
+  open(unit=36,file='remez2',status='old')
+  open(unit=37,file='remez4',status='old')
+  open(unit=38,file='remez2g',status='old')
+  open(unit=39,file='remez4g',status='old')
+ 
+  read(36,*) anum2(0)
+  read(37,*) anum4(0)
+  read(38,*) anum2g(0)
+  read(39,*) anum4g(0)
+  do i=1,ndiag
+     read(36,*) anum2(i),aden2(i)
+     read(37,*) anum4(i),aden4(i)
   enddo
+  do i=1,ndiagg
+     read(38,*) anum2g(i),aden2g(i)
+     read(39,*) anum4g(i),aden4g(i)
+  enddo
+  read(36,*) bnum2(0)
+  read(37,*) bnum4(0)
+  read(38,*) bnum2g(0)
+  read(39,*) bnum4g(0)
+  do i=1,ndiag
+     read(36,*) bnum2(i),bden2(i)
+     read(37,*) bnum4(i),bden4(i)
+  enddo
+  do i=1,ndiagg
+     read(38,*) bnum2g(i),bden2g(i)
+     read(39,*) bnum4g(i),bden4g(i)
+  enddo
+!
+  close(36)
+  close(37)
+  close(38)
+  close(39)
+
+
   do j = 1,4
     do it = 1,ksizet_l
       do iy = 1,ksizey_l
@@ -89,10 +116,22 @@ program test_force
   call start_halo_update_6(4, 1, Phi, 1, reqs_Phi)
   call start_halo_update_6(4, 25, Phi0_orig, 2, reqs_Phi0)
 #endif
-  u = cmplx(1.0d0,2.0d-1)
-  pp = -0.1
-  dSdpi = 0
-  theta = 2.0d-1
+  do j = 1,3
+    do it = 1,ksizet_l
+      do iy = 1,ksizey_l
+        do ix = 1,ksizex_l
+          idx = ip_x * ksizex_l + ix &
+            & + (ip_y * ksizey_l + iy - 1) * ksize &
+            & + (ip_t * ksizet_l + it - 1) * ksize * ksize &
+            & + (j - 1) * ksize * ksize * ksizet
+          u(ix, iy, it, j) = exp(iunit * idx * tau / idxmax)
+          theta(ix, iy, it, j) = 1.9 * exp(iunit * idx * tau / idxmax)
+          pp(ix, iy, it, j) = -1.1 * exp(iunit * idx * tau / idxmax)
+          dSdpi(ix, iy, it, j) = tau * exp(iunit * idx * tau / idxmax)
+        enddo
+      enddo
+    enddo
+  enddo
 #ifdef MPI
   call start_halo_update_4(3, u, 3, reqs_u)
   call complete_halo_update(reqs_R)
@@ -121,30 +160,31 @@ program test_force
   hp = 0
   s = 0
   max_qmr_iters = 10000
+  !call gdbwait()
   call hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass)
-  print*,s,hg,hp,h
   s_old = s
-  u_variation = 0.01
-!  if(ip_global.eq.1)then
-!    u(1,1,1,1) = u(1,1,1,1) + cmplx(0.0,u_variation/2)
-!    theta(1,1,1,1) = theta(1,1,1,1) + u_variation/2
-!  endif
-  call force(Phi, res1, am, imass, isweep, iter)
-  print*,s,hg,hp,h
-!  if(ip_global.eq.1)then
-!    u(1,1,1,1) = u(1,1,1,1) + cmplx(0.0,u_variation/2)
-!    theta(1,1,1,1) = theta(1,1,1,1) + u_variation/2
-!  endif
-  call hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass)
-  print*,s,hg,hp,h
-
-  if(ip_global.eq.1)then
-    print*,"Action difference:",s-s_old
-    print*,"Action:",s
-    print*,"Old action",s_old
-    ! check output
-    print*,"Force*u_variation:",dSdpi(1,1,1,1)*u_variation
+  u_variation = 0.0001
+  if(ip_global.eq.1)then ! changing only one link in the whole lattice
+    u(1,1,1,1) = u(1,1,1,1) + cmplx(0.0,u_variation/2)
+    theta(1,1,1,1) = theta(1,1,1,1) + u_variation/2
   endif
+  ! calculating force half way
+  call force(Phi, res1, am, imass, isweep, iter)
+  if(ip_global.eq.1)then! changing only one link in the whole lattice
+    u(1,1,1,1) = u(1,1,1,1) + cmplx(0.0,u_variation/2)
+    theta(1,1,1,1) = theta(1,1,1,1) + u_variation/2
+  endif
+  call hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass)
+
+  check : block 
+    real(dp) :: action_difference 
+    real(dp) :: force
+    if(ip_global.eq.1)then
+      action_difference = s-s_old
+      force = dSdpi(1,1,1,1)
+      check_float_equality(force*u_variation,action_difference,0.01,'f*du','test_force')
+    endif
+  end block check
 
 #ifdef MPI
   call MPI_Finalize(ierr)

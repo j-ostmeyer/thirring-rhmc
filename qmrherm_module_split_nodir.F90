@@ -26,11 +26,10 @@ contains
   !   iflag=2: evaluates DWF force term
   !   iflag=3: evaluates PV force term
   !*****************************************************************m
-  subroutine qmrherm_split_nodir(Phi, res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, &
+  subroutine qmrherm_split_nodir(Phi,X, res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, &
       & iter)
     use params
     use trial, only: u
-    use vector
     use gforce
     use comms
     use partitioning
@@ -39,6 +38,7 @@ contains
     use dirac
     use derivs_module
     complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(out) :: X(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     integer, intent(in) :: imass, ndiagq, iflag, isweep, iter
     real(dp), intent(in) :: anum(0:ndiagq), aden(ndiagq)
     real, intent(in) :: res, am

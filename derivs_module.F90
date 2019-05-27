@@ -4,8 +4,9 @@ module derivs_module
 contains
 
   subroutine derivs(R,X2,anum,iflag)
-    use gforce
-    use dirac
+    use gforce, only : dSdpi
+    use dirac, only: kdelta,gamval,gamin
+    use params, only : kthird,ksizet_l,ksizey_l,ksizex_l,akappa,dp
     !      complex, intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     !      complex, intent(in) :: X2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 

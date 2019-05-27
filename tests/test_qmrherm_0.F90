@@ -3,7 +3,7 @@ program test_qmrherm_0
   use dwf3d_lib
   use qmrherm_module, only: qmrherm, phi0, qmrhprint => printall
   use trial, only :u 
-  use vector
+  use vector, only : X
   !use dirac
   use gforce
   use params
@@ -124,7 +124,7 @@ program test_qmrherm_0
   ! call function
   do i = 1,timing_loops
     Phi0 = Phi0_orig
-    call qmrherm(Phi, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter)
+    call qmrherm(Phi, X, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter)
   end do
   ! check output
   if (generate) then
