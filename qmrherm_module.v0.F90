@@ -75,7 +75,7 @@ contains
     qm1 = cmplx(0.0, 0.0)
     x = anum(0) * Phi
 
-    print*,"sum phi:", sum(real(Phi))
+    !print*,"sum phi:", sum(real(Phi))
 
     betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
 #ifdef MPI

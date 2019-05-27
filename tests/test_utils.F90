@@ -21,7 +21,7 @@ contains
     integer :: offset
     integer :: mpi_fh
     integer :: local_mpiio_type
-    integer :: status
+    integer :: status(MPI_STATUS_SIZE)
     integer :: mode
     integer :: ierr
 
