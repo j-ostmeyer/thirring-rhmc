@@ -16,6 +16,5 @@ run???/
 *.err
 *benchmarks?*
 time*txt
-test_*
 *.tar
 playground

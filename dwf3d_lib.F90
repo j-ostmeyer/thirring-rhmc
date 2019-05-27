@@ -70,6 +70,7 @@ contains
 !     complex u
 !     complex a,b
     complex(dp) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)!
+    complex(dp) :: Xresult(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 ! Currently unused
 !    complex(dp) :: qq,qbqb
 !    complex(dp) :: u
@@ -264,15 +265,15 @@ contains
 !
 !  For now Phi = {MdaggerM}^0.25 * R
 !
-          call qmrherm(R,rescga,itercg,am,imass,anum4,aden4,ndiag,0,isweep,0)
+          call qmrherm(R,Xresult,rescga,itercg,am,imass,anum4,aden4,ndiag,0,isweep,0)
           ancgpf=ancgpf+float(itercg)
 !
-          R = X1
+          R = Xresult
 !
-          call qmrherm(R,rescga,itercg,One,1,bnum4,bden4,ndiag,0,isweep,0)
+          call qmrherm(R,Xresult,rescga,itercg,One,1,bnum4,bden4,ndiag,0,isweep,0)
           ancgpfpv=ancgpfpv+float(itercg)
 !
-          Phi = X1
+          Phi = Xresult
 !
        enddo
 !*******************************************************************
@@ -493,7 +494,6 @@ contains
   subroutine force(Phi,res1,am,imass,isweep,iter)
     use remezg
     use trial
-    use vector, X1=>X
     use gforce
     use avgitercounts
     use comms
@@ -505,6 +505,7 @@ contains
 !     complex Phi(kferm,Nf),X2(kferm)
 !     complex X1,u
     complex(dp) :: X2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp) :: Xresult(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     integer :: ia, itercg
 !
 !     write(6,111)
@@ -521,26 +522,26 @@ contains
 !
        X2 = Phi(:, :, :, :, :, ia)
 
-       call qmrherm(X2, res1, itercg, One, 1, anum4g, aden4g, ndiagg, 1, &
+       call qmrherm(X2,Xresult, res1, itercg, One, 1, anum4g, aden4g, ndiagg, 1, &
             & isweep, iter)
        ancgpv=ancgpv+float(itercg)
 
-       X2 = X1
+       X2 = Xresult
 !
-       call qmrherm(X2, res1, itercg, am, imass, bnum2g, bden2g, ndiagg, 0, &
+       call qmrherm(X2,Xresult, res1, itercg, am, imass, bnum2g, bden2g, ndiagg, 0, &
             & isweep, iter)
        ancg=ancg+float(itercg)
 !     write(111,*) itercg
-       X2 = X1
+       X2 = Xresult
 !
 !  evaluates -X2dagger * d/dpi[{MdaggerM(m)}^1/2] * X2
-       call qmrherm(X2, res1, itercg, am, imass, anum2g, aden2g, ndiagg, 2, &
+       call qmrherm(X2,Xresult, res1, itercg, am, imass, anum2g, aden2g, ndiagg, 2, &
             & isweep, iter)
        ancgf=ancgf+float(itercg)
 
 !     write(113,*) itercg
 !  evaluates +2Re{Phidagger * d/dpi[{MdaggerM(1)}^1/4] * X2}
-       call qmrherm(X2, res1, itercg, One, 1, anum4g, aden4g, ndiagg, 3, &
+       call qmrherm(X2,Xresult, res1, itercg, One, 1, anum4g, aden4g, ndiagg, 3, &
             & isweep, iter)
        ancgfpv=ancgfpv+float(itercg)
 !
@@ -560,7 +561,6 @@ contains
   subroutine hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass)
     use remez
     use trial, only: theta, pp
-    use vector, X1=>X
     use dum1
     use avgitercounts
     use comms
@@ -569,8 +569,7 @@ contains
     real(dp), intent(out) :: h, hg, hp, s
     real, intent(in) :: res2, am
     integer, intent(in) :: isweep, iflag, imass
-!     complex, intent(in) :: Phi(kthird, ksizex_l, ksizey_l, ksizet_l, 4, Nf)
-!     complex X1,R
+    complex(dp) :: Xresult(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real(dp) :: hf
     integer :: itercg, ia
 #ifdef MPI
@@ -603,16 +602,16 @@ contains
 !
        R = Phi(:, :, :, :, :, ia)
 
-       call qmrherm(R, res2, itercg, One, 1, anum4, aden4, ndiag, 0, isweep, iflag)
+       call qmrherm(R,Xresult, res2, itercg, One, 1, anum4, aden4, ndiag, 0, isweep, iflag)
        ancghpv=ancghpv+float(itercg)
 !
-       R = X1
+       R = Xresult
 !
-       call qmrherm(R, res2, itercg, am, imass, bnum2, bden2, ndiag, 0, isweep, iflag)
+       call qmrherm(R,Xresult, res2, itercg, am, imass, bnum2, bden2, ndiag, 0, isweep, iflag)
        ancgh=ancgh+float(itercg)
 !
        hf = hf + sum(real(conjg(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
-       &        * X1(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
+       &        * Xresult(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 !
     enddo
 #ifdef MPI

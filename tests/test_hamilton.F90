@@ -33,6 +33,7 @@ program test_hamilton
 
 #ifdef MPI
   integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
+  integer :: ierr
   call init_MPI
 #endif
   qmrhprint = .false.
@@ -151,4 +152,5 @@ program test_hamilton
       print *, "s looks wrong:", s
     end if
   end if
+  call MPI_Finalize(ierr)
 end program

@@ -9,6 +9,23 @@ module test_utils
 contains
 
 #ifdef MPI
+
+  subroutine gdbwait()
+    use comms
+    implicit none
+    logical,volatile :: wfi ! Wait For Intervention
+    integer :: ierr
+
+    wfi = .true.
+
+    if(ip_global.eq.0)then 
+      do while(wfi)
+        call sleep(1)
+      enddo
+    endif
+    call MPI_Barrier(MPI_Comm_World,ierr)
+  end subroutine gdbwait
+
   subroutine rw_file_mpi(array, array_shape, rank, filename, mpi_dtype, write_out)
     integer, intent(in) :: array_shape(:), rank
     type(*), dimension(..), intent(inout) :: array
@@ -21,7 +38,7 @@ contains
     integer :: offset
     integer :: mpi_fh
     integer :: local_mpiio_type
-    integer :: status
+    integer :: status(MPI_STATUS_SIZE)
     integer :: mode
     integer :: ierr
 

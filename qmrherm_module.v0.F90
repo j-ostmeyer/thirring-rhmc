@@ -1,4 +1,8 @@
-module qmrherm_module_split_nodir
+#ifdef SCOREPINST
+#include "scorep/SCOREP_User.inc"
+#endif
+
+module qmrherm_module
   use params
   implicit none
   complex(dp) :: vtild(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -26,15 +30,12 @@ contains
   !   iflag=2: evaluates DWF force term
   !   iflag=3: evaluates PV force term
   !*****************************************************************m
-  subroutine qmrherm_split_nodir(Phi,X, res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, &
+  subroutine qmrherm(Phi,X,res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, &
       & iter)
     use params
     use trial, only: u
     use gforce
     use comms
-    use partitioning
-    use comms_partitioning
-    use dirac_split_nodir
     use dirac
     use derivs_module
     complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -55,29 +56,15 @@ contains
     integer :: niter, idiag
     logical :: go_on
 #ifdef MPI
-    integer, dimension(12) :: reqs_X2, reqs_Phi0, reqs_R, reqs_x
+    integer, dimension(12) :: reqs_X2, reqs_vtild, reqs_Phi0, reqs_R, reqs_x
     integer :: ierr
     real(dp) :: dp_reduction ! DEBUG
-    ! For dirac split
-    integer :: Rsreqs(54), Rrreqs(54)
-    integer :: vtildsreqs(54), vtildrreqs(54)
 #endif
-    integer :: ichunk(3)
-    integer :: wpc
-    ! initialize communications     
-    call init_partitioning
-    ! MPI datatypes for send and receive
-    call init_dirac_hb_types
-    ! MPI_requests
-    call get_dirac_recvreqs(Rrreqs,R)
-    call get_dirac_sendreqs(Rsreqs,R)
-    call get_dirac_recvreqs(vtildrreqs,vtild)
-    call get_dirac_sendreqs(vtildsreqs,vtild)
-    ! list of work 
-    call get_dslash_work_ordering(dslash_work_ordering,.false.) 
-    call get_dslash_work_ordering(dslashd_work_ordering,.true.)
+#ifdef SCOREPINST
+    SCOREP_USER_REGION_DEFINE(qmrherm_main_loop)
+#endif
 
-    
+
     resid=sqrt(kthird*ksize*ksize*ksizet*4*res*res)
 
     itercg=0
@@ -87,74 +74,112 @@ contains
     R = Phi
     qm1 = cmplx(0.0, 0.0)
     x = anum(0) * Phi
-    betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
 
+    !print*,"sum phi:", sum(real(Phi))
+
+    betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) ** 2)
+#ifdef MPI
     !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
     call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
     betaq = dp_reduction
 
+
+    ! Setting up persistent communication requests
+    call init_halo_update_5(4, vtild, 1, reqs_vtild)
+    call init_halo_update_5(4, R, 2, reqs_R)
+#endif 
     betaq = sqrt(betaq)
     phimod=betaq
     !
     !do niter=1,20
     niter = 0
     go_on = .true.
-    call MPI_StartAll(54,Rrreqs,ierr)
-    call MPI_StartAll(54,Rsreqs,ierr)
-
+#ifdef SCOREPINST
+    SCOREP_USER_REGION_BEGIN(qmrherm_main_loop,"qmrh_main_loop",&
+      &SCOREP_USER_REGION_TYPE_COMMON)
+#endif
     do while(niter.lt.max_qmr_iters .and. go_on )
       niter=niter+1
       itercg=itercg+1
       !
       !  Lanczos steps
+ 
+      !call MPI_Barrier(comm,ierr)
+
+      block
+#ifdef SCOREPINST
+        SCOREP_USER_REGION_DEFINE(rescaling1)
+        SCOREP_USER_REGION_BEGIN(rescaling1,'R_rescaling',&
+          &SCOREP_USER_REGION_TYPE_COMMON)
+#endif
+        q = R / betaq
+#ifdef SCOREPINST
+        SCOREP_USER_REGION_END(rescaling1)
+#endif
+      end block
+
+      call dslash(vtild,q,u,am,imass)
+
+#ifdef MPI
+      ! No way to hide communications here unfortunately
+      !call start_halo_update_5(4, vtild, 1, reqs_vtild)
+      call MPI_Startall(12,reqs_vtild,ierr)
+      !call complete_halo_update(reqs_vtild) ! Now this call happens in dslashd
+
+      call dslashd(x3,vtild,u,am,imass,reqs_vtild)
+
+#else
+      call update_halo_5(4, vtild)
+      call dslashd(x3,vtild,u,am,imass)
+#endif
+
       !
-      ! on the local lattice
-      q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = &
-        & R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) / betaq
-      ! q = R / betaq on the halo && call dslash(vtild,q,u,am,imass)
-      ! starting recv requests for vtild
-      ! send requests are started in hbetaqdiv_dslash_split
-      call MPI_StartAll(54,vtildrreqs,ierr)
-      do wpc=1,27
-        ichunk = dslash_work_ordering(:,wpc)
-        call hbetaqdiv_dslash_split(q,betaq,vtild,R,u,am,imass,ichunk,&
-          & border_partitions_cube,Rrreqs,vtildsreqs)
-      enddo
-      call MPI_Barrier(comm,ierr)
- 
+      alphatild = sum(real(conjg(q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
+        &                * x3(:,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 
-      alphatild = sum(abs(vtild(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
+
+#ifdef MPI
       !call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
-      call MPI_AllReduce(alphatild,dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
-      alphatild = dp_reduction
-  
+      call MPI_AllReduce(alphatild, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
+      alphatild = dp_reduction ! DEBUG
+#endif
+     !
+      Rcompute: block 
+#ifdef SCOREPINST
+      SCOREP_USER_REGION_DEFINE(Rcompute)
+      SCOREP_USER_REGION_BEGIN(Rcompute,'Rcompute',&
+        &SCOREP_USER_REGION_TYPE_COMMON)
+#endif
+      R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = &
+        & x3(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
+        & - alphatild * q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
+        & - betaq * qm1
+#ifdef SCOREPINST
+      SCOREP_USER_REGION_END(Rcompute)
+#endif
+      end block Rcompute
+      !call MPI_Barrier(comm,ierr)
 
-      ! starting recv requests for R
-      ! send requests are started in dslashd_Rcomp_split
-      call MPI_StartAll(54,Rrreqs,ierr)
-      do wpc=1,27
-        ichunk = dslashd_work_ordering(:,wpc)
-        call dslashd_Rcomp_split(R,x3,alphatild,q,betaq,qm1,vtild,u,am,imass,&
-          & ichunk,border_partitions_cube,vtildrreqs,Rsreqs)
-      enddo
- 
-      call MPI_Barrier(comm,ierr)
-
+#ifdef MPI
+      ! R will be needed at the start of the next iteration to compute q
+      ! so start updating the boundary
+      call MPI_Startall(12,reqs_R,ierr)
+      !call start_halo_update_5(4, R, 2, reqs_R)
+#else
+      call update_halo_5(4, R)
+#endif
       qm1 = q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
       !
       betaq0 = betaq
-
       betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:)) ** 2)
+#ifdef MPI
       !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
-      call MPI_AllReduce(betaq,dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
-      betaq =  dp_reduction
+      call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
+      betaq = dp_reduction ! DEBUG
+#endif
       betaq = sqrt(betaq)
-      !print*,'betaq',betaq,ip_global
       !
       alpha = alphatild + aden
-      !print*,'alpha',alpha,ip_global
-      call MPI_Barrier(comm,ierr)
-
       !
       if(niter.eq.1)then
         d = alpha
@@ -170,19 +195,41 @@ contains
         dm1 = d
         d = alpha - betaq0 * amu
         rho = -amu * dm1 * rhom1 / d
+        post: block
+          integer :: idirac,it,iy,ix,iz
+          integer, parameter :: shift = 8
+#ifdef SCOREPINST
+          SCOREP_USER_REGION_DEFINE(post)
+          SCOREP_USER_REGION_BEGIN(post,'post',&
+            &SCOREP_USER_REGION_TYPE_COMMON)
+#endif
         do idiag = 1, ndiagq
-          p(:, :, :, :, :, idiag) = q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
-            & - amu(idiag) * pm1(:, :, :, :, :, idiag)
+          do idirac = 1,4
+            do it=1,ksizet_l
+              do iy=1,ksizey_l
+                do ix=1,ksizex_l
+                  do iz=1,kthird,shift
+                    p(iz:iz+shift-1,ix,iy,it,idirac,idiag) = q(iz:iz+shift-1,ix,iy,it,idirac) &
+                      & - amu(idiag) * pm1(iz:iz+shift-1,ix,iy,it,idirac,idiag)
+                    pm1(iz:iz+shift-1,ix,iy,it,idirac,idiag) = p(iz:iz+shift-1,ix,iy,it,idirac,idiag)
+                    x1(iz:iz+shift-1,ix,iy,it,idirac,idiag) = &
+                      & x1(iz:iz+shift-1,ix,iy,it,idirac,idiag) &
+                      & + rho(idiag) * p(iz:iz+shift-1,ix,iy,it,idirac,idiag)
+                  enddo
+                enddo
+              enddo
+            enddo
+          enddo
         enddo
-        pm1 = p
         !     Convergence criterion (a bit ad hoc for now...)
         rhomax = real(maxval(abs(phimod * rho)))
         rhom1 = rho
-        do idiag = 1, ndiagq
-          x1(:, :, :, :, :, idiag) = &
-            & x1(:, :, :, :, :, idiag) &
-            & + rho(idiag) * p(:, :, :, :, :, idiag)
-        enddo
+ 
+#ifdef SCOREPINST
+          SCOREP_USER_REGION_END(post)
+#endif
+
+        end block post
 
         !     check to see whether the residual is acceptable for all ndiagq....
         !     criterion is a bit ad hoc -- relaxing by a factor arelax improves code
@@ -197,8 +244,16 @@ contains
         endif
       endif
       !     
+#ifdef MPI
+      ! R will be needed at the start of the next iteration to compute q
+      ! so start updating the bounddary
+      call complete_halo_update(reqs_R)
+#endif
     enddo! do while(niter.lt.max_qmr_iters .and. go_on )
-
+#ifdef SCOREPINST
+    SCOREP_USER_REGION_END(qmrherm_main_loop)
+#endif
+ 
 
 
     if (niter.gt.max_qmr_iters) then
@@ -305,159 +360,12 @@ contains
     endif !if(iflag.lt.2)then , else
 
     if (ip_global .eq. 0 .and. printall) then
-      print*, "Qmrherm split nodir iterations,res:", itercg, res
+      print*, "Qmrherm iterations,res:", itercg, res
     endif
     return
-  end subroutine qmrherm_split_nodir
+  end subroutine qmrherm
   !**********************************************************************
   !  iflag = 0 : evaluates Rdagger*(Mdagger)'*X2
   !  iflag = 1 : evaluates Rdagger*(M)'*X2
   !**********************************************************************
-
-  ! this subroutine merges the q = R / betaq step and dslash application
-  ! WARNING: the q = R/ betaq is performed only on the halo,
-  !          it is assumed that q is already computed on the local lattice.
-  !          This complication arises from the fact that the values of q needed
-  !          for the dslash_calculation can be in a different partition from 
-  !          the one specified by ichunk - shifted by +-1 site in one of the 3 
-  !          directions.
-  subroutine hbetaqdiv_dslash_split(tq,betaq,Phi,R,u,am,imass,ichunk,tbpc,tdhrr,tdbsr)
-    use params
-    use partitioning
-    use mpi
-    use dirac_split_nodir
-    implicit none
-    complex(dp), intent(inout) :: tq(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    real(dp), intent(in) :: betaq
-    complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
-    real, intent(in) :: am
-    integer, intent(in) :: imass
-    integer,intent(in) :: ichunk(3) ! portion of array to operate on 
-    ! Temp Border Partition Cube
-    type(localpart),intent(in) :: tbpc(-1:1,-1:1,-1:1)
-    ! Temp Dirac Halo Recv Requests
-    integer,intent(inout) :: tdhrr(54)
-    integer,intent(inout) :: tdbsr(54)
-
-    integer :: chunk(2,3)
-    ! CHUNK Shifted
-    integer :: chunk_s(2,3)
-    integer :: halo_to_wait_for
-    type(localpart) :: tpart
-    integer :: inn
-    integer :: xd,xu,yd,yu,td,tu ! portion of array to operate on (Phi)
-    integer :: ierr
-    integer :: mu
-
-
-    tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
-    chunk = tpart%chunk
-    do mu=-3,3
-    halo_to_wait_for = tpart%ahpsr(mu)
-    ! checking if some work on the partition has already been done
-      if(halo_to_wait_for.ne.0) then
-        call MPI_Wait(tdhrr(halo_to_wait_for),MPI_STATUS_IGNORE,ierr)
-
-        ! performing q = R/betaq first on the halo parts
-        chunk_s = chunk
-        chunk_s(:,abs(mu)) = chunk_s(:,abs(mu)) + sign(1,mu)
-        xd=chunk_s(1,1)
-        xu=chunk_s(2,1)
-        yd=chunk_s(1,2)
-        yu=chunk_s(2,2)
-        td=chunk_s(1,3)
-        tu=chunk_s(2,3)
-
-        tq(:,xd:xu,yd:yu,td:tu,:)=R(:,xd:xu,yd:yu,td:tu,:)/ betaq 
-      endif
-    enddo
-
-    call dslash_split_work(Phi,tq,am,imass,u,chunk)
-
-    ! flagging work done
-    tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
-    do inn=1,tpart%nn
-      ! clearing send requests
-      call MPI_Wait(tdbsr(tpart%ahpss(inn)),MPI_STATUS_IGNORE,ierr)
-      ! restarting send request
-      call MPI_Start(tdbsr(tpart%ahpss(inn)),ierr)
-    enddo
-
-  end subroutine
-
-  ! this subroutine merges the dslashd application and the 
-  ! R = x3 - alphatild * q - betaq * qm1 
-  ! steps
-  subroutine dslashd_Rcomp_split(R,x3,alphatild,tq,betaq,tqm1,vtild,u,am,imass,&
-                          & ichunk,tbpc,tdhrr,tdbsr)
-    use params
-    use partitioning
-    use mpi
-    use dirac_split_nodir
-    use comms ! DEBUG
-    implicit none
-    complex(dp), intent(out) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(out) :: x3(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    real(dp), intent(in) :: alphatild
-    complex(dp), intent(in) :: tq(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    real(dp), intent(in) :: betaq
-    complex(dp), intent(in) :: tqm1(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-    complex(dp), intent(in) :: vtild(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
-    real, intent(in) :: am
-    integer, intent(in) :: imass
-    integer,intent(in) :: ichunk(3) ! portion of array to operate on 
-    ! Temp Border Partition Cube
-    type(localpart),intent(in) :: tbpc(-1:1,-1:1,-1:1)
-    ! Temp Dirac Halo Recv Requests
-    integer,intent(inout) :: tdhrr(54)
-    ! Temp Dirac Border Send Requests
-    integer,intent(inout) :: tdbsr(54)
-
-    integer :: chunk(2,3)
-    integer :: halo_to_wait_for
-    type(localpart) :: tpart
-    integer :: inn
-    integer :: xd,xu,yd,yu,td,tu ! portion of array to operate on
-    integer :: ierr
-    integer :: mu
-
-    tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
-    chunk = tpart%chunk
-    do mu=-3,3
-      halo_to_wait_for = tpart%ahpsr(mu)
-      if(halo_to_wait_for.ne.0) then
-        call MPI_Wait(tdhrr(halo_to_wait_for),MPI_STATUS_IGNORE,ierr)
-      endif
-    enddo
-
-    call dslashd_split_work(x3,vtild,am,imass,u,chunk)
-
-    ! R = x3 - alphatild * q - betaq * qm1 
-    ! on the required partition
-    xd=chunk(1,1)
-    xu=chunk(2,1)
-    yd=chunk(1,2)
-    yu=chunk(2,2)
-    td=chunk(1,3)
-    tu=chunk(2,3)
-
-    R(:,xd:xu,yd:yu,td:tu,:)=x3(:,xd:xu,yd:yu,td:tu,:) - &
-      & alphatild * tq(:,xd:xu,yd:yu,td:tu,:) - &
-      & betaq * tqm1(:,xd:xu,yd:yu,td:tu,:) 
-
-    ! flagging work done
-    ! checking whether to send the partition already or not
-    tpart = tbpc(ichunk(1),ichunk(2),ichunk(3))
-    do inn=1,tpart%nn
-      ! clearing send requests
-      call MPI_Wait(tdbsr(tpart%ahpss(inn)),MPI_STATUS_IGNORE,ierr)
-      ! restarting send request
-      call MPI_Start(tdbsr(tpart%ahpss(inn)),ierr)
-    enddo
-
-  end subroutine
-
-end module qmrherm_module_split_nodir
+end module qmrherm_module

@@ -5,7 +5,6 @@ program test_force
   use vector
   use dirac
   use gforce
-  use remez
   use remezg
   use avgitercounts
   use comms
@@ -15,8 +14,10 @@ program test_force
 
   ! general parameters
   logical :: generate = .false.
+  integer :: timing_loops = 1
   complex, parameter :: iunit = cmplx(0, 1)
   real(dp), parameter :: tau = 8 * atan(1.0_8)
+
 
   real :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
 
@@ -28,8 +29,8 @@ program test_force
   real :: sum_diff, max_diff
 
   integer :: imass, iflag, isweep, iter
-  real :: res1,res2, am, u_variation
-  real(dp) :: h, hg, hp, s, s_old
+  real :: res1, am
+  real(dp) :: h, hg, hp, s
 
   integer :: i, j, l, ix, iy, it, ithird
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
@@ -46,50 +47,23 @@ program test_force
   hg = 0
   hp = 0
   s = 0
-  res1 = 1.0d-6
-  res2 = 1.0d-8
+  res1 = 0.1
   am = 0.05
   imass = 3
   iflag = 0
   isweep = 1
   iter = 0
 
-  open(unit=36,file='remez2',status='old')
-  open(unit=37,file='remez4',status='old')
-  open(unit=38,file='remez2g',status='old')
-  open(unit=39,file='remez4g',status='old')
- 
-  read(36,*) anum2(0)
-  read(37,*) anum4(0)
-  read(38,*) anum2g(0)
-  read(39,*) anum4g(0)
-  do i=1,ndiag
-     read(36,*) anum2(i),aden2(i)
-     read(37,*) anum4(i),aden4(i)
+  anum2g(0) = 0.5
+  anum4g(0) = 0.51
+  bnum2g(0) = 0.49
+  bnum4g(0) = 0.53
+  do i = 1, ndiagg
+    anum2g(i) = 0.4 * real(exp(iunit * i * tau / ndiagg))
+    aden2g(i) = 0.4 * real(exp(-iunit * 0.5 * i * tau / ndiagg))
+    anum4g(i) = 0.41 * real(exp(iunit * i * tau / ndiagg))
+    aden4g(i) = 0.41 * real(exp(-iunit * 0.5 * i * tau / ndiagg))
   enddo
-  do i=1,ndiagg
-     read(38,*) anum2g(i),aden2g(i)
-     read(39,*) anum4g(i),aden4g(i)
-  enddo
-  read(36,*) bnum2(0)
-  read(37,*) bnum4(0)
-  read(38,*) bnum2g(0)
-  read(39,*) bnum4g(0)
-  do i=1,ndiag
-     read(36,*) bnum2(i),bden2(i)
-     read(37,*) bnum4(i),bden4(i)
-  enddo
-  do i=1,ndiagg
-     read(38,*) bnum2g(i),bden2g(i)
-     read(39,*) bnum4g(i),bden4g(i)
-  enddo
-!
-  close(36)
-  close(37)
-  close(38)
-  close(39)
-
-
   do j = 1,4
     do it = 1,ksizet_l
       do iy = 1,ksizey_l
@@ -125,9 +99,9 @@ program test_force
             & + (ip_t * ksizet_l + it - 1) * ksize * ksize &
             & + (j - 1) * ksize * ksize * ksizet
           u(ix, iy, it, j) = exp(iunit * idx * tau / idxmax)
-          theta(ix, iy, it, j) = 1.9 * exp(iunit * idx * tau / idxmax)
-          pp(ix, iy, it, j) = -1.1 * exp(iunit * idx * tau / idxmax)
-          dSdpi(ix, iy, it, j) = tau * exp(iunit * idx * tau / idxmax)
+          theta(ix, iy, it, j) = 1.9 * real(exp(iunit * idx * tau / idxmax), sp)
+          pp(ix, iy, it, j) = -1.1 * real(exp(iunit * idx * tau / idxmax), sp)
+          dSdpi(ix, iy, it, j) = real(tau * exp(iunit * idx * tau / idxmax), sp)
         enddo
       enddo
     enddo
@@ -154,38 +128,28 @@ program test_force
 
   call init(istart)
   ! call function
-  Phi0 = Phi0_orig
-  h = 0
-  hg = 0
-  hp = 0
-  s = 0
-  max_qmr_iters = 10000
-  !call gdbwait()
-  call hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass)
-  s_old = s
-  u_variation = 0.0001
-  if(ip_global.eq.1)then ! changing only one link in the whole lattice
-    u(1,1,1,1) = u(1,1,1,1) + cmplx(0.0,u_variation/2)
-    theta(1,1,1,1) = theta(1,1,1,1) + u_variation/2
-  endif
-  ! calculating force half way
-  call force(Phi, res1, am, imass, isweep, iter)
-  if(ip_global.eq.1)then! changing only one link in the whole lattice
-    u(1,1,1,1) = u(1,1,1,1) + cmplx(0.0,u_variation/2)
-    theta(1,1,1,1) = theta(1,1,1,1) + u_variation/2
-  endif
-  call hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass)
+  do i = 1,timing_loops
+    Phi0 = Phi0_orig
+    h = 0
+    hg = 0
+    hp = 0
+    s = 0
+    call force(Phi, res1, am, imass, isweep, iter)
+  end do
+  ! check output
+  if (generate) then
+    write_file(dSdpi, 'test_force.dat', MPI_Real)
+  else
+    read_file(dSdpi_ref, 'test_force.dat', MPI_Real)
+    diff = dSdpi_ref - dSdpi
 
-  check : block 
-    real(dp) :: action_difference 
-    real(dp) :: force
-    if(ip_global.eq.1)then
-      action_difference = s-s_old
-      force = dSdpi(1,1,1,1)
-      check_float_equality(force*u_variation,action_difference,0.01,'f*du','test_force')
-    endif
-  end block check
-
+    check_equality(ancgpv, 2, 'ancgpv', 'test_force_regression')
+    check_equality(ancg, 2, 'ancg', 'test_force_regression')
+    check_equality(ancgf, 2, 'ancgf', 'test_force_regression')
+    check_equality(ancgfpv, 2, 'ancgfpv', 'test_force_regression')
+    check_max(diff, 1.3, 'dSdpi', max_diff, MPI_Real, 'test_force_regression')
+    check_sum(diff, 2450, 'dSdpi', sum_diff, MPI_Real, 'test_force_regression')
+  end if
 #ifdef MPI
   call MPI_Finalize(ierr)
 #endif

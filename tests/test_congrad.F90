@@ -36,6 +36,7 @@ program test_congrad
   integer :: ierr
 
   call init_MPI
+  !call gdbwait
 #endif
 
   res = 0.1
@@ -124,4 +125,5 @@ program test_congrad
       end if
     end if
   end if
+  call MPI_Finalize(ierr)
 end program

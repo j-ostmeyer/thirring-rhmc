@@ -7,7 +7,7 @@ program test_congrad_1
   use comms
   use measure_module
   use test_utils
-  use inverter_checks
+  use inverter_utils
   implicit none
 
   ! general parameters
@@ -100,7 +100,7 @@ program test_congrad_1
   ! call function
   call congrad(Phi, res, itercg, am, imass) ! results are in vector.x
   ! check convergence
-  call dirac_operator(xout,x,am,imass)
+  call dirac_operator(xout,x,u,am,imass)
   delta_Phi = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
     &                xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
   delta_Phi = abs(delta_Phi)**2
