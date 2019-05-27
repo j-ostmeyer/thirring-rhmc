@@ -234,7 +234,7 @@ contains
     integer, dimension(12) :: reqs_X2, reqs_Phi0, reqs_R, reqs_x
     integer :: ierr
 #endif
-
+    x = anum(0) * Phi
     call multishift_solver(u,am,imass,ndiagq,aden,x1,Phi,res,max_qmr_iters,itercg)
  
     if(iflag.lt.2)then
