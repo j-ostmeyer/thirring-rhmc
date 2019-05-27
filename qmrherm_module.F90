@@ -198,7 +198,6 @@ contains
         d = alpha - betaq0 * amu
         rho = -amu * dm1 * rhom1 / d
         post: block
-          implicit none
           integer :: idirac,it,iy,ix,iz
           integer, parameter :: shift = 8
 #ifdef SCOREPINST
