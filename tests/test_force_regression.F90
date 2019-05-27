@@ -147,8 +147,8 @@ program test_force
     check_equality(ancg, 2, 'ancg', 'test_force_regression')
     check_equality(ancgf, 2, 'ancgf', 'test_force_regression')
     check_equality(ancgfpv, 2, 'ancgfpv', 'test_force_regression')
-    check_max(diff, 0.0, 'dSdpi', max_diff, MPI_Real, 'test_force_regression')
-    check_sum(diff, 0.0, 'dSdpi', sum_diff, MPI_Real, 'test_force_regression')
+    check_max(diff, 1.3, 'dSdpi', max_diff, MPI_Real, 'test_force_regression')
+    check_sum(diff, 2450, 'dSdpi', sum_diff, MPI_Real, 'test_force_regression')
   end if
 #ifdef MPI
   call MPI_Finalize(ierr)
