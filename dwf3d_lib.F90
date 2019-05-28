@@ -265,12 +265,12 @@ contains
 !
 !  For now Phi = {MdaggerM}^0.25 * R
 !
-          call qmrherm(R,Xresult,rescga,itercg,am,imass,anum4,aden4,ndiag,0,isweep,0)
+          call qmrherm(R,Xresult,rescga,itercg,am,imass,anum4,aden4,ndiag,0)
           ancgpf=ancgpf+float(itercg)
 !
           R = Xresult
 !
-          call qmrherm(R,Xresult,rescga,itercg,One,1,bnum4,bden4,ndiag,0,isweep,0)
+          call qmrherm(R,Xresult,rescga,itercg,One,1,bnum4,bden4,ndiag,0)
           ancgpfpv=ancgpfpv+float(itercg)
 !
           Phi = Xresult
@@ -522,27 +522,23 @@ contains
 !
        X2 = Phi(:, :, :, :, :, ia)
 
-       call qmrherm(X2,Xresult, res1, itercg, One, 1, anum4g, aden4g, ndiagg, 1, &
-            & isweep, iter)
+       call qmrherm(X2,Xresult,res1,itercg,One,1,anum4g,aden4g,ndiagg,1)
        ancgpv=ancgpv+float(itercg)
 
        X2 = Xresult
 !
-       call qmrherm(X2,Xresult, res1, itercg, am, imass, bnum2g, bden2g, ndiagg, 0, &
-            & isweep, iter)
+       call qmrherm(X2,Xresult,res1,itercg,am,imass,bnum2g,bden2g,ndiagg,0)
        ancg=ancg+float(itercg)
 !     write(111,*) itercg
        X2 = Xresult
 !
 !  evaluates -X2dagger * d/dpi[{MdaggerM(m)}^1/2] * X2
-       call qmrherm(X2,Xresult, res1, itercg, am, imass, anum2g, aden2g, ndiagg, 2, &
-            & isweep, iter)
+       call qmrherm(X2,Xresult,res1,itercg,am,imass,anum2g,aden2g,ndiagg,2)
        ancgf=ancgf+float(itercg)
 
 !     write(113,*) itercg
 !  evaluates +2Re{Phidagger * d/dpi[{MdaggerM(1)}^1/4] * X2}
-       call qmrherm(X2,Xresult, res1, itercg, One, 1, anum4g, aden4g, ndiagg, 3, &
-            & isweep, iter)
+       call qmrherm(X2,Xresult,res1,itercg,One,1,anum4g,aden4g,ndiagg,3)
        ancgfpv=ancgfpv+float(itercg)
 !
     enddo
@@ -550,7 +546,7 @@ contains
     if (ibound.eq.-1 .and. ip_t.eq.(np_t - 1)) then
        dSdpi(:, :, ksizet_l, 3) = -dSdpi(:, :, ksizet_l, 3)
     endif
-!
+
     dSdpi = dSdpi + beta * Nf * theta
 !
     return
@@ -602,12 +598,12 @@ contains
 !
        R = Phi(:, :, :, :, :, ia)
 
-       call qmrherm(R,Xresult, res2, itercg, One, 1, anum4, aden4, ndiag, 0, isweep, iflag)
+       call qmrherm(R,Xresult, res2, itercg, One, 1, anum4, aden4, ndiag, 0)
        ancghpv=ancghpv+float(itercg)
 !
        R = Xresult
 !
-       call qmrherm(R,Xresult, res2, itercg, am, imass, bnum2, bden2, ndiag, 0, isweep, iflag)
+       call qmrherm(R,Xresult, res2, itercg, am, imass, bnum2, bden2,ndiag,0)
        ancgh=ancgh+float(itercg)
 !
        hf = hf + sum(real(conjg(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &

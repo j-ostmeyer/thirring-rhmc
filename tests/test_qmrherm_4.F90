@@ -25,7 +25,7 @@ program test_qmrherm_4
   complex(dp) :: xin(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
   !complex(dp) :: R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 
-  integer :: imass, iflag, isweep, iter
+  integer :: imass, iflag
   real(dp) :: anum(0:ndiag), aden(ndiag), sum_delta_Phi
   real :: res, am, adenf
   integer :: itercg
@@ -50,8 +50,6 @@ program test_qmrherm_4
   am = 0.05
   imass = 3
   iflag = 0
-  isweep = 1
-  iter = 0
 
   open(unit=36,file='../remez2',status='old')
   read(36,*) anum(0)
@@ -124,7 +122,7 @@ program test_qmrherm_4
   ! call function
   Phi0 = Phi0_orig
   max_qmr_iters = 180
-  call qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter)
+  call qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiag, iflag)
   ! check output
   do idiag=1,ndiag
     xin(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(:,:,:,:,:,idiag)

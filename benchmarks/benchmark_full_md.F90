@@ -20,6 +20,7 @@ program full_md
   double precision :: t1i,t2i
   integer, parameter :: itermax=1000
   complex(dp) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)!
+  complex(dp) :: Xresult(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
   real(dp) :: H0,H1,S0,S1,dH,dS,hg,hp
   real :: action, paction, gaction
   real :: vel2, x, ytest, atraj
@@ -201,15 +202,15 @@ program full_md
 #endif
 
       
-      call qmrherm(R,rescga,itercg,am,imass,anum4,aden4,ndiag,0,isweep,0)
+      call qmrherm(R,Xresult,rescga,itercg,am,imass,anum4,aden4,ndiag,0)
       ancgpf=ancgpf+float(itercg)
       !
-      R = X1
+      R = Xresult
       !
-      call qmrherm(R,rescga,itercg,One,1,bnum4,bden4,ndiag,0,isweep,0)
+      call qmrherm(R,Xresult,rescga,itercg,One,1,bnum4,bden4,ndiag,0)
       ancgpfpv=ancgpfpv+float(itercg)
       !
-      Phi = X1
+      Phi = Xresult
       !
  
     enddo

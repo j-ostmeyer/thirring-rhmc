@@ -232,7 +232,6 @@ contains
 #else
         call update_halo_5(4, Phi)
 #endif
-        !     call qmrherm(Phi,res,itercg,am,imass,cnum,cden,1,0)
         call congrad(Phi, res, itercg, am, imass)
         iter = iter + itercg
         !
@@ -287,7 +286,6 @@ contains
         !
         ! xi= (M)**-1 * Phi
         !
-        !     call qmrherm(Phi,res,itercg,am,imass,cnum,cden,1,0)
         call congrad(Phi,res,itercg,am,imass)
         iter = iter + itercg
         !     

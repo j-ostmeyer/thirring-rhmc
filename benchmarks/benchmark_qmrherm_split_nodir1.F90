@@ -1,7 +1,6 @@
 program benchmark_qmrherm_split1
   use dwf3d_lib
   use trial
-  use vector
   use qmrherm_module_split_nodir, only: qmrherm_split_nodir, phi0, qmrhprint => printall
   use dirac
   use gforce
@@ -22,9 +21,10 @@ program benchmark_qmrherm_split1
   complex(dp), allocatable :: Phi0_orig(:, :, :, :, :, :)
   complex(dp), allocatable :: delta_Phi0(:, :, :, :, :, :)
   complex(dp) :: R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) :: X(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 
 
-  integer :: imass, iflag, isweep, iter
+  integer :: imass, iflag
   real(dp) :: anum(0:ndiagg), aden(ndiagg)
   real :: res, am
   integer :: itercg
@@ -51,8 +51,8 @@ program benchmark_qmrherm_split1
   am = 0.05
   imass = 3
   iflag = 1
-  isweep = 1
-  iter = 0
+ 
+
 
   anum(0) = 0.5
   do i = 1, ndiagg
@@ -122,7 +122,7 @@ program benchmark_qmrherm_split1
   t1i = MPI_Wtime()
   do i = 1,timing_loops
     Phi0 = Phi0_orig
-    call qmrherm_split_nodir(Phi, res, itercg, am, imass, anum, aden, ndiagg, iflag, isweep, iter)
+    call qmrherm_split_nodir(Phi,X, res, itercg, am, imass, anum, aden, ndiagg, iflag,0,0)
     total_iterations = total_iterations + itercg
   end do
   !call gettimeofday(t2i,ierr)

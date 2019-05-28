@@ -32,7 +32,7 @@ program test_qmrherm_3
   complex(dp) :: sum_delta_x, sum_delta_Phi0
   real(dp) :: max_delta_x, max_delta_Phi0
 
-  integer :: imass, iflag, isweep, iter
+  integer :: imass, iflag
   real(dp) :: anum(0:ndiag), aden(ndiag)
   real :: res, am
   integer :: itercg
@@ -56,8 +56,6 @@ program test_qmrherm_3
   am = 0.05
   imass = 3
   iflag = 3
-  isweep = 1
-  iter = 0
 
   anum(0) = 0.5
   do i = 1, ndiag
@@ -124,7 +122,7 @@ program test_qmrherm_3
   ! call function
   do i = 1,timing_loops
     Phi0 = Phi0_orig
-    call qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiag, iflag, isweep, iter)
+    call qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiag, iflag)
   end do
   ! check output
   if (generate) then
