@@ -153,12 +153,12 @@ contains
       SCOREP_USER_REGION_BEGIN(post,'post',&
         &SCOREP_USER_REGION_TYPE_COMMON)
 #endif
-      do idirac = 1,4
-        do it=1,ksizet_l
-          do iy=1,ksizey_l
-            do ix=1,ksizex_l
-              do iz=1,kthird,shift
-                do ishift=1,maxishift
+      do ishift=1,maxishift
+        do idirac = 1,4
+          do it=1,ksizet_l
+            do iy=1,ksizey_l
+              do ix=1,ksizex_l
+                do iz=1,kthird,shift
                   output(iz:iz+shift-1,ix,iy,it,idirac,ishift) = &
                     &output(iz:iz+shift-1,ix,iy,it,idirac,ishift)-&
                     &shiftferm(iz:iz+shift-1,ix,iy,it,idirac,ishift)*&
