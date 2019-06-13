@@ -22,7 +22,7 @@ contains
 
   ! From https://arxiv.org/abs/hep-lat/9612014
   ! Krylov space solvers for shifted linear systems, B. Jegerlehner, 1996
-  subroutine multishift_solver(u,am,imass,ndiagq,aden,output,input,res,&
+  subroutine multishift_solver(u,am,imass,ndiagq,aden,anum,output,input,res,&
     &maxcg,cg_return)
     use dirac
     use params 
@@ -34,6 +34,7 @@ contains
     integer, intent(in) :: imass
     integer, intent(in) :: ndiagq
     real(dp), intent(in) :: aden(ndiagq)
+    real(dp), intent(in) :: anum(ndiagq)
     complex(dp) :: output(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
     complex(dp) :: input(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real, intent(in) :: res
@@ -60,7 +61,8 @@ contains
     real(dp) :: alpha,delta,lambda,omega,omega_save,gammag
 
     ! temporary variables - utilities
-    integer :: ishift,maxishift
+    integer :: ishift,maxishift,minishift
+    real(dp) :: correction(ndiagq)
     real(dp) :: source_norm
 #ifdef MPI
     integer, dimension(12) :: reqs_h,reqs_p
@@ -91,6 +93,9 @@ contains
     call init_halo_update_5(4, h, 1, reqs_h)
     call init_halo_update_5(4, p, 2, reqs_p)
 
+    correction = abs(anum/aden) ! ndiagq-long
+    correction = correction/exp(sum(log(correction))/ndiagq) ! 
+
     do ishift=1,ndiagq
       flags(ishift) = .true.
       shiftferm(:,:,:,:,:,ishift) = input(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:)
@@ -101,8 +106,9 @@ contains
     gammag = 0.0d0
     cg_return = 0
     maxishift = ndiagq
+    minishift = 1
 
-    do while((maxishift .gt. 0).and.(cg_return.lt.maxcg))
+    do while((maxishift .gt. (minishift-1)).and.(cg_return.lt.maxcg))
       cg_return = cg_return + 1 
 
 
@@ -129,10 +135,10 @@ contains
       omega_save = omega
       omega = -delta/alpha
 
-      do ishift=1,maxishift
+      do ishift=minishift,maxishift
           zeta_iii(ishift) = (zeta_i(ishift)*zeta_ii(ishift)*omega_save)/ &      
             & ( omega*gammag*(zeta_i(ishift)-zeta_ii(ishift))+ &
-            &   zeta_i(ishift)*omega_save*(1.0-aden(ishift)*omega) ) ! TO CHECK definition of aden
+            &   zeta_i(ishift)*omega_save*(1.0-aden(ishift)*omega) ) 
           omegas(ishift)=omega*zeta_iii(ishift)/zeta_ii(ishift)   
       enddo
 
@@ -147,13 +153,13 @@ contains
       p = r + gammag*p
       call MPI_Startall(12,reqs_p,ierr)
 
-      gammas(1:ishift)=gammag*zeta_iii(1:ishift)*omegas(1:ishift)/(zeta_ii(1:ishift)*omega)
+      gammas(minishift:maxishift)=gammag*zeta_iii(minishift:maxishift)*omegas(minishift:maxishift)/(zeta_ii(minishift:maxishift)*omega)
 
 #ifdef SCOREPINST
       SCOREP_USER_REGION_BEGIN(post,'post',&
         &SCOREP_USER_REGION_TYPE_COMMON)
 #endif
-      do ishift=1,maxishift
+      do ishift=minishift,maxishift
         do idirac = 1,4
           do it=1,ksizet_l
             do iy=1,ksizey_l
@@ -174,7 +180,7 @@ contains
         enddo
       enddo
  
-      !do ishift=1,maxishift
+      !do ishift=minishift,maxishift
       !  output(:,:,:,:,:,ishift) = output(:,:,:,:,:,ishift)-&
       !    &shiftferm(:,:,:,:,:,ishift)*omegas(ishift) 
       !  shiftferm(:,:,:,:,:,ishift) = shiftferm(:,:,:,:,:,ishift) * gammas(ishift)+&
@@ -220,19 +226,22 @@ contains
 !          enddo
 !        endif
 !      end block test
- 
+
+      
       maxishift = 0
+      minishift = ndiagq+1
       do ishift=1,ndiagq
         if(flags(ishift))then
-          if(sqrt(delta*zeta_ii(ishift)**2) < res) then
+          if(sqrt(delta*zeta_ii(ishift)**2)*correction(ishift) < res) then
             flags(ishift) = .false.
           else
-            maxishift = ishift 
+            maxishift = max(ishift,maxishift)
+            minishift = min(ishift,minishift)
           endif
         endif
       enddo
-      zeta_i(1:maxishift)  = zeta_ii(1:maxishift)
-      zeta_ii(1:maxishift) = zeta_iii(1:maxishift)
+      zeta_i (minishift:maxishift) = zeta_ii (minishift:maxishift)
+      zeta_ii(minishift:maxishift) = zeta_iii(minishift:maxishift)
 
       delta = lambda
 
@@ -266,7 +275,7 @@ contains
     integer, dimension(12) :: reqs_X2, reqs_Phi0, reqs_R, reqs_x
 #endif
     x = anum(0) * Phi
-    call multishift_solver(u,am,imass,ndiagq,aden,x1,Phi,res,max_qmr_iters,itercg)
+    call multishift_solver(u,am,imass,ndiagq,aden,anum(1:ndiagq),x1,Phi,res,max_qmr_iters,itercg)
  
     if(iflag.lt.2)then
       !     Now evaluate solution x=(MdaggerM)^p * Phi
