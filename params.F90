@@ -57,8 +57,6 @@ module params
 
   ! max step in molecular dynamics evolution
   integer, parameter :: itermax=1000
-!
-
 
   ! Runtime parameters
   real :: beta

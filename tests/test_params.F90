@@ -50,6 +50,14 @@ module params
   integer :: max_qmr_iters=2   !QMRHERM
   integer :: niterc=kthird*kvol ! CONGRAD
 
+  ! inverter residuals
+  real, parameter :: respbp=1.0e-6, rescgg=1.0e-6
+  real, parameter :: rescga=1e-9
+  real, parameter :: rescgm=1e-9
+
+  ! max step in molecular dynamics evolution
+  integer, parameter :: itermax=1000
+
   ! Runtime parameters
   real :: beta
   real :: am3
