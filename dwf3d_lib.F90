@@ -84,6 +84,9 @@ contains
 #ifdef MPI
     integer :: reqs_ps(12)
     integer :: ierr
+#ifdef GDBHOOK
+    logical :: wait_on_master
+#endif
 #endif
 !
 !*******************************************************************
@@ -94,7 +97,18 @@ contains
     qmrhprint = .true.
 #ifdef MPI
     call init_MPI
+#ifdef GDBHOOK
+    wait_on_master = .true.
+    if (ip_global .eq. 0) then
+      do while (wait_on_master)
+         print*,'Waiting on master for intervention with GDB...'
+         call sleep(1)
+      enddo
+    endif
+    call MPI_Barrier(MPI_COMM_WORLD,ierr)
 #endif
+#endif
+
 !*******************************************************************
 !     end of input
 !*******************************************************************
@@ -450,9 +464,16 @@ contains
     if (ip_global .eq. 0) then
 !     write(6, 9022) iter2,naccp,atraj,yav,yyav,ancg,ancgpv,ancgh,ancghpv,ancgf,
 !    & ancgfpv,ancgpf,ancgpfpv,pbpa,vel2a,actiona
-       write(7, 9022) iter2,naccp,atraj,yav,yyav, &
-            & ancg,ancgpv,ancgh,ancghpv,ancgf,ancgfpv,ancgpf,ancgpfpv, &
-            & pbpa,ancgma,vel2a,actiona
+       write(7, 9022) iter2,&
+            & naccp,atraj,&
+            & yav,yyav,&
+            & ancg,ancgpv,&
+            & ancgh,ancghpv,&
+            & ancgf,ancgfpv,&
+            & ancgpf,ancgpfpv,&
+            & pbpa,&
+            & ancgma,&
+            & vel2a,actiona
 9022   format(' averages for last ',i6,' trajectories',/  &
             & 1x,' # of acceptances: ',i6,' average trajectory length= ',f8.3/ &
             & 1x,' <exp-dH>=',e11.4,' +/-',e10.3/ &

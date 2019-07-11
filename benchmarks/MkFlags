@@ -1,7 +1,7 @@
-COMPILER=SPINTEL# See ../MkRules for available options
+COMPILER=INTEL# See ../MkRules for available options
 MPI=yes#
-NP_X=3
-NP_Y=3
-NP_T=3
+NP_X=2
+NP_Y=4
+NP_T=4
 SITE_RANDOM=yes#
 WITH_MUST=no#

@@ -151,7 +151,9 @@ dwf3d_lib.o : $(TOPDIR)/dwf3d_lib.F90 \
               dum1.mod gauge.mod gaussian.mod gforce.mod measure_module.mod \
               params.mod qmrherm_module.mod random.mod remez.mod remezg.mod \
               trial.mod vector.mod
-	$(COMPILE) -o dwf3d_lib.o $<
+	$(COMPILE) -o dwf3d_lib.o $< 
+
+#	$(FC) -O0 -g $(COMMS_FLAGS) -DGDBHOOK ${RANDOM_FLAGS} -c -o dwf3d_lib.o $< # debug
 
 gaussian.o : $(TOPDIR)/gaussian.F90 .makefile.uptodate \
              comms.mod params.mod random.mod 

@@ -2,6 +2,6 @@
 COMPILER=INTEL# either GNU or INTEL
 MPI=yes#
 NP_X=2#
-NP_Y=2#
-NP_T=2#
+NP_Y=4#
+NP_T=4#
 SITE_RANDOM=yes#

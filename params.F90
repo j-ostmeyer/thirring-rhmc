@@ -11,7 +11,7 @@ module params
 #define KSIZE 16
 #define KSIZET 16
   integer, parameter :: ksize=KSIZE, ksizet=KSIZET
-  integer, parameter :: kthird=32
+  integer, parameter :: kthird=48
   integer, parameter :: kvol=ksize*ksize*ksizet
   integer, parameter :: ndiag=25, ndiagg=12
   integer, parameter :: Nf=1
@@ -47,13 +47,15 @@ module params
   integer, parameter :: icheck=100
 
   ! Inverter
-  integer :: max_qmr_iters=15000 ! QMRHERM
+  integer :: max_qmr_iters=30000 ! QMRHERM
   integer :: niterc=kthird*kvol ! CONGRAD
 
   ! inverter residuals
-  real, parameter :: respbp=1.0e-6, rescgg=1.0e-6
-  real, parameter :: rescga=1e-9
-  real, parameter :: rescgm=1e-9
+  real, parameter :: respbp=1.0e-8, rescgg=1.0e-4
+  real, parameter :: rescga=1e-8                
+  real, parameter :: rescgm=1e-8               
+
+
 
   ! max step in molecular dynamics evolution
   integer, parameter :: itermax=1000
