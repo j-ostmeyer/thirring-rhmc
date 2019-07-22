@@ -61,11 +61,6 @@ contains
 !                                               SJH February 2017
 !*******************************************************************
     implicit none
-    real, parameter :: respbp=1.0e-6, rescgg=1.0e-6
-    real, parameter :: rescga=1e-9
-    real, parameter :: rescgm=1e-9
-    integer, parameter :: itermax=1000
-!     complex :: Phi(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, Nf)
 !     complex qq,qbqb
 !     complex u
 !     complex a,b
@@ -689,6 +684,7 @@ contains
     call MPI_File_Close(mpi_fh,ierr)
 ! Get the see,ierrd
     if (ip_global.eq.0) then
+      print*, "configuration file read."
       open(unit=10, file='con', status='old', form='unformatted', access='stream')
       !print*,"FSEEK CALL COMMENTED OUT, THIS WILL FAIL"
       call fseek(10, 3 * ksize * ksize * ksizet * 4 + 4, 0)
@@ -699,6 +695,7 @@ contains
     open(unit=10, file='con', status='old', form='unformatted')
     read (10) theta, seed
     close(10)
+    print*, "configuration file read."
 #endif
     return
   end subroutine sread

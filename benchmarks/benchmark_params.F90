@@ -10,8 +10,8 @@ module params
   ! benchmarking/profiling parameters
   integer :: timing_loops = 10
   ! Lattice parameters
-#define KSIZE 12
-#define KSIZET 12
+#define KSIZE 16
+#define KSIZET 16
   integer, parameter :: ksize=KSIZE, ksizet=KSIZET
   integer, parameter :: kthird=48
   integer, parameter :: kvol=ksize*ksize*ksizet
@@ -51,6 +51,14 @@ module params
   ! Inverter
   integer :: max_qmr_iters=100    !QMRHERM
   integer :: niterc=10 !CONGRAD
+
+  ! inverter residuals
+  real, parameter :: respbp=1.0e-6, rescgg=1.0e-6
+  real, parameter :: rescga=1e-9
+  real, parameter :: rescgm=1e-9
+
+  ! max step in molecular dynamics evolution
+  integer, parameter :: itermax=1000
 
   ! Runtime parameters
   real :: beta

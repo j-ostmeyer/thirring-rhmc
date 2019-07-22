@@ -8,10 +8,10 @@ module params
   integer, parameter :: sp=kind(1.)
 
   ! Lattice parameters
-#define KSIZE 12
-#define KSIZET 12
+#define KSIZE 16
+#define KSIZET 16
   integer, parameter :: ksize=KSIZE, ksizet=KSIZET
-  integer, parameter :: kthird=48
+  integer, parameter :: kthird=32
   integer, parameter :: kvol=ksize*ksize*ksizet
   integer, parameter :: ndiag=25, ndiagg=12
   integer, parameter :: Nf=1
@@ -39,16 +39,24 @@ module params
 #endif
 
   ! Control parameters
-  integer, parameter :: istart=1    !
-  integer, parameter :: iread=0      ! 
+  integer, parameter :: istart=-1   !
+  integer, parameter :: iread=1     ! 
   integer, parameter :: iwrite=1     !
-  integer, parameter :: iprint=1     !
+  integer, parameter :: iprint=5     !
   integer, parameter :: iseed=0      ! 
   integer, parameter :: icheck=100
 
   ! Inverter
-  integer :: max_qmr_iters=12000 ! QMRHERM
+  integer :: max_qmr_iters=15000 ! QMRHERM
   integer :: niterc=kthird*kvol ! CONGRAD
+
+  ! inverter residuals
+  real, parameter :: respbp=1.0e-6, rescgg=1.0e-6
+  real, parameter :: rescga=1e-9
+  real, parameter :: rescgm=1e-9
+
+  ! max step in molecular dynamics evolution
+  integer, parameter :: itermax=1000
 
   ! Runtime parameters
   real :: beta
