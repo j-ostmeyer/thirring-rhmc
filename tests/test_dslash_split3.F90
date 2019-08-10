@@ -69,6 +69,7 @@ program test_dslash_split
 #ifdef MPI
   call start_halo_update_4(3, u, 1, reqs_u)
   call complete_halo_update(reqs_R)
+  call complete_halo_update(reqs_Phi)
   call complete_halo_update(reqs_u)
 #else
   call update_halo_5(4, R)
