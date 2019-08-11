@@ -25,6 +25,7 @@ program test_dslash_split
   real, parameter :: am = 0.05
   integer, parameter :: imass = 1
 
+
   integer :: i, j, ix, iy, it, ithird
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
   integer :: idx
@@ -69,6 +70,7 @@ program test_dslash_split
 #ifdef MPI
   call start_halo_update_4(3, u, 1, reqs_u)
   call complete_halo_update(reqs_R)
+  call complete_halo_update(reqs_Phi)
   call complete_halo_update(reqs_u)
 #else
   call update_halo_5(4, R)
@@ -86,7 +88,7 @@ program test_dslash_split
   do i = 1,timing_loops
     call dslash(Phi, R, u, am, imass)
   end do
-!  ! check output
+  ! check output
   if (generate) then
     write_file(Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_dslash_1.dat', MPI_Double_Complex)
   else

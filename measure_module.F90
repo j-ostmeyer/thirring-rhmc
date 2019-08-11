@@ -327,10 +327,10 @@ contains
       endif
       !write(6,*) real(psibarpsi1),aimag(psibarpsi1), real(psibarpsi2),aimag(psibarpsi2)
       if (ip_global .eq. 0) then
-        !write(100,*) real(psibarpsi1), aimag(psibarpsi1), &
-        !     & real(psibarpsi2), aimag(psibarpsi2)
-        !write(6,*) real(psibarpsi1), aimag(psibarpsi1), &
-        !     & real(psibarpsi2), aimag(psibarpsi2)
+        write(100,*) real(psibarpsi1), aimag(psibarpsi1), &
+             & real(psibarpsi2), aimag(psibarpsi2)
+        write(6,*) real(psibarpsi1), aimag(psibarpsi1), &
+             & real(psibarpsi2), aimag(psibarpsi2)
 
       end if
       !
