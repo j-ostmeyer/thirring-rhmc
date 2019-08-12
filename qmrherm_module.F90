@@ -257,58 +257,27 @@ contains
 
 
 
-  function reduce_real_dp(input_arr) result(r)
-    implicit none
-    real(sp), intent(in) :: input_arr
-    real(dp) :: r
-
-    real(sp), pointer :: input_pointer(:)
-    integer ::idx
-
-    input_pointer(1:size(input_arr)) => input_arr
-
-    r = 0
-    do idx=1,size(input_arr)
-      r = r+input_pointer(idx)
-    enddo
-    deallocate(input_shape)
-  end function reduce_real_dp
-
-  function reduce_cplx_dp(input_arr) result(r)
-    implicit none
-    complex(sp), intent(in) :: input_arr
-    complex(dp) :: r
-
-    complex(sp), pointer :: input_pointer(:)
-    integer ::idx
-
-    input_pointer(1:size(input_arr)) => input_arr
-
-    r = 0
-    do idx=1,size(input_arr)
-      r = r+input_pointer(idx)
-    enddo
-    deallocate(input_shape)
-  end function reduce_real_dp
-
-
   ! From https://arxiv.org/abs/hep-lat/9612014
   ! Krylov space solvers for shifted linear systems, B. Jegerlehner, 1996
   ! Single precision version
-  subroutine multishift_solver_sp(u,am,imass,ndiagq,aden,anum,output,input,res,&
+  subroutine multishift_solver_sp(udp,am,imass,ndiagq,aden,anum,outputdp,inputdp,res,&
     &maxcg,cg_return)
     use dirac
     use params 
     use comms
     use inverter_utils
+    use reductions, only : reduce_real_dp5d
     ! subroutine parameters
-    complex(sp),intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
+    complex(dp),intent(in) :: udp(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
+    complex(sp) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
     real, intent(in) :: am
     integer, intent(in) :: imass
     integer, intent(in) :: ndiagq
-    real(sp), intent(in) :: aden(ndiagq)
-    real(sp), intent(in) :: anum(ndiagq)
+    real(dp), intent(in) :: aden(ndiagq)
+    real(dp), intent(in) :: anum(ndiagq)
+    complex(dp) :: outputdp(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
     complex(sp) :: output(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
+    complex(dp) :: inputdp(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(sp) :: input(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real, intent(in) :: res
     integer, intent(in) :: maxcg
@@ -350,9 +319,13 @@ contains
     SCOREP_USER_REGION_DEFINE(post)
 #endif
 
+    ! convert to single precision
+    u = udp
+    input = inputdp
+
     r = input ! vector
     p = r     ! vector
-    delta = sum(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:))**2)
+    delta = reduce_real_dp5d(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:))**2)
 #ifdef MPI
     call MPI_AllReduce(delta, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
     delta = dp_reduction
@@ -397,7 +370,7 @@ contains
       call dslashd(s,h,u,am,imass)
 #endif
 
-      alpha = sum(real(conjg(p(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
+      alpha = reduce_real_dp5d(real(conjg(p(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) & 
         &                * s(:,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 
 #ifdef MPI
@@ -416,7 +389,7 @@ contains
       enddo
 
       r = r + omega*s
-      lambda = sum(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:))**2)
+      lambda = reduce_real_dp5d(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l,:))**2)
 #ifdef MPI
       call MPI_AllReduce(lambda, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
       lambda = dp_reduction
@@ -525,11 +498,13 @@ contains
       !endif
     enddo
 
+    outputdp = output
 
-  end subroutine multishift_solver
+
+  end subroutine multishift_solver_sp
 
 
-  subroutine qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiagq, iflag)
+  subroutine qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiagq, iflag,use_sp)
     use params
     use trial, only: u
     use gforce
@@ -541,6 +516,7 @@ contains
     integer, intent(in) :: imass, ndiagq, iflag
     real(dp), intent(in) :: anum(0:ndiagq), aden(ndiagq)
     real, intent(in) :: res, am
+    logical, intent(in), optional :: use_sp
     integer, intent(out) :: itercg
     real(dp) :: coeff
     integer :: idiag
@@ -548,8 +524,12 @@ contains
     integer, dimension(12) :: reqs_X2, reqs_Phi0, reqs_R, reqs_x
 #endif
     x = anum(0) * Phi
-    call multishift_solver(u,am,imass,ndiagq,aden,anum(1:ndiagq),x1,Phi,res,max_qmr_iters,itercg)
- 
+    if(present(use_sp).and.use_sp)then
+      call multishift_solver_sp(u,am,imass,ndiagq,aden,anum(1:ndiagq),x1,Phi,res,max_qmr_iters,itercg)
+    else
+      call multishift_solver(u,am,imass,ndiagq,aden,anum(1:ndiagq),x1,Phi,res,max_qmr_iters,itercg)
+    endif
+
     if(iflag.lt.2)then
       !     Now evaluate solution x=(MdaggerM)^p * Phi
       do idiag=1,ndiagq

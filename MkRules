@@ -83,7 +83,7 @@ LIBOBJS = avgitercounts.o derivs_module.o dirac.o dum1.o dwf3d_lib.o \
        comms.o random.o partitioning.o comms_partitioning.o \
        dirac_split.o qmrherm_module_split.o \
        dirac_split_nodir.o qmrherm_module_split_nodir.o \
-       inverter_utils.o
+       inverter_utils.o reductions.o
 
 
 .PHONY: clean
@@ -128,7 +128,7 @@ avgitercounts.o : $(TOPDIR)/avgitercounts.F90 .makefile.uptodate
 
 qmrherm_module.o : $(TOPDIR)/qmrherm_module.F90 .makefile.uptodate params.mod \
                    vector.mod gforce.mod comms.mod dirac.mod \
-                   derivs_module.mod inverter_utils.mod
+                   derivs_module.mod inverter_utils.mod reductions.mod
 	$(COMPILE) -o qmrherm_module.o $<
 
 qmrherm_module_split.o : $(TOPDIR)/qmrherm_module_split.F90 \
