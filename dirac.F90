@@ -1,11 +1,8 @@
 module dirac
   use params
-  use comms
+  use gammamatrices
   implicit none
   save
-
-  complex(dp) :: gamval(6,4)
-  integer :: gamin(6,4)
 
 contains 
 
@@ -281,12 +278,6 @@ contains
   !   A Kronecker delta function
   !   Useful for calculating coordinate offsets
   !***********************************************************************
-  pure integer function kdelta(nu, mu)
-    integer, intent(in) :: nu
-    integer, intent(in) :: mu
-
-    kdelta=merge(1,0,nu==mu)
-  end function kdelta
 
 end module dirac
 

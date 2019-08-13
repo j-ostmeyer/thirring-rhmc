@@ -19,6 +19,6 @@ bulk_rhmc: $(LIBOBJS) bulk_rhmc.o
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -o $@ $^
 
 clean:
-	rm -f bulk_rhmc *.o *.mod compile_flags
+	rm -f bulk_rhmc *.o *.mod compile_flags *_sp.F90
 
 

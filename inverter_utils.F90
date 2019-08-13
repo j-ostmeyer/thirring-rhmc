@@ -7,7 +7,6 @@ contains
 
   !   For the multi-shift inverter
   subroutine dirac_op_shifted(xout,xin,u,am,imass,shift)
-    use dirac
     complex(dp),intent(out) :: xout(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp),intent(in) :: xin(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp),intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
@@ -19,8 +18,13 @@ contains
   end subroutine 
 
   subroutine dirac_operator(xout,xin,u,am,imass)
-    use dirac
+    use dirac, only: dslash, dslashd
     use comms
+#ifdef MPI
+    use comms5, only : start_halo_update_5
+#else    
+    use comms5, only : update_halo_5
+#endif
     complex(dp),intent(out) :: xout(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp),intent(in) :: xin(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp),intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
