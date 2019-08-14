@@ -18,7 +18,12 @@ contains
 
 
   subroutine qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiagq, iflag,use_sp)
-    use comms
+    use comms, only: complete_halo_update,ip_global,start_halo_update_6
+#ifdef MPI
+    use comms5, only: start_halo_update_5
+#else
+    use comms5, only: update_halo_5
+#endif
     use derivs_module
     use dirac
     use gforce

@@ -32,6 +32,7 @@ contains
     use trial, only: u
     use gforce
     use comms
+    use comms5
     use partitioning
     use comms_partitioning
     use dirac_split
