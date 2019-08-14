@@ -161,12 +161,7 @@ contains
 #else
   pure subroutine dslashd(Phi,R,u,am,imass)
 #endif
-    !     calculates phi = mdagger*r
-    !
-    !     complex, intent(in) ::  u(0:ksize+1,0:ksize+1,0:ksizet+1,3)
-    !     complex, intent(out) :: phi(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
-    !     complex, intent(in) :: r(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
-    !     complex :: zkappa
+    use comms, only : complete_halo_update
     complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
