@@ -9,6 +9,8 @@ contains
   subroutine congrad(Phi,res,itercg,am,imass,iterations)
     use trial, only: u
     use vector
+    use comms5, only: init_halo_update_5
+    use comms_common, only: comm
     use comms
     use dirac
     use params
@@ -147,6 +149,7 @@ contains
   subroutine measure(psibarpsi, res, aviter, am, imass)
     use trial, only: u
     use vector, xi=>x
+    use comms5, only: start_halo_update_5
     use comms
     use gaussian
     use dirac
@@ -365,6 +368,7 @@ contains
     use dirac
     use trial
     use comms
+    use comms5, only: start_halo_update_5
 
     real, intent(in) :: res, am
     integer, intent(out) :: itercg
