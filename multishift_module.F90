@@ -11,10 +11,13 @@ contains
   ! Krylov space solvers for shifted linear systems, B. Jegerlehner, 1996
   subroutine multishift_solver(u,am,imass,ndiagq,aden,anum,output,input,res,&
     &maxcg,cg_return)
-    use comms5
     use dirac
     use params 
     use reductions
+    use mpi
+    use comms, only : complete_halo_update
+    use comms_common, only: comm
+    use comms5, only : start_halo_update_5,init_halo_update_5
     ! subroutine parameters
     complex(dp),intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
     real, intent(in) :: am
@@ -250,7 +253,10 @@ contains
     &maxcg,cg_return)
     use dirac_sp, only: dslash_sp, dslashd_sp
     use params 
-    use comms
+    use comms_common, only : comm
+    use comms, only : complete_halo_update
+    use mpi
+    use comms5_sp, only: init_halo_update_5_sp
     use reductions, only : reduce_real_dp5d
     ! subroutine parameters
     complex(dp),intent(in) :: udp(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
@@ -321,8 +327,8 @@ contains
     alpha = 0.0d0
     output = 0.0 ! vector
     ! Setting up persistent communication requests
-    call init_halo_update_5(4, h, 1, reqs_h)
-    call init_halo_update_5(4, p, 2, reqs_p)
+    call init_halo_update_5_sp(4, h, 1, reqs_h)
+    call init_halo_update_5_sp(4, p, 2, reqs_p)
 
     correction = abs(anum/aden) ! ndiagq-long
     correction = correction/exp(sum(log(correction))/ndiagq) ! 
@@ -350,7 +356,7 @@ contains
       !call complete_halo_update(reqs_h) ! Now this call happens in dslashd
       call dslashd_sp(s,h,u,am,imass,reqs_h)
 #else
-      call update_halo_5(4, h)
+      call update_halo_5_sp(4, h)
       call dslashd_sp(s,h,u,am,imass)
 #endif
 
