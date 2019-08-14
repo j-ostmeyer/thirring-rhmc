@@ -77,7 +77,14 @@ $(info MPIFC   : $(MPIFC))
 $(info FC      : $(FC))
 $(info FCFLAGS : $(FCFLAGS))
 
-LIBOBJS = avgitercounts.o comms.o comms5.o comms5_sp.o comms_partitioning.o derivs_module.o  dirac.o dirac_split.o dirac_split_nodir.o dum1.o dwf3d_lib.o  gammamatrices.o gauge.o gaussian.o gforce.o inverter_utils.o  measure_module.o multishift_module.o params.o partitioning.o  qmrherm_module.o qmrherm_module_split.o  qmrherm_module_split_nodir.o random.o reductions.o remez.o remezg.o  trial.o vector.o
+LIBOBJS = avgitercounts.o comms.o comms_common.o comms5.o comms5_sp.o \
+          comms_partitioning.o derivs_module.o  dirac.o dirac_sp.o \
+          dirac_split.o dirac_split_nodir.o dum1.o dwf3d_lib.o \
+          gammamatrices.o gauge.o gaussian.o gforce.o inverter_utils.o \
+          measure_module.o multishift_module.o params.o partitioning.o \
+          qmrherm_module.o qmrherm_module_split.o \
+          qmrherm_module_split_nodir.o random.o reductions.o remez.o remezg.o \
+          trial.o vector.o
 
 .PHONY: clean
 
@@ -142,15 +149,15 @@ gaussian.o : $(TOPDIR)/gaussian.F90 .makefile.uptodate \
 
 inverter_utils.o  : $(TOPDIR)/inverter_utils.F90 .makefile.uptodate dirac.mod \
                     trial.mod comms.mod comms5.mod
-	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -o inverter_utils.o $<
+	$(COMPILE) -o inverter_utils.o $<
 
 measure_module.o : $(TOPDIR)/measure_module.F90 \
                   .makefile.uptodate params.mod gaussian.mod trial.mod \
-                  vector.mod comms.mod dirac.mod 
+                  vector.mod comms5.mod comms_common.mod dirac.mod 
 	$(COMPILE) -o measure_module.o $<
 
 multishift_module.o :  $(TOPDIR)/multishift_module.F90 \
-                  .makefile.uptodate comms.mod dirac.mod dirac_sp.mod \
+                  .makefile.uptodate comms5.mod comms5_sp.mod comms_common.mod dirac.mod dirac_sp.mod \
                   params.mod reductions.mod
 	$(COMPILE) -o $*.o $<
 
@@ -185,11 +192,11 @@ comms.o :  $(TOPDIR)/comms.F90 .makefile.uptodate comms_common.mod comms5.mod\
 	$(COMPILE) -o comms.o $<
 
 comms5.o :  $(TOPDIR)/comms5.F90 .makefile.uptodate comms_common.mod params.mod
-	$(COMPILE) -o comms.o $<
+	$(COMPILE) -o comms5.o $<
 
 comms5_sp.o :  $(TOPDIR)/comms5_sp.F90 .makefile.uptodate comms_common.mod \
             params.mod
-	$(COMPILE) -o comms.o $<
+	$(COMPILE) -o comms5_sp.o $<
 
 
 
@@ -199,7 +206,7 @@ comms.o :  $(TOPDIR)/uncomms.f90 .makefile.uptodate params.mod
 	$(COMPILE) -o comms.o $<
 
 comms5.o :  $(TOPDIR)/uncomms5.f90 .makefile.uptodate params.mod
-	$(COMPILE) -o comms.o $<
+	$(COMPILE) -o comms5.o $<
 
 else 
 $(error MPI not correctly specified (watch for whitespaces))
@@ -219,7 +226,7 @@ RANDOM_FLAGS =
 random.o : $(TOPDIR)/random.f90 .makefile.uptodate comms.mod
 	$(COMPILE) -o random.o $<
 else 
-    $(error SITE_RANDOM not correctly specified (watch for whitespaces))
+ $(error SITE_RANDOM not correctly specified (watch for whitespaces))
 endif
 
 
