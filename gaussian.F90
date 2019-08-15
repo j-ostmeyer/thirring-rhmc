@@ -1,9 +1,6 @@
 module gaussian
-  use comms 
   use random
   use params
-
-
 
   real, parameter :: tpi = 2.0*acos(-1.0)
 
@@ -15,6 +12,7 @@ contains
   !**********************************************************************
 #ifdef MPI
   subroutine gaussp(ps, reqs)
+    use comms4, only : start_halo_update_4_real
 #else
   subroutine gaussp(ps)
 #endif
@@ -56,6 +54,7 @@ contains
   !**********************************************************************
 #ifdef MPI
   subroutine gauss0(ps, reqs)
+    use comms4, only : start_halo_update_4_real
 #else
   subroutine gauss0(ps)
 #endif
@@ -90,6 +89,5 @@ contains
 #endif
     return
   end subroutine gauss0
-
 
 end module gaussian

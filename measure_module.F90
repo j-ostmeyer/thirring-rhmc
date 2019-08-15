@@ -367,8 +367,14 @@ contains
     use vector, xi=>x
     use dirac
     use trial
-    use comms
+#ifdef MPI
+    use comms4, only: start_halo_update_4
     use comms5, only: start_halo_update_5
+#else
+    use comms4, only: update_halo_4
+    use comms5, only: update_halo_5
+
+#endif
 
     real, intent(in) :: res, am
     integer, intent(out) :: itercg

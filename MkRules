@@ -77,7 +77,10 @@ $(info MPIFC   : $(MPIFC))
 $(info FC      : $(FC))
 $(info FCFLAGS : $(FCFLAGS))
 
-LIBOBJS = avgitercounts.o comms.o comms_common.o comms5.o comms5_sp.o \
+LIBOBJS = avgitercounts.o comms.o comms_common.o \
+          comms4.o comms4_sp.o \
+          comms5.o comms5_sp.o \
+          comms6.o \
           comms_partitioning.o derivs_module.o  dirac.o dirac_sp.o \
           dirac_split.o dirac_split_nodir.o dum1.o dwf3d_lib.o \
           gammamatrices.o gauge.o gaussian.o gforce.o inverter_utils.o \
@@ -91,6 +94,9 @@ LIBOBJS = avgitercounts.o comms.o comms_common.o comms5.o comms5_sp.o \
 COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -c 
 
 dirac_sp.F90 : $(TOPDIR)/dirac.F90
+	bash convert_to_sp.sh $<
+
+comms4_sp.F90 : $(TOPDIR)/comms4.F90
 	bash convert_to_sp.sh $<
 
 comms5_sp.F90 : $(TOPDIR)/comms5.F90
@@ -137,14 +143,16 @@ dirac_split_nodir.o : $(TOPDIR)/dirac_split_nodir.F90 .makefile.uptodate \
 	$(COMPILE) -o $*.o $<
 
 dwf3d_lib.o : $(TOPDIR)/dwf3d_lib.F90 \
-              .makefile.uptodate avgitercounts.mod comms.mod dirac.mod \
+              .makefile.uptodate avgitercounts.mod comms.mod comms_common.mod \
+              comms4.mod \
+              dirac.mod \
               dum1.mod gauge.mod gaussian.mod gforce.mod measure_module.mod \
               params.mod qmrherm_module.mod random.mod remez.mod remezg.mod \
               trial.mod vector.mod
 	$(COMPILE) -o dwf3d_lib.o $<
 
 gaussian.o : $(TOPDIR)/gaussian.F90 .makefile.uptodate \
-             comms.mod params.mod random.mod 
+             comms4.mod params.mod random.mod 
 	$(COMPILE) -o gaussian.o $<
 
 inverter_utils.o  : $(TOPDIR)/inverter_utils.F90 .makefile.uptodate dirac.mod \
@@ -166,7 +174,8 @@ partitioning.o : $(TOPDIR)/partitioning.F90 .makefile.uptodate params.mod \
 	$(COMPILE) -o $*.o $<
 
 qmrherm_module.o : $(TOPDIR)/qmrherm_module.F90 .makefile.uptodate params.mod \
-                   vector.mod gforce.mod comms.mod dirac.mod \
+                   vector.mod gforce.mod comms.mod \
+                   comms_common.mod comms5.mod comms6.mod dirac.mod \
                    derivs_module.mod inverter_utils.mod multishift_module.mod \
                    reductions.mod
 	$(COMPILE) -o qmrherm_module.o $<
@@ -187,8 +196,11 @@ ifeq ($(MPI), yes)
 COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T) 
 FC = $(MPIFC)
 
-comms.o :  $(TOPDIR)/comms.F90 .makefile.uptodate comms_common.mod comms5.mod\
-           comms5_sp.mod params.mod
+comms.o :  $(TOPDIR)/comms.F90 .makefile.uptodate comms_common.mod \
+           comms4.mod comms4_sp.mod \
+           comms5.mod comms5_sp.mod \
+           comms6.mod \
+           params.mod
 	$(COMPILE) -o comms.o $<
 
 comms5.o :  $(TOPDIR)/comms5.F90 .makefile.uptodate comms_common.mod params.mod
@@ -197,6 +209,13 @@ comms5.o :  $(TOPDIR)/comms5.F90 .makefile.uptodate comms_common.mod params.mod
 comms5_sp.o :  $(TOPDIR)/comms5_sp.F90 .makefile.uptodate comms_common.mod \
             params.mod
 	$(COMPILE) -o comms5_sp.o $<
+
+comms4.o :  $(TOPDIR)/comms4.F90 .makefile.uptodate comms_common.mod params.mod
+	$(COMPILE) -o comms4.o $<
+
+comms4_sp.o :  $(TOPDIR)/comms4_sp.F90 .makefile.uptodate comms_common.mod \
+            params.mod
+	$(COMPILE) -o comms4_sp.o $<
 
 
 

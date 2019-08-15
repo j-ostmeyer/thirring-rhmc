@@ -31,8 +31,9 @@ contains
     use params
     use trial, only: u
     use gforce
-    use comms
-    use comms5
+    use comms, only: complete_halo_update
+    use comms5, only : start_halo_update_5
+    use comms6, only : start_halo_update_6
     use partitioning
     use comms_partitioning
     use dirac_split_nodir

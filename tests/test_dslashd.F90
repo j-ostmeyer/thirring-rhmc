@@ -3,6 +3,8 @@ program test_dslashd
   use dwf3d_lib
   use dirac
   use comms
+  use comms4
+  use comms5
   implicit none
 
   ! general parameters

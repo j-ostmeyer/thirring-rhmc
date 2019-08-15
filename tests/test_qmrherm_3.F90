@@ -8,6 +8,9 @@ program test_qmrherm_3
   use gforce
   use params
   use comms
+  use comms4
+  use comms5
+  use comms6
   use test_utils
   implicit none
 

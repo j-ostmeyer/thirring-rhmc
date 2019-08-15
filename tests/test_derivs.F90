@@ -4,6 +4,8 @@ program test_derivs
   use dirac
   use gforce
   use comms
+  use comms4
+  use comms5
   use test_utils
   use derivs_module, only: derivs
   implicit none

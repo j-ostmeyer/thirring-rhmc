@@ -9,6 +9,9 @@ program test_force
   use remezg
   use avgitercounts
   use comms
+  use comms4
+  use comms5
+  use comms6
   use qmrherm_module, only : phi0, qmrhprint => printall
   use test_utils
   implicit none

@@ -10,13 +10,14 @@ contains
   ! From https://arxiv.org/abs/hep-lat/9612014
   ! Krylov space solvers for shifted linear systems, B. Jegerlehner, 1996
   subroutine multishift_solver(u,am,imass,ndiagq,aden,anum,output,input,res,&
-    &maxcg,cg_return)
+    &maxcg,cg_return,cg_returns)
     use dirac
     use params 
     use reductions
     use mpi
     use comms, only : complete_halo_update
-    use comms_common, only: comm
+    use comms_common, only: comm,ip_global
+    use inverter_utils, only: dirac_op_shifted
     use comms5, only : start_halo_update_5,init_halo_update_5
     ! subroutine parameters
     complex(dp),intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
@@ -30,6 +31,7 @@ contains
     real, intent(in) :: res
     integer, intent(in) :: maxcg
     integer, intent(out) :: cg_return
+    integer, intent(out),optional :: cg_returns(ndiagq)
 
     
     ! temporary variables - large vectors
@@ -168,6 +170,11 @@ contains
           enddo
         enddo
       enddo
+
+      if(present(cg_returns)) then
+        cg_returns(minishift:maxishift) = cg_return
+      endif
+
  
       !do ishift=minishift,maxishift
       !  output(:,:,:,:,:,ishift) = output(:,:,:,:,:,ishift)-&
@@ -250,10 +257,10 @@ contains
   ! Krylov space solvers for shifted linear systems, B. Jegerlehner, 1996
   ! Single precision version
   subroutine multishift_solver_sp(udp,am,imass,ndiagq,aden,anum,outputdp,inputdp,res,&
-    &maxcg,cg_return)
+    &maxcg,cg_return,cg_returns)
     use dirac_sp, only: dslash_sp, dslashd_sp
     use params 
-    use comms_common, only : comm
+    use comms_common, only: comm
     use comms, only : complete_halo_update
     use mpi
     use comms5_sp, only: init_halo_update_5_sp
@@ -273,6 +280,7 @@ contains
     real, intent(in) :: res
     integer, intent(in) :: maxcg
     integer, intent(out) :: cg_return
+    integer, intent(out),optional :: cg_returns(ndiagq)
 
     
     ! temporary variables - large vectors
@@ -342,6 +350,9 @@ contains
     enddo
     gammag = 0.0d0
     cg_return = 0
+    if(present(cg_returns)) then
+      cg_returns = 0
+    endif
     maxishift = ndiagq
     minishift = 1
 
@@ -415,7 +426,12 @@ contains
           enddo
         enddo
       enddo
- 
+
+      if(present(cg_returns)) then
+        cg_returns(minishift:maxishift) = cg_return
+      endif
+
+
       !do ishift=minishift,maxishift
       !  output(:,:,:,:,:,ishift) = output(:,:,:,:,:,ishift)-&
       !    &shiftferm(:,:,:,:,:,ishift)*omegas(ishift) 
@@ -425,43 +441,6 @@ contains
 #ifdef SCOREPINST
           SCOREP_USER_REGION_END(post)
 #endif
-
-
-!      test : block
-!        ! CHECK : Real residual seems to decrease faster than the one computed...
-!        complex(dp) :: xout(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-!        complex(dp) :: xin(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-!        complex(dp) :: check(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-!#ifdef MPI
-!        integer, dimension(12) :: reqs_xin
-!#endif
-!
-!        real(dp) :: checksum
-!
-!        if(mod(cg_return,10)==0) then
-!          do ishift =1,ndiagq
-!            xin(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = output(:,:,:,:,:,ishift)
-!#ifdef MPI
-!            call start_halo_update_5(4, xin, 10, reqs_xin)
-!            call complete_halo_update(reqs_xin)
-!#else
-!            call update_halo_5(4, xin)
-!#endif
-!            call dirac_op_shifted(xout,xin,u,am,imass,real(aden(ishift)))
-!
-!            check = input(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
-!              & xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
-!            checksum = sum(abs(check)**2)
-!#ifdef MPI
-!            call MPI_AllReduce(checksum, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
-!            checksum = dp_reduction
-!#endif
-!            if(ip_global.eq.0) then
-!              print*, ishift,sqrt(delta*zeta_i(ishift)**2),checksum,res,real(aden(ishift))
-!            endif
-!          enddo
-!        endif
-!      end block test
 
       
       maxishift = 0

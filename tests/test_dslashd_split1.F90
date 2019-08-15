@@ -3,6 +3,8 @@ program test_dslashd_split
   use params
   use dwf3d_lib
   use comms
+  use comms4
+  use comms5
   use test_utils
   implicit none
 
@@ -114,6 +116,7 @@ end program
 subroutine dslashd(phi,r,u,am,imass)
   use dirac_split_nodir
   use partitioning
+  use comms
   use comms_partitioning
   use mpi
   implicit none

@@ -5,6 +5,8 @@ program test_measure
   use vector
   use dirac
   use comms
+  use comms4
+  use comms5
   use measure_module
   use test_utils
 

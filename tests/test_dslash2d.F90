@@ -4,6 +4,7 @@ program test_dslash2d
   use dwf3d_lib
   use dirac
   use comms
+  use comms4
   use test_utils
   implicit none
 

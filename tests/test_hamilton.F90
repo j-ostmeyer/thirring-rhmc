@@ -9,6 +9,9 @@ program test_hamilton
   use remezg
   use params
   use comms
+  use comms4
+  use comms5
+  use comms6
   implicit none
 
   ! general parameters

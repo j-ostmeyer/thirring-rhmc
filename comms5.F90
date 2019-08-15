@@ -13,6 +13,13 @@ module comms5
 
 contains
 
+  ! Initialise a single halo type.
+  ! direction: direction to be communicated; x=0, y=1, t=2
+  ! position: coordinate in direction of the region
+  ! i5, i6: size in extra directions
+  ! datatype: datatype to transfer
+  ! typetarget: array element to put type into;
+  !   should be halo_{4,4_real,5,6}_{x,y,t}{up,dn}_{send,recv}(size{4,5}[, size6])
   subroutine init_single_halo_type_5(direction, position, size5, typetarget)
     integer, intent(in) :: direction, position, size5
     integer, intent(out) :: typetarget

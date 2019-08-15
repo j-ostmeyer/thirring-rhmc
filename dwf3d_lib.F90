@@ -909,7 +909,9 @@ contains
 !   calculate compact links from non-compact links
 !******************************************************************
   subroutine coef(u, theta)
-    use comms
+    use comms4, only : start_halo_update_4
+    use comms_common, only: ip_t
+    use comms, only : complete_halo_update
     implicit none
 !
     complex(dp), intent(out) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)

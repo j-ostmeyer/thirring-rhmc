@@ -17,12 +17,15 @@ module qmrherm_module
 contains
 
 
-  subroutine qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiagq, iflag,use_sp)
-    use comms, only: complete_halo_update,ip_global,start_halo_update_6
+  subroutine qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiagq, iflag,use_sp,cg_returns)
+    use comms_common, only : ip_global
+    use comms, only: complete_halo_update
 #ifdef MPI
     use comms5, only: start_halo_update_5
+    use comms6, only: start_halo_update_6
 #else
     use comms5, only: update_halo_5
+    use comms6, only: update_halo_6
 #endif
     use derivs_module
     use dirac
@@ -37,6 +40,8 @@ contains
     real, intent(in) :: res, am
     logical, intent(in), optional :: use_sp
     integer, intent(out) :: itercg
+    integer, intent(out),optional :: cg_returns(ndiagq)
+    integer :: cg_returns_tmp(ndiagq)
     real(dp) :: coeff
     integer :: idiag
 #ifdef MPI
@@ -44,9 +49,13 @@ contains
 #endif
     x = anum(0) * Phi
     if(present(use_sp).and.use_sp)then
-      call multishift_solver_sp(u,am,imass,ndiagq,aden,anum(1:ndiagq),x1,Phi,res,max_qmr_iters,itercg)
+      call multishift_solver_sp(u,am,imass,ndiagq,aden,anum(1:ndiagq),x1,Phi,res,max_qmr_iters,itercg,cg_returns_tmp)
     else
-      call multishift_solver(u,am,imass,ndiagq,aden,anum(1:ndiagq),x1,Phi,res,max_qmr_iters,itercg)
+      call multishift_solver(u,am,imass,ndiagq,aden,anum(1:ndiagq),x1,Phi,res,max_qmr_iters,itercg,cg_returns_tmp)
+    endif
+
+    if(present(cg_returns))then
+      cg_returns = cg_returns_tmp
     endif
 
     if(iflag.lt.2)then

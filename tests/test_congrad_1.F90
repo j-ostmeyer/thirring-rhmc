@@ -5,6 +5,8 @@ program test_congrad_1
   use vector
   use dirac
   use comms
+  use comms4
+  use comms5
   use measure_module
   use test_utils
   use inverter_utils
