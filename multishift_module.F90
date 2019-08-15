@@ -17,7 +17,6 @@ contains
     use mpi
     use comms, only : complete_halo_update
     use comms_common, only: comm,ip_global
-    use inverter_utils, only: dirac_op_shifted
     use comms5, only : start_halo_update_5,init_halo_update_5
     ! subroutine parameters
     complex(dp),intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
@@ -188,6 +187,7 @@ contains
 
 
 !      test : block
+!        use inverter_utils, only: dirac_op_shifted
 !        ! CHECK : Real residual seems to decrease faster than the one computed...
 !        complex(dp) :: xout(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 !        complex(dp) :: xin(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
