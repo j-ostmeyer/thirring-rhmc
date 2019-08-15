@@ -142,8 +142,8 @@ program test_qmrherm_4
     delta_Phi = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
       &                xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
     ! relative error
-    delta_Phi = abs(delta_Phi)**2/sum(real(xin*conjg(xin)))*(anum(idiag)/aden(idiag))**2
-    check_sum(delta_Phi, 1e-6, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_dp')
+    delta_Phi = abs(delta_Phi)**2/sum(abs(xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
+    check_sum(delta_Phi, 1e-14, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_dp')
 
   enddo
 
@@ -163,8 +163,8 @@ program test_qmrherm_4
     delta_Phi = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
       &                xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
     ! relative error
-    delta_Phi = abs(delta_Phi)**2/sum(real(xin*conjg(xin)))*(anum(idiag)/aden(idiag))**2
-    check_sum(delta_Phi, 3e-5, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_sp')
+    delta_Phi = abs(delta_Phi)**2/sum(abs(xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
+    check_sum(delta_Phi, 1e-9, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_sp')
 
   enddo
 
