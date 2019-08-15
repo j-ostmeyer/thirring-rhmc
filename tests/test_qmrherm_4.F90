@@ -144,7 +144,6 @@ program test_qmrherm_4
     ! relative error
     delta_Phi = abs(delta_Phi)**2/sum(abs(xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
     check_sum(delta_Phi, 1e-14, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_dp')
-
   enddo
 
   call qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiag, iflag,.true.,itercgs)
