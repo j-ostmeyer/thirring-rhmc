@@ -79,7 +79,7 @@ contains
     source_norm = delta
     omega = 1.0d0
     alpha = 0.0d0
-    output = 0.0 ! vector
+    output = 0.0d0 ! vector
     ! Setting up persistent communication requests
     call init_halo_update_5(4, h, 1, reqs_h)
     call init_halo_update_5(4, p, 2, reqs_p)
