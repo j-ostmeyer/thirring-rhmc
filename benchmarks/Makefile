@@ -55,8 +55,6 @@ MODS=$(patsubst %.o,%.mod,$(LIBOBJS))
 
 .PRECIOUS : %.mod
 
-%.o : %.mod
-
 benchmark_%.o: benchmark_%.F90 .makefile.uptodate $(MODS)
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o $@ $<
 
