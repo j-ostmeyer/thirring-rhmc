@@ -14,11 +14,11 @@ program full_md
   use qmrherm_module, only : qmrherm,qmrhprint => printall
   use dwf3d_lib
   implicit none
-  real, parameter :: respbp=1.0e-6, rescgg=1.0e-6
-  real, parameter :: rescga=1e-9
-  real, parameter :: rescgm=1e-9
+  !real, parameter :: respbp=1.0e-6, rescgg=1.0e-6
+  !real, parameter :: rescga=1e-9
+  !real, parameter :: rescgm=1e-9
   double precision :: t1i,t2i
-  integer, parameter :: itermax=1000
+  !integer, parameter :: itermax=1000
   complex(dp) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)!
   complex(dp) :: Xresult(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
   real(dp) :: H0,H1,S0,S1,dH,dS,hg,hp
@@ -314,7 +314,6 @@ program full_md
 #endif
       write(6,*) "End of MD."
       time_measurement:block
-        implicit none
         double precision :: dt 
         dt = (t2i - t1i )/iterl
         print*,"Time per MD iteration:", dt

@@ -1,9 +1,12 @@
 program benchmark_congrad
   use dwf3d_lib
   use trial, only: u
-  use vector
+  use vector, only : x
   use dirac
   use comms
+  use comms4
+  use comms5
+  use comms6
   use measure_module
   implicit none
 

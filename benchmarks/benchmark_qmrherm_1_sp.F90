@@ -123,7 +123,7 @@ program benchmark_qmrherm_1
   t1i = MPI_Wtime()
   do i = 1,timing_loops
     Phi0 = Phi0_orig
-    call qmrherm(Phi,X,res, itercg, am, imass, anum, aden, ndiagg, iflag)
+    call qmrherm(Phi,X,res, itercg, am, imass, anum, aden, ndiagg, iflag,.true.)
     total_iterations = total_iterations + itercg
   end do
   !call gettimeofday(t2i,ierr)
