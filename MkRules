@@ -93,13 +93,13 @@ LIBOBJS = avgitercounts.o comms.o comms_common.o \
 
 COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -c 
 
-dirac_sp.F90 : $(TOPDIR)/dirac.F90
+$(TOPDIR)/dirac_sp.F90 : $(TOPDIR)/dirac.F90
 	bash $(TOPDIR)/convert_to_sp.sh $<
 
-comms4_sp.F90 : $(TOPDIR)/comms4.F90
+$(TOPDIR)/comms4_sp.F90 : $(TOPDIR)/comms4.F90
 	bash $(TOPDIR)/convert_to_sp.sh $<
 
-comms5_sp.F90 : $(TOPDIR)/comms5.F90
+$(TOPDIR)/comms5_sp.F90 : $(TOPDIR)/comms5.F90
 	bash $(TOPDIR)/convert_to_sp.sh $<
 
 
