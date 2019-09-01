@@ -16,7 +16,7 @@ module random
 
   ! Internal parameters and state of the generator
   DOUBLE PRECISION, PRIVATE :: DS(2, ksizex_l, ksizey_l, ksizet_l) = 0.0
-  DOUBLE PRECISION, PRIVATE, PARAMETER :: DM(2) = (/ 15184245.D0, 2651554.D0 /)
+  DOUBLE PRECISION, PRIVATE, PARAMETER :: DM(2) = (/15184245.D0, 2651554.D0/)
   DOUBLE PRECISION, PRIVATE, PARAMETER :: DX24 = 16777216.D0
   DOUBLE PRECISION, PRIVATE, PARAMETER :: DX48 = 281474976710656.D0
   !DATA      DS     /  16651885.D0, 2868876.D0  /
@@ -35,22 +35,22 @@ contains
     integer, intent(in) :: ix, iy, it
     integer :: j
     real :: dum
-    !     
-    if(i(ix, iy, it) .lt. 0)then
+    !
+    if (i(ix, iy, it) .lt. 0) then
       i(ix, iy, it) = 1
-      do j=1,97
+      do j = 1, 97
         dum = rranf(ix, iy, it)
       enddo
-      do j=1,97
+      do j = 1, 97
         v(j, ix, iy, it) = rranf(ix, iy, it)
       enddo
 
       y(ix, iy, it) = rranf(ix, iy, it)
     endif
-    !     
-    j = 1 + int(97.0 * y(ix, iy, it))
-    if(j.gt.97) j=97
-    if(j.lt.1) j=1
+    !
+    j = 1 + int(97.0*y(ix, iy, it))
+    if (j .gt. 97) j = 97
+    if (j .lt. 1) j = 1
     !     write(6,*) j,y
     !     write(6,*) 'problems with rano'
     !     stop
@@ -61,14 +61,14 @@ contains
     return
   end function rano
   !========================================================================
-  !     
+  !
   ! Calculate an offset for the random seed based on the site location
   function seed_offset(ix, iy, it)
     integer :: seed_offset
     integer, intent(in) :: ix, iy, it
-    seed_offset =  ip_x * ksizex_l + ix - 1 &
-      & + ksize * (ip_y * ksizey_l + iy - 1) & 
-      & + ksize * ksize * (ip_t * ksizet_l + it - 1)
+    seed_offset = ip_x*ksizex_l + ix - 1 &
+      & + ksize*(ip_y*ksizey_l + iy - 1) &
+      & + ksize*ksize*(ip_t*ksizet_l + it - 1)
     return
   end function seed_offset
 
@@ -76,7 +76,7 @@ contains
   SUBROUTINE RRANGET(LSEED, ix, iy, it)
     DOUBLE PRECISION, INTENT(OUT) :: LSEED
     integer, intent(in) :: ix, iy, it
-    LSEED  =  G900GT(ix, iy, it)
+    LSEED = G900GT(ix, iy, it)
     RETURN
   END SUBROUTINE RRANGET
 
@@ -85,11 +85,9 @@ contains
     DOUBLE PRECISION, INTENT(IN) :: LSEED
     DOUBLE PRECISION DUMMY
     integer, intent(in) :: ix, iy, it
-    DUMMY  =  G900ST(seed_offset(ix, iy, it) + LSEED, ix, iy, it)
+    DUMMY = G900ST(seed_offset(ix, iy, it) + LSEED, ix, iy, it)
     RETURN
   END SUBROUTINE RRANSET
-
-
 
   ! Get a random single-precision real number
   REAL FUNCTION RRANF(ix, iy, it)
@@ -102,22 +100,22 @@ contains
   ! Has less entropy than rano
   DOUBLE PRECISION FUNCTION DRANF(ix, iy, it)
     integer, intent(in) :: ix, iy, it
-    DOUBLE PRECISION    DL,       DC,       DU,       DR
-    DL  =  DS(1, ix, iy, it) * DM(1)
-    DC  =  DINT(DL/DX24)
-    DL  =  DL - DC*DX24
-    DU  =  DS(1, ix, iy, it)*DM(2) + DS(2, ix, iy, it)*DM(1) + DC
-    DS(2, ix, iy, it)  =  DU - DINT(DU/DX24)*DX24
-    DS(1, ix, iy, it)  =  DL
-    DR     =  (DS(2, ix, iy, it)*DX24 + DS(1, ix, iy, it)) / DX48
-    DRANF  =  DR
+    DOUBLE PRECISION DL, DC, DU, DR
+    DL = DS(1, ix, iy, it)*DM(1)
+    DC = DINT(DL/DX24)
+    DL = DL - DC*DX24
+    DU = DS(1, ix, iy, it)*DM(2) + DS(2, ix, iy, it)*DM(1) + DC
+    DS(2, ix, iy, it) = DU - DINT(DU/DX24)*DX24
+    DS(1, ix, iy, it) = DL
+    DR = (DS(2, ix, iy, it)*DX24 + DS(1, ix, iy, it))/DX48
+    DRANF = DR
     RETURN
   END FUNCTION DRANF
 
   ! Actually get the state of the generator
   DOUBLE PRECISION FUNCTION G900GT(ix, iy, it)
     integer, intent(in) :: ix, iy, it
-    G900GT  =  DS(2, ix, iy, it)*DX24 + DS(1, ix, iy, it)
+    G900GT = DS(2, ix, iy, it)*DX24 + DS(1, ix, iy, it)
     RETURN
   END FUNCTION G900GT
 
@@ -125,9 +123,9 @@ contains
   DOUBLE PRECISION FUNCTION G900ST(DSEED, ix, iy, it)
     DOUBLE PRECISION, INTENT(IN) :: DSEED
     integer, intent(in) :: ix, iy, it
-    DS(2, ix, iy, it)  =  DINT(DSEED/DX24)
-    DS(1, ix, iy, it)  =  DSEED - DS(2, ix, iy, it)*DX24
-    G900ST =  DS(1, ix, iy, it)
+    DS(2, ix, iy, it) = DINT(DSEED/DX24)
+    DS(1, ix, iy, it) = DSEED - DS(2, ix, iy, it)*DX24
+    G900ST = DS(1, ix, iy, it)
     RETURN
   END FUNCTION G900ST
   !***********************************************************************
