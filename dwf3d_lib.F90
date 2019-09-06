@@ -516,23 +516,23 @@ contains
 !
       X2 = Phi(:, :, :, :, :, ia)
 
-     call qmrherm(X2, Xresult, res1, itercg, One, 1, anum4g, aden4g, ndiagg, 1)
+      call qmrherm(X2, Xresult, res1, itercg, One, 1, anum4g, aden4g, ndiagg, 1, spmd)
       ancgpv = ancgpv + float(itercg)
 
       X2 = Xresult
 !
-  call qmrherm(X2, Xresult, res1, itercg, am, imass, bnum2g, bden2g, ndiagg, 0)
+      call qmrherm(X2, Xresult, res1, itercg, am, imass, bnum2g, bden2g, ndiagg, 0, spmd)
       ancg = ancg + float(itercg)
 !     write(111,*) itercg
       X2 = Xresult
 !
 !  evaluates -X2dagger * d/dpi[{MdaggerM(m)}^1/2] * X2
-  call qmrherm(X2, Xresult, res1, itercg, am, imass, anum2g, aden2g, ndiagg, 2)
+      call qmrherm(X2, Xresult, res1, itercg, am, imass, anum2g, aden2g, ndiagg, 2, spmd)
       ancgf = ancgf + float(itercg)
 
 !     write(113,*) itercg
 !  evaluates +2Re{Phidagger * d/dpi[{MdaggerM(1)}^1/4] * X2}
-     call qmrherm(X2, Xresult, res1, itercg, One, 1, anum4g, aden4g, ndiagg, 3)
+      call qmrherm(X2, Xresult, res1, itercg, One, 1, anum4g, aden4g, ndiagg, 3, spmd)
       ancgfpv = ancgfpv + float(itercg)
 !
     enddo

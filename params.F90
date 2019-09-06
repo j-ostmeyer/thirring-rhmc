@@ -51,9 +51,10 @@ module params
   integer :: niterc = kthird*kvol ! CONGRAD
 
   ! inverter residuals
-  real, parameter :: respbp = 1.0e-6, rescgg = 1.0e-6
+  real, parameter :: respbp = 1.0e-6, rescgg = 3.0e-4
   real, parameter :: rescga = 1e-9
   real, parameter :: rescgm = 1e-9
+  logical, parameter :: spmd = .true.
 
   ! max step in molecular dynamics evolution
   integer, parameter :: itermax = 1000
