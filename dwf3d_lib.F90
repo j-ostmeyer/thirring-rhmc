@@ -64,8 +64,8 @@ contains
 !     complex qq,qbqb
 !     complex u
 !     complex a,b
- complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)!
-    complex(dp) :: Xresult(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)!
+    complex(dp) :: Xresult(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 ! Currently unused
 !    complex(dp) :: qq,qbqb
 !    complex(dp) :: u
@@ -102,7 +102,7 @@ contains
 !     check qmrherm is going to be OK
 !*******************************************************************
     if (ndiagg .gt. ndiag) then
-       print *, 'The qmrherm_module module currently requires ndiag be greater than ndiagg.'
+      print *, 'The qmrherm_module module currently requires ndiag be greater than ndiagg.'
       print *, 'Please adjust it and recompile.'
       call exit(1)
     endif
@@ -259,12 +259,12 @@ contains
 !
 !  For now Phi = {MdaggerM}^0.25 * R
 !
-    call qmrherm(R, Xresult, rescga, itercg, am, imass, anum4, aden4, ndiag, 0)
+        call qmrherm(R, Xresult, rescga, itercg, am, imass, anum4, aden4, ndiag, 0)
         ancgpf = ancgpf + float(itercg)
 !
         R = Xresult
 !
-       call qmrherm(R, Xresult, rescga, itercg, One, 1, bnum4, bden4, ndiag, 0)
+        call qmrherm(R, Xresult, rescga, itercg, One, 1, bnum4, bden4, ndiag, 0)
         ancgpfpv = ancgpfpv + float(itercg)
 !
         Phi = Xresult
@@ -307,7 +307,7 @@ contains
 #ifdef MPI
         if (ip_global .eq. 0) then
 #endif
-       write (6, "(A15,I4,A15,I4)") "MD iteration", iter, "of (average)", iterl
+          write (6, "(A15,I4,A15,I4)") "MD iteration", iter, "of (average)", iterl
 #ifdef MPI
         endif
 #endif
@@ -493,13 +493,13 @@ contains
     use comms
     use qmrherm_module, only: qmrherm
 
-    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, Nf)
+    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, Nf)
     real, intent(in) :: res1, am
     integer, intent(in) :: imass, isweep, iter
 !     complex Phi(kferm,Nf),X2(kferm)
 !     complex X1,u
-   complex(dp) :: X2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) :: Xresult(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp) :: X2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: Xresult(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     integer :: ia, itercg
 !
 !     write(6,111)
@@ -555,11 +555,11 @@ contains
     use avgitercounts
     use comms
     use qmrherm_module, only: qmrherm
-    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, Nf)
+    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, Nf)
     real(dp), intent(out) :: h, hg, hp, s
     real, intent(in) :: res2, am
     integer, intent(in) :: isweep, iflag, imass
-    complex(dp) :: Xresult(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp) :: Xresult(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp) :: hf
     integer :: itercg, ia
 #ifdef MPI
@@ -572,7 +572,7 @@ contains
 !
     hp = 0.5*sum(pp**2)
 #ifdef MPI
-    call MPI_AllReduce(MPI_In_Place, hp, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+    call MPI_AllReduce(MPI_In_Place, hp, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
 #endif
 
     hg = 0.5*Nf*beta*sum(theta**2)
@@ -601,13 +601,13 @@ contains
       ancgh = ancgh + float(itercg)
 !
       hf = hf + sum(real(conjg(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
-                  &        *Xresult(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
+                        &        *Xresult(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 !
     enddo
 #ifdef MPI
 ! hf is built up from zero during the loop so only needs to be summed across
 ! all partitions at this point
-    call MPI_AllReduce(MPI_In_Place, hf, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+    call MPI_AllReduce(MPI_In_Place, hf, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
 #endif
 !
     h = hg + hp + hf
@@ -684,7 +684,7 @@ contains
 ! Get the see,ierrd
     if (ip_global .eq. 0) then
       print *, "configuration file read."
-  open (unit=10, file='con', status='old', form='unformatted', access='stream')
+      open (unit=10, file='con', status='old', form='unformatted', access='stream')
       !print*,"FSEEK CALL COMMENTED OUT, THIS WILL FAIL"
       call fseek(10, 3*ksize*ksize*ksizet*4 + 4, 0)
       read (10) seed
@@ -719,7 +719,7 @@ contains
 
 ! Write seed in serial
     if (ip_global .eq. 0) then
-  open (unit=31, file='con', status='old', form='unformatted', access='stream')
+      open (unit=31, file='con', status='old', form='unformatted', access='stream')
       !print*,"FSEEK CALL COMMENTED OUT, THIS WILL FAIL"
       call fseek(31, 3*ksize*ksize*ksizet*4 + 4, 0)
 ! Manually compute the effective record length to be compatible with serial Fortran
@@ -913,7 +913,7 @@ contains
     use comms, only: complete_halo_update
     implicit none
 !
-    complex(dp), intent(out) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
+    complex(dp), intent(out) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
     real, intent(in) :: theta(ksizex_l, ksizey_l, ksizet_l, 3)
 #ifdef MPI
     integer, dimension(12) :: reqs_u
