@@ -149,7 +149,11 @@ contains
     endif !if(iflag.lt.2)then , else
 
     if (ip_global .eq. 0 .and. printall) then
-      print *, "Qmrherm iterations,res:", itercg, res
+      if (present(use_sp) .and. use_sp) then
+         print *, "[SP] Qmrherm iterations,res:", itercg, res
+      else
+         print *, "[DP] Qmrherm iterations,res:", itercg, res
+      endif
     endif
     return
   end subroutine qmrherm
