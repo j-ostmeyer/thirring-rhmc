@@ -78,6 +78,7 @@ contains
     real :: ancgm, ancgma
     integer :: imass, iter, iterl, iter2, i, ia, idirac, ithird
     integer :: naccp, ipbp, itot, isweep, itercg, mu
+    integer ::walltimesec
 !*******************************************************************
 !     variables to keep track of MPI requests
 !*******************************************************************
@@ -118,7 +119,7 @@ contains
     if (iread .eq. 1) then
       call sread
     endif
-    read (25, *) dt, beta, am3, am, imass, iterl, iter2
+    read (25, *) dt, beta, am3, am, imass, iterl, iter2, walltimesec
     close (25)
 ! set a new seed by hand...
 
@@ -222,208 +223,236 @@ contains
 !*******************************************************************
 !     start of classical evolution
 !*******************************************************************
-    do isweep = 1, iter2
+    classical_evolution: block
+      real(dp) :: run_time, time_per_md_step ! conservative estimates
+      real(dp) :: measurement_time, total_md_time
+      total_md_time = 0
+
+      do isweep = 1, iter2
 
 #ifdef MPI
-      if (ip_global .eq. 0) then
+        if (ip_global .eq. 0) then
 #endif
-        write (6, *) 'Isweep', isweep, ' of', iter2
+          write (6, *) 'Isweep', isweep, ' of', iter2
 #ifdef MPI
-      endif
+        endif
 #endif
 ! uncomment line below to go straight to measurement
 !     goto 666
 !*******************************************************************
 !     initialise trial fields
 !*******************************************************************
-      thetat = theta
+        thetat = theta
 !
-      call coef(ut, thetat)
+        call coef(ut, thetat)
 !*******************************************************************
 !  Pseudofermion fields: Phi = {MdaggerM(1)}^-1/4 * {MdaggerM(m)}^1/4 * R, where
 !   R is gaussian
 !*******************************************************************
-      do ia = 1, Nf
+        do ia = 1, Nf
 !
-        do idirac = 1, 4
-          do ithird = 1, kthird
+          do idirac = 1, 4
+            do ithird = 1, kthird
 #ifdef MPI
-            call gauss0(ps, reqs_ps)
-            call complete_halo_update(reqs_ps)
+              call gauss0(ps, reqs_ps)
+              call complete_halo_update(reqs_ps)
 #else
-            call gauss0(ps)
+              call gauss0(ps)
 #endif
-            R(ithird, :, :, :, idirac) = cmplx(ps(:, :, :, 1), ps(:, :, :, 2))
+              R(ithird, :, :, :, idirac) = cmplx(ps(:, :, :, 1), ps(:, :, :, 2))
+            enddo
           enddo
-        enddo
 !
 !  For now Phi = {MdaggerM}^0.25 * R
 !
-        call qmrherm(R, Xresult, rescga, itercg, am, imass, anum4, aden4, ndiag, 0)
-        ancgpf = ancgpf + float(itercg)
+          call qmrherm(R, Xresult, rescga, itercg, am, imass, anum4, aden4, ndiag, 0)
+          ancgpf = ancgpf + float(itercg)
 !
-        R = Xresult
+          R = Xresult
 !
-        call qmrherm(R, Xresult, rescga, itercg, One, 1, bnum4, bden4, ndiag, 0)
-        ancgpfpv = ancgpfpv + float(itercg)
+          call qmrherm(R, Xresult, rescga, itercg, One, 1, bnum4, bden4, ndiag, 0)
+          ancgpfpv = ancgpfpv + float(itercg)
 !
-        Phi = Xresult
+          Phi = Xresult
 !
-      enddo
+        enddo
 !*******************************************************************
 !     heatbath for p
 !*******************************************************************
 !  for some occult reason this write statement is needed to ensure compatibility with earlier versions
 !     write(6,*) idum
 !     write(98,*) idum
-      do mu = 1, 3
+        do mu = 1, 3
 #ifdef MPI
-        call gaussp(ps, reqs_ps)
-        call complete_halo_update(reqs_ps)
+          call gaussp(ps, reqs_ps)
+          call complete_halo_update(reqs_ps)
 #else
-        call gaussp(ps)
+          call gaussp(ps)
 #endif
-        pp(:, :, :, mu) = ps(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1)
-      enddo
+          pp(:, :, :, mu) = ps(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1)
+        enddo
+
+        ! Start computing time (including hamiltonian calls)
+        call cpu_time(run_time)
+        total_md_time = total_md_time - run_time
+
 !*******************************************************************
 !  call to Hamiltonian
 !
-      call hamilton(Phi, H0, hg, hp, S0, rescga, isweep, 0, am, imass)
-      if (isweep .eq. 1) then
-        action = real(S0)/kvol
-        gaction = real(hg)/kvol
-        paction = real(hp)/kvol
-      endif
+        call hamilton(Phi, H0, hg, hp, S0, rescga, isweep, 0, am, imass)
+        if (isweep .eq. 1) then
+          action = real(S0)/kvol
+          gaction = real(hg)/kvol
+          paction = real(hp)/kvol
+        endif
 !     goto 501
 !*******************************************************************
 !      half-step forward for p
 !*******************************************************************
-      call force(Phi, rescgg, am, imass, isweep, 0)
-      pp = pp - 0.5*dt*dSdpi
+        call force(Phi, rescgg, am, imass, isweep, 0)
+        pp = pp - 0.5*dt*dSdpi
 !*******************************************************************
 !     start of main loop for classical time evolution
 !*******************************************************************
-      do iter = 1, itermax
+
+        do iter = 1, (4*iterl)
 #ifdef MPI
-        if (ip_global .eq. 0) then
+          if (ip_global .eq. 0) then
 #endif
-          write (6, "(A15,I4,A15,I4)") "MD iteration", iter, "of (average)", iterl
+            write (6, "(A15,I4,A15,I4)") "MD iteration", iter, "of (average)", iterl
 #ifdef MPI
-        endif
+          endif
 #endif
 !
 !  step (i) st(t+dt)=st(t)+p(t+dt/2)*dt;
 !
-        thetat = thetat + dt*pp
+          thetat = thetat + dt*pp
 !
 !  step (ii)  p(t+3dt/2)=p(t+dt/2)-dSds(t+dt)*dt (1/2 step on last iteration)
 !
-        call coef(ut, thetat)
-        call force(Phi, rescgg, am, imass, isweep, iter)
+          call coef(ut, thetat)
+          call force(Phi, rescgg, am, imass, isweep, iter)
 !
 ! test for end of random trajectory
 !
-        if (ip_global .eq. 0) then
-          ytest = rano(yran, idum, 1, 1, 1)
-        end if
+          if (ip_global .eq. 0) then
+            ytest = rano(yran, idum, 1, 1, 1)
+          end if
 #ifdef MPI
-        call MPI_Bcast(ytest, 1, MPI_Real, 0, comm, ierr)
+          call MPI_Bcast(ytest, 1, MPI_Real, 0, comm, ierr)
 #endif
-        if (ytest .lt. proby) then
-          pp = pp - 0.5*dt*dSdpi
-          itot = itot + iter
-          goto 501
-        else
-          pp = pp - dt*dSdpi
-        endif
+          if (ytest .lt. proby) then
+            pp = pp - 0.5*dt*dSdpi
+            itot = itot + iter
+            goto 501
+          else
+            pp = pp - dt*dSdpi
+          endif
 !
-      end do
+        end do
 !**********************************************************************
 !  Monte Carlo step: accept new fields with probability=
 !              min(1,exp(H0-H1))
 !**********************************************************************
-501   continue
-      call hamilton(Phi, H1, hg, hp, S1, rescga, isweep, -1, am, imass)
-      dH = H0 - H1
-      dS = S0 - S1
-      if (ip_global .eq. 0) then
-        write (98, *) dH, dS
-        write (6, *) "dH,dS ", dH, dS
-      end if
-      y = exp(real(dH))
-      yav = yav + y
-      yyav = yyav + y*y
+501     continue
+
+        call hamilton(Phi, H1, hg, hp, S1, rescga, isweep, -1, am, imass)
+        dH = H0 - H1
+        dS = S0 - S1
+        if (ip_global .eq. 0) then
+          write (98, *) dH, dS
+          write (6, *) "dH,dS ", dH, dS
+        end if
+        y = exp(real(dH))
+        yav = yav + y
+        yyav = yyav + y*y
 !
-      if (dH .lt. 0.0) then
-        x = rano(yran, idum, 1, 1, 1)
+        if (dH .lt. 0.0) then
+          x = rano(yran, idum, 1, 1, 1)
 #ifdef MPI
-        call MPI_Bcast(x, 1, MPI_Real, 0, comm, ierr)
+          call MPI_Bcast(x, 1, MPI_Real, 0, comm, ierr)
 #endif
-        if (x .gt. y) goto 600
-      endif
+          if (x .gt. y) goto 600
+        endif
 !
 !     step accepted: set s=st
 !
-      theta = thetat
-      naccp = naccp + 1
-      action = real(S1)/kvol
-      gaction = real(hg)/kvol
-      paction = real(hp)/kvol
-600   continue
-      if (ip_global .eq. 0) then
-        write (11, *) isweep, gaction, paction
-      end if
-      actiona = actiona + action
-      vel2 = sum(pp*pp)
+        theta = thetat
+        naccp = naccp + 1
+        action = real(S1)/kvol
+        gaction = real(hg)/kvol
+        paction = real(hp)/kvol
+600     continue
+        if (ip_global .eq. 0) then
+          write (11, *) isweep, gaction, paction
+        end if
+        actiona = actiona + action
+        vel2 = sum(pp*pp)
 #ifdef MPI
-      call MPI_AllReduce(MPI_In_Place, vel2, 1, MPI_Real, MPI_Sum, comm, ierr)
+        call MPI_AllReduce(MPI_In_Place, vel2, 1, MPI_Real, MPI_Sum, comm, ierr)
 #endif
-      vel2 = vel2/(3*kvol)
-      vel2a = vel2a + vel2
-!
+        vel2 = vel2/(3*kvol)
+        vel2a = vel2a + vel2
+
+        ! Including also hamiltonian call time
+        call cpu_time(run_time)
+        total_md_time = total_md_time + run_time
+        time_per_md_step = total_md_time/itot
+
 !     uncomment to disable measurements
 !     goto 601
 !666    continue
-      if ((isweep/iprint)*iprint .eq. isweep) then
-        thetat = theta
-        call coef(ut, thetat)
-        call measure(pbp, respbp, ancgm, am, imass)
+
+        if ((isweep/iprint)*iprint .eq. isweep) then
+          call cpu_time(run_time)
+          thetat = theta
+          call coef(ut, thetat)
+          call measure(pbp, respbp, ancgm, am, imass)
 !         call meson(rescgm,itercg,ancgm,am,imass)
-        pbpa = pbpa + pbp
-        ancgma = ancgma + ancgm
-        ipbp = ipbp + 1
-!        write(11,*) pbp
-        if (ip_global .eq. 0) then
-          write (6, *) isweep, 'pbp:', pbp, ancgm
+          pbpa = pbpa + pbp
+          ancgma = ancgma + ancgm
+          ipbp = ipbp + 1
+#ifdef MPI
+          if (ip_global .eq. 0) then
+#endif
+            write (6, *) isweep, 'pbp:', pbp, ancgm
+#ifdef MPI
+          endif
+#endif
+          call cpu_time(measurement_time)
+          measurement_time = measurement_time - run_time
         endif
-      endif
 !
-      if ((isweep/icheck)*icheck .eq. isweep) then
-        call rranget(seed, 1, 1, 1)
-        if (iwrite .eq. 1) then
-          call swrite
+        if ((isweep/icheck)*icheck .eq. isweep) then
+          call rranget(seed, 1, 1, 1)
+          if (iwrite .eq. 1) then
+            call swrite
+          endif
+          flush (100)
+          flush (200)
         endif
-        !flush(100)
-        flush (200)
-!     flush(302)
-!     flush(400)
-!     flush(500)
-!     flush(501)
-        if (imass .ne. 1) then
-!        flush(401)
-!        flush(402)
-!        flush(403)
-        endif
-!#ifdef MPI
-!      if (ip_global .eq. 0) then
-!#endif
-!      write(7,9023) seed
-!#ifdef MPI
-!      endif
-!#endif
-      endif
-!
-    end do
+
+#ifdef MPI
+        call MPI_AllReduce(MPI_In_Place, measurement_time, 1, MPI_Double_Precision, MPI_Max, comm, ierr)
+        call MPI_AllReduce(MPI_In_Place, time_per_md_step, 1, MPI_Double_Precision, MPI_Max, comm, ierr)
+#endif
+        keep_running_check: block
+          real(dp) :: run_time_left, time_for_next_iteration
+
+          time_for_next_iteration = time_per_md_step*4*iterl*2
+
+          if (((isweep + 1)/icheck)*icheck .eq. isweep) then
+            time_for_next_iteration = time_for_next_iteration + measurement_time
+          endif
+
+          call cpu_time(run_time)
+
+          if (run_time + time_for_next_iteration .gt. walltimesec) then
+            exit
+          endif
+        end block keep_running_check
+      end do
+    end block classical_evolution
 !*******************************************************************
 !     end of main loop
 !*******************************************************************
