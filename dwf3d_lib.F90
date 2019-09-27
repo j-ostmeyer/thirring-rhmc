@@ -77,7 +77,7 @@ contains
     real :: actiona, vel2a, pbp, pbpa, yav, yyav
     real :: ancgm, ancgma
     integer :: imass, iter, iterl, iter2, i, ia, idirac, ithird
-    integer :: walltimesec
+    integer :: walltimesec, count, count_rate, count_max,run_time_start
     integer :: naccp, ipbp, itot, isweep, itercg, mu
 !*******************************************************************
 !     variables to keep track of MPI requests
@@ -93,6 +93,8 @@ contains
     complex(dp), parameter :: zi = (0.0, 1.0)
     ibound = -1
     qmrhprint = .true.
+    call system_clock(count,count_rate,count_max)
+    run_time_start = count/count_rate
 #ifdef MPI
     call init_MPI
 #endif
@@ -120,6 +122,7 @@ contains
       call sread
     endif
     read (25, *) dt, beta, am3, am, imass, iterl, iter2, walltimesec
+    print*,'READ:', dt, beta, am3, am, imass, iterl, iter2, walltimesec
     close (25)
 ! set a new seed by hand...
 
@@ -225,8 +228,8 @@ contains
 !*******************************************************************
     classical_evolution: block
 
-      real(dp) :: run_time, time_per_md_step ! conservative estimates
-      real(dp) :: measurement_time, total_md_time
+      real :: run_time, time_per_md_step ! conservative estimates
+      real :: measurement_time, total_md_time
       total_md_time = 0
 
       do isweep = 1, iter2
@@ -294,7 +297,8 @@ contains
         enddo
 
         ! Start computing time (including hamiltonian calls)
-        call cpu_time(run_time)
+        call system_clocl(count,count_rate,count_max) 
+        run_time = count / count_rate - run_time_start
         total_md_time = total_md_time - run_time
 
 !*******************************************************************
@@ -396,7 +400,9 @@ contains
         vel2a = vel2a + vel2
 
         ! Including also hamiltonian call time
-        call cpu_time(run_time)
+        call system_clocl(count,count_rate,count_max) 
+        run_time = count / count_rate - run_time_start
+
         total_md_time = total_md_time + run_time
         time_per_md_step = total_md_time/itot
 
@@ -405,7 +411,9 @@ contains
 !666    continue
 
         if ((isweep/iprint)*iprint .eq. isweep) then
-          call cpu_time(run_time)
+          call system_clocl(count,count_rate,count_max) 
+          run_time = count / count_rate - run_time_start
+
           thetat = theta
           call coef(ut, thetat)
           call measure(pbp, respbp, ancgm, am, imass)
@@ -420,7 +428,8 @@ contains
 #ifdef MPI
           endif
 #endif
-          call cpu_time(measurement_time)
+          call system_clocl(count,count_rate,count_max) 
+          measurement_time = count/count_rate
           measurement_time = measurement_time - run_time
         endif
 !
@@ -438,7 +447,7 @@ contains
         call MPI_AllReduce(MPI_In_Place, time_per_md_step, 1, MPI_Double_Precision, MPI_Max, comm, ierr)
 #endif
         keep_running_check: block
-          real(dp) :: run_time_left, time_for_next_iteration
+          real :: run_time_left, time_for_next_iteration
 
           time_for_next_iteration = time_per_md_step*4*iterl*2
 
@@ -446,11 +455,15 @@ contains
             time_for_next_iteration = time_for_next_iteration + measurement_time
           endif
 
-          call cpu_time(run_time)
+          call system_clocl(count,count_rate,count_max) 
+          run_time = count / count_rate - run_time_start
 #ifdef MPI
           if (ip_global .eq. 0) then
 #endif
             print *, 'Expected next run time:', run_time + time_for_next_iteration
+            print *, 'out of ', walltimesec
+            print *, 'time for next iter: ', time_for_next_iteration
+            print *, 'run time now:', run_time
 #ifdef MPI
           endif
 #endif

@@ -229,7 +229,7 @@ contains
 #ifdef MPI
           if(ip_global.eq.0) then
 #endif
-          if(mod(cg_return,print_every).eq.1)then
+          if(mod(cg_return,print_every).eq.0)then
             write(6,'(E9.1E3)',advance="no")sqrt(delta*zeta_ii(ishift)**2)*correction(ishift)
           endif
 #ifdef MPI
@@ -245,7 +245,7 @@ contains
 #ifdef MPI
           if(ip_global.eq.0) then
 #endif
-            if(mod(cg_return,print_every).eq.1)then
+            if(mod(cg_return,print_every).eq.0)then
               write(6,'(A9)',advance="no") "-"
             endif
 #ifdef MPI
@@ -256,7 +256,7 @@ contains
 #ifdef MPI
       if(ip_global.eq.0) then
 #endif
-        if(mod(cg_return,print_every).eq.1)then
+        if(mod(cg_return,print_every).eq.0)then
           write(6,*) ""
         endif
 #ifdef MPI
@@ -472,7 +472,7 @@ contains
 #ifdef MPI
           if(ip_global.eq.0) then
 #endif
-          if(mod(cg_return,print_every).eq.1)then
+          if(mod(cg_return,print_every).eq.0)then
             write(6,'(E9.1E3)',advance="no")sqrt(delta*zeta_ii(ishift)**2)*correction(ishift)
           endif
 #ifdef MPI
@@ -488,7 +488,7 @@ contains
 #ifdef MPI
           if(ip_global.eq.0) then
 #endif
-            if(mod(cg_return,print_every).eq.1)then
+            if(mod(cg_return,print_every).eq.0)then
               write(6,'(A9)',advance="no") "-"
             endif
 #ifdef MPI
@@ -499,7 +499,7 @@ contains
 #ifdef MPI
       if(ip_global.eq.0) then
 #endif
-        if(mod(cg_return,print_every).eq.1)then
+        if(mod(cg_return,print_every).eq.0)then
           write(6,*) ""
         endif
 #ifdef MPI
