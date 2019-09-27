@@ -297,7 +297,7 @@ contains
         enddo
 
         ! Start computing time (including hamiltonian calls)
-        call system_clocl(count,count_rate,count_max) 
+        call system_clock(count,count_rate,count_max) 
         run_time = count / count_rate - run_time_start
         total_md_time = total_md_time - run_time
 
@@ -400,7 +400,7 @@ contains
         vel2a = vel2a + vel2
 
         ! Including also hamiltonian call time
-        call system_clocl(count,count_rate,count_max) 
+        call system_clock(count,count_rate,count_max) 
         run_time = count / count_rate - run_time_start
 
         total_md_time = total_md_time + run_time
@@ -411,7 +411,7 @@ contains
 !666    continue
 
         if ((isweep/iprint)*iprint .eq. isweep) then
-          call system_clocl(count,count_rate,count_max) 
+          call system_clock(count,count_rate,count_max) 
           run_time = count / count_rate - run_time_start
 
           thetat = theta
@@ -428,7 +428,7 @@ contains
 #ifdef MPI
           endif
 #endif
-          call system_clocl(count,count_rate,count_max) 
+          call system_clock(count,count_rate,count_max) 
           measurement_time = count/count_rate
           measurement_time = measurement_time - run_time
         endif
@@ -455,7 +455,7 @@ contains
             time_for_next_iteration = time_for_next_iteration + measurement_time
           endif
 
-          call system_clocl(count,count_rate,count_max) 
+          call system_clock(count,count_rate,count_max) 
           run_time = count / count_rate - run_time_start
 #ifdef MPI
           if (ip_global .eq. 0) then
