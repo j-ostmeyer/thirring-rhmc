@@ -122,7 +122,6 @@ contains
       call sread
     endif
     read (25, *) dt, beta, am3, am, imass, iterl, iter2, walltimesec
-    print*,'READ:', dt, beta, am3, am, imass, iterl, iter2, walltimesec
     close (25)
 ! set a new seed by hand...
 
@@ -230,6 +229,7 @@ contains
 
       real :: run_time, time_per_md_step ! conservative estimates
       real :: measurement_time, total_md_time
+      measurement_time = 100 ! an arbitrary value (that should be conservative)
       total_md_time = 0
 
       do isweep = 1, iter2
@@ -447,7 +447,7 @@ contains
         call MPI_AllReduce(MPI_In_Place, time_per_md_step, 1, MPI_Double_Precision, MPI_Max, comm, ierr)
 #endif
         keep_running_check: block
-          real :: run_time_left, time_for_next_iteration
+          real :: time_for_next_iteration
 
           time_for_next_iteration = time_per_md_step*4*iterl*2
 
@@ -460,10 +460,8 @@ contains
 #ifdef MPI
           if (ip_global .eq. 0) then
 #endif
-            print *, 'Expected next run time:', run_time + time_for_next_iteration
-            print *, 'out of ', walltimesec
-            print *, 'time for next iter: ', time_for_next_iteration
-            print *, 'run time now:', run_time
+            print *, 'Expected next run time with safety margin:', &
+              run_time + time_for_next_iteration,' of ', walltimesec
 #ifdef MPI
           endif
 #endif
@@ -471,7 +469,7 @@ contains
 #ifdef MPI
             if (ip_global .eq. 0) then
 #endif
-              print *, ' larger than ', walltimesec, ', Quitting.'
+              print *, 'Time left insufficient, quitting.'
 #ifdef MPI
             endif
 #endif
@@ -485,7 +483,13 @@ contains
 !*******************************************************************
     actiona = actiona/iter2
     vel2a = vel2a/iter2
-    pbpa = pbpa/ipbp
+    if(ipbp.ne.0)then
+      pbpa = pbpa/ipbp
+      ancgma = ancgma/ipbp
+    else
+      pbpa = 0
+      ancgma = 0
+    endif
     ancg = ancg/(Nf*itot)
     ancgh = ancgh/(2*Nf*iter2)
     ancgpf = ancgpf/(Nf*iter2)
@@ -494,7 +498,6 @@ contains
     ancgfpv = ancgfpv/(Nf*itot)
     ancghpv = ancghpv/(2*Nf*iter2)
     ancgpfpv = ancgpfpv/(iter2*Nf)
-    ancgma = ancgma/ipbp
     yav = yav/iter2
     yyav = yyav/iter2 - yav*yav
     yyav = sqrt(yyav/(iter2 - 1))
