@@ -77,8 +77,8 @@ contains
     real :: actiona, vel2a, pbp, pbpa, yav, yyav
     real :: ancgm, ancgma
     integer :: imass, iter, iterl, iter2, i, ia, idirac, ithird
+    integer :: walltimesec
     integer :: naccp, ipbp, itot, isweep, itercg, mu
-    integer ::walltimesec
 !*******************************************************************
 !     variables to keep track of MPI requests
 !*******************************************************************

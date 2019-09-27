@@ -4,6 +4,8 @@
 
 module multishift_module
   implicit none
+
+  integer, parameter :: print_every = 1000
 contains
 
   ! From https://arxiv.org/abs/hep-lat/9612014
@@ -171,6 +173,7 @@ complex(dp) :: input(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
         cg_returns(minishift:maxishift) = cg_return
       endif
 
+      !! Original code
       !do ishift=minishift,maxishift
       !  output(:,:,:,:,:,ishift) = output(:,:,:,:,:,ishift)-&
       !    &shiftferm(:,:,:,:,:,ishift)*omegas(ishift)
@@ -204,7 +207,7 @@ complex(dp) :: input(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 !#endif
 !            call dirac_op_shifted(xout,xin,u,am,imass,real(aden(ishift)))
 !
-!            check = input(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
+!            check = i
 !              & xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
 !            checksum = sum(abs(check)**2)
 !#ifdef MPI
@@ -222,14 +225,43 @@ complex(dp) :: input(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
       minishift = ndiagq + 1
       do ishift = 1, ndiagq
         if (flags(ishift)) then
+#ifdef MPI
+          if(ip_global.eq.0) then
+#endif
+          if(mod(cg_return,print_every).eq.1)then
+            write(6,'(E9.1E3)',advance="no")sqrt(delta*zeta_ii(ishift)**2)*correction(ishift)
+          endif
+#ifdef MPI
+          endif
+#endif
           if (sqrt(delta*zeta_ii(ishift)**2)*correction(ishift) < res) then
             flags(ishift) = .false.
           else
             maxishift = max(ishift, maxishift)
             minishift = min(ishift, minishift)
           endif
+        else 
+#ifdef MPI
+          if(ip_global.eq.0) then
+#endif
+            if(mod(cg_return,print_every).eq.1)then
+              write(6,'(A9)',advance="no") "-"
+            endif
+#ifdef MPI
+          endif
+#endif
         endif
       enddo
+#ifdef MPI
+      if(ip_global.eq.0) then
+#endif
+        if(mod(cg_return,print_every).eq.1)then
+          write(6,*) ""
+        endif
+#ifdef MPI
+      endif
+#endif
+
       zeta_i(minishift:maxishift) = zeta_ii(minishift:maxishift)
       zeta_ii(minishift:maxishift) = zeta_iii(minishift:maxishift)
 
@@ -251,7 +283,7 @@ complex(dp) :: input(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     &maxcg, cg_return, cg_returns)
     use dirac_sp, only: dslash_sp, dslashd_sp
     use params
-    use comms_common, only: comm
+    use comms_common, only: comm, ip_global
     use comms, only: complete_halo_update
     use mpi
     use comms5_sp, only: init_halo_update_5_sp
@@ -419,7 +451,8 @@ complex(sp) :: input(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
       if (present(cg_returns)) then
         cg_returns(minishift:maxishift) = cg_return
       endif
-
+      
+      !! Original code
       !do ishift=minishift,maxishift
       !  output(:,:,:,:,:,ishift) = output(:,:,:,:,:,ishift)-&
       !    &shiftferm(:,:,:,:,:,ishift)*omegas(ishift)
@@ -434,14 +467,43 @@ complex(sp) :: input(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
       minishift = ndiagq + 1
       do ishift = 1, ndiagq
         if (flags(ishift)) then
+#ifdef MPI
+          if(ip_global.eq.0) then
+#endif
+          if(mod(cg_return,print_every).eq.1)then
+            write(6,'(E9.1E3)',advance="no")sqrt(delta*zeta_ii(ishift)**2)*correction(ishift)
+          endif
+#ifdef MPI
+          endif
+#endif
           if (sqrt(delta*zeta_ii(ishift)**2)*correction(ishift) < res) then
             flags(ishift) = .false.
           else
             maxishift = max(ishift, maxishift)
             minishift = min(ishift, minishift)
           endif
+        else 
+#ifdef MPI
+          if(ip_global.eq.0) then
+#endif
+            if(mod(cg_return,print_every).eq.1)then
+              write(6,'(A9)',advance="no") "-"
+            endif
+#ifdef MPI
+          endif
+#endif
         endif
       enddo
+#ifdef MPI
+      if(ip_global.eq.0) then
+#endif
+        if(mod(cg_return,print_every).eq.1)then
+          write(6,*) ""
+        endif
+#ifdef MPI
+      endif
+#endif
+ 
       zeta_i(minishift:maxishift) = zeta_ii(minishift:maxishift)
       zeta_ii(minishift:maxishift) = zeta_iii(minishift:maxishift)
 
