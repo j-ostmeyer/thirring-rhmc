@@ -448,6 +448,12 @@ contains
           call cpu_time(run_time)
 
           if (run_time + time_for_next_iteration .gt. walltimesec) then
+            if(ip_global.eq.0)then
+              print*,'Expected next run time:',&
+               run_time + time_for_next_iteration, ' larger than ',&
+               walltimesec
+              print*,'Quitting'
+            endif
             exit
           endif
         end block keep_running_check
