@@ -224,6 +224,7 @@ contains
 !     start of classical evolution
 !*******************************************************************
     classical_evolution: block
+
       real(dp) :: run_time, time_per_md_step ! conservative estimates
       real(dp) :: measurement_time, total_md_time
       total_md_time = 0
@@ -446,14 +447,21 @@ contains
           endif
 
           call cpu_time(run_time)
-
+#ifdef MPI
+          if (ip_global .eq. 0) then
+#endif
+            print *, 'Expected next run time:', run_time + time_for_next_iteration
+#ifdef MPI
+          endif
+#endif
           if (run_time + time_for_next_iteration .gt. walltimesec) then
-            if(ip_global.eq.0)then
-              print*,'Expected next run time:',&
-               run_time + time_for_next_iteration, ' larger than ',&
-               walltimesec
-              print*,'Quitting'
+#ifdef MPI
+            if (ip_global .eq. 0) then
+#endif
+              print *, ' larger than ', walltimesec, ', Quitting.'
+#ifdef MPI
             endif
+#endif
             exit
           endif
         end block keep_running_check
@@ -972,3 +980,4 @@ contains
     return
   end subroutine coef
 end module dwf3d_lib
+
