@@ -77,8 +77,9 @@ contains
     real :: actiona, vel2a, pbp, pbpa, yav, yyav
     real :: ancgm, ancgma
     integer :: imass, iter, iterl, iter2, i, ia, idirac, ithird
-    integer :: walltimesec, count, count_rate, count_max,run_time_start
-    integer :: naccp, ipbp, itot, isweep, itercg, mu
+    integer :: walltimesec, count, count_rate, count_max, run_time_start
+    integer :: naccp, ipbp, itot, isweep, isweep_total_start, itercg, mu
+    logical :: program_status_file_exists
 !*******************************************************************
 !     variables to keep track of MPI requests
 !*******************************************************************
@@ -93,7 +94,7 @@ contains
     complex(dp), parameter :: zi = (0.0, 1.0)
     ibound = -1
     qmrhprint = .true.
-    call system_clock(count,count_rate,count_max)
+    call system_clock(count, count_rate, count_max)
     run_time_start = count/count_rate
 #ifdef MPI
     call init_MPI
@@ -109,21 +110,33 @@ contains
       print *, 'Please adjust it and recompile.'
       call exit(1)
     endif
+
     if (ip_global .eq. 0) then
       open (unit=7, file='output', status='unknown')
       open (unit=98, file='control', status='unknown')
     end if
+
     open (unit=25, file='midout', status='old')
     open (unit=36, file='remez2', status='old')
     open (unit=37, file='remez4', status='old')
     open (unit=38, file='remez2g', status='old')
     open (unit=39, file='remez4g', status='old')
+
+    inquire (file='program_status', exist=program_status_file_exists)
+    if (program_status_file_exists) then
+      open (unit=53, file='program_status', status='old')
+      read (53, *) isweep_total_start
+      close (53)
+    else
+      isweep_total_start = 0
+    endif
     if (iread .eq. 1) then
       call sread
     endif
     read (25, *) dt, beta, am3, am, imass, iterl, iter2, walltimesec
-    print*,'READ:', dt, beta, am3, am, imass, iterl, iter2, walltimesec
+    print *, 'READ:', dt, beta, am3, am, imass, iterl, iter2, walltimesec
     close (25)
+
 ! set a new seed by hand...
 
     if (iseed .ne. 0) then
@@ -237,7 +250,7 @@ contains
 #ifdef MPI
         if (ip_global .eq. 0) then
 #endif
-          write (6, *) 'Isweep', isweep, ' of', iter2
+          write (6, '(A7I6A4I6A2I6A1)') 'Isweep ', isweep, ' of ', iter2, ' (', isweep_total_start, ')'
 #ifdef MPI
         endif
 #endif
@@ -297,8 +310,8 @@ contains
         enddo
 
         ! Start computing time (including hamiltonian calls)
-        call system_clock(count,count_rate,count_max) 
-        run_time = count / count_rate - run_time_start
+        call system_clock(count, count_rate, count_max)
+        run_time = count/count_rate - run_time_start
         total_md_time = total_md_time - run_time
 
 !*******************************************************************
@@ -389,7 +402,7 @@ contains
         paction = real(hp)/kvol
 600     continue
         if (ip_global .eq. 0) then
-          write (11, *) isweep, gaction, paction
+          write (11, *) isweep_total_start, isweep, gaction, paction
         end if
         actiona = actiona + action
         vel2 = sum(pp*pp)
@@ -400,8 +413,8 @@ contains
         vel2a = vel2a + vel2
 
         ! Including also hamiltonian call time
-        call system_clock(count,count_rate,count_max) 
-        run_time = count / count_rate - run_time_start
+        call system_clock(count, count_rate, count_max)
+        run_time = count/count_rate - run_time_start
 
         total_md_time = total_md_time + run_time
         time_per_md_step = total_md_time/itot
@@ -410,9 +423,9 @@ contains
 !     goto 601
 !666    continue
 
-        if ((isweep/iprint)*iprint .eq. isweep) then
-          call system_clock(count,count_rate,count_max) 
-          run_time = count / count_rate - run_time_start
+        if (((isweep + isweep_total_start)/iprint)*iprint .eq. isweep) then
+          call system_clock(count, count_rate, count_max)
+          run_time = count/count_rate - run_time_start
 
           thetat = theta
           call coef(ut, thetat)
@@ -428,7 +441,7 @@ contains
 #ifdef MPI
           endif
 #endif
-          call system_clock(count,count_rate,count_max) 
+          call system_clock(count, count_rate, count_max)
           measurement_time = count/count_rate
           measurement_time = measurement_time - run_time
         endif
@@ -455,8 +468,8 @@ contains
             time_for_next_iteration = time_for_next_iteration + measurement_time
           endif
 
-          call system_clock(count,count_rate,count_max) 
-          run_time = count / count_rate - run_time_start
+          call system_clock(count, count_rate, count_max)
+          run_time = count/count_rate - run_time_start
 #ifdef MPI
           if (ip_global .eq. 0) then
 #endif
@@ -524,6 +537,10 @@ contains
 9024  format(1x)
 !
       close (11)
+
+      open (unit=53, file='program_status', status='unknown', action='write')
+      write (53, *) isweep + isweep_total_start
+      close (53)
     end if
 !
     if (iwrite .eq. 1) then
