@@ -83,7 +83,7 @@ contains
       portion_starts(3) = locdim(idimension) + 2 ! beyond
       do iportion = -2, 2
         border3geometry(1, iportion, idimension) = portion_starts(iportion)
-    border3geometry(2, iportion, idimension) = portion_starts(iportion + 1) - 1
+        border3geometry(2, iportion, idimension) = portion_starts(iportion + 1) - 1
       enddo
     enddo
 
@@ -112,7 +112,7 @@ contains
 
   end subroutine
 
-subroutine get_all_local_partitions_neighbors(tbp_cube, tbp_list, tb_cl, tb_lc)
+  subroutine get_all_local_partitions_neighbors(tbp_cube, tbp_list, tb_cl, tb_lc)
     use comms
     use mpi
     implicit none
@@ -182,7 +182,7 @@ subroutine get_all_local_partitions_neighbors(tbp_cube, tbp_list, tb_cl, tb_lc)
     enddo
   end subroutine
 
- subroutine get_all_halo_partitions_neighbors(thp_cube, thp_list, th_cl, th_lc)
+  subroutine get_all_halo_partitions_neighbors(thp_cube, thp_list, th_cl, th_lc)
     use comms
     use mpi
     implicit none
@@ -216,7 +216,7 @@ subroutine get_all_local_partitions_neighbors(tbp_cube, tbp_list, tb_cl, tb_lc)
             do idir = 1, 3 ! scanning for ipdx(idir)=+-2
               if (ips(idir)**2 .eq. 4) then
                 ! getting neighbour
-               call MPI_Cart_Shift(comm, idir - 1, ips(idir)/2, ipw, ipn, ierr)
+                call MPI_Cart_Shift(comm, idir - 1, ips(idir)/2, ipw, ipn, ierr)
                 tpart%nn = ipn
 
                 ! computing tag
@@ -297,7 +297,7 @@ subroutine get_all_local_partitions_neighbors(tbp_cube, tbp_list, tb_cl, tb_lc)
     call get_all_halo_partitions_neighbors(halo_partitions_cube,&
       &    halo_partitions_list, halo_cl, halo_lc)
     call get_border_halo_associations(border_partitions_cube, &
-                                    border_partitions_list, border_lc, halo_cl)
+                                      border_partitions_list, border_lc, halo_cl)
   end subroutine
 
 end module partitioning

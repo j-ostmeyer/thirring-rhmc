@@ -227,11 +227,11 @@ contains
       do ishift = 1, ndiagq
         if (flags(ishift)) then
 #ifdef MPI
-          if(ip_global.eq.0) then
+          if (ip_global .eq. 0) then
 #endif
-          if(mod(cg_return,print_every).eq.0)then
-            write(6,'(E9.1E3)',advance="no")sqrt(delta*zeta_ii(ishift)**2)*correction(ishift)
-          endif
+            if (mod(cg_return, print_every) .eq. 0) then
+              write (6, '(E9.1E3)', advance="no") sqrt(delta*zeta_ii(ishift)**2)*correction(ishift)
+            endif
 #ifdef MPI
           endif
 #endif
@@ -241,12 +241,12 @@ contains
             maxishift = max(ishift, maxishift)
             minishift = min(ishift, minishift)
           endif
-        else 
+        else
 #ifdef MPI
-          if(ip_global.eq.0) then
+          if (ip_global .eq. 0) then
 #endif
-            if(mod(cg_return,print_every).eq.0)then
-              write(6,'(A9)',advance="no") "-"
+            if (mod(cg_return, print_every) .eq. 0) then
+              write (6, '(A9)', advance="no") "-"
             endif
 #ifdef MPI
           endif
@@ -254,10 +254,10 @@ contains
         endif
       enddo
 #ifdef MPI
-      if(ip_global.eq.0) then
+      if (ip_global .eq. 0) then
 #endif
-        if(mod(cg_return,print_every).eq.0)then
-          write(6,*) ""
+        if (mod(cg_return, print_every) .eq. 0) then
+          write (6, *) ""
         endif
 #ifdef MPI
       endif
@@ -453,7 +453,7 @@ contains
       if (present(cg_returns)) then
         cg_returns(minishift:maxishift) = cg_return
       endif
-      
+
       !! Original code
       !do ishift=minishift,maxishift
       !  output(:,:,:,:,:,ishift) = output(:,:,:,:,:,ishift)-&
@@ -470,11 +470,11 @@ contains
       do ishift = 1, ndiagq
         if (flags(ishift)) then
 #ifdef MPI
-          if(ip_global.eq.0) then
+          if (ip_global .eq. 0) then
 #endif
-          if(mod(cg_return,print_every).eq.0)then
-            write(6,'(E9.1E3)',advance="no")sqrt(delta*zeta_ii(ishift)**2)*correction(ishift)
-          endif
+            if (mod(cg_return, print_every) .eq. 0) then
+              write (6, '(E9.1E3)', advance="no") sqrt(delta*zeta_ii(ishift)**2)*correction(ishift)
+            endif
 #ifdef MPI
           endif
 #endif
@@ -484,12 +484,12 @@ contains
             maxishift = max(ishift, maxishift)
             minishift = min(ishift, minishift)
           endif
-        else 
+        else
 #ifdef MPI
-          if(ip_global.eq.0) then
+          if (ip_global .eq. 0) then
 #endif
-            if(mod(cg_return,print_every).eq.0)then
-              write(6,'(A9)',advance="no") "-"
+            if (mod(cg_return, print_every) .eq. 0) then
+              write (6, '(A9)', advance="no") "-"
             endif
 #ifdef MPI
           endif
@@ -497,15 +497,15 @@ contains
         endif
       enddo
 #ifdef MPI
-      if(ip_global.eq.0) then
+      if (ip_global .eq. 0) then
 #endif
-        if(mod(cg_return,print_every).eq.0)then
-          write(6,*) ""
+        if (mod(cg_return, print_every) .eq. 0) then
+          write (6, *) ""
         endif
 #ifdef MPI
       endif
 #endif
- 
+
       zeta_i(minishift:maxishift) = zeta_ii(minishift:maxishift)
       zeta_ii(minishift:maxishift) = zeta_iii(minishift:maxishift)
 

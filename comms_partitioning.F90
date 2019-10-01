@@ -33,8 +33,8 @@ contains
       subsizes(2:4) = chunk(2, :) - chunk(1, :) + 1
       ! For MPI_Type_create_subarray, indices start at 0 (because it's a C function)
       starts(2:4) = chunk(1, :) ! arrays are indexed from 0 as chunks
-  call MPI_Type_create_subarray(5, sizes, subsizes, starts, MPI_Order_Fortran,&
-      &  MPI_Double_Complex, tdhdts(ih), ierr)
+      call MPI_Type_create_subarray(5, sizes, subsizes, starts, MPI_Order_Fortran,&
+          &  MPI_Double_Complex, tdhdts(ih), ierr)
       call MPI_Type_Commit(tdhdts(ih), ierr)
     enddo
   end subroutine
@@ -61,8 +61,8 @@ contains
       subsizes(2:4) = chunk(2, :) - chunk(1, :) + 1
       ! For MPI_Type_create_subarray, indices start at 0 (because it's a C function)
       starts(2:4) = chunk(1, :) ! arrays are indexed from 0 as chunks
-  call MPI_Type_create_subarray(5, sizes, subsizes, starts, MPI_Order_Fortran,&
-      &  MPI_Double_Complex, tdbdts(ib), ierr)
+      call MPI_Type_create_subarray(5, sizes, subsizes, starts, MPI_Order_Fortran,&
+          &  MPI_Double_Complex, tdbdts(ib), ierr)
       call MPI_Type_Commit(tdbdts(ib), ierr)
     enddo
   end subroutine
@@ -76,7 +76,7 @@ contains
     implicit none
     integer, intent(out) :: sreqs(54)! Send REQuestS
     !BUFfer To Send
-    complex(dp),intent(in) :: bufts(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
+    complex(dp), intent(in) :: bufts(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     integer, intent(in) :: tsbdts(26) ! Temp Send Border Data TypeS
     type(localpart), intent(in) :: tbpl(26) ! Temp Border Partition List
     integer :: ibp ! Index Border Partition
@@ -106,7 +106,7 @@ contains
     implicit none
     integer, intent(out) :: sreqs(54)! Send REQuestS
     !BUFfer To Send
-    complex(dp),intent(in) :: bufts(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
+    complex(dp), intent(in) :: bufts(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 
     call create_dpsreqs(sreqs, bufts, dirac_border_dts, border_partitions_list)
   end subroutine
@@ -120,7 +120,7 @@ contains
     implicit none
     integer, intent(out) :: rreqs(54)! Recv REQuestS
     !BUFfer To Recv
-    complex(dp),intent(in) :: buftr(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
+    complex(dp), intent(in) :: buftr(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     integer, intent(in) :: trhdts(54) ! Temp Recv Halo Data TypeS
     type(halopart), intent(in) :: thpl(54) ! Temp Halo Partition List
     integer :: ihp ! Index Halo Partition
@@ -141,7 +141,7 @@ contains
     implicit none
     integer, intent(out) :: rreqs(54)! Recv REQuestS
     !BUFfer To Recv
-    complex(dp),intent(in) :: buftr(kthird,0:ksizex_l+1,0:ksizey_l+1,0:ksizet_l+1,4)
+    complex(dp), intent(in) :: buftr(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 
     call create_dprreqs(rreqs, buftr, dirac_halo_dts, halo_partitions_list)
   end subroutine

@@ -5,7 +5,7 @@
 module qmrherm_module
   use params
   implicit none
-complex(dp) :: vtild(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+  complex(dp) :: vtild(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) :: q(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) :: pm1(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
   complex(dp) :: qm1(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
@@ -15,7 +15,7 @@ complex(dp) :: vtild(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) :: x1(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
   complex(dp) :: x2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 
-  complex(dp),save :: Phi0(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4,ndiag)
+  complex(dp), save :: Phi0(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, ndiag)
   logical :: printall
 
 contains
@@ -30,7 +30,7 @@ contains
   !   iflag=2: evaluates DWF force term
   !   iflag=3: evaluates PV force term
   !*****************************************************************m
-  subroutine qmrherm(Phi,X,res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, &
+  subroutine qmrherm(Phi, X, res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, &
       & iter)
     use params
     use trial, only: u
@@ -38,8 +38,8 @@ contains
     use comms
     use dirac
     use derivs_module
-    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(out) :: X(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(out) :: X(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     integer, intent(in) :: imass, ndiagq, iflag, isweep, iter
     real(dp), intent(in) :: anum(0:ndiagq), aden(ndiagq)
     real, intent(in) :: res, am
@@ -79,7 +79,7 @@ contains
     betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
 #ifdef MPI
     !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
-    call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
+    call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm, ierr) ! DEBUG
     betaq = dp_reduction
 
     ! Setting up persistent communication requests
@@ -133,11 +133,11 @@ contains
 
       !
       alphatild = sum(real(conjg(q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
-               &                *x3(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
+                          &                *x3(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 
 #ifdef MPI
       !call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
-      call MPI_AllReduce(alphatild, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
+      call MPI_AllReduce(alphatild, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm, ierr) ! DEBUG
       alphatild = dp_reduction ! DEBUG
 #endif
       !
@@ -171,7 +171,7 @@ contains
       betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
 #ifdef MPI
       !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
-      call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
+      call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm, ierr) ! DEBUG
       betaq = dp_reduction ! DEBUG
 #endif
       betaq = sqrt(betaq)
@@ -206,9 +206,9 @@ contains
                 do iy = 1, ksizey_l
                   do ix = 1, ksizex_l
                     do iz = 1, kthird, shift
-                    p(iz:iz+shift-1,ix,iy,it,idirac,idiag) = q(iz:iz+shift-1,ix,iy,it,idirac) &
-               & - amu(idiag)*pm1(iz:iz + shift - 1, ix, iy, it, idirac, idiag)
-                    pm1(iz:iz+shift-1,ix,iy,it,idirac,idiag) = p(iz:iz+shift-1,ix,iy,it,idirac,idiag)
+                      p(iz:iz + shift - 1, ix, iy, it, idirac, idiag) = q(iz:iz + shift - 1, ix, iy, it, idirac) &
+                 & - amu(idiag)*pm1(iz:iz + shift - 1, ix, iy, it, idirac, idiag)
+                      pm1(iz:iz + shift - 1, ix, iy, it, idirac, idiag) = p(iz:iz + shift - 1, ix, iy, it, idirac, idiag)
                       x1(iz:iz + shift - 1, ix, iy, it, idirac, idiag) = &
                         & x1(iz:iz + shift - 1, ix, iy, it, idirac, idiag) &
                  & + rho(idiag)*p(iz:iz + shift - 1, ix, iy, it, idirac, idiag)
@@ -255,8 +255,8 @@ contains
 #ifdef MPI
       if (ip_global .eq. 0) then
 #endif
-    write (7, *) 'QMRniterc!, niter, isweep,iter,iflag,imass,anum,ndiagq = ', &
-        &   niter, isweep, iter, iflag, imass, anum(0), ndiagq
+        write (7, *) 'QMRniterc!, niter, isweep,iter,iflag,imass,anum,ndiagq = ', &
+            &   niter, isweep, iter, iflag, imass, anum(0), ndiagq
 #ifdef MPI
       end if
 #endif
@@ -341,7 +341,7 @@ contains
           call update_halo_5(4, X2)
 #endif
           !
-         R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(:, :, :, :, :, idiag)
+          R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(:, :, :, :, :, idiag)
 #ifdef MPI
           call start_halo_update_5(4, R, 8, reqs_R)
           call complete_halo_update(reqs_X2)

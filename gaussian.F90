@@ -16,7 +16,7 @@ contains
 #else
     subroutine gaussp(ps)
 #endif
-     real, intent(out) :: ps(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 2)
+      real, intent(out) :: ps(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 2)
 #ifdef MPI
       integer, intent(out) :: reqs(12)
 #endif
@@ -58,7 +58,7 @@ contains
 #else
       subroutine gauss0(ps)
 #endif
-     real, intent(out) :: ps(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 2)
+        real, intent(out) :: ps(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 2)
 #ifdef MPI
         integer, intent(out) :: reqs(12)
 #endif

@@ -1,7 +1,7 @@
 module qmrherm_module_split
   use params
   implicit none
-complex(dp) :: vtild(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+  complex(dp) :: vtild(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) :: q(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) :: pm1(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
   complex(dp) :: qm1(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
@@ -11,7 +11,7 @@ complex(dp) :: vtild(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) :: x1(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
   complex(dp) :: x2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 
-  complex(dp),save :: Phi0(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4,ndiag)
+  complex(dp), save :: Phi0(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, ndiag)
   logical :: printall
 
 contains
@@ -26,7 +26,7 @@ contains
   !   iflag=2: evaluates DWF force term
   !   iflag=3: evaluates PV force term
   !*****************************************************************m
-  subroutine qmrherm_split(Phi,X, res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, &
+  subroutine qmrherm_split(Phi, X, res, itercg, am, imass, anum, aden, ndiagq, iflag, isweep, &
       & iter)
     use params
     use trial, only: u
@@ -39,8 +39,8 @@ contains
     use dirac_split
     use dirac
     use derivs_module
-    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(out) :: X(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(out) :: X(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     integer, intent(in) :: imass, ndiagq, iflag, isweep, iter
     real(dp), intent(in) :: anum(0:ndiagq), aden(ndiagq)
     real, intent(in) :: res, am
@@ -91,7 +91,7 @@ contains
     betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
 
     !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
-    call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) ! DEBUG
+    call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm, ierr) ! DEBUG
     betaq = dp_reduction
 
     betaq = sqrt(betaq)
@@ -120,14 +120,14 @@ contains
       do wpc = 1, 27*7
         ichunk = dslash_work_ordering(1:3, wpc)
         mu = dslash_work_ordering(4, wpc)
-     call hbetaqdiv_dslash_split(q, betaq, vtild, R, u, am, imass, ichunk, mu,&
-          & border_partitions_cube, dslash_swd, Rrreqs, vtildsreqs)
+        call hbetaqdiv_dslash_split(q, betaq, vtild, R, u, am, imass, ichunk, mu,&
+             & border_partitions_cube, dslash_swd, Rrreqs, vtildsreqs)
       enddo
       call MPI_Barrier(comm, ierr)
 
       alphatild = sum(abs(vtild(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
       !call MPI_AllReduce(MPI_In_Place, alphatild, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
-      call MPI_AllReduce(alphatild,dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+      call MPI_AllReduce(alphatild, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
       alphatild = dp_reduction
 
       ! starting recv requests for R
@@ -137,7 +137,7 @@ contains
       do wpc = 1, 27*7
         ichunk = dslashd_work_ordering(1:3, wpc)
         mu = dslashd_work_ordering(4, wpc)
-        call dslashd_Rcomp_split(R,x3,alphatild,q,betaq,qm1,vtild,u,am,imass,ichunk,mu,&
+        call dslashd_Rcomp_split(R, x3, alphatild, q, betaq, qm1, vtild, u, am, imass, ichunk, mu,&
           & border_partitions_cube, dslashd_swd, vtildrreqs, Rsreqs)
       enddo
 
@@ -149,7 +149,7 @@ contains
 
       betaq = sum(abs(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
       !call MPI_AllReduce(MPI_In_Place, betaq, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
-      call MPI_AllReduce(betaq,dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm,ierr)
+      call MPI_AllReduce(betaq, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
       betaq = dp_reduction
       betaq = sqrt(betaq)
       !print*,'betaq',betaq,ip_global
@@ -174,8 +174,8 @@ contains
         d = alpha - betaq0*amu
         rho = -amu*dm1*rhom1/d
         do idiag = 1, ndiagq
-        p(:, :, :, :, :, idiag) = q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
-            & - amu(idiag)*pm1(:, :, :, :, :, idiag)
+          p(:, :, :, :, :, idiag) = q(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
+              & - amu(idiag)*pm1(:, :, :, :, :, idiag)
         enddo
         pm1 = p
         !     Convergence criterion (a bit ad hoc for now...)
@@ -206,8 +206,8 @@ contains
 #ifdef MPI
       if (ip_global .eq. 0) then
 #endif
-    write (7, *) 'QMRniterc!, niter, isweep,iter,iflag,imass,anum,ndiagq = ', &
-        &   niter, isweep, iter, iflag, imass, anum(0), ndiagq
+        write (7, *) 'QMRniterc!, niter, isweep,iter,iflag,imass,anum,ndiagq = ', &
+            &   niter, isweep, iter, iflag, imass, anum(0), ndiagq
 #ifdef MPI
       end if
 #endif
@@ -292,7 +292,7 @@ contains
           call update_halo_5(4, X2)
 #endif
           !
-         R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(:, :, :, :, :, idiag)
+          R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(:, :, :, :, :, idiag)
 #ifdef MPI
           call start_halo_update_5(4, R, 8, reqs_R)
           call complete_halo_update(reqs_X2)
@@ -323,17 +323,17 @@ contains
   !          the one specified by ichunk - shifted by +-1 site in one of the 3
   !          directions.
 
-  subroutine hbetaqdiv_dslash_split(tq,betaq,Phi,R,u,am,imass,ichunk,mu,tbpc,tdsswd,tdhrr,tdbsr)
+  subroutine hbetaqdiv_dslash_split(tq, betaq, Phi, R, u, am, imass, ichunk, mu, tbpc, tdsswd, tdhrr, tdbsr)
     use params
     use partitioning
     use mpi
     use dirac_split
     implicit none
-    complex(dp), intent(inout) :: tq(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(inout) :: tq(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: betaq
-    complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-complex(dp), intent(in) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
+    complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
     real, intent(in) :: am
     integer, intent(in) :: imass
     integer, intent(in) :: ichunk(3) ! portion of array to operate on
@@ -405,7 +405,7 @@ complex(dp), intent(in) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
   ! this subroutine merges the dslashd application and the
   ! R = x3 - alphatild * q - betaq * qm1
   ! steps
-  subroutine dslashd_Rcomp_split(R,x3,alphatild,tq,betaq,tqm1,vtild,u,am,imass,&
+  subroutine dslashd_Rcomp_split(R, x3, alphatild, tq, betaq, tqm1, vtild, u, am, imass,&
                           & ichunk, mu, tbpc, tdsswd, tdhrr, tdbsr)
     use params
     use partitioning
@@ -413,14 +413,14 @@ complex(dp), intent(in) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
     use dirac_split
     use comms ! DEBUG
     implicit none
-    complex(dp), intent(out) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(out) :: x3(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(out) :: R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(out) :: x3(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: alphatild
-    complex(dp), intent(in) :: tq(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: tq(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: betaq
     complex(dp), intent(in) :: tqm1(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-    complex(dp), intent(in) :: vtild(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-complex(dp), intent(in) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
+    complex(dp), intent(in) :: vtild(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
     real, intent(in) :: am
     integer, intent(in) :: imass
     integer, intent(in) :: ichunk(3) ! portion of array to operate on

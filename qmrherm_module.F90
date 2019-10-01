@@ -1,7 +1,7 @@
 module qmrherm_module
   use params
   implicit none
-complex(dp) :: vtild(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+  complex(dp) :: vtild(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) :: q(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) :: pm1(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
   complex(dp) :: qm1(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
@@ -11,12 +11,12 @@ complex(dp) :: vtild(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) :: x1(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
   complex(dp) :: x2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 
-  complex(dp),save :: Phi0(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4,ndiag)
+  complex(dp), save :: Phi0(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, ndiag)
   logical :: printall
 
 contains
 
-  subroutine qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiagq, iflag,use_sp,cg_returns)
+  subroutine qmrherm(Phi, X, res, itercg, am, imass, anum, aden, ndiagq, iflag, use_sp, cg_returns)
     use comms_common, only: ip_global
     use comms, only: complete_halo_update
 #ifdef MPI
@@ -32,8 +32,8 @@ contains
     use multishift_module, only: multishift_solver, multishift_solver_sp
     use params
     use trial, only: u
-    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(out) :: X(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(out) :: X(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     integer, intent(in) :: imass, ndiagq, iflag
     real(dp), intent(in) :: anum(0:ndiagq), aden(ndiagq)
     real, intent(in) :: res, am
@@ -48,9 +48,9 @@ contains
 #endif
     x = anum(0)*Phi
     if (present(use_sp) .and. use_sp) then
-      call multishift_solver_sp(u,am,imass,ndiagq,aden,anum(1:ndiagq),x1,Phi,res,max_qmr_iters,itercg,cg_returns_tmp)
+      call multishift_solver_sp(u, am, imass, ndiagq, aden, anum(1:ndiagq), x1, Phi, res, max_qmr_iters, itercg, cg_returns_tmp)
     else
-      call multishift_solver(u,am,imass,ndiagq,aden,anum(1:ndiagq),x1,Phi,res,max_qmr_iters,itercg,cg_returns_tmp)
+      call multishift_solver(u, am, imass, ndiagq, aden, anum(1:ndiagq), x1, Phi, res, max_qmr_iters, itercg, cg_returns_tmp)
     endif
 
     if (present(cg_returns)) then
@@ -135,7 +135,7 @@ contains
           call update_halo_5(4, X2)
 #endif
           !
-         R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(:, :, :, :, :, idiag)
+          R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(:, :, :, :, :, idiag)
 #ifdef MPI
           call start_halo_update_5(4, R, 8, reqs_R)
           call complete_halo_update(reqs_X2)
@@ -150,9 +150,9 @@ contains
 
     if (ip_global .eq. 0 .and. printall) then
       if (present(use_sp) .and. use_sp) then
-         print *, "[SP] Qmrherm iterations,res:", itercg, res
+        print *, "[SP] Qmrherm iterations,res:", itercg, res
       else
-         print *, "[DP] Qmrherm iterations,res:", itercg, res
+        print *, "[DP] Qmrherm iterations,res:", itercg, res
       endif
     endif
     return

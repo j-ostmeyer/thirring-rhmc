@@ -15,7 +15,7 @@ contains
     use dirac
     use params
     implicit none
-    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     !     complex, intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real, intent(in) :: res, am
     integer, intent(out) :: itercg
@@ -23,8 +23,8 @@ contains
     integer, intent(out), optional :: iterations
 
     !     complex x1(kferm),x2(kferm),p(kferm),r(kferm)
-   complex(dp) :: x1(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-   complex(dp) :: x2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: x1(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: x2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: p(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: r(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real :: resid
@@ -70,7 +70,7 @@ contains
         !   Don't need x1's halo at this point
         alphad = sum(abs(x1(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
 #ifdef MPI
-        call MPI_AllReduce(MPI_In_Place, alphad, 1, MPI_Double_Precision, MPI_Sum, comm,ierr) 
+        call MPI_AllReduce(MPI_In_Place, alphad, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
 #endif
         alpha = alphan/alphad
         !
@@ -102,7 +102,7 @@ contains
       !   betacg=(r_k+1,r_k+1)/(r_k,r_k)
       betacgn = sum(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
 #ifdef MPI
-      call MPI_AllReduce(MPI_In_Place, betacgn, 1, MPI_Double_precision, MPI_Sum, comm,ierr) 
+      call MPI_AllReduce(MPI_In_Place, betacgn, 1, MPI_Double_precision, MPI_Sum, comm, ierr)
 #endif
       betacg = betacgn/betacgd
       betacgd = betacgn
@@ -162,7 +162,7 @@ contains
     !     complex :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     !     complex :: psibarpsi1,psibarpsi2
     complex(dp) :: x(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-  complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: psibarpsi1, psibarpsi2
     real(dp) :: cnum(0:1), cden(1)
     real :: ps(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 2)
@@ -390,7 +390,7 @@ contains
     !     complex prop00(kvol,3:4,1:2),prop0L(kvol,3:4,3:4)
     complex(dp) :: x(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: x0(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-  complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: prop00(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
     complex(dp) :: prop0L(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
     !    complex :: prop00n(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
@@ -458,7 +458,7 @@ contains
         !    x(:, :, ksizet_l, :) = cmplx(1.0,0.0) / ksize2
         !  end if
         !  point source at fixed site, spin...
-       if (ip_xxx .eq. ip_x .and. ip_yyy .eq. ip_y .and. ip_ttt .eq. ip_t) then
+        if (ip_xxx .eq. ip_x .and. ip_yyy .eq. ip_y .and. ip_ttt .eq. ip_t) then
           x(ixxx_l, iyyy_l, ittt_l, idsource) = (1.0d+0, 0.0d+0)
         end if
         !
@@ -510,7 +510,7 @@ contains
         call congrad(Phi, res, itercg, am, imass)  ! solution is vector::x, here called xi
         iter = iter + itercg
         !
-prop00(:, :, :, idsource, 1:2) = xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+        prop00(:, :, :, idsource, 1:2) = xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
         prop0L(:, :, :, idsource, 3:4) = xi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
         !
         ! if(imass.ne.1)then
@@ -567,7 +567,7 @@ prop00(:, :, :, idsource, 1:2) = xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
         endif
       enddo
 #ifdef MPI
-      call MPI_AllReduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,comm,ierr) 
+      call MPI_AllReduce(MPI_In_Place, tempcpmm_r, ksizet, MPI_DOUBLE_PRECISION, MPI_SUM, comm, ierr)
       if (ip_global .eq. 0) then
 #endif
         !!! if(ip_global.eq.0) then
@@ -595,7 +595,7 @@ prop00(:, :, :, idsource, 1:2) = xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
         endif
       enddo
 #ifdef MPI
-      call MPI_AllReduce(MPI_In_Place,tempcpmm_r,ksizet,MPI_DOUBLE_PRECISION,MPI_SUM,comm,ierr)
+      call MPI_AllReduce(MPI_In_Place, tempcpmm_r, ksizet, MPI_DOUBLE_PRECISION, MPI_SUM, comm, ierr)
       if (ip_global .eq. 0) then
 #endif
         !!! if(ip_global.eq.0) then
@@ -640,7 +640,7 @@ prop00(:, :, :, idsource, 1:2) = xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
         enddo
       enddo! do idd=3,4
 #ifdef MPI
-      call MPI_AllReduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,comm,ierr)
+      call MPI_AllReduce(MPI_In_Place, tempcpmm_c, ksizet, MPI_DOUBLE_COMPLEX, MPI_SUM, comm, ierr)
       if (ip_global .eq. 0) then
 #endif
         !!! if(ip_global.eq.0) then
@@ -666,7 +666,7 @@ prop00(:, :, :, idsource, 1:2) = xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
         enddo
       enddo! do idd=3,4
 #ifdef MPI
-      call MPI_AllReduce(MPI_In_Place,tempcpmm_c,ksizet,MPI_DOUBLE_COMPLEX,MPI_SUM,comm,ierr)
+      call MPI_AllReduce(MPI_In_Place, tempcpmm_c, ksizet, MPI_DOUBLE_COMPLEX, MPI_SUM, comm, ierr)
       if (ip_global .eq. 0) then
 #endif
         !!! if(ip_global.eq.0) then
