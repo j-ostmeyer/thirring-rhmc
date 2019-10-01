@@ -32,8 +32,8 @@ contains
     starts = (/0, 1, 1, 1, 0/)
     starts(direction + 2) = position
 
- call MPI_Type_Create_Subarray(5, sizes, subsizes, starts, MPI_Order_Fortran, &
-      & MPI_Double_Complex, typetarget, ierr)
+    call MPI_Type_Create_Subarray(5, sizes, subsizes, starts, MPI_Order_Fortran, &
+         & MPI_Double_Complex, typetarget, ierr)
     call MPI_Type_Commit(typetarget, ierr)
     return
   end subroutine init_single_halo_type_5
@@ -46,26 +46,26 @@ contains
     do i5 = 1, nsize5
       call init_single_halo_type_5(0, 1, size5(i5), halo_5_xdn_send(size5(i5)))
       call init_single_halo_type_5(0, 0, size5(i5), halo_5_xdn_recv(size5(i5)))
-      call init_single_halo_type_5(0, ksizex_l,   size5(i5), halo_5_xup_send(size5(i5)))
-      call init_single_halo_type_5(0, ksizex_l+1, size5(i5), halo_5_xup_recv(size5(i5)))
+      call init_single_halo_type_5(0, ksizex_l, size5(i5), halo_5_xup_send(size5(i5)))
+      call init_single_halo_type_5(0, ksizex_l + 1, size5(i5), halo_5_xup_recv(size5(i5)))
 
       call init_single_halo_type_5(1, 1, size5(i5), halo_5_ydn_send(size5(i5)))
       call init_single_halo_type_5(1, 0, size5(i5), halo_5_ydn_recv(size5(i5)))
-      call init_single_halo_type_5(1, ksizey_l,   size5(i5), halo_5_yup_send(size5(i5)))
-      call init_single_halo_type_5(1, ksizey_l+1, size5(i5), halo_5_yup_recv(size5(i5)))
+      call init_single_halo_type_5(1, ksizey_l, size5(i5), halo_5_yup_send(size5(i5)))
+      call init_single_halo_type_5(1, ksizey_l + 1, size5(i5), halo_5_yup_recv(size5(i5)))
 
       call init_single_halo_type_5(2, 1, size5(i5), halo_5_tdn_send(size5(i5)))
       call init_single_halo_type_5(2, 0, size5(i5), halo_5_tdn_recv(size5(i5)))
-      call init_single_halo_type_5(2, ksizet_l,   size5(i5), halo_5_tup_send(size5(i5)))
-      call init_single_halo_type_5(2, ksizet_l+1, size5(i5), halo_5_tup_recv(size5(i5)))
+      call init_single_halo_type_5(2, ksizet_l, size5(i5), halo_5_tup_send(size5(i5)))
+      call init_single_halo_type_5(2, ksizet_l + 1, size5(i5), halo_5_tup_recv(size5(i5)))
     end do
   end subroutine init_halo_types_5
 
   subroutine init_halo_update_5(size5, Array, tag, reqs)
     !
     integer, intent(in) :: size5, tag
-  complex(dp), intent(inout) :: Array(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, &
-      &                              0:ksizet_l + 1, size5)
+    complex(dp), intent(inout) :: Array(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, &
+        &                              0:ksizet_l + 1, size5)
     integer, intent(out) :: reqs(12)
     integer :: ip_xup, ip_xdn, ip_yup, ip_ydn, ip_tup, ip_tdn
     integer :: tag_offset
@@ -111,8 +111,8 @@ contains
   subroutine start_halo_update_5(size5, Array, tag, reqs)
     !
     integer, intent(in) :: size5, tag
-  complex(dp), intent(inout) :: Array(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, &
-      &                              0:ksizet_l + 1, size5)
+    complex(dp), intent(inout) :: Array(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, &
+        &                              0:ksizet_l + 1, size5)
     integer, intent(out) :: reqs(12)
     integer :: ip_xup, ip_xdn, ip_yup, ip_ydn, ip_tup, ip_tdn
     integer :: tag_offset
