@@ -44,7 +44,7 @@ contains
     call MPI_comm_size(MPI_COMM_WORLD, np_global, ierr)
     call MPI_comm_rank(MPI_COMM_WORLD, ip_global, ierr)
     if (np_global .ne. NP_X*NP_Y*NP_T + must_rank) then
-      print *,"MPI dimensionality mismatch: ", NP_X, "*", NP_Y, "*", NP_T, "!=", np_global
+      print *, "MPI dimensionality mismatch: ", NP_X, "*", NP_Y, "*", NP_T, "!=", np_global
       call MPI_finalize(ierr)
       call exit(2)
     end if
@@ -63,7 +63,7 @@ contains
     call MPI_Type_Create_Subarray(4, &! dimensionality
                                   (/ksize, ksize, ksizet, 3/), &! global volume
                                   (/ksizex_l, ksizey_l, ksizet_l, 3/), &! local volume
-          (/ip_x*ksizex_l, ip_y*ksizey_l, ip_t*ksizet_l, 0/), &! start location
+                                  (/ip_x*ksizex_l, ip_y*ksizey_l, ip_t*ksizet_l, 0/), &! start location
                                   MPI_Order_Fortran, &! array ordering
                                   MPI_Real, &! datatype to store
                                   mpiio_type, ierr) ! type descriptor for this subarray type
