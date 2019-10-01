@@ -146,7 +146,7 @@ contains
   !       solves Mx=x1
   !     (Numerical Recipes section 2.10 pp.70-73)
   !*******************************************************************
-  subroutine measure(psibarpsi, res, aviter, am, imass)
+  subroutine measure(psibarpsi, res, aviter, am, imass,isweep_total)
     use trial, only: u
     use vector, xi => x
     use comms5, only: start_halo_update_5
@@ -157,6 +157,7 @@ contains
     real, intent(out) :: psibarpsi, aviter
     real, intent(in) :: res, am
     integer, intent(in) :: imass
+    integer, intent(in), optional :: isweep_total
     integer, parameter :: knoise = 10
     !     complex :: x(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     !     complex :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -330,11 +331,15 @@ contains
       endif
       !write(6,*) real(psibarpsi1),aimag(psibarpsi1), real(psibarpsi2),aimag(psibarpsi2)
       if (ip_global .eq. 0) then
-        write (100, *) real(psibarpsi1), aimag(psibarpsi1), &
+        open(unit=100,file='fort.100',action='write',position='append')
+        if(present(isweep_total)) then
+          write (100, *) isweep_total, real(psibarpsi1), aimag(psibarpsi1), &
              & real(psibarpsi2), aimag(psibarpsi2)
-        !write(6,*) real(psibarpsi1), aimag(psibarpsi1), &
-        !     & real(psibarpsi2), aimag(psibarpsi2)
-
+        else
+          write (100, *) real(psibarpsi1), aimag(psibarpsi1), &
+             & real(psibarpsi2), aimag(psibarpsi2)
+        endif
+        close(100)
       end if
       !
       ! end loop on noise
@@ -349,7 +354,13 @@ contains
     psibarpsi = psibarpsi/knoise
     susclsing = 2*kvol*susclsing/(knoise*(knoise - 1))
     if (ip_global .eq. 0) then
-      write (200, *) psibarpsi, susclsing
+      open(unit=200,file='fort.200',action='write',position='append')
+      if(present(isweep_total)) then
+        write (200, *) isweep_total, psibarpsi, susclsing
+      else
+        write (200, *) psibarpsi, susclsing
+      endif
+      close(200)  
     end if
     aviter = float(iter)/(4*knoise)
     return

@@ -77,8 +77,9 @@ contains
     real :: actiona, vel2a, pbp, pbpa, yav, yyav
     real :: ancgm, ancgma
     integer :: imass, iter, iterl, iter2, i, ia, idirac, ithird
-    integer :: walltimesec, count, count_rate, count_max, run_time_start
-    integer :: naccp, ipbp, itot, isweep, isweep_total_start, itercg, mu
+    integer :: walltimesec, count, count_rate, count_max
+    real :: run_time_start
+    integer :: naccp, ipbp, itot, itercg, mu
     logical :: program_status_file_exists
 !*******************************************************************
 !     variables to keep track of MPI requests
@@ -98,6 +99,8 @@ contains
     run_time_start = count/count_rate
 #ifdef MPI
     call init_MPI
+    call MPI_AllReduce(MPI_In_Place,run_time_start, 1, MPI_Real, MPI_Max, comm, ierr)
+
 #endif
 !*******************************************************************
 !     end of input
@@ -112,29 +115,22 @@ contains
     endif
 
     if (ip_global .eq. 0) then
-      open (unit=7, file='output', status='unknown')
-      open (unit=98, file='control', status='unknown')
+      open (unit=7, file='output', status='unknown', action='write', &
+        position='append')
+      open (unit=98, file='control', status='unknown', action='write', &
+        position='append')
     end if
 
-    open (unit=25, file='midout', status='old')
-    open (unit=36, file='remez2', status='old')
-    open (unit=37, file='remez4', status='old')
-    open (unit=38, file='remez2g', status='old')
-    open (unit=39, file='remez4g', status='old')
+    open (unit=25, file='midout', status='old', action='read')
+    open (unit=36, file='remez2', status='old', action='read')
+    open (unit=37, file='remez4', status='old', action='read')
+    open (unit=38, file='remez2g', status='old', action='read')
+    open (unit=39, file='remez4g', status='old', action='read')
 
-    inquire (file='program_status', exist=program_status_file_exists)
-    if (program_status_file_exists) then
-      open (unit=53, file='program_status', status='old')
-      read (53, *) isweep_total_start
-      close (53)
-    else
-      isweep_total_start = 0
-    endif
     if (iread .eq. 1) then
       call sread
     endif
     read (25, *) dt, beta, am3, am, imass, iterl, iter2, walltimesec
-    print *, 'READ:', dt, beta, am3, am, imass, iterl, iter2, walltimesec
     close (25)
 
 ! set a new seed by hand...
@@ -243,15 +239,24 @@ contains
 
       real :: run_time, time_per_md_step ! conservative estimates
       real :: measurement_time, total_md_time
+      integer :: isweep, isweep_total_start
       measurement_time = 100 ! an arbitrary value (that should be conservative)
       total_md_time = 0
+      inquire (file='program_status', exist=program_status_file_exists)
+      if (program_status_file_exists) then
+        open (unit=53, file='program_status', status='old', action='read')
+        read (53, *) isweep_total_start, measurement_time
+        close (53)
+      else
+        isweep_total_start = 0
+      endif
 
       do isweep = 1, iter2
 
 #ifdef MPI
         if (ip_global .eq. 0) then
 #endif
-          write (6, '(A7I6A4I6A2I6A1)') 'Isweep ', isweep, ' of ', iter2, ' (', isweep_total_start, ')'
+          write (6, "(A7,I6,A4,I6,A12,I6,A1)") 'Isweep ', isweep, ' of ', iter2, ' (start from', isweep_total_start, ')'
 #ifdef MPI
         endif
 #endif
@@ -313,6 +318,10 @@ contains
         ! Start computing time (including hamiltonian calls)
         call system_clock(count, count_rate, count_max)
         run_time = count/count_rate - run_time_start
+#ifdef MPI
+        call MPI_AllReduce(MPI_In_Place,run_time, 1, MPI_Real, MPI_Max, comm, ierr)
+#endif 
+
         total_md_time = total_md_time - run_time
 
 !*******************************************************************
@@ -379,7 +388,7 @@ contains
         dH = H0 - H1
         dS = S0 - S1
         if (ip_global .eq. 0) then
-          write (98, *) dH, dS
+          write (98, *) isweep_total_start,isweep,dH, dS
           write (6, *) "dH,dS ", dH, dS
         end if
         y = exp(real(dH))
@@ -402,8 +411,10 @@ contains
         gaction = real(hg)/kvol
         paction = real(hp)/kvol
 600     continue
-        if (ip_global .eq. 0) then
+        if(ip_global .eq. 0) then
+          open (unit=11, file='fort.11', action='write', position='append')
           write (11, *) isweep_total_start, isweep, gaction, paction
+          close (11)
         end if
         actiona = actiona + action
         vel2 = sum(pp*pp)
@@ -416,21 +427,24 @@ contains
         ! Including also hamiltonian call time
         call system_clock(count, count_rate, count_max)
         run_time = count/count_rate - run_time_start
+#ifdef MPI
+        call MPI_AllReduce(MPI_In_Place,run_time, 1, MPI_Real, MPI_Max, comm, ierr)
+#endif 
 
         total_md_time = total_md_time + run_time
         time_per_md_step = total_md_time/itot
+#ifdef MPI
+        call MPI_AllReduce(MPI_In_Place, time_per_md_step, 1, MPI_Double_Precision, MPI_Max, comm, ierr)
+#endif
 
 !     uncomment to disable measurements
 !     goto 601
 !666    continue
 
-        if (((isweep + isweep_total_start)/iprint)*iprint .eq. isweep) then
-          call system_clock(count, count_rate, count_max)
-          run_time = count/count_rate - run_time_start
-
+        if (mod((isweep + isweep_total_start),iprint).eq.0) then
           thetat = theta
           call coef(ut, thetat)
-          call measure(pbp, respbp, ancgm, am, imass)
+          call measure(pbp, respbp, ancgm, am, imass,isweep+isweep_total_start)
 !         call meson(rescgm,itercg,ancgm,am,imass)
           pbpa = pbpa + pbp
           ancgma = ancgma + ancgm
@@ -443,8 +457,11 @@ contains
           endif
 #endif
           call system_clock(count, count_rate, count_max)
-          measurement_time = count/count_rate
+          measurement_time = count/count_rate - run_time_start
           measurement_time = measurement_time - run_time
+#ifdef MPI
+          call MPI_AllReduce(MPI_In_Place,measurement_time, 1, MPI_Real, MPI_Max, comm, ierr)
+#endif 
         endif
 !
         if ((isweep/icheck)*icheck .eq. isweep) then
@@ -456,10 +473,6 @@ contains
           flush (200)
         endif
 
-#ifdef MPI
-        call MPI_AllReduce(MPI_In_Place, measurement_time, 1, MPI_Double_Precision, MPI_Max, comm, ierr)
-        call MPI_AllReduce(MPI_In_Place, time_per_md_step, 1, MPI_Double_Precision, MPI_Max, comm, ierr)
-#endif
         keep_running_check: block
           real :: time_for_next_iteration
 
@@ -471,6 +484,9 @@ contains
 
           call system_clock(count, count_rate, count_max)
           run_time = count/count_rate - run_time_start
+#ifdef MPI
+          call MPI_AllReduce(MPI_In_Place,run_time, 1, MPI_Real, MPI_Max, comm, ierr)
+#endif 
 #ifdef MPI
           if (ip_global .eq. 0) then
 #endif
@@ -484,6 +500,7 @@ contains
             if (ip_global .eq. 0) then
 #endif
               print *, 'Time left insufficient, quitting.'
+              print*,'Run:',isweep,' started:',isweep_total_start
 #ifdef MPI
             endif
 #endif
@@ -491,6 +508,9 @@ contains
           endif
         end block keep_running_check
       end do
+      open (unit=53, file='program_status', status='unknown', action='write')
+      write (53, *) min(isweep,iter2) + isweep_total_start, measurement_time
+      close (53)
     end block classical_evolution
 !*******************************************************************
 !     end of main loop
@@ -541,17 +561,12 @@ contains
 9024  format(1x)
 !
       close (11)
-
-      open (unit=53, file='program_status', status='unknown', action='write')
-      write (53, *) isweep + isweep_total_start
-      close (53)
     end if
 !
     if (iwrite .eq. 1) then
       call rranget(seed, 1, 1, 1)
       call swrite
       call saveseed(seed)
-      write (7, *) 'seed: ', idum
     endif
 
 #ifdef MPI
