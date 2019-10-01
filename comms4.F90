@@ -41,8 +41,8 @@ contains
     starts = (/1, 1, 1, 0/)
     starts(direction + 1) = position
 
- call MPI_Type_Create_Subarray(4, sizes, subsizes, starts, MPI_Order_Fortran, &
-      & datatype, typetarget, ierr)
+    call MPI_Type_Create_Subarray(4, sizes, subsizes, starts, MPI_Order_Fortran, &
+         & datatype, typetarget, ierr)
     call MPI_Type_Commit(typetarget, ierr)
     return
   end subroutine init_single_halo_type_4
@@ -130,7 +130,7 @@ contains
   subroutine start_halo_update_4(size4, Array, tag, reqs)
     !
     integer, intent(in) :: size4, tag
-    complex(dp), intent(inout) :: Array(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, size4)
+    complex(dp), intent(inout) :: Array(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, size4)
     integer, intent(out) :: reqs(12)
     integer :: ip_xup, ip_xdn, ip_yup, ip_ydn, ip_tup, ip_tdn
     integer :: tag_offset
@@ -176,7 +176,7 @@ contains
   subroutine start_halo_update_4_real(size4, Array, tag, reqs)
     !
     integer, intent(in) :: size4, tag
-    real, intent(inout) :: Array(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, size4)
+    real, intent(inout) :: Array(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, size4)
     integer, intent(out) :: reqs(12)
     integer :: ip_xup, ip_xdn, ip_yup, ip_ydn, ip_tup, ip_tdn
     integer :: tag_offset
