@@ -147,7 +147,8 @@ dwf3d_lib.o : $(TOPDIR)/dwf3d_lib.F90 \
               .makefile.uptodate counters.mod comms.mod comms_common.mod \
               comms4.mod \
               dirac.mod \
-              dum1.mod gauge.mod gaussian.mod gforce.mod measure_module.mod \
+              dum1.mod gauge.mod gaussian.mod gammamatrices.mod \
+              gforce.mod measure_module.mod \
               params.mod qmrherm_module.mod random.mod remez.mod remezg.mod \
               remez_common_subroutines.mod trial.mod vector.mod
 	$(COMPILE) -o dwf3d_lib.o $<

@@ -12,6 +12,7 @@ contains
 
   subroutine dwf3d_main
     use random
+    use gammamatrices
     use gaussian
     use remez
     use remezg
@@ -71,7 +72,7 @@ contains
     real :: action, paction, gaction
     real :: vel2, x, ytest, atraj
     real :: dt, am, y, traj, proby
-    integer :: imass, iter, iterl, iter2, iter2_read, i, ia, idirac, ithird
+    integer :: imass, iter, iterl, iter2, iter2_read, ia, idirac, ithird
     integer :: walltimesec, count, count_rate, count_max
     real :: run_time_start
     integer :: itercg, mu
@@ -81,7 +82,6 @@ contains
     integer :: reqs_ps(12)
     integer :: ierr
 #endif
-    complex(dp), parameter :: zi = (0.0, 1.0)
     ibound = -1
     qmrhprint = .true.
     call system_clock(count, count_rate, count_max)
@@ -101,19 +101,27 @@ contains
 
     open (unit=25, file='midout', status='old', action='read')
 
-    if (iread .eq. 1) then
-      call sread
-    endif
     read (25, *) dt, beta, am3, am, imass, iterl, iter2_read, walltimesec
     close (25)
 
 ! set a new seed by hand...
 
-    if (iseed .ne. 0) then
-      seed = 4139764973254.0 ! this should be a double precision number
-      ! ending with d0, but we do not care
-    endif
-    call readseed(seed)
+    block
+      logical :: success
+      call readseed(seed, success)
+      if (.not. success) then
+#ifdef MPI
+        if (ip_global .eq. 0) then
+#endif
+          print *, 'Reading seed file failed, using default value'
+#ifdef MPI
+        endif
+#endif
+        seed = 4139764973254.0 ! this should be a double precision number
+        ! ending with d0, but we do not care
+      endif
+    end block
+
     if (ip_global .eq. 0) then
       write (7, *) 'seed: ', seed
     end if
@@ -128,7 +136,26 @@ contains
 !     istart=0    : ordered start
 !     istart=1    : random start
 !*******************************************************************
-    call init(istart)
+    call init_gammas()
+    block
+      logical :: success
+      if ((istart .lt. 0) .or. (iread .eq. 1)) then
+        call sread(success)
+        if (.not. success) then
+#ifdef MPI
+          if (ip_global .eq. 0) then
+#endif
+            print *, 'Reading seed file failed, using default value'
+#ifdef MPI
+          endif
+#endif
+        endif
+      endif
+      if (istart .ge. 0 .or. .not. success) then
+        call init_gauge(istart)
+      endif
+    end block
+
 !  read in Remez coefficients
 
     call read_remez_file('remez2', ndiag, anum2, bnum2, aden2, bden2)
@@ -660,39 +687,46 @@ contains
     return
   end subroutine hamilton
 
-  subroutine sread
+  subroutine sread(success)
     use random
     use gauge
 #ifdef MPI
     use comms
+    implicit none
+    logical, intent(out) :: success
     integer :: mpi_fh
     integer :: status(mpi_status_size)
     integer :: ierr
 
-    call MPI_File_Open(comm, 'con', MPI_Mode_Rdonly, &
-         & MPI_Info_Null, mpi_fh, ierr)
+    inquire (file='con', exist=success)
+
+    if (success) then
+
+      call MPI_File_Open(comm, 'con', MPI_Mode_Rdonly, &
+           & MPI_Info_Null, mpi_fh, ierr)
 ! Get the configuration
-    call MPI_File_Set_View(mpi_fh, 0_8, MPI_Real, mpiio_type, "native", &
-         & MPI_Info_Null, ierr)
-    call MPI_File_Read_All(mpi_fh, theta, 3*ksizex_l*ksizey_l*ksizet_l, &
-         & MPI_Real, status, ierr)
-    call MPI_File_Close(mpi_fh, ierr)
+      call MPI_File_Set_View(mpi_fh, 0_8, MPI_Real, mpiio_type, "native", &
+           & MPI_Info_Null, ierr)
+      call MPI_File_Read_All(mpi_fh, theta, 3*ksizex_l*ksizey_l*ksizet_l, &
+           & MPI_Real, status, ierr)
+      call MPI_File_Close(mpi_fh, ierr)
 ! Get the see,ierrd
-    if (ip_global .eq. 0) then
-      print *, "configuration file read."
-      open (unit=10, file='con', status='old', form='unformatted', access='stream')
-      !print*,"FSEEK CALL COMMENTED OUT, THIS WILL FAIL"
-      call fseek(10, 3*ksize*ksize*ksizet*4 + 4, 0)
-      read (10) seed
-      close (10)
-    end if
+      if (ip_global .eq. 0) then
+        print *, "configuration file read."
+        open (unit=10, file='con', status='old', form='unformatted', access='stream')
+        !print*,"FSEEK CALL COMMENTED OUT, THIS WILL FAIL"
+        call fseek(10, 3*ksize*ksize*ksizet*4 + 4, 0)
+        read (10) seed
+        close (10)
+      end if
 #else
-    open (unit=10, file='con', status='old', form='unformatted')
-    read (10) theta, seed
-    close (10)
-    print *, "configuration file read."
+      open (unit=10, file='con', status='old', form='unformatted')
+      read (10) theta, seed
+      close (10)
+      print *, "configuration file read."
 #endif
-    return
+    endif
+
   end subroutine sread
 !
   subroutine swrite
@@ -735,14 +769,15 @@ contains
   end subroutine swrite
 
   ! Tries to read seed from file
-  subroutine readseed(globalseed)
+  subroutine readseed(globalseed, success)
 #ifdef MPI
     use comms
 #endif
     implicit none
     ! if the seed file is not correctly read, we do not want to change
     ! the vaule of globalseed passed as input
-    real(dp), intent(inout) :: globalseed
+    real(dp), intent(out) :: globalseed
+    logical, intent(out) :: success
     integer :: seedreadstatus
 #ifdef MPI
     integer :: ierr
@@ -752,11 +787,15 @@ contains
       ! if 'random_seed' can be opened, read from it.
       if (seedreadstatus .eq. 0) then
         read (40, *) globalseed
+        success = .true.
         close (40)
+      else
+        success = .false.
       endif
 #ifdef MPI
     endif
     call MPI_Bcast(globalseed, 1, MPI_Double_Precision, 0, comm, ierr)
+    call MPI_Bcast(success, 1, MPI_Logical, 0, comm, ierr)
 #endif
   end subroutine readseed
 
@@ -779,127 +818,40 @@ contains
 #endif
   end subroutine saveseed
 !
-  subroutine init(nc)
+  subroutine init_gauge(nc)
     use random
     use gauge
-    use dirac
 !*******************************************************************
 !     sets initial values
 !     nc=0 cold start
 !     nc=1 hot start
 !     nc<0 no initialization
 !*******************************************************************
+    implicit none
     integer, intent(in) :: nc
-!     complex one,zi
-    complex(dp), parameter :: one = (1.0, 0.0), zi = (0.0, 1.0)
     integer :: ix, iy, it, mu
     real :: g
-!
-!*******************************************************************
-!  calculate constants
-!*******************************************************************
-!      call addrc
-!*******************************************************************
-!    setup Dirac algebra
-!*******************************************************************
-!
-!     gamma_1
-!
-    gamval(1, 1) = -zi
-    gamval(1, 2) = -zi
-    gamval(1, 3) = zi
-    gamval(1, 4) = zi
-!
-    gamin(1, 1) = 4
-    gamin(1, 2) = 3
-    gamin(1, 3) = 2
-    gamin(1, 4) = 1
-!
-!     gamma_2
-!
-    gamval(2, 1) = -one
-    gamval(2, 2) = one
-    gamval(2, 3) = one
-    gamval(2, 4) = -one
-!
-    gamin(2, 1) = 4
-    gamin(2, 2) = 3
-    gamin(2, 3) = 2
-    gamin(2, 4) = 1
-!
-!     gamma_3
-!
-    gamval(3, 1) = -zi
-    gamval(3, 2) = zi
-    gamval(3, 3) = zi
-    gamval(3, 4) = -zi
-!
-    gamin(3, 1) = 3
-    gamin(3, 2) = 4
-    gamin(3, 3) = 1
-    gamin(3, 4) = 2
-!
-!     gamma_4
-!
-    gamval(4, 1) = one
-    gamval(4, 2) = one
-    gamval(4, 3) = -one
-    gamval(4, 4) = -one
-!
-    gamin(4, 1) = 1
-    gamin(4, 2) = 2
-    gamin(4, 3) = 3
-    gamin(4, 4) = 4
-!
-!     gamma_5 = gamma_1 * gamma_2 * gamma_3 * gamma_4
-!
-    gamval(5, 1) = -one
-    gamval(5, 2) = -one
-    gamval(5, 3) = -one
-    gamval(5, 4) = -one
-!
-    gamin(5, 1) = 3
-    gamin(5, 2) = 4
-    gamin(5, 3) = 1
-    gamin(5, 4) = 2
-!
-!     gamma_4 * gamma_5 (called gamma_3 gamma_5 in notes)
-    gamval(6, 1) = -one
-    gamval(6, 2) = -one
-    gamval(6, 3) = one
-    gamval(6, 4) = one
-!
-    gamin(6, 1) = 3
-    gamin(6, 2) = 4
-    gamin(6, 3) = 1
-    gamin(6, 4) = 2
-!
-!
-    gamval = gamval*akappa
-!
-    if (nc .lt. 0) return
-!
-!     initialize gauge fields
-!
-    if (nc .eq. 1) goto 40
-!     (else cold start)
-    theta = 0.0
-    return
-!
-40  continue
-    g = 0.05
-    do mu = 1, 3
-      do it = 1, ksizet_l
-        do iy = 1, ksizey_l
-          do ix = 1, ksizex_l
-!               theta(ix, iy, it, mu) = 2.0 * g * rranf(ix, iy, it) - 1.0
-            theta(ix, iy, it, mu) = 2.0*g*rano(yran, idum, ix, iy, it) - 1.0
+
+    select case (nc)
+    case (-1)
+      return
+    case (0)
+      theta = 0.0
+      return
+    case (1)
+      g = 0.05
+      do mu = 1, 3
+        do it = 1, ksizet_l
+          do iy = 1, ksizey_l
+            do ix = 1, ksizex_l
+              theta(ix, iy, it, mu) = 2.0*g*rano(yran, idum, ix, iy, it) - 1.0
+            enddo
           enddo
         enddo
       enddo
-    enddo
-    return
-  end subroutine init
+      return
+    end select
+  end subroutine init_gauge
 !******************************************************************
 !   calculate compact links from non-compact links
 !******************************************************************

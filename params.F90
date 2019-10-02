@@ -40,11 +40,10 @@ module params
 
   ! Control parameters
   ! CAREFUL. Look into dwf3d_lib.F90 for the meaning.
-  integer, parameter :: istart = -1   !
-  integer, parameter :: iread = 1     !
-  integer, parameter :: iwrite = 1     !
+  integer, parameter :: istart = -1   ! Default -1
+  integer, parameter :: iread = 1     ! Default 1
+  integer, parameter :: iwrite = 1     ! Default 1
   integer, parameter :: iprint = 5     !
-  integer, parameter :: iseed = 0      !
   integer, parameter :: icheck = 100
 
   ! Inverter
