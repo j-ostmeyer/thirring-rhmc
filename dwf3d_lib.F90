@@ -426,6 +426,7 @@ contains
 
         keep_running_check: block
           real :: time_for_next_iteration
+          logical :: stop_file_exists
 
           time_for_next_iteration = time_per_md_step*4*iterl*2
 
@@ -457,6 +458,20 @@ contains
 #endif
             exit
           endif
+
+          inquire (file='stop', exist=stop_file_exists)
+          if (stop_file_exists) then
+#ifdef MPI
+            if (ip_global .eq. 0) then
+#endif
+              print *, 'Found "stop" file: stopping now.'
+              print *, 'Run:', isweep, ' started:', isweep_total_start
+#ifdef MPI
+            endif
+#endif
+            exit
+          endif
+
         end block keep_running_check
       end do
       iter2 = min(isweep, iter2_read)
