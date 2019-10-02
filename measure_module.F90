@@ -146,7 +146,7 @@ contains
   !       solves Mx=x1
   !     (Numerical Recipes section 2.10 pp.70-73)
   !*******************************************************************
-  subroutine measure(psibarpsi, res, aviter, am, imass,isweep_total)
+  subroutine measure(psibarpsi, res, aviter, am, imass, isweep_total)
     use trial, only: u
     use vector, xi => x
     use comms5, only: start_halo_update_5
@@ -331,15 +331,15 @@ contains
       endif
       !write(6,*) real(psibarpsi1),aimag(psibarpsi1), real(psibarpsi2),aimag(psibarpsi2)
       if (ip_global .eq. 0) then
-        open(unit=100,file='fort.100',action='write',position='append')
-        if(present(isweep_total)) then
-          write (100, *) isweep_total, real(psibarpsi1), aimag(psibarpsi1), &
+        open (unit=100, file='fort.100', action='write', position='append')
+        if (present(isweep_total)) then
+          write (100, '(I5,4E17.9E3)') isweep_total, real(psibarpsi1), aimag(psibarpsi1), &
              & real(psibarpsi2), aimag(psibarpsi2)
         else
-          write (100, *) real(psibarpsi1), aimag(psibarpsi1), &
+          write (100, '(I5,4E17.9E3)') real(psibarpsi1), aimag(psibarpsi1), &
              & real(psibarpsi2), aimag(psibarpsi2)
         endif
-        close(100)
+        close (100)
       end if
       !
       ! end loop on noise
@@ -354,13 +354,13 @@ contains
     psibarpsi = psibarpsi/knoise
     susclsing = 2*kvol*susclsing/(knoise*(knoise - 1))
     if (ip_global .eq. 0) then
-      open(unit=200,file='fort.200',action='write',position='append')
-      if(present(isweep_total)) then
-        write (200, *) isweep_total, psibarpsi, susclsing
+      open (unit=200, file='fort.200', action='write', position='append')
+      if (present(isweep_total)) then
+        write (200, '(I5,2E15.7E3)') isweep_total, psibarpsi, susclsing
       else
-        write (200, *) psibarpsi, susclsing
+        write (200, '(2E15.7E3)') psibarpsi, susclsing
       endif
-      close(200)  
+      close (200)
     end if
     aviter = float(iter)/(4*knoise)
     return
