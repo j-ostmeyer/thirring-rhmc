@@ -145,14 +145,14 @@ contains
 #ifdef MPI
           if (ip_global .eq. 0) then
 #endif
-            print *, 'Reading seed file failed, using default value'
+            print *, 'Reading con file failed, starting from random conf'
 #ifdef MPI
           endif
 #endif
         endif
       endif
       if (istart .ge. 0 .or. .not. success) then
-        call init_gauge(istart)
+        call init_gauge(1)
       endif
     end block
 
@@ -845,6 +845,14 @@ contains
     integer, intent(in) :: nc
     integer :: ix, iy, it, mu
     real :: g
+
+#ifdef MPI
+    if (ip_global .eq. 0) then
+#endif
+      print *, 'Initialising gauge conf, nc: ', nc
+#ifdef MPI
+    endif
+#endif
 
     select case (nc)
     case (-1)
