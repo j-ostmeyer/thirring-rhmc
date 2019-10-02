@@ -56,6 +56,7 @@ module params
   real, parameter :: respbp=1.0e-6, rescgg=1.0e-6
   real, parameter :: rescga=1e-9
   real, parameter :: rescgm=1e-9
+  logical, parameter :: spmd = .true.
 
   ! max step in molecular dynamics evolution
   integer, parameter :: itermax=1000
