@@ -169,33 +169,6 @@ contains
 !*******************************************************************
     traj = iterl*dt
     proby = 1.0/float(iterl)
-    if (ip_global .eq. 0) then
-      write (7, 9001) ksize, ksizet, kthird, Nf, dt, traj, ndiag, ndiagg, &
-           & iter2, beta, am3, am, imass
-9001  format(' ksize=', i3, ' ksizet=', i3, / &
-             , ' kthird=', i3, / &
-             , ' Nf =', i3, / &
-             , ' time step: dt=', f6.4, ' trajectory length=', f9.6, / &
-             , ' Remez ndiag: action =', i3, ' guidance=', i3, / &
-             , ' # trajectories=', i6, ' beta=', f9.6, / &
-             , ' am3=', f6.4, ' am=', f6.4/ &
-             , ' imass=', i2)
-#ifdef MPI
-      write (7, 9002) NP_X, NP_Y, NP_T, ksizex_l, ksizey_l, ksizet_l
-9002  format(" NP_X=", i3, " NP_Y=", i3, " NP_T=", i3, / &
-           & " ksizex_l=", i3, " ksizey_l=", i3, " ksizet_l=", i3)
-#endif
-!     write(6,9004) rescgg,rescga,respbp
-      write (7, 9004) rescgg, rescga, respbp
-9004  format(' Stopping residuals: guidance: ', e11.4, ' acceptance: ', &
-           &     e11.4, ' estimator: ', e11.4)
-!     write(6,9044) rescgm
-      write (7, 9044) rescgm
-9044  format(' Stopping residuals: meson: ', e11.4)
-      call rranget(seed, 1, 1, 1)
-! c     write(6,*) 'seed: ', seed
-      write (7, *) 'seed: ', seed
-    end if
 !*******************************************************************
 !       initialize for averages
 !*******************************************************************
@@ -521,7 +494,33 @@ contains
 !*******************************************************************
 !     print global averages
 !*******************************************************************
+
     if (ip_global .eq. 0) then
+      write (7, 9001) ksize, ksizet, kthird, Nf, dt, traj, ndiag, ndiagg, &
+           & iter2, iter2_read, beta, am3, am, imass
+9001  format(' ksize=', i3, ' ksizet=', i3, / &
+             , ' kthird=', i3, / &
+             , ' Nf =', i3, / &
+             , ' time step: dt=', f6.4, ' expected avg trajectory length=', f9.6, / &
+             , ' Remez ndiag: action =', i3, ' guidance=', i3, / &
+             , ' # trajectories=', i6, ' out of max', i6, ' beta=', f9.6, / &
+             , ' am3=', f6.4, ' am=', f6.4/ &
+             , ' imass=', i2)
+#ifdef MPI
+      write (7, 9002) NP_X, NP_Y, NP_T, ksizex_l, ksizey_l, ksizet_l
+9002  format(" NP_X=", i3, " NP_Y=", i3, " NP_T=", i3, / &
+           & " ksizex_l=", i3, " ksizey_l=", i3, " ksizet_l=", i3)
+#endif
+!     write(6,9004) rescgg,rescga,respbp
+      write (7, 9004) rescgg, rescga, respbp
+9004  format(' Stopping residuals: guidance: ', e11.4, ' acceptance: ', &
+           &     e11.4, ' estimator: ', e11.4)
+!     write(6,9044) rescgm
+      write (7, 9044) rescgm
+9044  format(' Stopping residuals: meson: ', e11.4)
+      call rranget(seed, 1, 1, 1)
+! c     write(6,*) 'seed: ', seed
+      write (7, *) 'seed: ', seed
 !     write(6, 9022) iter2,naccp,atraj,y_average,ysq_average,ancg,ancgpv,ancgh,ancghpv,ancgf,
 !    & ancgfpv,ancgpf,ancgpfpv,pbpa,vel2a,action_average
       write (7, 9022) iter2, naccp, atraj, y_average, ysq_average, &
