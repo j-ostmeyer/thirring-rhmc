@@ -48,16 +48,21 @@ contains
       ancgm_average = 0
     endif
     ancg = ancg/(Nf*itot)
-    ancgh = ancgh/(2*Nf*iter2)
-    ancgpf = ancgpf/(Nf*iter2)
     ancgpv = ancgpv/(Nf*itot)
     ancgf = ancgf/(Nf*itot)
     ancgfpv = ancgfpv/(Nf*itot)
+
+    ancgh = ancgh/(2*Nf*iter2)
+    ancgpf = ancgpf/(Nf*iter2)
     ancghpv = ancghpv/(2*Nf*iter2)
-    ancgpfpv = ancgpfpv/(iter2*Nf)
+    ancgpfpv = ancgpfpv/(Nf*iter2)
     y_average = y_average/iter2
     ysq_average = ysq_average/iter2 - y_average*y_average
-    ysq_average = sqrt(ysq_average/(iter2 - 1))
+    if (iter2 .gt. 1) then
+      ysq_average = sqrt(ysq_average/(iter2 - 1))
+    else
+      ysq_average = 0.0
+    endif
 
   end subroutine final_averages
 
