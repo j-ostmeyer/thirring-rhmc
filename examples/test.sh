@@ -15,8 +15,10 @@ MPIRUNNER='mpirun -n 8'
 
 echo "Slurm Job ID: $SLURM_JOB_ID" >> output
 
-cp con con.$SLURM_JOB_ID
-cp random_seed random_seed.$SLURM_JOB_ID
+for file in con random_seed program_status
+do 
+  cp $file $file.$SLURM_JOB_ID
+done
 
 
 BOOKKEEPING=bookkeeping.txt
@@ -24,11 +26,12 @@ BOOKKEEPING=bookkeeping.txt
 if [ ! -f "$BOOKKEEPING" ]
 then
     echo '# Line count' >> $BOOKKEEPING
-    echo SLURM_JOB_ID fort.100 fort.11 fort.200 control >> $BOOKKEEPING
+    echo UnixTimeStamp SLURM_JOB_ID fort.100 fort.11 fort.200 control >> $BOOKKEEPING
 fi
 
-echo $SLURM_JOB_ID $(cat fort.100 | wc -l ) $(cat fort.11 | wc -l) \
-    $( cat fort.200 | wc -l ) $(cat control | wc -l) >> $BOOKKEEPING
+echo $(date +"%s") $SLURM_JOB_ID $(cat fort.100  2>/dev/null| wc -l ) \
+ $(cat fort.11 2>/dev/null | wc -l) $( cat fort.200 2>/dev/null | wc -l ) \
+ $(cat control 2>/dev/null | wc -l) >> $BOOKKEEPING
 
 
 $MPIRUNNER  ./bulk_rhmc
