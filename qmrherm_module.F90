@@ -18,7 +18,7 @@ contains
 
   subroutine qmrherm(Phi, X, res, itercg, am, imass, anum, aden, ndiagq, iflag, use_sp, cg_returns)
     use comms_common, only: ip_global
-    use comms, only: complete_halo_update
+    use comms, only: complete_halo_update, MPI_COMM_WORLD
 #ifdef MPI
     use comms5, only: start_halo_update_5
     use comms6, only: start_halo_update_6
@@ -45,7 +45,18 @@ contains
     integer :: idiag
 #ifdef MPI
     integer, dimension(12) :: reqs_X2, reqs_Phi0, reqs_R, reqs_x
+    integer :: ierr
 #endif
+
+    if (ndiagq .gt. ndiag) then
+      print *, 'The qmrherm_module module currently requires ndiagq be greater than ndiagg.'
+      print *, 'Please adjust it and recompile.'
+#ifdef MPI
+      call MPI_Abort(MPI_COMM_WORLD, 1, ierr)
+#endif
+      call exit(1)
+    endif
+
     x = anum(0)*Phi
     if (present(use_sp) .and. use_sp) then
       call multishift_solver_sp(u, am, imass, ndiagq, aden, anum(1:ndiagq), x1, Phi, res, max_qmr_iters, itercg, cg_returns_tmp)

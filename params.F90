@@ -39,6 +39,7 @@ module params
 #endif
 
   ! Control parameters
+  ! CAREFUL. Look into dwf3d_lib.F90 for the meaning.
   integer, parameter :: istart = -1   !
   integer, parameter :: iread = 1     !
   integer, parameter :: iwrite = 1     !
@@ -47,17 +48,18 @@ module params
   integer, parameter :: icheck = 100
 
   ! Inverter
-  integer :: max_qmr_iters = 15000 ! QMRHERM
+  integer :: max_qmr_iters = 30000 ! QMRHERM
   integer :: niterc = kthird*kvol ! CONGRAD
 
   ! inverter residuals
   real, parameter :: respbp = 1.0e-6, rescgg = 3.0e-4
   real, parameter :: rescga = 1e-9
   real, parameter :: rescgm = 1e-9
+  ! whether to use single precision in 'guidance' phase.
   logical, parameter :: spmd = .true.
 
   ! max step in molecular dynamics evolution
-  integer, parameter :: itermax = 1000
+  ! integer, parameter :: itermax = 1000 ! now set to 4*iterl
 
   ! Runtime parameters
   real :: beta

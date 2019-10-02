@@ -77,7 +77,7 @@ $(info MPIFC   : $(MPIFC))
 $(info FC      : $(FC))
 $(info FCFLAGS : $(FCFLAGS))
 
-LIBOBJS = avgitercounts.o comms.o comms_common.o \
+LIBOBJS = counters.o comms.o comms_common.o \
           comms4.o comms4_sp.o \
           comms5.o comms5_sp.o \
           comms6.o \
@@ -87,7 +87,7 @@ LIBOBJS = avgitercounts.o comms.o comms_common.o \
           measure_module.o multishift_module.o params.o partitioning.o \
           qmrherm_module.o qmrherm_module_split.o \
           qmrherm_module_split_nodir.o random.o reductions.o remez.o remezg.o \
-          trial.o vector.o
+          remez_common_subroutines.o trial.o vector.o
 
 .PHONY: clean
 
@@ -108,12 +108,13 @@ $(TOPDIR)/comms5_sp.F90 : $(TOPDIR)/comms5.F90
 %.mod : %.o
 	#touch $@
 
-# generic rule for dum,gauge,gforce,remez,remezg,trial,vector,partitioning
+# generic rule for dum,gauge,gforce,remez,remezg, remez_common_subroutine 
+# trial,vector,partitioning
 %.o : $(TOPDIR)/%.F90 .makefile.uptodate params.mod
 	$(COMPILE) -o $*.o $<
 
-avgitercounts.o : $(TOPDIR)/avgitercounts.F90 .makefile.uptodate
-	$(COMPILE) -o avgitercounts.o $<
+counters.o : $(TOPDIR)/counters.F90 .makefile.uptodate
+	$(COMPILE) -o counters.o $<
 
 bulk_rhmc.o : $(TOPDIR)/bulk_rhmc.f90 .makefile.uptodate \
         dwf3d_lib.mod
@@ -143,12 +144,12 @@ dirac_split_nodir.o : $(TOPDIR)/dirac_split_nodir.F90 .makefile.uptodate \
 	$(COMPILE) -o $*.o $<
 
 dwf3d_lib.o : $(TOPDIR)/dwf3d_lib.F90 \
-              .makefile.uptodate avgitercounts.mod comms.mod comms_common.mod \
+              .makefile.uptodate counters.mod comms.mod comms_common.mod \
               comms4.mod \
               dirac.mod \
               dum1.mod gauge.mod gaussian.mod gforce.mod measure_module.mod \
               params.mod qmrherm_module.mod random.mod remez.mod remezg.mod \
-              trial.mod vector.mod
+              remez_common_subroutines.mod trial.mod vector.mod
 	$(COMPILE) -o dwf3d_lib.o $<
 
 gaussian.o : $(TOPDIR)/gaussian.F90 .makefile.uptodate \

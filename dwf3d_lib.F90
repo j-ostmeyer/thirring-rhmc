@@ -15,11 +15,12 @@ contains
     use gaussian
     use remez
     use remezg
+    use remez_common_subroutines
     use trial, ut => u, thetat => theta
     use gauge
     use vector, X1 => X
     use gforce
-    use avgitercounts
+    use counters ! ALL
     use dum1
     use comms
     use measure_module
@@ -56,42 +57,30 @@ contains
 !
 !    Phi: pseudofermion field
 !    am: bare fermion mass
-!    actiona: running average of total action
+!    action_average: running average of total action
 !
 !                                               SJH February 2017
+
+!    The code now runs up to a fixed numner iter2_read of trajectories, but run time is now the limiting factor (see
+!    walltime_seconds variable.
 !*******************************************************************
     implicit none
-!     complex qq,qbqb
-!     complex u
-!     complex a,b
     complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)!
     complex(dp) :: Xresult(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-! Currently unused
-!    complex(dp) :: qq,qbqb
-!    complex(dp) :: u
-!    complex(dp) :: a,b
     real(dp) :: H0, H1, S0, S1, dH, dS, hg, hp
     real :: action, paction, gaction
     real :: vel2, x, ytest, atraj
     real :: dt, am, y, traj, proby
-    real :: actiona, vel2a, pbp, pbpa, yav, yyav
-    real :: ancgm, ancgma
-    integer :: imass, iter, iterl, iter2, i, ia, idirac, ithird
+    integer :: imass, iter, iterl, iter2, iter2_read, i, ia, idirac, ithird
     integer :: walltimesec, count, count_rate, count_max
     real :: run_time_start
-    integer :: naccp, ipbp, itot, itercg, mu
+    integer :: itercg, mu
     logical :: program_status_file_exists
-!*******************************************************************
-!     variables to keep track of MPI requests
-!*******************************************************************
 #ifdef MPI
+!     variables to keep track of MPI requests
     integer :: reqs_ps(12)
     integer :: ierr
 #endif
-!
-!*******************************************************************
-!     input
-!*******************************************************************
     complex(dp), parameter :: zi = (0.0, 1.0)
     ibound = -1
     qmrhprint = .true.
@@ -99,38 +88,23 @@ contains
     run_time_start = count/count_rate
 #ifdef MPI
     call init_MPI
-    call MPI_AllReduce(MPI_In_Place,run_time_start, 1, MPI_Real, MPI_Max, comm, ierr)
+    call MPI_AllReduce(MPI_In_Place, run_time_start, 1, MPI_Real, MPI_Max, comm, ierr)
 
 #endif
-!*******************************************************************
-!     end of input
-!*******************************************************************
-!*******************************************************************
-!     check qmrherm is going to be OK
-!*******************************************************************
-    if (ndiagg .gt. ndiag) then
-      print *, 'The qmrherm_module module currently requires ndiag be greater than ndiagg.'
-      print *, 'Please adjust it and recompile.'
-      call exit(1)
-    endif
 
     if (ip_global .eq. 0) then
       open (unit=7, file='output', status='unknown', action='write', &
-        position='append')
+            position='append')
       open (unit=98, file='control', status='unknown', action='write', &
-        position='append')
+            position='append')
     end if
 
     open (unit=25, file='midout', status='old', action='read')
-    open (unit=36, file='remez2', status='old', action='read')
-    open (unit=37, file='remez4', status='old', action='read')
-    open (unit=38, file='remez2g', status='old', action='read')
-    open (unit=39, file='remez4g', status='old', action='read')
 
     if (iread .eq. 1) then
       call sread
     endif
-    read (25, *) dt, beta, am3, am, imass, iterl, iter2, walltimesec
+    read (25, *) dt, beta, am3, am, imass, iterl, iter2_read, walltimesec
     close (25)
 
 ! set a new seed by hand...
@@ -156,30 +130,13 @@ contains
 !*******************************************************************
     call init(istart)
 !  read in Remez coefficients
-    read (36, *) anum2(0)
-    read (37, *) anum4(0)
-    read (38, *) anum2g(0)
-    read (39, *) anum4g(0)
-    do i = 1, ndiag
-      read (36, *) anum2(i), aden2(i)
-      read (37, *) anum4(i), aden4(i)
-    enddo
-    do i = 1, ndiagg
-      read (38, *) anum2g(i), aden2g(i)
-      read (39, *) anum4g(i), aden4g(i)
-    enddo
-    read (36, *) bnum2(0)
-    read (37, *) bnum4(0)
-    read (38, *) bnum2g(0)
-    read (39, *) bnum4g(0)
-    do i = 1, ndiag
-      read (36, *) bnum2(i), bden2(i)
-      read (37, *) bnum4(i), bden4(i)
-    enddo
-    do i = 1, ndiagg
-      read (38, *) bnum2g(i), bden2g(i)
-      read (39, *) bnum4g(i), bden4g(i)
-    enddo
+
+    call read_remez_file('remez2', ndiag, anum2, bnum2, aden2, bden2)
+    call read_remez_file('remez2g', ndiagg, anum2g, bnum2g, aden2g, bden2g)
+
+    call read_remez_file('remez4', ndiag, anum4, bnum4, aden4, bden4)
+    call read_remez_file('remez4g', ndiagg, anum4g, bnum4g, aden4g, bden4g)
+
 !*******************************************************************
 !     print heading
 !*******************************************************************
@@ -215,23 +172,27 @@ contains
 !*******************************************************************
 !       initialize for averages
 !*******************************************************************
-    actiona = 0.0
-    vel2a = 0.0
-    pbpa = 0.0
-    ancg = 0.0
-    ancgh = 0.0
-    ancgf = 0.0
-    ancgpf = 0.0
-    ancgpv = 0.0
-    ancghpv = 0.0
-    ancgfpv = 0.0
-    ancgpfpv = 0.0
-    ancgma = 0.0
-    yav = 0.0
-    yyav = 0.0
-    naccp = 0
-    ipbp = 0
-    itot = 0
+
+    call init_counters()
+    !action_average = 0.0
+    !vel2a = 0.0
+    !pbp_average = 0.0
+
+    !ancg = 0.0
+    !ancgf = 0.0
+    !ancgfpv = 0.0
+    !ancgh = 0.0
+    !ancghpv = 0.0
+    !ancgpf = 0.0
+    !ancgpfpv = 0.0
+    !ancgpv = 0.0
+
+    !ancgm_average = 0.0
+    !y_average = 0.0
+    !ysq_average = 0.0
+    !naccp = 0
+    !ipbp = 0
+    !itot = 0
 !*******************************************************************
 !     start of classical evolution
 !*******************************************************************
@@ -240,6 +201,7 @@ contains
       real :: run_time, time_per_md_step ! conservative estimates
       real :: measurement_time, total_md_time
       integer :: isweep, isweep_total_start
+
       measurement_time = 100 ! an arbitrary value (that should be conservative)
       total_md_time = 0
       inquire (file='program_status', exist=program_status_file_exists)
@@ -251,12 +213,12 @@ contains
         isweep_total_start = 0
       endif
 
-      do isweep = 1, iter2
+      do isweep = 1, iter2_read
 
 #ifdef MPI
         if (ip_global .eq. 0) then
 #endif
-          write (6, "(A7,I6,A4,I6,A12,I6,A1)") 'Isweep ', isweep, ' of ', iter2, ' (start from', isweep_total_start, ')'
+          write (6, "(A7,I6,A4,I6,A12,I6,A1)") 'Isweep ', isweep, ' of ', iter2_read, ' (start from', isweep_total_start, ')'
 #ifdef MPI
         endif
 #endif
@@ -319,21 +281,16 @@ contains
         call system_clock(count, count_rate, count_max)
         run_time = count/count_rate - run_time_start
 #ifdef MPI
-        call MPI_AllReduce(MPI_In_Place,run_time, 1, MPI_Real, MPI_Max, comm, ierr)
-#endif 
+        call MPI_AllReduce(MPI_In_Place, run_time, 1, MPI_Real, MPI_Max, comm, ierr)
+#endif
 
         total_md_time = total_md_time - run_time
-
-!*******************************************************************
-!  call to Hamiltonian
-!
         call hamilton(Phi, H0, hg, hp, S0, rescga, isweep, 0, am, imass)
         if (isweep .eq. 1) then
           action = real(S0)/kvol
           gaction = real(hg)/kvol
           paction = real(hp)/kvol
         endif
-!     goto 501
 !*******************************************************************
 !      half-step forward for p
 !*******************************************************************
@@ -351,18 +308,13 @@ contains
 #ifdef MPI
           endif
 #endif
-!
-!  step (i) st(t+dt)=st(t)+p(t+dt/2)*dt;
-!
+          !  step (i) st(t+dt)=st(t)+p(t+dt/2)*dt;
           thetat = thetat + dt*pp
-!
-!  step (ii)  p(t+3dt/2)=p(t+dt/2)-dSds(t+dt)*dt (1/2 step on last iteration)
-!
+          !  step (ii)  p(t+3dt/2)=p(t+dt/2)-dSds(t+dt)*dt (1/2 step on last iteration)
           call coef(ut, thetat)
           call force(Phi, rescgg, am, imass, isweep, iter)
-!
-! test for end of random trajectory
-!
+
+          ! test for end of random trajectory
           if (ip_global .eq. 0) then
             ytest = rano(yran, idum, 1, 1, 1)
           end if
@@ -372,28 +324,27 @@ contains
           if (ytest .lt. proby) then
             pp = pp - 0.5*dt*dSdpi
             itot = itot + iter
-            goto 501
+            exit
           else
             pp = pp - dt*dSdpi
           endif
 !
-        end do
+        enddo
 !**********************************************************************
 !  Monte Carlo step: accept new fields with probability=
 !              min(1,exp(H0-H1))
 !**********************************************************************
-501     continue
 
         call hamilton(Phi, H1, hg, hp, S1, rescga, isweep, -1, am, imass)
         dH = H0 - H1
         dS = S0 - S1
         if (ip_global .eq. 0) then
-          write (98, *) isweep_total_start,isweep,dH, dS
+          write (98, *) isweep_total_start, isweep, dH, dS
           write (6, *) "dH,dS ", dH, dS
         end if
         y = exp(real(dH))
-        yav = yav + y
-        yyav = yyav + y*y
+        y_average = y_average + y
+        ysq_average = ysq_average + y*y
 !
         if (dH .lt. 0.0) then
           x = rano(yran, idum, 1, 1, 1)
@@ -411,12 +362,12 @@ contains
         gaction = real(hg)/kvol
         paction = real(hp)/kvol
 600     continue
-        if(ip_global .eq. 0) then
+        if (ip_global .eq. 0) then
           open (unit=11, file='fort.11', action='write', position='append')
           write (11, *) isweep_total_start, isweep, gaction, paction
           close (11)
         end if
-        actiona = actiona + action
+        action_average = action_average + action
         vel2 = sum(pp*pp)
 #ifdef MPI
         call MPI_AllReduce(MPI_In_Place, vel2, 1, MPI_Real, MPI_Sum, comm, ierr)
@@ -428,8 +379,8 @@ contains
         call system_clock(count, count_rate, count_max)
         run_time = count/count_rate - run_time_start
 #ifdef MPI
-        call MPI_AllReduce(MPI_In_Place,run_time, 1, MPI_Real, MPI_Max, comm, ierr)
-#endif 
+        call MPI_AllReduce(MPI_In_Place, run_time, 1, MPI_Real, MPI_Max, comm, ierr)
+#endif
 
         total_md_time = total_md_time + run_time
         time_per_md_step = total_md_time/itot
@@ -441,13 +392,13 @@ contains
 !     goto 601
 !666    continue
 
-        if (mod((isweep + isweep_total_start),iprint).eq.0) then
+        if (mod((isweep + isweep_total_start), iprint) .eq. 0) then
           thetat = theta
           call coef(ut, thetat)
-          call measure(pbp, respbp, ancgm, am, imass,isweep+isweep_total_start)
+          call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)
 !         call meson(rescgm,itercg,ancgm,am,imass)
-          pbpa = pbpa + pbp
-          ancgma = ancgma + ancgm
+          pbp_average = pbp_average + pbp
+          ancgm_average = ancgm_average + ancgm
           ipbp = ipbp + 1
 #ifdef MPI
           if (ip_global .eq. 0) then
@@ -460,8 +411,8 @@ contains
           measurement_time = count/count_rate - run_time_start
           measurement_time = measurement_time - run_time
 #ifdef MPI
-          call MPI_AllReduce(MPI_In_Place,measurement_time, 1, MPI_Real, MPI_Max, comm, ierr)
-#endif 
+          call MPI_AllReduce(MPI_In_Place, measurement_time, 1, MPI_Real, MPI_Max, comm, ierr)
+#endif
         endif
 !
         if ((isweep/icheck)*icheck .eq. isweep) then
@@ -485,8 +436,8 @@ contains
           call system_clock(count, count_rate, count_max)
           run_time = count/count_rate - run_time_start
 #ifdef MPI
-          call MPI_AllReduce(MPI_In_Place,run_time, 1, MPI_Real, MPI_Max, comm, ierr)
-#endif 
+          call MPI_AllReduce(MPI_In_Place, run_time, 1, MPI_Real, MPI_Max, comm, ierr)
+#endif
 #ifdef MPI
           if (ip_global .eq. 0) then
 #endif
@@ -500,7 +451,7 @@ contains
             if (ip_global .eq. 0) then
 #endif
               print *, 'Time left insufficient, quitting.'
-              print*,'Run:',isweep,' started:',isweep_total_start
+              print *, 'Run:', isweep, ' started:', isweep_total_start
 #ifdef MPI
             endif
 #endif
@@ -508,43 +459,47 @@ contains
           endif
         end block keep_running_check
       end do
-      open (unit=53, file='program_status', status='unknown', action='write')
-      write (53, *) min(isweep,iter2) + isweep_total_start, measurement_time
-      close (53)
+      iter2 = min(isweep, iter2_read)
+      if (ip_global .eq. 0) then
+        open (unit=53, file='program_status', status='unknown', action='write')
+        write (53, *) + isweep_total_start, measurement_time
+        close (53)
+      endif
     end block classical_evolution
-!*******************************************************************
+    !*******************************************************************
 !     end of main loop
 !*******************************************************************
-    actiona = actiona/iter2
-    vel2a = vel2a/iter2
-    if (ipbp .ne. 0) then
-      pbpa = pbpa/ipbp
-      ancgma = ancgma/ipbp
-    else
-      pbpa = 0
-      ancgma = 0
-    endif
-    ancg = ancg/(Nf*itot)
-    ancgh = ancgh/(2*Nf*iter2)
-    ancgpf = ancgpf/(Nf*iter2)
-    ancgpv = ancgpv/(Nf*itot)
-    ancgf = ancgf/(Nf*itot)
-    ancgfpv = ancgfpv/(Nf*itot)
-    ancghpv = ancghpv/(2*Nf*iter2)
-    ancgpfpv = ancgpfpv/(iter2*Nf)
-    yav = yav/iter2
-    yyav = yyav/iter2 - yav*yav
-    yyav = sqrt(yyav/(iter2 - 1))
-    atraj = dt*itot/iter2
+    call final_averages(Nf, iter2)
+    !action_average = action_average/iter2
+    !vel2a = vel2a/iter2
+    !if (ipbp .ne. 0) then
+    !  pbp_average = pbp_average/ipbp
+    !  ancgm_average = ancgm_average/ipbp
+    !else
+    !  pbp_average = 0
+    !  ancgm_average = 0
+    !endif
+    !ancg = ancg/(Nf*itot)
+    !ancgh = ancgh/(2*Nf*iter2)
+    !ancgpf = ancgpf/(Nf*iter2)
+    !ancgpv = ancgpv/(Nf*itot)
+    !ancgf = ancgf/(Nf*itot)
+    !ancgfpv = ancgfpv/(Nf*itot)
+    !ancghpv = ancghpv/(2*Nf*iter2)
+    !ancgpfpv = ancgpfpv/(iter2*Nf)
+    !y_average = y_average/iter2
+    !ysq_average = ysq_average/iter2 - y_average*y_average
+    !ysq_average = sqrt(ysq_average/(iter2 - 1))
+    !atraj = dt*itot/iter2
 !*******************************************************************
 !     print global averages
 !*******************************************************************
     if (ip_global .eq. 0) then
-!     write(6, 9022) iter2,naccp,atraj,yav,yyav,ancg,ancgpv,ancgh,ancghpv,ancgf,
-!    & ancgfpv,ancgpf,ancgpfpv,pbpa,vel2a,actiona
-      write (7, 9022) iter2, naccp, atraj, yav, yyav, &
+!     write(6, 9022) iter2,naccp,atraj,y_average,ysq_average,ancg,ancgpv,ancgh,ancghpv,ancgf,
+!    & ancgfpv,ancgpf,ancgpfpv,pbpa,vel2a,action_average
+      write (7, 9022) iter2, naccp, atraj, y_average, ysq_average, &
            & ancg, ancgpv, ancgh, ancghpv, ancgf, ancgfpv, ancgpf, ancgpfpv, &
-           & pbpa, ancgma, vel2a, actiona
+           & pbp_average, ancgm_average, vel2a, action_average
 9022  format(' averages for last ', i6, ' trajectories', /  &
        & 1x, ' # of acceptances: ', i6, ' average trajectory length= ', f8.3/ &
            & 1x, ' <exp-dH>=', e11.4, ' +/-', e10.3/ &
@@ -581,7 +536,7 @@ contains
     use remezg
     use trial
     use gforce
-    use avgitercounts
+    use counters
     use comms
     use qmrherm_module, only: qmrherm
 
@@ -593,14 +548,12 @@ contains
     complex(dp) :: X2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: Xresult(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     integer :: ia, itercg
-!
-!     write(6,111)
-!111 format(' Hi from force')
-!
+
     dSdpi = 0.0
-!
+
 ! uncomment this line to quench the fermions!
 !     return
+
 ! pseudofermion action is
 !   Phi^dagger {MdaggerM(1)}^1/4 {MdaggerM(m)})^-1/2 {MdaggerM(1)}^1/4 Phi
 !
@@ -644,7 +597,7 @@ contains
     use remez
     use trial, only: theta, pp
     use dum1
-    use avgitercounts
+    use counters, only: ancghpv, ancgh
     use comms
     use qmrherm_module, only: qmrherm
     complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, Nf)
@@ -672,7 +625,6 @@ contains
     call MPI_AllReduce(MPI_In_Place, hg, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
 #endif
     h = hg + hp
-
 !
 ! uncomment these lines to quench the fermions!
 !     return
@@ -707,54 +659,6 @@ contains
 !
     return
   end subroutine hamilton
-
-! c******************************************************************
-! c   Calculates residual for testing purposes....
-! c   needs to run with double precision vectors to be useful.....
-! c******************************************************************
-!       subroutine testinv(Phi,resmax,itercg,am,imass,x,aden,ndiag)
-!       parameter(ksize=12,ksizet=12,kthird=24,kvol=ksizet*ksize*ksize)
-!       parameter(kferm=4*kthird*kvol)
-!       common/trial/u(kvol,3),theta(kvol,3),pp(kvol,3)
-!       common/para/bbb,am3,ibound
-!       complex Phi(kferm)
-!       complex(dp) vtild(kferm)
-!       complex(dp) x3(kferm)
-!       complex(dp) x(kferm,ndiag),x1(kferm),x2(kferm)
-!       complex(dp) u
-! c     complex vtild(kferm)
-! c     complex x3(kferm)
-! c     complex x(kferm,ndiag),x1(kferm),x2(kferm)
-! c      complex u
-!       real(dp) residual
-!       real(dp) aden(ndiag)
-! c
-!       write(6,111)
-! 111   format(' Hi from testinv')
-! c
-!       resmax=0.0
-! c
-!       do idiag=1,ndiag
-!       residual=0.0
-!       do i=1,kferm
-!       x3(i)=x(i,idiag)
-!       enddo
-!       call dslash(x2,x3,u,am,imass)
-!       call dslashd(x1,x2,u,am,imass)
-!       do i=1,kferm
-!       vtild(i)=x1(i)+aden(idiag)*x3(i)-Phi(i)
-!       residual=residual+conjg(vtild(i))*vtild(i)
-!       enddo
-! c     residual=sqrt(residual)
-!       if(residual.gt.resmax) resmax=residual
-! c
-!       write(6,*) idiag, 'itercg = ',itercg, ' residual = ',residual
-!       enddo
-! c
-!       resmax=sqrt(resmax)
-! c
-!       return
-!       end
 
   subroutine sread
     use random
