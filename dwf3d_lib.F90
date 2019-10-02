@@ -477,7 +477,7 @@ contains
       iter2 = min(isweep, iter2_read)
       if (ip_global .eq. 0) then
         open (unit=53, file='program_status', status='unknown', action='write')
-        write (53, *) + isweep_total_start, measurement_time
+        write (53, *) iter2 + isweep_total_start, measurement_time
         close (53)
       endif
     end block classical_evolution
