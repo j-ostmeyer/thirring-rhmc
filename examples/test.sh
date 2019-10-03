@@ -13,7 +13,6 @@
 module load mpi/intel/2018/3 compiler/intel/2018/3
 MPIRUNNER='mpirun -n 8' 
 
-echo "Slurm Job ID: $SLURM_JOB_ID" >> output
 
 for file in con random_seed program_status
 do 
@@ -33,7 +32,7 @@ echo $(date +"%s") start $SLURM_JOB_ID $(cat fort.100  2>/dev/null| wc -l ) \
  $(cat fort.11 2>/dev/null | wc -l) $( cat fort.200 2>/dev/null | wc -l ) \
  $(cat control 2>/dev/null | wc -l) $(cat output 2>/dev/null | wc -l) >> $BOOKKEEPING
 
-
+echo "Slurm Job ID: $SLURM_JOB_ID" >> output
 $MPIRUNNER  ./bulk_rhmc
 
 echo $(date +"%s") end $SLURM_JOB_ID $(cat fort.100  2>/dev/null| wc -l ) \
