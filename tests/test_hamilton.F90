@@ -1,6 +1,6 @@
 program test_hamilton
   use dwf3d_lib
-  use avgitercounts
+  use counters
   use trial
   use qmrherm_module, only: phi0, qmrhprint => printall
   use dirac
@@ -9,26 +9,28 @@ program test_hamilton
   use remezg
   use params
   use comms
+  use comms4
+  use comms5
+  use comms6
   implicit none
 
   ! general parameters
   integer :: timing_loops = 1
   complex, parameter :: iunit = cmplx(0, 1)
-  real(dp), parameter :: tau = 8 * atan(1.0_8)
-
+  real(dp), parameter :: tau = 8*atan(1.0_8)
 
   ! initialise function parameters
-  complex(dp) Phi(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp), allocatable :: Phi0_ref(:, :, :, :, :, :)
   complex(dp), allocatable :: Phi0_orig(:, :, :, :, :, :)
-  complex(dp) :: R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) :: R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 
   integer :: imass, iflag, isweep, iter
   real :: res2, am
   real(dp) :: h, hg, hp, s
 
   integer :: i, j, l, ix, iy, it, ithird
-  integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
+  integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
   integer :: idx = 0
 
 #ifdef MPI
@@ -38,8 +40,8 @@ program test_hamilton
 #endif
   qmrhprint = .false.
 
-  allocate(Phi0_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
-  allocate(Phi0_orig(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 25))
+  allocate (Phi0_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
+  allocate (Phi0_orig(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, 25))
 
   hg = 0.
   hp = 0.
@@ -58,25 +60,25 @@ program test_hamilton
   bnum2(0) = 0.49
   bnum4(0) = 0.53
   do i = 1, ndiag
-    anum2(i) = 0.4 * exp(iunit * i * tau / ndiag)
-    aden2(i) = 0.4 * exp(-iunit * 0.5 * i * tau / ndiag)
-    anum4(i) = 0.41 * exp(iunit * i * tau / ndiag)
-    aden4(i) = 0.41 * exp(-iunit * 0.5 * i * tau / ndiag)
+    anum2(i) = 0.4*exp(iunit*i*tau/ndiag)
+    aden2(i) = 0.4*exp(-iunit*0.5*i*tau/ndiag)
+    anum4(i) = 0.41*exp(iunit*i*tau/ndiag)
+    aden4(i) = 0.41*exp(-iunit*0.5*i*tau/ndiag)
   enddo
-  do j = 1,4
-    do it = 1,ksizet_l
-      do iy = 1,ksizey_l
-        do ix = 1,ksizex_l
-          do ithird = 1,kthird
-            idx = ithird + (ip_x * ksizex_l + ix - 1) * kthird &
-              & + (ip_y * ksizey_l + iy - 1) * kthird * ksize &
-              & + (ip_t * ksizet_l + it - 1) * kthird * ksize * ksize &
-              & + (j - 1) * kthird * ksize * ksize * ksizet
-            Phi(ithird, ix, iy, it, j) = 1.1 * exp(iunit * idx * tau / idxmax)
-            R(ithird, ix, iy, it, j) = 1.3 * exp(iunit * idx * tau / idxmax)
+  do j = 1, 4
+    do it = 1, ksizet_l
+      do iy = 1, ksizey_l
+        do ix = 1, ksizex_l
+          do ithird = 1, kthird
+            idx = ithird + (ip_x*ksizex_l + ix - 1)*kthird &
+              & + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
+              & + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
+              & + (j - 1)*kthird*ksize*ksize*ksizet
+            Phi(ithird, ix, iy, it, j) = 1.1*exp(iunit*idx*tau/idxmax)
+            R(ithird, ix, iy, it, j) = 1.3*exp(iunit*idx*tau/idxmax)
             do l = 1, 25
               Phi0_orig(ithird, ix, iy, it, j, l) = &
-                & 1.7 * exp(1.0) * exp(iunit * idx * tau / idxmax) + l
+                & 1.7*exp(1.0)*exp(iunit*idx*tau/idxmax) + l
             end do
           end do
         end do
@@ -88,18 +90,18 @@ program test_hamilton
   call start_halo_update_5(4, Phi, 1, reqs_Phi)
   call start_halo_update_6(4, 25, Phi0_orig, 2, reqs_Phi0)
 #endif
-  do j = 1,3
-    do it = 1,ksizet_l
-      do iy = 1,ksizey_l
-        do ix = 1,ksizex_l
-          idx = ip_x * ksizex_l + ix &
-            & + (ip_y * ksizey_l + iy - 1) * ksize &
-            & + (ip_t * ksizet_l + it - 1) * ksize * ksize &
-            & + (j - 1) * ksize * ksize * ksizet
-          u(ix, iy, it, j) = exp(iunit * idx * tau / idxmax)
-          theta(ix, iy, it, j) = 1.9 * exp(iunit * idx * tau / idxmax)
-          pp(ix, iy, it, j) = -1.1 * exp(iunit * idx * tau / idxmax)
-          dSdpi(ix, iy, it, j) = tau * exp(iunit * idx * tau / idxmax)
+  do j = 1, 3
+    do it = 1, ksizet_l
+      do iy = 1, ksizey_l
+        do ix = 1, ksizex_l
+          idx = ip_x*ksizex_l + ix &
+            & + (ip_y*ksizey_l + iy - 1)*ksize &
+            & + (ip_t*ksizet_l + it - 1)*ksize*ksize &
+            & + (j - 1)*ksize*ksize*ksizet
+          u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
+          theta(ix, iy, it, j) = 1.9*exp(iunit*idx*tau/idxmax)
+          pp(ix, iy, it, j) = -1.1*exp(iunit*idx*tau/idxmax)
+          dSdpi(ix, iy, it, j) = tau*exp(iunit*idx*tau/idxmax)
         enddo
       enddo
     enddo
@@ -123,7 +125,7 @@ program test_hamilton
 
   call init(istart)
   ! call function
-  do i = 1,timing_loops
+  do i = 1, timing_loops
     Phi0 = Phi0_orig
     h = 0
     hg = 0

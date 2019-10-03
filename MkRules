@@ -10,7 +10,7 @@
 #GNU SETTINGS
 GNU_MPIFC    = mpif90
 GNU_FC       = gfortran
-GNU_FCFLAGS  = -O3 -Wall -ffree-line-length-none -g
+GNU_FCFLAGS  = -O3 -Wall -ffree-line-length-none -g -mcmodel=medium
 
 #INTEL SETTINGS
 INTEL_MPIFC  = mpiifort #mpif90 
@@ -77,18 +77,30 @@ $(info MPIFC   : $(MPIFC))
 $(info FC      : $(FC))
 $(info FCFLAGS : $(FCFLAGS))
 
-LIBOBJS = avgitercounts.o derivs_module.o dirac.o dum1.o dwf3d_lib.o \
-       gauge.o gaussian.o gforce.o measure_module.o params.o \
-       qmrherm_module.o remez.o remezg.o trial.o vector.o\
-       comms.o random.o partitioning.o comms_partitioning.o \
-       dirac_split.o qmrherm_module_split.o \
-       dirac_split_nodir.o qmrherm_module_split_nodir.o \
-       inverter_utils.o
-
+LIBOBJS = counters.o comms.o comms_common.o \
+          comms4.o comms4_sp.o \
+          comms5.o comms5_sp.o \
+          comms6.o \
+          comms_partitioning.o derivs_module.o  dirac.o dirac_sp.o \
+          dirac_split.o dirac_split_nodir.o dum1.o dwf3d_lib.o \
+          gammamatrices.o gauge.o gaussian.o gforce.o inverter_utils.o \
+          measure_module.o multishift_module.o params.o partitioning.o \
+          qmrherm_module.o qmrherm_module_split.o \
+          qmrherm_module_split_nodir.o random.o reductions.o remez.o remezg.o \
+          remez_common_subroutines.o trial.o vector.o
 
 .PHONY: clean
 
 COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -c 
+
+$(TOPDIR)/dirac_sp.F90 : $(TOPDIR)/dirac.F90
+	bash $(TOPDIR)/convert_to_sp.sh $<
+
+$(TOPDIR)/comms4_sp.F90 : $(TOPDIR)/comms4.F90
+	bash $(TOPDIR)/convert_to_sp.sh $<
+
+$(TOPDIR)/comms5_sp.F90 : $(TOPDIR)/comms5.F90
+	bash $(TOPDIR)/convert_to_sp.sh $<
 
 
 # MODULES AND OBJECT FILES
@@ -96,12 +108,16 @@ COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -c
 %.mod : %.o
 	#touch $@
 
-# generic rule for dum,gauge,gforce,remez,remezg,trial,vector,partitioning
+# generic rule for dum,gauge,gforce,remez,remezg, remez_common_subroutine 
+# trial,vector,partitioning
 %.o : $(TOPDIR)/%.F90 .makefile.uptodate params.mod
 	$(COMPILE) -o $*.o $<
 
-partitioning.o : $(TOPDIR)/partitioning.F90 .makefile.uptodate params.mod \
-                 comms.mod
+counters.o : $(TOPDIR)/counters.F90 .makefile.uptodate
+	$(COMPILE) -o counters.o $<
+
+bulk_rhmc.o : $(TOPDIR)/bulk_rhmc.f90 .makefile.uptodate \
+        dwf3d_lib.mod
 	$(COMPILE) -o $*.o $<
 
 comms_partitioning.o : $(TOPDIR)/comms_partitioning.F90 .makefile.uptodate \
@@ -112,7 +128,11 @@ derivs_module.o : $(TOPDIR)/derivs_module.F90 .makefile.uptodate gforce.mod \
                   dirac.mod
 	$(COMPILE) -o $*.o $<
 
-dirac.o : $(TOPDIR)/dirac.F90 .makefile.uptodate params.mod comms.mod
+dirac.o : $(TOPDIR)/dirac.F90 .makefile.uptodate params.mod gammamatrices.mod
+	$(COMPILE) -o $*.o $<
+
+dirac_sp.o : $(TOPDIR)/dirac_sp.F90 .makefile.uptodate params.mod \
+          gammamatrices.mod
 	$(COMPILE) -o $*.o $<
 
 dirac_split.o : $(TOPDIR)/dirac_split.F90 .makefile.uptodate params.mod \
@@ -123,12 +143,43 @@ dirac_split_nodir.o : $(TOPDIR)/dirac_split_nodir.F90 .makefile.uptodate \
                       params.mod comms.mod dirac.mod partitioning.mod
 	$(COMPILE) -o $*.o $<
 
-avgitercounts.o : $(TOPDIR)/avgitercounts.F90 .makefile.uptodate
-	$(COMPILE) -o avgitercounts.o $<
+dwf3d_lib.o : $(TOPDIR)/dwf3d_lib.F90 \
+              .makefile.uptodate counters.mod comms.mod comms_common.mod \
+              comms4.mod \
+              dirac.mod \
+              dum1.mod gauge.mod gaussian.mod gammamatrices.mod \
+              gforce.mod measure_module.mod \
+              params.mod qmrherm_module.mod random.mod remez.mod remezg.mod \
+              remez_common_subroutines.mod trial.mod vector.mod
+	$(COMPILE) -o dwf3d_lib.o $<
+
+gaussian.o : $(TOPDIR)/gaussian.F90 .makefile.uptodate \
+             comms4.mod params.mod random.mod 
+	$(COMPILE) -o gaussian.o $<
+
+inverter_utils.o  : $(TOPDIR)/inverter_utils.F90 .makefile.uptodate dirac.mod \
+                    trial.mod comms.mod comms5.mod
+	$(COMPILE) -o inverter_utils.o $<
+
+measure_module.o : $(TOPDIR)/measure_module.F90 \
+                  .makefile.uptodate params.mod gaussian.mod trial.mod \
+                  vector.mod comms5.mod comms_common.mod dirac.mod 
+	$(COMPILE) -o measure_module.o $<
+
+multishift_module.o :  $(TOPDIR)/multishift_module.F90 \
+                  .makefile.uptodate comms5.mod comms5_sp.mod comms_common.mod dirac.mod dirac_sp.mod \
+                  params.mod reductions.mod
+	$(COMPILE) -o $*.o $<
+
+partitioning.o : $(TOPDIR)/partitioning.F90 .makefile.uptodate params.mod \
+                 comms.mod
+	$(COMPILE) -o $*.o $<
 
 qmrherm_module.o : $(TOPDIR)/qmrherm_module.F90 .makefile.uptodate params.mod \
-                   vector.mod gforce.mod comms.mod dirac.mod \
-                   derivs_module.mod inverter_utils.mod
+                   vector.mod gforce.mod comms.mod \
+                   comms_common.mod comms5.mod comms6.mod dirac.mod \
+                   derivs_module.mod inverter_utils.mod multishift_module.mod \
+                   reductions.mod
 	$(COMPILE) -o qmrherm_module.o $<
 
 qmrherm_module_split.o : $(TOPDIR)/qmrherm_module_split.F90 \
@@ -137,57 +188,46 @@ qmrherm_module_split.o : $(TOPDIR)/qmrherm_module_split.F90 \
 	$(COMPILE) -o qmrherm_module_split.o $<
 
 qmrherm_module_split_nodir.o : $(TOPDIR)/qmrherm_module_split_nodir.F90 \
-                              .makefile.uptodate params.mod vector.mod \
-                              gforce.mod comms.mod dirac_split_nodir.mod \
-                              dirac.mod derivs_module.mod
+                              .makefile.uptodate params.mod comms.mod \
+                              derivs_module.mod dirac.mod gforce.mod \
+                              params.mod trial.mod
 	$(COMPILE) -o qmrherm_module_split_nodir.o $<
-
-bulk_rhmc.o : $(TOPDIR)/bulk_rhmc.f90 .makefile.uptodate \
-        dwf3d_lib.mod
-	$(COMPILE) -o $*.o $<
-
-dwf3d_lib.o : $(TOPDIR)/dwf3d_lib.F90 \
-              .makefile.uptodate avgitercounts.mod comms.mod dirac.mod \
-              dum1.mod gauge.mod gaussian.mod gforce.mod measure_module.mod \
-              params.mod qmrherm_module.mod random.mod remez.mod remezg.mod \
-              trial.mod vector.mod
-	$(COMPILE) -o dwf3d_lib.o $< 
-
-#	$(FC) -O0 -g $(COMMS_FLAGS) -DGDBHOOK ${RANDOM_FLAGS} -c -o dwf3d_lib.o $< # debug
-
-gaussian.o : $(TOPDIR)/gaussian.F90 .makefile.uptodate \
-             comms.mod params.mod random.mod 
-	$(COMPILE) -o gaussian.o $<
-
-inverter_utils.o  : $(TOPDIR)/inverter_utils.F90 \
-        .makefile.uptodate dirac.mod trial.mod comms.mod
-	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o inverter_utils.o $<
-
-measure_module.o : $(TOPDIR)/measure_module.F90 \
-                  .makefile.uptodate params.mod gaussian.mod trial.mod \
-                  vector.mod comms.mod dirac.mod 
-	$(COMPILE) -o measure_module.o $<
-
 
 # COMMUNICATION-RELATED 
 ifeq ($(MPI), yes)
 COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T) 
 FC = $(MPIFC)
 
-comms.o :  $(TOPDIR)/comms.F90 .makefile.uptodate params.mod
+comms.o :  $(TOPDIR)/comms.F90 .makefile.uptodate comms_common.mod \
+           comms4.mod comms4_sp.mod \
+           comms5.mod comms5_sp.mod \
+           comms6.mod \
+           params.mod
 	$(COMPILE) -o comms.o $<
+
+comms5.o :  $(TOPDIR)/comms5.F90 .makefile.uptodate comms_common.mod params.mod
+	$(COMPILE) -o comms5.o $<
+
+comms5_sp.o :  $(TOPDIR)/comms5_sp.F90 .makefile.uptodate comms_common.mod \
+            params.mod
+	$(COMPILE) -o comms5_sp.o $<
+
+comms4.o :  $(TOPDIR)/comms4.F90 .makefile.uptodate comms_common.mod params.mod
+	$(COMPILE) -o comms4.o $<
+
+comms4_sp.o :  $(TOPDIR)/comms4_sp.F90 .makefile.uptodate comms_common.mod \
+            params.mod
+	$(COMPILE) -o comms4_sp.o $<
+
+
 
 else ifeq ($(MPI), no)
 
 comms.o :  $(TOPDIR)/uncomms.f90 .makefile.uptodate params.mod
 	$(COMPILE) -o comms.o $<
 
-else ifeq ($(MPI), fake)
-COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T) 
-FC = $(MPIFC)
-
-comms.o :  $(TOPDIR)/fake_comms.F90 .makefile.uptodate params.mod
-	$(COMPILE) -o comms.o $<
+comms5.o :  $(TOPDIR)/uncomms5.f90 .makefile.uptodate params.mod
+	$(COMPILE) -o comms5.o $<
 
 else 
 $(error MPI not correctly specified (watch for whitespaces))
@@ -207,7 +247,7 @@ RANDOM_FLAGS =
 random.o : $(TOPDIR)/random.f90 .makefile.uptodate comms.mod
 	$(COMPILE) -o random.o $<
 else 
-    $(error SITE_RANDOM not correctly specified (watch for whitespaces))
+ $(error SITE_RANDOM not correctly specified (watch for whitespaces))
 endif
 
 

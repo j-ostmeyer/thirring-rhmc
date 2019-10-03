@@ -10,6 +10,7 @@ end function pid
 program test_halo_4
   use params
   use comms
+  use comms4
   implicit none
   integer :: ix, iy, it, i5, i=0
   integer :: pid

@@ -6,9 +6,12 @@ program test_force
   use dirac
   use gforce
   use remezg
-  use avgitercounts
+  use counters
   use comms
-  use qmrherm_module, only : phi0, qmrhprint => printall
+  use comms4
+  use comms5
+  use comms6
+  use qmrherm_module, only: phi0, qmrhprint => printall
   use test_utils
   implicit none
 
@@ -16,16 +19,15 @@ program test_force
   logical :: generate = .false.
   integer :: timing_loops = 1
   complex, parameter :: iunit = cmplx(0, 1)
-  real(dp), parameter :: tau = 8 * atan(1.0_8)
-
+  real(dp), parameter :: tau = 8*atan(1.0_8)
 
   real :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
 
   ! initialise function parameters
-  complex(dp) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 1)
-  complex(dp) :: Phi0_orig(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 25)
+  complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, 1)
+  complex(dp) :: Phi0_orig(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, 25)
   real :: diff(ksizex_l, ksizey_l, ksizet_l, 3)
-  complex(dp) :: R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) :: R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   real :: sum_diff, max_diff
 
   integer :: imass, iflag, isweep, iter
@@ -33,7 +35,7 @@ program test_force
   real(dp) :: h, hg, hp, s
 
   integer :: i, j, l, ix, iy, it, ithird
-  integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
+  integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
   integer :: idx = 0
 
 #ifdef MPI
@@ -59,25 +61,25 @@ program test_force
   bnum2g(0) = 0.49
   bnum4g(0) = 0.53
   do i = 1, ndiagg
-    anum2g(i) = 0.4 * real(exp(iunit * i * tau / ndiagg))
-    aden2g(i) = 0.4 * real(exp(-iunit * 0.5 * i * tau / ndiagg))
-    anum4g(i) = 0.41 * real(exp(iunit * i * tau / ndiagg))
-    aden4g(i) = 0.41 * real(exp(-iunit * 0.5 * i * tau / ndiagg))
+    anum2g(i) = 0.4*real(exp(iunit*i*tau/ndiagg))
+    aden2g(i) = 0.4*real(exp(-iunit*0.5*i*tau/ndiagg))
+    anum4g(i) = 0.41*real(exp(iunit*i*tau/ndiagg))
+    aden4g(i) = 0.41*real(exp(-iunit*0.5*i*tau/ndiagg))
   enddo
-  do j = 1,4
-    do it = 1,ksizet_l
-      do iy = 1,ksizey_l
-        do ix = 1,ksizex_l
-          do ithird = 1,kthird
-            idx = ithird + (ip_x * ksizex_l + ix - 1) * kthird &
-              & + (ip_y * ksizey_l + iy - 1) * kthird * ksize &
-              & + (ip_t * ksizet_l + it - 1) * kthird * ksize * ksize &
-              & + (j - 1) * kthird * ksize * ksize * ksizet
-            Phi(ithird, ix, iy, it, j, 1) = 1.1 * exp(iunit * idx * tau / idxmax)
-            R(ithird, ix, iy, it, j) = 1.3 * exp(iunit * idx * tau / idxmax)
-            X(ithird, ix, iy, it, j) = 0.5 * exp(1.0) * exp(iunit * idx * tau / idxmax)
+  do j = 1, 4
+    do it = 1, ksizet_l
+      do iy = 1, ksizey_l
+        do ix = 1, ksizex_l
+          do ithird = 1, kthird
+            idx = ithird + (ip_x*ksizex_l + ix - 1)*kthird &
+              & + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
+              & + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
+              & + (j - 1)*kthird*ksize*ksize*ksizet
+            Phi(ithird, ix, iy, it, j, 1) = 1.1*exp(iunit*idx*tau/idxmax)
+            R(ithird, ix, iy, it, j) = 1.3*exp(iunit*idx*tau/idxmax)
+            X(ithird, ix, iy, it, j) = 0.5*exp(1.0)*exp(iunit*idx*tau/idxmax)
             do l = 1, 25
-              Phi0_orig(ithird, ix, iy, it, j, l) = 1.7 * exp(1.0) * exp(iunit * idx * tau / idxmax) + l
+              Phi0_orig(ithird, ix, iy, it, j, l) = 1.7*exp(1.0)*exp(iunit*idx*tau/idxmax) + l
             enddo
           enddo
         enddo
@@ -90,18 +92,18 @@ program test_force
   call start_halo_update_6(4, 1, Phi, 1, reqs_Phi)
   call start_halo_update_6(4, 25, Phi0_orig, 2, reqs_Phi0)
 #endif
-  do j = 1,3
-    do it = 1,ksizet_l
-      do iy = 1,ksizey_l
-        do ix = 1,ksizex_l
-          idx = ip_x * ksizex_l + ix &
-            & + (ip_y * ksizey_l + iy - 1) * ksize &
-            & + (ip_t * ksizet_l + it - 1) * ksize * ksize &
-            & + (j - 1) * ksize * ksize * ksizet
-          u(ix, iy, it, j) = exp(iunit * idx * tau / idxmax)
-          theta(ix, iy, it, j) = 1.9 * real(exp(iunit * idx * tau / idxmax), sp)
-          pp(ix, iy, it, j) = -1.1 * real(exp(iunit * idx * tau / idxmax), sp)
-          dSdpi(ix, iy, it, j) = real(tau * exp(iunit * idx * tau / idxmax), sp)
+  do j = 1, 3
+    do it = 1, ksizet_l
+      do iy = 1, ksizey_l
+        do ix = 1, ksizex_l
+          idx = ip_x*ksizex_l + ix &
+            & + (ip_y*ksizey_l + iy - 1)*ksize &
+            & + (ip_t*ksizet_l + it - 1)*ksize*ksize &
+            & + (j - 1)*ksize*ksize*ksizet
+          u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
+          theta(ix, iy, it, j) = 1.9*real(exp(iunit*idx*tau/idxmax), sp)
+          pp(ix, iy, it, j) = -1.1*real(exp(iunit*idx*tau/idxmax), sp)
+          dSdpi(ix, iy, it, j) = real(tau*exp(iunit*idx*tau/idxmax), sp)
         enddo
       enddo
     enddo
@@ -128,7 +130,7 @@ program test_force
 
   call init(istart)
   ! call function
-  do i = 1,timing_loops
+  do i = 1, timing_loops
     Phi0 = Phi0_orig
     h = 0
     hg = 0

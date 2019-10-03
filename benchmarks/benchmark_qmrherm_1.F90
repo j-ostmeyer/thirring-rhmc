@@ -6,6 +6,9 @@ program benchmark_qmrherm_1
   use gforce
   use params
   use comms
+  use comms4
+  use comms5
+  use comms6
   implicit none
 
   ! general parameters
@@ -54,8 +57,8 @@ program benchmark_qmrherm_1
 
   anum(0) = 0.5
   do i = 1, ndiagg
-    anum(i) = real(exp(iunit * i * tau / ndiagg))
-    aden(i) = real(exp(-iunit * 0.5 * i * tau / ndiagg))
+    anum(i) = 1 !real(exp(iunit * i * tau / ndiagg))
+    aden(i) = 1.0e-18 !real(exp(-iunit * 0.5 * i * tau / ndiagg))
   enddo
   do j = 1,4
     do it = 1,ksizet_l

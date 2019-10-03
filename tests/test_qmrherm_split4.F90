@@ -7,6 +7,9 @@ program test_qmrherm_4
   use trial
   use gforce
   use comms
+  use comms4
+  use comms5
+  use comms6
   use test_utils
   implicit none
 

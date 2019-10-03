@@ -7,6 +7,9 @@ program test_qmrherm_4
   use trial
   use gforce
   use comms
+  use comms4
+  use comms5
+  use comms6
   use test_utils
   implicit none
 
@@ -29,6 +32,7 @@ program test_qmrherm_4
   real(dp) :: anum(0:ndiag), aden(ndiag), sum_delta_Phi
   real :: res, am, adenf
   integer :: itercg
+  integer :: itercgs(ndiag)
 
   integer :: i, j, l, ix, iy, it, ithird
   integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
@@ -46,7 +50,7 @@ program test_qmrherm_4
   allocate(Phi0_orig(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 25))
   allocate(delta_Phi(kthird, ksizex_l, ksizey_l, ksizet_l, 4))
 
-  res = 1e-5
+  res = 1e-8
   am = 0.05
   imass = 3
   iflag = 0
@@ -122,7 +126,7 @@ program test_qmrherm_4
   ! call function
   Phi0 = Phi0_orig
   max_qmr_iters = 180
-  call qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiag, iflag)
+  call qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiag, iflag,.false.,itercgs)
   ! check output
   do idiag=1,ndiag
     xin(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(:,:,:,:,:,idiag)
@@ -137,10 +141,32 @@ program test_qmrherm_4
 
     delta_Phi = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
       &                xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
-    delta_Phi = abs(delta_Phi)**2
-    check_sum(delta_Phi, 1e-6, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4')
+    ! relative error
+    delta_Phi = abs(delta_Phi)**2/sum(abs(xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
+    check_sum(delta_Phi, 1e-14, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_dp')
+  enddo
+
+  call qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiag, iflag,.true.,itercgs)
+  ! check output
+  do idiag=1,ndiag
+    xin(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(:,:,:,:,:,idiag)
+#ifdef MPI
+    call start_halo_update_5(4, xin, 10, reqs_xin)
+    call complete_halo_update(reqs_xin)
+#else
+    call update_halo_5(4, xin)
+#endif
+    adenf = aden(idiag)
+    call dirac_op_shifted(xout,xin,u,am,imass,adenf)
+
+    delta_Phi = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
+      &                xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
+    ! relative error
+    delta_Phi = abs(delta_Phi)**2/sum(abs(xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
+    check_sum(delta_Phi, 1e-9, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_sp')
 
   enddo
+
 #ifdef MPI
   call MPI_Finalize(ierr)
 #endif

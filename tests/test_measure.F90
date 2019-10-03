@@ -4,6 +4,8 @@ program test_measure
   use trial, only: u
   use vector
   use comms
+  use comms4
+  use comms5
   use random
   use measure_module
   use test_utils

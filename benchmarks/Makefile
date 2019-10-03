@@ -17,7 +17,8 @@ endif
 
 
 
-BENCHMARKS = benchmark_congrad benchmark_qmrherm_1 benchmark_qmrherm_split1 \
+BENCHMARKS = benchmark_congrad benchmark_qmrherm_1 \
+ benchmark_qmrherm_1_sp benchmark_qmrherm_split1 \
  benchmark_qmrherm_split_nodir1 benchmark_full_md
 
 default: $(BENCHMARKS)
@@ -53,8 +54,6 @@ include ../MkRules
 MODS=$(patsubst %.o,%.mod,$(LIBOBJS))
 
 .PRECIOUS : %.mod
-
-%.o : %.mod
 
 benchmark_%.o: benchmark_%.F90 .makefile.uptodate $(MODS)
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o $@ $<
