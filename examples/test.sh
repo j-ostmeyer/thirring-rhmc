@@ -26,12 +26,18 @@ BOOKKEEPING=bookkeeping.txt
 if [ ! -f "$BOOKKEEPING" ]
 then
     echo '# Line count' >> $BOOKKEEPING
-    echo UnixTimeStamp SLURM_JOB_ID fort.100 fort.11 fort.200 control >> $BOOKKEEPING
+    echo UnixTimeStamp MeasType SLURM_JOB_ID fort.100 fort.11 fort.200 control output>> $BOOKKEEPING
 fi
 
-echo $(date +"%s") $SLURM_JOB_ID $(cat fort.100  2>/dev/null| wc -l ) \
+echo $(date +"%s") start $SLURM_JOB_ID $(cat fort.100  2>/dev/null| wc -l ) \
  $(cat fort.11 2>/dev/null | wc -l) $( cat fort.200 2>/dev/null | wc -l ) \
- $(cat control 2>/dev/null | wc -l) >> $BOOKKEEPING
+ $(cat control 2>/dev/null | wc -l) $(cat output 2>/dev/null | wc -l) >> $BOOKKEEPING
 
 
 $MPIRUNNER  ./bulk_rhmc
+
+echo $(date +"%s") end $SLURM_JOB_ID $(cat fort.100  2>/dev/null| wc -l ) \
+ $(cat fort.11 2>/dev/null | wc -l) $( cat fort.200 2>/dev/null | wc -l ) \
+ $(cat control 2>/dev/null | wc -l) $(cat output 2>/dev/null | wc -l) >> $BOOKKEEPING
+
+
