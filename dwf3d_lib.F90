@@ -724,8 +724,8 @@ contains
       write (configuration_filename, '(A3)') 'con'
     endif
 ! Write theta
-    call MPI_File_Open(comm, trim(configuration_filename), MPI_Mode_Wronly + MPI_Mode_Create, &
-         & MPI_Info_Null, mpi_fh, ierr)
+    call MPI_File_Open(comm, trim(configuration_filename), &
+                       MPI_Mode_Wronly + MPI_Mode_Create, MPI_Info_Null, mpi_fh, ierr)
     call MPI_File_Set_View(mpi_fh, 0_8, MPI_Real, mpiio_type, "native", &
          & MPI_Info_Null, ierr)
     call MPI_File_Write_All(mpi_fh, theta, 3*ksizex_l*ksizey_l*ksizet_l, &
@@ -734,7 +734,8 @@ contains
 
 ! Write seed in serial
     if (ip_global .eq. 0) then
-      open (unit=31, file='con', status='old', form='unformatted', access='stream')
+      open (unit=31, file=trim(configuration_filename), status='old', &
+            form='unformatted', access='stream')
       !print*,"FSEEK CALL COMMENTED OUT, THIS WILL FAIL"
       call fseek(31, 3*ksize*ksize*ksizet*4 + 4, 0)
 ! Manually compute the effective record length to be compatible with serial Fortran
@@ -746,7 +747,8 @@ contains
 
     end if
 #else
-    open (unit=31, file='con', status='unknown', form='unformatted')
+    open (unit=31, file=trim(configuration_filename), status='unknown', &
+          form='unformatted')
     write (31) theta, seed
     close (31)
 #endif
