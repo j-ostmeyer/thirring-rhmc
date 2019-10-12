@@ -26,7 +26,7 @@ contains
     use comms
     use measure_module
     use qmrherm_module, only: qmrherm, qmrhprint => printall
-    use timer, only: timeinit => initialise, get_time
+    use timer, only: timeinit => initialise, get_time_from_start
 !*******************************************************************
 !    Rational Hybrid Monte Carlo algorithm for bulk Thirring Model with Domain Wall
 !         fermions
@@ -257,7 +257,7 @@ contains
         enddo
 
         ! Start computing time (including hamiltonian calls)
-        run_time = get_time()
+        run_time = get_time_from_start()
 
         total_md_time = total_md_time - run_time
         call hamilton(Phi, H0, hg, hp, S0, rescga, isweep, 0, am, imass)
@@ -351,7 +351,7 @@ contains
         vel2a = vel2a + vel2
 
         ! Including also hamiltonian call time
-        run_time = get_time()
+        run_time = get_time_from_start()
 
         total_md_time = total_md_time + run_time
         time_per_md_step = total_md_time/itot
@@ -375,7 +375,7 @@ contains
 #ifdef MPI
           endif
 #endif
-          measurement_time = get_time()
+          measurement_time = get_time_from_start()
           measurement_time = measurement_time - run_time
         endif
 !
@@ -398,7 +398,7 @@ contains
             time_for_next_iteration = time_for_next_iteration + measurement_time
           endif
 
-          run_time = get_time()
+          run_time = get_time_from_start()
 
 #ifdef MPI
           if (ip_global .eq. 0) then
