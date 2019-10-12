@@ -26,6 +26,7 @@ contains
     use comms
     use measure_module
     use qmrherm_module, only: qmrherm, qmrhprint => printall
+    use timer, only: timeinit => initialise, get_time
 !*******************************************************************
 !    Rational Hybrid Monte Carlo algorithm for bulk Thirring Model with Domain Wall
 !         fermions
@@ -73,8 +74,7 @@ contains
     real :: vel2, x, ytest, atraj
     real :: dt, am, y, traj, proby
     integer :: imass, iter, iterl, iter2, iter2_read, ia, idirac, ithird
-    integer :: walltimesec, count, count_rate, count_max
-    real :: run_time_start
+    integer :: walltimesec
     integer :: itercg, mu
     logical :: program_status_file_exists
 #ifdef MPI
@@ -84,12 +84,9 @@ contains
 #endif
     ibound = -1
     qmrhprint = .true.
-    call system_clock(count, count_rate, count_max)
-    run_time_start = count/count_rate
 #ifdef MPI
     call init_MPI
-    call MPI_AllReduce(MPI_In_Place, run_time_start, 1, MPI_Real, MPI_Max, comm, ierr)
-
+    call timeinit
 #endif
 
     if (ip_global .eq. 0) then
@@ -260,11 +257,7 @@ contains
         enddo
 
         ! Start computing time (including hamiltonian calls)
-        call system_clock(count, count_rate, count_max)
-        run_time = count/count_rate - run_time_start
-#ifdef MPI
-        call MPI_AllReduce(MPI_In_Place, run_time, 1, MPI_Real, MPI_Max, comm, ierr)
-#endif
+        run_time = get_time()
 
         total_md_time = total_md_time - run_time
         call hamilton(Phi, H0, hg, hp, S0, rescga, isweep, 0, am, imass)
@@ -358,17 +351,10 @@ contains
         vel2a = vel2a + vel2
 
         ! Including also hamiltonian call time
-        call system_clock(count, count_rate, count_max)
-        run_time = count/count_rate - run_time_start
-#ifdef MPI
-        call MPI_AllReduce(MPI_In_Place, run_time, 1, MPI_Real, MPI_Max, comm, ierr)
-#endif
+        run_time = get_time()
 
         total_md_time = total_md_time + run_time
         time_per_md_step = total_md_time/itot
-#ifdef MPI
-        call MPI_AllReduce(MPI_In_Place, time_per_md_step, 1, MPI_Double_Precision, MPI_Max, comm, ierr)
-#endif
 
 !     uncomment to disable measurements
 !     goto 601
@@ -389,12 +375,8 @@ contains
 #ifdef MPI
           endif
 #endif
-          call system_clock(count, count_rate, count_max)
-          measurement_time = count/count_rate - run_time_start
+          measurement_time = get_time()
           measurement_time = measurement_time - run_time
-#ifdef MPI
-          call MPI_AllReduce(MPI_In_Place, measurement_time, 1, MPI_Real, MPI_Max, comm, ierr)
-#endif
         endif
 !
         if (mod((isweep + isweep_total_start), icheckpoint) .eq. 0) then
@@ -416,11 +398,8 @@ contains
             time_for_next_iteration = time_for_next_iteration + measurement_time
           endif
 
-          call system_clock(count, count_rate, count_max)
-          run_time = count/count_rate - run_time_start
-#ifdef MPI
-          call MPI_AllReduce(MPI_In_Place, run_time, 1, MPI_Real, MPI_Max, comm, ierr)
-#endif
+          run_time = get_time()
+
 #ifdef MPI
           if (ip_global .eq. 0) then
 #endif
