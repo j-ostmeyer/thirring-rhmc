@@ -39,7 +39,7 @@ tests: $(TESTS)
 runtests: $(TESTS) 
 	@for test in $(TESTS); do \
 	    printf "$$test: "; \
-	    OUTPUT=$$($(MPI_RUNNER) ./$$test); \
+	    OUTPUT=$$($(MPI_RUNNER) ./$$test) && \
 	    if [ -z "$$OUTPUT" ]; then \
 	        echo "OK"; \
 	    else \

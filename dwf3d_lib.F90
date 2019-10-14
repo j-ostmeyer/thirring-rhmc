@@ -649,12 +649,12 @@ contains
       call MPI_File_Close(mpi_fh, ierr)
 ! Get the see,ierrd
       if (ip_global .eq. 0) then
-        print *, "configuration file read."
         open (unit=10, file='con', status='old', form='unformatted', access='stream')
         !print*,"FSEEK CALL COMMENTED OUT, THIS WILL FAIL"
         call fseek(10, 3*ksize*ksize*ksizet*4 + 4, 0)
         read (10) seed
         close (10)
+        print *, "configuration file read."
       end if
 #else
       open (unit=10, file='con', status='old', form='unformatted')
