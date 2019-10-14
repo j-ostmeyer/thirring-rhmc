@@ -336,7 +336,7 @@ contains
           write (100, '(I5,4E17.9E3)') isweep_total, real(psibarpsi1), aimag(psibarpsi1), &
              & real(psibarpsi2), aimag(psibarpsi2)
         else
-          write (100, '(I5,4E17.9E3)') real(psibarpsi1), aimag(psibarpsi1), &
+          write (100, '(4E17.9E3)') real(psibarpsi1), aimag(psibarpsi1), &
              & real(psibarpsi2), aimag(psibarpsi2)
         endif
         close (100)

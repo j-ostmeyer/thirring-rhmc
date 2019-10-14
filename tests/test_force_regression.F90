@@ -4,6 +4,7 @@ program test_force
   use trial
   use vector
   use dirac
+  use gammamatrices
   use gforce
   use remezg
   use counters
@@ -128,7 +129,7 @@ program test_force
   am3 = 1.0
   ibound = -1
 
-  call init(istart)
+  call init_gammas()
   ! call function
   do i = 1, timing_loops
     Phi0 = Phi0_orig

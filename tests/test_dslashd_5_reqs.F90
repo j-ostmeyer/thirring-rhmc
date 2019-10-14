@@ -11,16 +11,15 @@ program test_dslashd
 
   ! general parameters
   complex, parameter :: iunit = cmplx(0, 1)
-  real(dp), parameter :: tau = 8 * atan(1.0_8)
+  real(dp), parameter :: tau = 8*atan(1.0_8)
 
   ! common blocks to function
 
-
   ! initialise function parameters
-  complex(dp) u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
-  complex(dp) Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
+  complex(dp) Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) Phiref(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-  complex(dp) R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) diff(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
   complex(dp) sum_diff
   real(dp) max_diff
@@ -29,24 +28,24 @@ program test_dslashd
   integer, parameter :: imass = 5
 
   integer :: j, ix, iy, it, ithird
-  integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
+  integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
   integer :: idx
 #ifdef MPI
   integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi
   integer :: ierr
   call init_MPI
 #endif
-  do j = 1,4
-    do it = 1,ksizet_l
-      do iy = 1,ksizey_l
-        do ix = 1,ksizex_l
-          do ithird = 1,kthird
-            idx = ithird + (ip_x * ksizex_l + ix - 1) * kthird &
-              & + (ip_y * ksizey_l + iy - 1) * kthird * ksize &
-              & + (ip_t * ksizet_l + it - 1) * kthird * ksize * ksize &
-              & + (j - 1) * kthird * ksize * ksize * ksizet
-            Phi(ithird, ix, iy, it, j) = 1.1 * exp(iunit * idx * tau / idxmax)
-            R(ithird, ix, iy, it, j) = 1.3 * exp(iunit * idx * tau / idxmax)
+  do j = 1, 4
+    do it = 1, ksizet_l
+      do iy = 1, ksizey_l
+        do ix = 1, ksizex_l
+          do ithird = 1, kthird
+            idx = ithird + (ip_x*ksizex_l + ix - 1)*kthird &
+              & + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
+              & + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
+              & + (j - 1)*kthird*ksize*ksize*ksizet
+            Phi(ithird, ix, iy, it, j) = 1.1*exp(iunit*idx*tau/idxmax)
+            R(ithird, ix, iy, it, j) = 1.3*exp(iunit*idx*tau/idxmax)
           enddo
         enddo
       enddo
@@ -56,15 +55,15 @@ program test_dslashd
   call start_halo_update_5(4, R, 0, reqs_R)
   call start_halo_update_5(4, Phi, 1, reqs_Phi)
 #endif
-  do j = 1,3
-    do it = 1,ksizet_l
-      do iy = 1,ksizey_l
-        do ix = 1,ksizex_l
-          idx = ip_x * ksizex_l + ix &
-            & + (ip_y * ksizey_l + iy - 1) * ksize &
-            & + (ip_t * ksizet_l + it - 1) * ksize * ksize &
-            & + (j - 1) * ksize * ksize * ksizet
-          u(ix, iy, it, j) = exp(iunit * idx * tau / idxmax)
+  do j = 1, 3
+    do it = 1, ksizet_l
+      do iy = 1, ksizey_l
+        do ix = 1, ksizex_l
+          idx = ip_x*ksizex_l + ix &
+            & + (ip_y*ksizey_l + iy - 1)*ksize &
+            & + (ip_t*ksizet_l + it - 1)*ksize*ksize &
+            & + (j - 1)*ksize*ksize*ksizet
+          u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
         enddo
       enddo
     enddo
@@ -85,10 +84,10 @@ program test_dslashd
   am3 = 1.0
   ibound = -1
 
-  call init(istart)
+  call init_gammas()
   ! call function
 #ifdef MPI
-  call dslashd(Phi, R, u, am, imass,reqs_R)
+  call dslashd(Phi, R, u, am, imass, reqs_R)
   call start_halo_update_5(4, Phi, 2, reqs_Phi)
   call complete_halo_update(reqs_Phi)
 #else

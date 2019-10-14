@@ -4,6 +4,7 @@ program test_hamilton
   use trial
   use qmrherm_module, only: phi0, qmrhprint => printall
   use dirac
+  use gammamatrices
   use gforce
   use remez
   use remezg
@@ -123,7 +124,7 @@ program test_hamilton
   am3 = 1.0
   ibound = -1
 
-  call init(istart)
+  call init_gammas()
   ! call function
   do i = 1, timing_loops
     Phi0 = Phi0_orig

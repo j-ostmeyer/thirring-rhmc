@@ -12,7 +12,6 @@ contains
 
   subroutine dwf3d_main
     use random
-    use gammamatrices
     use gaussian
     use remez
     use remezg
@@ -133,26 +132,7 @@ contains
 !     istart=0    : ordered start
 !     istart=1    : random start
 !*******************************************************************
-    call init_gammas()
-    block
-      logical :: success
-      if ((istart .lt. 0) .or. (iread .eq. 1)) then
-        call sread(success)
-        if (.not. success) then
-#ifdef MPI
-          if (ip_global .eq. 0) then
-#endif
-            print *, 'Reading con file failed, starting from random conf'
-#ifdef MPI
-          endif
-#endif
-        endif
-      endif
-      if (istart .ge. 0 .or. .not. success) then
-        call init_gauge(1)
-      endif
-    end block
-
+    call init(istart)
 !  read in Remez coefficients
 
     call read_remez_file('remez2', ndiag, anum2, bnum2, aden2, bden2)
@@ -643,13 +623,14 @@ contains
     return
   end subroutine hamilton
 
-  subroutine sread(success)
+  subroutine sread(success_out)
     use random
     use gauge
 #ifdef MPI
     use comms
     implicit none
-    logical, intent(out) :: success
+    logical, optional, intent(out) :: success_out
+    logical :: success
     integer :: mpi_fh
     integer :: status(mpi_status_size)
     integer :: ierr
@@ -681,6 +662,14 @@ contains
       close (10)
       print *, "configuration file read."
 #endif
+    else
+      if ((.not. success) .and. (.not. present(success_out))) then
+        print *, "Configuration file 'con' not found!"
+        stop
+      endif
+    endif
+    if (present(success_out)) then
+      success_out = success
     endif
 
   end subroutine sread
@@ -784,9 +773,10 @@ contains
 #endif
   end subroutine saveseed
 !
-  subroutine init_gauge(nc)
-    use random
+  subroutine init(nc)
+    use gammamatrices, only: init_gammas
     use gauge
+    use random
 !*******************************************************************
 !     sets initial values
 !     nc=0 cold start
@@ -795,18 +785,41 @@ contains
 !*******************************************************************
     implicit none
     integer, intent(in) :: nc
+    integer :: nc_temp
     integer :: ix, iy, it, mu
     real :: g
+
+    call init_gammas()
+    block
+      logical :: success
+      if ((istart .lt. 0) .or. (iread .eq. 1)) then
+        call sread(success)
+        if (.not. success) then
+#ifdef MPI
+          if (ip_global .eq. 0) then
+#endif
+            print *, 'Reading con file failed, starting from random conf'
+#ifdef MPI
+          endif
+#endif
+          nc_temp = 1
+        else
+          return
+        endif
+      else
+        nc_temp = nc
+      endif
+    end block
 
 #ifdef MPI
     if (ip_global .eq. 0) then
 #endif
-      print *, 'Initialising gauge conf, nc: ', nc
+      print *, 'Initialising gauge conf, nc: ', nc_temp
 #ifdef MPI
     endif
 #endif
 
-    select case (nc)
+    select case (nc_temp)
     case (-1)
       return
     case (0)
@@ -825,7 +838,7 @@ contains
       enddo
       return
     end select
-  end subroutine init_gauge
+  end subroutine init
 !******************************************************************
 !   calculate compact links from non-compact links
 !******************************************************************

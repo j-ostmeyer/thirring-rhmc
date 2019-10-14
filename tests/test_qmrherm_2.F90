@@ -2,9 +2,10 @@
 program test_qmrherm_2
   use dwf3d_lib
   use trial
-  use vector, only : X
+  use vector, only: X
   use qmrherm_module, only: qmrherm, phi0, qmrhprint => printall
   use dirac
+  use gammamatrices
   use gforce
   use params
   use comms
@@ -18,19 +19,18 @@ program test_qmrherm_2
   logical :: generate = .false.
   integer :: timing_loops = 1
   complex, parameter :: iunit = cmplx(0, 1)
-  real(dp), parameter :: tau = 8 * atan(1.0_8)
+  real(dp), parameter :: tau = 8*atan(1.0_8)
 
   ! common blocks to function
 
-
   ! initialise function parameters
-  complex(dp) Phi(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp), allocatable :: Phi0_ref(:, :, :, :, :, :)
   complex(dp), allocatable :: Phi0_orig(:, :, :, :, :, :)
   complex(dp) :: x_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
   complex(dp) :: delta_x(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
   complex(dp), allocatable :: delta_Phi0(:, :, :, :, :, :)
-  complex(dp) :: R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) :: R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 
   complex(dp) :: sum_delta_x, sum_delta_Phi0
   real(dp) :: max_delta_x, max_delta_Phi0
@@ -41,7 +41,7 @@ program test_qmrherm_2
   integer :: itercg
 
   integer :: i, j, l, ix, iy, it, ithird
-  integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
+  integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
   integer :: idx = 0
 
 #ifdef MPI
@@ -51,9 +51,9 @@ program test_qmrherm_2
 #endif
   qmrhprint = .false.
 
-  allocate(Phi0_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
-  allocate(Phi0_orig(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4, 25))
-  allocate(delta_Phi0(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
+  allocate (Phi0_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
+  allocate (Phi0_orig(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, 25))
+  allocate (delta_Phi0(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
 
   res = 0.1
   am = 0.05
@@ -62,23 +62,23 @@ program test_qmrherm_2
 
   anum(0) = 0.5
   do i = 1, ndiag
-    anum(i) = real(exp(iunit * i * tau / ndiag))
-    aden(i) = real(exp(-iunit * 0.5 * i * tau / ndiag))
+    anum(i) = real(exp(iunit*i*tau/ndiag))
+    aden(i) = real(exp(-iunit*0.5*i*tau/ndiag))
   enddo
-  do j = 1,4
-    do it = 1,ksizet_l
-      do iy = 1,ksizey_l
-        do ix = 1,ksizex_l
-          do ithird = 1,kthird
-            idx = ithird + (ip_x * ksizex_l + ix - 1) * kthird &
-              & + (ip_y * ksizey_l + iy - 1) * kthird * ksize &
-              & + (ip_t * ksizet_l + it - 1) * kthird * ksize * ksize &
-              & + (j - 1) * kthird * ksize * ksize * ksizet
-            Phi(ithird, ix, iy, it, j) = 1.1 * exp(iunit * idx * tau / idxmax)
-            R(ithird, ix, iy, it, j) = 1.3 * exp(iunit * idx * tau / idxmax)
+  do j = 1, 4
+    do it = 1, ksizet_l
+      do iy = 1, ksizey_l
+        do ix = 1, ksizex_l
+          do ithird = 1, kthird
+            idx = ithird + (ip_x*ksizex_l + ix - 1)*kthird &
+              & + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
+              & + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
+              & + (j - 1)*kthird*ksize*ksize*ksizet
+            Phi(ithird, ix, iy, it, j) = 1.1*exp(iunit*idx*tau/idxmax)
+            R(ithird, ix, iy, it, j) = 1.3*exp(iunit*idx*tau/idxmax)
             do l = 1, 25
               Phi0_orig(ithird, ix, iy, it, j, l) = &
-                & 1.7 * exp(1.0) * exp(iunit * idx * tau / idxmax) + l
+                & 1.7*exp(1.0)*exp(iunit*idx*tau/idxmax) + l
             end do
           end do
         end do
@@ -90,16 +90,16 @@ program test_qmrherm_2
   call start_halo_update_5(4, Phi, 1, reqs_Phi)
   call start_halo_update_6(4, 25, Phi0_orig, 2, reqs_Phi0)
 #endif
-  do j = 1,3
-    do it = 1,ksizet_l
-      do iy = 1,ksizey_l
-        do ix = 1,ksizex_l
-          idx = ip_x * ksizex_l + ix - 1 &
-            & + (ip_y * ksizey_l + iy - 1) * ksize &
-            & + (ip_t * ksizet_l + it - 1) * ksize * ksize &
-            & + (j - 1) * ksize * ksize * ksizet
-          u(ix, iy, it, j) = exp(iunit * idx * tau / idxmax)
-          dSdpi(ix, iy, it, j) = real(tau * exp(iunit * idx * tau / idxmax), sp)
+  do j = 1, 3
+    do it = 1, ksizet_l
+      do iy = 1, ksizey_l
+        do ix = 1, ksizex_l
+          idx = ip_x*ksizex_l + ix - 1 &
+            & + (ip_y*ksizey_l + iy - 1)*ksize &
+            & + (ip_t*ksizet_l + it - 1)*ksize*ksize &
+            & + (j - 1)*ksize*ksize*ksizet
+          u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
+          dSdpi(ix, iy, it, j) = real(tau*exp(iunit*idx*tau/idxmax), sp)
         enddo
       enddo
     enddo
@@ -121,11 +121,11 @@ program test_qmrherm_2
   am3 = 1.0
   ibound = -1
 
-  call init(istart)
+  call init_gammas()
   ! call function
-  do i = 1,timing_loops
+  do i = 1, timing_loops
     Phi0 = Phi0_orig
-    call qmrherm(Phi,X, res, itercg, am, imass, anum, aden, ndiag, iflag)
+    call qmrherm(Phi, X, res, itercg, am, imass, anum, aden, ndiag, iflag)
   end do
   ! check output
   if (generate) then
@@ -133,7 +133,7 @@ program test_qmrherm_2
     write_file(x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_qmrherm_2_x.dat', MPI_Double_Complex)
     write_file(Phi0(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :, :), 'test_qmrherm_2_Phi0.dat', MPI_Double_Complex)
 #else
-    write(6,*) "Generation not possible"
+    write (6, *) "Generation not possible"
     call exit(1)
 #endif
   else
