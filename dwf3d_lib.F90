@@ -12,7 +12,6 @@ contains
 
   subroutine dwf3d_main
     use random
-    use gammamatrices
     use gaussian
     use remez
     use remezg
@@ -26,6 +25,7 @@ contains
     use comms
     use measure_module
     use qmrherm_module, only: qmrherm, qmrhprint => printall
+    use timer, only: timeinit => initialise, get_time_from_start
 !*******************************************************************
 !    Rational Hybrid Monte Carlo algorithm for bulk Thirring Model with Domain Wall
 !         fermions
@@ -73,8 +73,7 @@ contains
     real :: vel2, x, ytest, atraj
     real :: dt, am, y, traj, proby
     integer :: imass, iter, iterl, iter2, iter2_read, ia, idirac, ithird
-    integer :: walltimesec, count, count_rate, count_max
-    real :: run_time_start
+    integer :: walltimesec
     integer :: itercg, mu
     logical :: program_status_file_exists
 #ifdef MPI
@@ -87,8 +86,6 @@ contains
 #endif
     ibound = -1
     qmrhprint = .true.
-    call system_clock(count, count_rate, count_max)
-    run_time_start = count/count_rate
 #ifdef MPI
     call init_MPI
 #ifdef GDBHOOK
@@ -101,7 +98,7 @@ contains
     endif
     call MPI_Barrier(MPI_COMM_WORLD,ierr)
 #endif
-    call MPI_AllReduce(MPI_In_Place, run_time_start, 1, MPI_Real, MPI_Max, comm, ierr)
+    call timeinit
 #endif
 
     if (ip_global .eq. 0) then
@@ -148,26 +145,7 @@ contains
 !     istart=0    : ordered start
 !     istart=1    : random start
 !*******************************************************************
-    call init_gammas()
-    block
-      logical :: success
-      if ((istart .lt. 0) .or. (iread .eq. 1)) then
-        call sread(success)
-        if (.not. success) then
-#ifdef MPI
-          if (ip_global .eq. 0) then
-#endif
-            print *, 'Reading con file failed, starting from random conf'
-#ifdef MPI
-          endif
-#endif
-        endif
-      endif
-      if (istart .ge. 0 .or. .not. success) then
-        call init_gauge(1)
-      endif
-    end block
-
+    call init(istart)
 !  read in Remez coefficients
 
     call read_remez_file('remez2', ndiag, anum2, bnum2, aden2, bden2)
@@ -272,11 +250,7 @@ contains
         enddo
 
         ! Start computing time (including hamiltonian calls)
-        call system_clock(count, count_rate, count_max)
-        run_time = count/count_rate - run_time_start
-#ifdef MPI
-        call MPI_AllReduce(MPI_In_Place, run_time, 1, MPI_Real, MPI_Max, comm, ierr)
-#endif
+        run_time = get_time_from_start()
 
         total_md_time = total_md_time - run_time
         call hamilton(Phi, H0, hg, hp, S0, rescga, isweep, 0, am, imass)
@@ -370,17 +344,10 @@ contains
         vel2a = vel2a + vel2
 
         ! Including also hamiltonian call time
-        call system_clock(count, count_rate, count_max)
-        run_time = count/count_rate - run_time_start
-#ifdef MPI
-        call MPI_AllReduce(MPI_In_Place, run_time, 1, MPI_Real, MPI_Max, comm, ierr)
-#endif
+        run_time = get_time_from_start()
 
         total_md_time = total_md_time + run_time
         time_per_md_step = total_md_time/itot
-#ifdef MPI
-        call MPI_AllReduce(MPI_In_Place, time_per_md_step, 1, MPI_Double_Precision, MPI_Max, comm, ierr)
-#endif
 
 !     uncomment to disable measurements
 !     goto 601
@@ -401,12 +368,8 @@ contains
 #ifdef MPI
           endif
 #endif
-          call system_clock(count, count_rate, count_max)
-          measurement_time = count/count_rate - run_time_start
+          measurement_time = get_time_from_start()
           measurement_time = measurement_time - run_time
-#ifdef MPI
-          call MPI_AllReduce(MPI_In_Place, measurement_time, 1, MPI_Real, MPI_Max, comm, ierr)
-#endif
         endif
 !
         if (mod((isweep + isweep_total_start), icheckpoint) .eq. 0) then
@@ -428,11 +391,8 @@ contains
             time_for_next_iteration = time_for_next_iteration + measurement_time
           endif
 
-          call system_clock(count, count_rate, count_max)
-          run_time = count/count_rate - run_time_start
-#ifdef MPI
-          call MPI_AllReduce(MPI_In_Place, run_time, 1, MPI_Real, MPI_Max, comm, ierr)
-#endif
+          run_time = get_time_from_start()
+
 #ifdef MPI
           if (ip_global .eq. 0) then
 #endif
@@ -676,13 +636,14 @@ contains
     return
   end subroutine hamilton
 
-  subroutine sread(success)
+  subroutine sread(success_out)
     use random
     use gauge
 #ifdef MPI
     use comms
     implicit none
-    logical, intent(out) :: success
+    logical, optional, intent(out) :: success_out
+    logical :: success
     integer :: mpi_fh
     integer :: status(mpi_status_size)
     integer :: ierr
@@ -701,12 +662,12 @@ contains
       call MPI_File_Close(mpi_fh, ierr)
 ! Get the see,ierrd
       if (ip_global .eq. 0) then
-        print *, "configuration file read."
         open (unit=10, file='con', status='old', form='unformatted', access='stream')
         !print*,"FSEEK CALL COMMENTED OUT, THIS WILL FAIL"
         call fseek(10, 3*ksize*ksize*ksizet*4 + 4, 0)
         read (10) seed
         close (10)
+        print *, "configuration file read."
       end if
 #else
       open (unit=10, file='con', status='old', form='unformatted')
@@ -714,6 +675,14 @@ contains
       close (10)
       print *, "configuration file read."
 #endif
+    else
+      if ((.not. success) .and. (.not. present(success_out))) then
+        print *, "Configuration file 'con' not found!"
+        stop
+      endif
+    endif
+    if (present(success_out)) then
+      success_out = success
     endif
 
   end subroutine sread
@@ -817,9 +786,10 @@ contains
 #endif
   end subroutine saveseed
 !
-  subroutine init_gauge(nc)
-    use random
+  subroutine init(nc)
+    use gammamatrices, only: init_gammas
     use gauge
+    use random
 !*******************************************************************
 !     sets initial values
 !     nc=0 cold start
@@ -828,18 +798,41 @@ contains
 !*******************************************************************
     implicit none
     integer, intent(in) :: nc
+    integer :: nc_temp
     integer :: ix, iy, it, mu
     real :: g
+
+    call init_gammas()
+    block
+      logical :: success
+      if ((istart .lt. 0) .or. (iread .eq. 1)) then
+        call sread(success)
+        if (.not. success) then
+#ifdef MPI
+          if (ip_global .eq. 0) then
+#endif
+            print *, 'Reading con file failed, starting from random conf'
+#ifdef MPI
+          endif
+#endif
+          nc_temp = 1
+        else
+          return
+        endif
+      else
+        nc_temp = nc
+      endif
+    end block
 
 #ifdef MPI
     if (ip_global .eq. 0) then
 #endif
-      print *, 'Initialising gauge conf, nc: ', nc
+      print *, 'Initialising gauge conf, nc: ', nc_temp
 #ifdef MPI
     endif
 #endif
 
-    select case (nc)
+    select case (nc_temp)
     case (-1)
       return
     case (0)
@@ -858,7 +851,7 @@ contains
       enddo
       return
     end select
-  end subroutine init_gauge
+  end subroutine init
 !******************************************************************
 !   calculate compact links from non-compact links
 !******************************************************************

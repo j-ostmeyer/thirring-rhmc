@@ -14,42 +14,41 @@ program test_derivs
   logical :: generate = .false.
   integer :: timing_loops = 1
   complex, parameter :: iunit = cmplx(0, 1)
-  real(dp), parameter :: tau = 8 * atan(1.0_8)
+  real(dp), parameter :: tau = 8*atan(1.0_8)
 
   ! common blocks to function
 
-
   ! initialise function parameters
-  complex(dp) u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
-  complex(dp) Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-  complex(dp) X2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
+  complex(dp) Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+  complex(dp) X2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   real :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
-  complex(dp) R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   real :: diff(ksizex_l, ksizey_l, ksizet_l, 3), sum_diff, max_diff
 
   real(dp), parameter :: anum = tau
   integer, parameter :: iflag = 0
 
   integer :: i, j, ix, iy, it, ithird
-  integer, parameter :: idxmax = 4 * ksize * ksize * ksizet * kthird
+  integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
   integer :: idx = 0
 #ifdef MPI
   integer, dimension(12) :: reqs_R, reqs_Phi, reqs_X2
   integer :: ierr
   call init_MPI
 #endif
-  do j = 1,4
-    do it = 1,ksizet_l
-      do iy = 1,ksizey_l
-        do ix = 1,ksizex_l
-          do ithird = 1,kthird
-            idx = ithird + (ip_x * ksizex_l + ix - 1) * kthird &
-              & + (ip_y * ksizey_l + iy - 1) * kthird * ksize &
-              & + (ip_t * ksizet_l + it - 1) * kthird * ksize * ksize &
-              & + (j - 1) * kthird * ksize * ksize * ksizet
-            Phi(ithird, ix, iy, it, j) = 1.1 * exp(iunit * idx * tau / idxmax)
-            R(ithird, ix, iy, it, j) = 1.3 * exp(iunit * idx * tau / idxmax)
-            X2(ithird, ix, iy, it, j) = 0.5 * exp(1.0) * exp(iunit * idx * tau / idxmax)
+  do j = 1, 4
+    do it = 1, ksizet_l
+      do iy = 1, ksizey_l
+        do ix = 1, ksizex_l
+          do ithird = 1, kthird
+            idx = ithird + (ip_x*ksizex_l + ix - 1)*kthird &
+              & + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
+              & + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
+              & + (j - 1)*kthird*ksize*ksize*ksizet
+            Phi(ithird, ix, iy, it, j) = 1.1*exp(iunit*idx*tau/idxmax)
+            R(ithird, ix, iy, it, j) = 1.3*exp(iunit*idx*tau/idxmax)
+            X2(ithird, ix, iy, it, j) = 0.5*exp(1.0)*exp(iunit*idx*tau/idxmax)
           enddo
         enddo
       enddo
@@ -60,16 +59,16 @@ program test_derivs
   call start_halo_update_5(4, Phi, 0, reqs_Phi)
   call start_halo_update_5(4, X2, 0, reqs_X2)
 #endif
-  do j = 1,3
-    do it = 1,ksizet_l
-      do iy = 1,ksizey_l
-        do ix = 1,ksizex_l
-          idx = ip_x * ksizex_l + ix &
-            & + (ip_y * ksizey_l + iy - 1) * ksize &
-            & + (ip_t * ksizet_l + it - 1) * ksize * ksize &
-            & + (j - 1) * ksize * ksize * ksizet
-          u(ix, iy, it, j) = exp(iunit * idx * tau / idxmax)
-          dSdpi_ref(ix, iy, it, j) = real(tau * exp(iunit * idx * tau / idxmax), sp)
+  do j = 1, 3
+    do it = 1, ksizet_l
+      do iy = 1, ksizey_l
+        do ix = 1, ksizex_l
+          idx = ip_x*ksizex_l + ix &
+            & + (ip_y*ksizey_l + iy - 1)*ksize &
+            & + (ip_t*ksizet_l + it - 1)*ksize*ksize &
+            & + (j - 1)*ksize*ksize*ksizet
+          u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
+          dSdpi_ref(ix, iy, it, j) = real(tau*exp(iunit*idx*tau/idxmax), sp)
         enddo
       enddo
     enddo
@@ -88,9 +87,9 @@ program test_derivs
   am3 = 1.0
   ibound = -1
 
-  call init(istart)
+  call init_gammas()
   ! call function
-  do i = 1,timing_loops
+  do i = 1, timing_loops
     dSdpi = dSdpi_ref
     call derivs(R, X2, anum, iflag)
   end do
@@ -105,9 +104,9 @@ program test_derivs
     max_diff = maxval(abs(diff))
 #ifdef MPI
     call MPI_AllReduce(MPI_IN_PLACE, sum_diff, 1, MPI_Real, MPI_Sum, &
-      & comm,ierr)
+      & comm, ierr)
     call MPI_AllReduce(MPI_IN_PLACE, max_diff, 1, MPI_Real, MPI_Max, &
-      & comm,ierr)
+      & comm, ierr)
 #endif
     if (ip_global .eq. 0) then
       if (abs(sum_diff) .gt. 0.3) then
@@ -116,7 +115,7 @@ program test_derivs
       if (max_diff .gt. 0.01) then
         print *, 'max delta too large: ', max_diff
       end if
-    end if      
+    end if
   end if
 #ifdef MPI
   call MPI_Finalize(ierr)

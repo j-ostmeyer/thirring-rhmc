@@ -87,7 +87,7 @@ LIBOBJS = counters.o comms.o comms_common.o \
           measure_module.o multishift_module.o params.o partitioning.o \
           qmrherm_module.o qmrherm_module_split.o \
           qmrherm_module_split_nodir.o random.o reductions.o remez.o remezg.o \
-          remez_common_subroutines.o trial.o vector.o
+          remez_common_subroutines.o timer.o trial.o vector.o
 
 .PHONY: clean
 
@@ -150,7 +150,7 @@ dwf3d_lib.o : $(TOPDIR)/dwf3d_lib.F90 \
               dum1.mod gauge.mod gaussian.mod gammamatrices.mod \
               gforce.mod measure_module.mod \
               params.mod qmrherm_module.mod random.mod remez.mod remezg.mod \
-              remez_common_subroutines.mod trial.mod vector.mod
+              remez_common_subroutines.mod timer.mod trial.mod vector.mod
 	$(COMPILE) -o dwf3d_lib.o $<
 
 gaussian.o : $(TOPDIR)/gaussian.F90 .makefile.uptodate \
@@ -192,6 +192,9 @@ qmrherm_module_split_nodir.o : $(TOPDIR)/qmrherm_module_split_nodir.F90 \
                               derivs_module.mod dirac.mod gforce.mod \
                               params.mod trial.mod
 	$(COMPILE) -o qmrherm_module_split_nodir.o $<
+
+timer.o : $(TOPDIR)/timer.F90 comms_common.mod
+	$(COMPILE) -o timer.o $<
 
 # COMMUNICATION-RELATED 
 ifeq ($(MPI), yes)

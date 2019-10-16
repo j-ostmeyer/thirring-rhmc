@@ -8,10 +8,10 @@ module params
   integer, parameter :: sp = kind(1.)
 
   ! Lattice parameters
-#define KSIZE 16
-#define KSIZET 16
+#define KSIZE 6
+#define KSIZET 6
   integer, parameter :: ksize = KSIZE, ksizet = KSIZET
-  integer, parameter :: kthird = 32
+  integer, parameter :: kthird = 8
   integer, parameter :: kvol = ksize*ksize*ksizet
   integer, parameter :: ndiag = 25, ndiagg = 12
   integer, parameter :: Nf = 1
