@@ -371,32 +371,7 @@ program full_md
         write (6, *) isweep, 'pbp:', pbp, ancgm
       endif
     endif
-    !
-    if ((isweep/icheck)*icheck .eq. isweep) then
-      call rranget(seed, 1, 1, 1)
-      if (iwrite .eq. 1) then
-        call swrite
-      endif
-      !flush(100)
-      flush (200)
-      !     flush(302)
-      !     flush(400)
-      !     flush(500)
-      !     flush(501)
-      if (imass .ne. 1) then
-        !        flush(401)
-        !        flush(402)
-        !        flush(403)
-      endif
-      !#ifdef MPI
-      !      if (ip_global .eq. 0) then
-      !#endif
-      !      write(7,9023) seed
-      !#ifdef MPI
-      !      endif
-      !#endif
-    endif
-    !
+
   end do
   !*******************************************************************
   !     end of main loop

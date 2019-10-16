@@ -11,7 +11,7 @@ module params
 #define KSIZE 16
 #define KSIZET 16
   integer, parameter :: ksize = KSIZE, ksizet = KSIZET
-  integer, parameter :: kthird=48
+  integer, parameter :: kthird = 32
   integer, parameter :: kvol = ksize*ksize*ksizet
   integer, parameter :: ndiag = 25, ndiagg = 12
   integer, parameter :: Nf = 1
@@ -44,7 +44,7 @@ module params
   integer, parameter :: iread = 1     ! Default 1
   integer, parameter :: iwrite = 1     ! Default 1
   integer, parameter :: iprint = 5     !
-  integer, parameter :: icheck = 100
+  integer, parameter :: icheckpoint = 100
 
   ! Inverter
   integer :: max_qmr_iters = 30000 ! QMRHERM
@@ -52,8 +52,8 @@ module params
 
   ! inverter residuals
   real, parameter :: respbp = 1.0e-6, rescgg = 3.0e-4
-  real, parameter :: rescga = 1e-9
-  real, parameter :: rescgm = 1e-9
+  real, parameter :: rescga = 1e-8
+  real, parameter :: rescgm = 1e-8
   ! whether to use single precision in 'guidance' phase.
   logical, parameter :: spmd = .true.
 

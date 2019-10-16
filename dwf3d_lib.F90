@@ -409,10 +409,10 @@ contains
 #endif
         endif
 !
-        if ((isweep/icheck)*icheck .eq. isweep) then
+        if (mod((isweep + isweep_total_start), icheckpoint) .eq. 0) then
           call rranget(seed, 1, 1, 1)
           if (iwrite .eq. 1) then
-            call swrite
+            call swrite(isweep + isweep_total_start)
           endif
           flush (100)
           flush (200)
@@ -424,7 +424,7 @@ contains
 
           time_for_next_iteration = time_per_md_step*4*iterl*2
 
-          if (((isweep + 1)/icheck)*icheck .eq. isweep) then
+          if (mod((isweep + isweep_total_start + 1), iprint) .eq. 0) then
             time_for_next_iteration = time_for_next_iteration + measurement_time
           endif
 
@@ -718,18 +718,26 @@ contains
 
   end subroutine sread
 !
-  subroutine swrite
+  subroutine swrite(traj_id)
     use random
     use gauge
 #ifdef MPI
     use comms
+    integer, intent(in), optional :: traj_id
+
     integer :: mpi_fh
     integer :: status(mpi_status_size)
     integer :: ierr
+    character(len=20) :: configuration_filename
 
+    if (present(traj_id)) then
+      write (configuration_filename, '(A4,I5.5)') 'con.', traj_id
+    else
+      write (configuration_filename, '(A3)') 'con'
+    endif
 ! Write theta
-    call MPI_File_Open(comm, 'con', MPI_Mode_Wronly + MPI_Mode_Create, &
-         & MPI_Info_Null, mpi_fh, ierr)
+    call MPI_File_Open(comm, trim(configuration_filename), &
+                       MPI_Mode_Wronly + MPI_Mode_Create, MPI_Info_Null, mpi_fh, ierr)
     call MPI_File_Set_View(mpi_fh, 0_8, MPI_Real, mpiio_type, "native", &
          & MPI_Info_Null, ierr)
     call MPI_File_Write_All(mpi_fh, theta, 3*ksizex_l*ksizey_l*ksizet_l, &
@@ -738,7 +746,8 @@ contains
 
 ! Write seed in serial
     if (ip_global .eq. 0) then
-      open (unit=31, file='con', status='old', form='unformatted', access='stream')
+      open (unit=31, file=trim(configuration_filename), status='old', &
+            form='unformatted', access='stream')
       !print*,"FSEEK CALL COMMENTED OUT, THIS WILL FAIL"
       call fseek(31, 3*ksize*ksize*ksizet*4 + 4, 0)
 ! Manually compute the effective record length to be compatible with serial Fortran
@@ -750,7 +759,8 @@ contains
 
     end if
 #else
-    open (unit=31, file='con', status='unknown', form='unformatted')
+    open (unit=31, file=trim(configuration_filename), status='unknown', &
+          form='unformatted')
     write (31) theta, seed
     close (31)
 #endif
