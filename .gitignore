@@ -18,3 +18,9 @@ run???/
 time*txt
 *.tar
 playground
+comms4_sp.F90
+comms5_sp.F90
+dirac_sp.F90
+minibenchmarks/
+test_dirac_sunbird/
+test_walltime/

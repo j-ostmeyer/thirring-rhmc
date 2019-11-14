@@ -7,3 +7,6 @@ benchmark_full_md
 benchmark_qmrherm_split_nodir1
 scorep_benchmark_*
 test?????*
+benchmark_qmrherm_1_sp*
+benchsetup_parameters.py
+benchsetup_parameters.pyc

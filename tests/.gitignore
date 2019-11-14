@@ -45,3 +45,6 @@ test_partitioning
 test_partitioning2
 test_partitioning3
 test_qmrherm_split4
+test_force_regression
+con
+random_seed
