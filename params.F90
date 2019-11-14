@@ -51,7 +51,7 @@ module params
   integer :: niterc = kthird*kvol ! CONGRAD
 
   ! inverter residuals
-  real, parameter :: respbp = 1.0e-6, rescgg = 3.0e-4
+  real, parameter :: respbp = 1.0e-6, rescgg = 3.0e-5
   real, parameter :: rescga = 1e-8
   real, parameter :: rescgm = 1e-8
   ! whether to use single precision in 'guidance' phase.

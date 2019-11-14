@@ -5,7 +5,7 @@
 module multishift_module
   implicit none
 
-  integer, parameter :: print_every = 1000
+  integer, parameter :: print_every = 100000
 contains
 
   ! From https://arxiv.org/abs/hep-lat/9612014
