@@ -80,11 +80,24 @@ contains
 !     variables to keep track of MPI requests
     integer :: reqs_ps(12)
     integer :: ierr
+#ifdef GDBHOOK
+    logical :: wait_on_master
+#endif
 #endif
     ibound = -1
     qmrhprint = .true.
 #ifdef MPI
     call init_MPI
+#ifdef GDBHOOK
+    wait_on_master = .true.
+    if (ip_global .eq. 0) then
+      do while (wait_on_master)
+         print*,'Waiting on master for intervention with GDB...'
+         call sleep(1)
+      enddo
+    endif
+    call MPI_Barrier(MPI_COMM_WORLD,ierr)
+#endif
     call timeinit
 #endif
 
