@@ -25,10 +25,10 @@ program full_md
   real :: action, paction, gaction
   real :: vel2, x, ytest, atraj
   real :: dt, am, y, traj, proby
-  real :: actiona, vel2a, pbp, pbpa, yav, yyav
-  real :: ancgm, ancgma
+  real :: actiona, pbpa, yav, yyav
+  real :: ancgma
   integer :: imass, iter, iterl, iter2, i, ia, idirac, ithird
-  integer :: naccp, ipbp, itot, isweep, itercg, mu
+  integer :: isweep, itercg, mu
   !*******************************************************************
   !     variables to keep track of MPI requests
   !*******************************************************************
@@ -76,7 +76,7 @@ program full_md
   ! ending with d0, but we do not care
   call init_random(seed)
 
-  call init(1)
+  call init(1) ! hot random start
   !  mock Remez coefficients
   anum2(0) = 71
   anum4(0) = 71
