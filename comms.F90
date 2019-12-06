@@ -44,11 +44,16 @@ contains
     call MPI_comm_size(MPI_COMM_WORLD, np_global, ierr)
     call MPI_comm_rank(MPI_COMM_WORLD, ip_global, ierr)
     if (np_global .ne. NP_X*NP_Y*NP_T + must_rank) then
-      print *, "MPI dimensionality mismatch: ", NP_X, "*", NP_Y, "*", NP_T, "!=", np_global
+      if(ip_global.eq.0) then
+        print *, "MPI dimensionality mismatch: ", NP_X, "*", NP_Y, "*", NP_T, "!=", np_global
+      end if
       call MPI_finalize(ierr)
       call exit(2)
     end if
-
+    if(ip_global.eq.0) then
+      print *, "Initialising MPI with grid ", NP_X, "*", NP_Y, "*", NP_T
+    end if
+ 
     ! Set up a Cartesian communicator; periodic boundaries, allow reordering
     call MPI_cart_create(MPI_COMM_WORLD, 3, (/NP_X, NP_Y, NP_T/), &
       & (/.true., .true., .true./), .true., comm, ierr)
