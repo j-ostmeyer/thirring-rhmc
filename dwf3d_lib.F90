@@ -614,11 +614,13 @@ contains
 
       call qmrherm(R, Xresult, res2, itercg, One, 1, anum4, aden4, ndiag, 0)
       ancghpv = ancghpv + float(itercg)
+      call check_qmr_iterations(niterations = itercg, abort_on_max_reached = .true. ) 
 !
       R = Xresult
 !
       call qmrherm(R, Xresult, res2, itercg, am, imass, bnum2, bden2, ndiag, 0)
       ancgh = ancgh + float(itercg)
+      call check_qmr_iterations(niterations = itercg, abort_on_max_reached = .true. ) 
 !
       hf = hf + sum(real(conjg(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
                         &        *Xresult(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
@@ -884,5 +886,27 @@ contains
 #endif
     return
   end subroutine coef
+
+subroutine check_qmr_iterations(niterations, abort_on_max_reached)
+  use params, only: max_qmr_iters
+#ifdef MPI
+  use mpi
+  integer :: ierr
+#endif
+  integer, intent(in) :: niterations
+  logical, intent(in) :: abort_on_max_reached
+
+  if ( niterations .eq. max_qmr_iters ) then
+    if (abort_on_max_reached) then 
+      print*,"ERROR: Max QMR iterations reached."
+#ifdef MPI
+      call MPI_Abort(MPI_COMM_WORLD,1,ierr)
+#endif
+    else
+      print*,"WARNING: Max QMR iterations reached."
+    endif 
+  endif
+end subroutine check_qmr_iterations
+  
 end module dwf3d_lib
 
