@@ -901,6 +901,8 @@ subroutine check_qmr_iterations(niterations, abort_on_max_reached)
       print*,"ERROR: Max QMR iterations reached."
 #ifdef MPI
       call MPI_Abort(MPI_COMM_WORLD,1,ierr)
+#else
+      stop
 #endif
     else
       print*,"WARNING: Max QMR iterations reached."
