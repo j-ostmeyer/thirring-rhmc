@@ -1,7 +1,8 @@
 
-COMPILER=INTEL# either GNU or INTEL
+COMPILER=GNU# either GNU or INTEL
 MPI=yes#
-NP_X=2#
-NP_Y=4#
-NP_T=4#
+NP_X=1#
+NP_Y=1#
+NP_T=2#
+NP_THIRD=2#
 SITE_RANDOM=yes#

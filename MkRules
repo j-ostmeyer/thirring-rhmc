@@ -3,23 +3,24 @@
 #FC = /usr/lib64/mpi/gcc/mvapich2/bin/mpif90
 #FC = /usr/lib64/mvapich2/bin/mpif90
 #FCFLAGS = -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g
-#FCFLAGS = -g -ipo -O3 -no-prec-div -fp-model fast=2 -xHost -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1 #-heap-arrays -CB -traceback
-#FCFLAGS = -g -O3 -march=native -mtune=native -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1
+#FCFLAGS = -g -ipo -O3 -no-prec-div -fp-model fast=2 -xHost -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1 -DNP_THIRD=1 #-heap-arrays -CB -traceback
+#FCFLAGS = -g -O3 -march=native -mtune=native -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1 -DNP_THIRD=1
 #FCFLAGS = -O0 -heap-arrays -warn all -C -traceback
 
 #GNU SETTINGS
 GNU_MPIFC    = mpif90
 GNU_FC       = gfortran
-GNU_FCFLAGS  = -O3 -Wall -ffree-line-length-none -g -mcmodel=medium 
+GNU_FCFLAGS  = -O3 -Wall -ffree-line-length-none -g -mcmodel=medium
 
 #INTEL SETTINGS
-INTEL_MPIFC  = mpiifort #mpif90 
-INTEL_FC     = ifort 
+INTEL_MPIFC  = mpiifort #mpif90
+INTEL_FC     = ifort
 INTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays
-#INTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g -fpe0 -traceback 
+#INTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g -fpe0 -traceback
 #INTEL_FCFLAGS= -O2 -heap-arrays #-g -warn all
 #INTEL_FCFLAGS=-g -O0 -heap-arrays -warn all -C -traceback
-#INTEL_FCFLAGS=-g -O0 -heap-arrays 
+#INTEL_FCFLAGS=-g -O0 -heap-arrays
+#INTEL_FCFLAGS=-g -O0 -heap-arrays -debug all -traceback
 
 #CRAY SETTINGS
 CRAY_MPIFC    = ftn
@@ -27,16 +28,16 @@ CRAY_FC       = ftn
 CRAY_FCFLAGS  = -O3
 
 #SCOREPR-INTEL SETTINGS
-SCOREPINTEL_MPIFC  =scorep --user mpif90 #mpiifort 
-SCOREPINTEL_FC     =scorep --user ifort 
+SCOREPINTEL_MPIFC  =scorep --user mpif90 #mpiifort
+SCOREPINTEL_FC     =scorep --user ifort
 SCOREPINTEL_FCFLAGS= -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g -warn all -DSCOREPINST
 #INTEL_FCFLAGS=-g -O0 -heap-arrays -warn all -C -traceback
-#INTEL_FCFLAGS=-g -O0 -heap-arrays 
+#INTEL_FCFLAGS=-g -O0 -heap-arrays
 
 #INTEL SETTINGS NO IPO OPENMPI3 - SCOREP 'DRY'
-SCOREPDRYINTEL_MPIFC  = mpif90 
-SCOREPDRYINTEL_FC     = ifort 
-SCOREPDRYINTEL_FCFLAGS= -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g 
+SCOREPDRYINTEL_MPIFC  = mpif90
+SCOREPDRYINTEL_FC     = ifort
+SCOREPDRYINTEL_FCFLAGS= -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g
 
 #IBM SETTINGS
 IBM_MPIFC  = #SETME
@@ -65,12 +66,12 @@ MPIFC  =$(SCOREPDRYINTEL_MPIFC)
 FC     =$(SCOREPDRYINTEL_FC)
 FCFLAGS=$(SCOREPDRYINTEL_FCFLAGS)
 else ifeq ($(COMPILER), IBM)
-$(error COMPILER IBM not implemented - set flags in MkRules first.) 
+$(error COMPILER IBM not implemented - set flags in MkRules first.)
 MPIFC  =$(IBM_MPIFC)
 FC     =$(IBM_FC)
 FCFLAGS=$(IBM_FCFLAGS)
-else 
-$(error COMPILER not correctly specified (watch for whitespaces)) 
+else
+$(error COMPILER not correctly specified (watch for whitespaces))
 endif
 
 $(info COMPILER: $(COMPILER))
@@ -92,7 +93,7 @@ LIBOBJS = counters.o comms.o comms_common.o \
 
 .PHONY: clean
 
-COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -c 
+COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -c
 
 $(TOPDIR)/dirac_sp.F90 : $(TOPDIR)/dirac.F90
 	bash $(TOPDIR)/convert_to_sp.sh $<
@@ -109,7 +110,7 @@ $(TOPDIR)/comms5_sp.F90 : $(TOPDIR)/comms5.F90
 %.mod : %.o
 	#touch $@
 
-# generic rule for dum,gauge,gforce,remez,remezg, remez_common_subroutine 
+# generic rule for dum,gauge,gforce,remez,remezg, remez_common_subroutine
 # trial,vector,partitioning
 %.o : $(TOPDIR)/%.F90 .makefile.uptodate params.mod
 	$(COMPILE) -o $*.o $<
@@ -155,7 +156,7 @@ dwf3d_lib.o : $(TOPDIR)/dwf3d_lib.F90 \
 	$(COMPILE) -o dwf3d_lib.o $<
 
 gaussian.o : $(TOPDIR)/gaussian.F90 .makefile.uptodate \
-             comms4.mod params.mod random.mod 
+             comms4.mod params.mod random.mod
 	$(COMPILE) -o gaussian.o $<
 
 inverter_utils.o  : $(TOPDIR)/inverter_utils.F90 .makefile.uptodate dirac.mod \
@@ -164,7 +165,7 @@ inverter_utils.o  : $(TOPDIR)/inverter_utils.F90 .makefile.uptodate dirac.mod \
 
 measure_module.o : $(TOPDIR)/measure_module.F90 \
                   .makefile.uptodate params.mod gaussian.mod trial.mod \
-                  vector.mod comms5.mod comms_common.mod dirac.mod 
+                  vector.mod comms5.mod comms_common.mod dirac.mod
 	$(COMPILE) -o measure_module.o $<
 
 multishift_module.o :  $(TOPDIR)/multishift_module.F90 \
@@ -197,9 +198,9 @@ qmrherm_module_split_nodir.o : $(TOPDIR)/qmrherm_module_split_nodir.F90 \
 timer.o : $(TOPDIR)/timer.F90 comms_common.mod
 	$(COMPILE) -o timer.o $<
 
-# COMMUNICATION-RELATED 
+# COMMUNICATION-RELATED
 ifeq ($(MPI), yes)
-COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T) 
+COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T) -DNP_THIRD=$(NP_THIRD)
 FC = $(MPIFC)
 
 comms.o :  $(TOPDIR)/comms.F90 .makefile.uptodate comms_common.mod \
@@ -233,7 +234,7 @@ comms.o :  $(TOPDIR)/uncomms.f90 .makefile.uptodate params.mod
 comms5.o :  $(TOPDIR)/uncomms5.f90 .makefile.uptodate params.mod
 	$(COMPILE) -o comms5.o $<
 
-else 
+else
 $(error MPI not correctly specified (watch for whitespaces))
 endif
 
@@ -246,11 +247,11 @@ random.o :  $(TOPDIR)/site_random.f90 .makefile.uptodate comms.mod params.mod
 
 else ifeq ($(SITE_RANDOM), no)
 
-RANDOM_FLAGS = 
+RANDOM_FLAGS =
 
 random.o : $(TOPDIR)/random.f90 .makefile.uptodate comms.mod
 	$(COMPILE) -o random.o $<
-else 
+else
  $(error SITE_RANDOM not correctly specified (watch for whitespaces))
 endif
 
@@ -258,4 +259,3 @@ endif
 #MISC
 compile_flags: MkRules MkFlags
 	echo $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} > $@
-
