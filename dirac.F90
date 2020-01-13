@@ -4,9 +4,9 @@ module dirac
   implicit none
   save
 
-contains 
+contains
 
-  pure subroutine dslash(Phi,R,u,am,imass)
+  pure subroutine dslash(Phi, R, u, am, imass)
     !
     !     calculates Phi = M*R
     !
@@ -25,32 +25,33 @@ contains
     !     write(6,*) 'hi from dslash'
     !
     !     diagonal term
-    diag=(3.0-am3)+1.0
-    Phi=diag*R
-    !      
+    diag = (3.0 - am3) + 1.0
+    Phi = diag*R
+    !
     !     Wilson term (hermitian) and Dirac term (antihermitian)
-    do mu=1,3
+    do mu = 1, 3
       ixup = kdelta(1, mu)
       iyup = kdelta(2, mu)
       itup = kdelta(3, mu)
 
-      do idirac=1,4
-        igork=gamin(mu,idirac)
-        do it = 1,ksizet_l
-          do iy = 1,ksizey_l
-            do ix = 1,ksizex_l
-              Phi(:,ix,iy,it,idirac)=Phi(:,ix,iy,it,idirac) &
-                ! Wilson term (hermitian)
-              &    -akappa*(u(ix,iy,it,mu) &
-                &              * R(:, ix+ixup, iy+iyup, it+itup, idirac) &
-                &             + conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
-                &              * R(:, ix-ixup, iy-iyup, it-itup, idirac)) &
-                ! Dirac term (antihermitian)
-              &     + gamval(mu,idirac) * &
-                &       (u(ix,iy,it,mu) &
-                &         * R(:, ix+ixup, iy+iyup, it+itup, igork) &
-                &        - conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
-                &         * R(:, ix-ixup, iy-iyup, it-itup, igork))
+      do idirac = 1, 4
+        igork = gamin(mu, idirac)
+        do it = 1, ksizet_l
+          do iy = 1, ksizey_l
+            do ix = 1, ksizex_l
+              Phi(:, ix, iy, it, idirac) = Phi(:, ix, iy, it, idirac) &
+                        ! Wilson term (hermitian)
+                            - akappa &
+                            * (u(ix, iy, it, mu) &
+                             * R(:, ix+ixup, iy+iyup, it+itup, idirac) &
+                             + conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
+                             * R(:, ix-ixup, iy-iyup, it-itup, idirac)) &
+                        ! Dirac term (antihermitian)
+                            + gamval(mu, idirac) &
+                            * (u(ix, iy, it, mu) &
+                             * R(:, ix+ixup, iy+iyup, it+itup, igork) &
+                             - conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
+                             * R(:, ix-ixup, iy-iyup, it-itup, igork))
             enddo
           enddo
         enddo
@@ -58,37 +59,44 @@ contains
     enddo
     !
     !  s-like term exploiting projection
-    Phi(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-      & = Phi(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-      & - R(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
-    Phi(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-      & = Phi(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-      & - R(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+    Phi(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+            Phi(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          - R(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+
+    Phi(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+            Phi(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          - R(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
     !
     !  Mass term (couples the two walls unless imass=5)
-    if (imass.eq.1) then
-      zkappa=cmplx(am,0.0)
+    if (imass .eq. 1) then
+      zkappa = cmplx(am, 0.0)
+
       Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-        & Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-        & + zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+            Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          + zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+
       Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-        & Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) + &
-        & zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
-    elseif (imass.eq.3) then
-      zkappa=cmplx(0.0,-am)
+            Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          + zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+
+    else if (imass .eq. 3) then
+      zkappa = cmplx(0.0, -am)
+
       Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-        & Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-        & - zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+            Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          - zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+
       Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-        & Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-        & + zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
-    elseif (imass.eq.5) then
-      zkappa=cmplx(0.0,-am)
+            Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          + zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+
+    else if (imass .eq. 5) then
+      zkappa = cmplx(0.0, -am)
       !         do idirac=3,4
       !         igork=gamin(5,idirac)
       Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-        & Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-        & - zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+            Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          - zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
       !        Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac) = &
       !            & Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac) &
       !            & + 2 * zkappa * gamval(5,idirac) * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, igork)
@@ -96,18 +104,20 @@ contains
       !         do idirac=1,2
       !         igork=gamin(5,idirac)
       Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-        & Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-        & - zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+            Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          - zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
       !        Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac) = &
-      !            & Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac) 
+      !            & Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac)
       !            & + 2 * zkappa * gamval(5,idirac) * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, igork)
       !         enddo
-    endif
-    !
+    end if
+
     return
   end subroutine dslash
+
   !***********************************************************************
-  pure subroutine dslashd_local(am,Phi,R,imass)
+
+  pure subroutine dslashd_local(am, Phi, R, imass)
     implicit none
     complex(dp), intent(out) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp), intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -116,50 +126,62 @@ contains
     real, intent(in) :: am
     integer, intent(in) :: imass
 
-    diag=(3.0-am3)+1.0
-    Phi(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:) = diag * R(:,1:ksizex_l,1:ksizey_l,1:ksizet_l,:)
+    diag = (3.0 - am3) + 1.0
+    Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = diag*R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
 
     !   s-like term exploiting projection
-    Phi(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-      & = Phi(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-      & - R(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
-    Phi(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-      & = Phi(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-      & - R(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
-    !
-    !   Mass term (couples the two walls unless imass=5) 
-    if(imass.eq.1)then
-      zkappa=cmplx(am,0.0)
-      Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-        & Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-        & + zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
-      Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-        & Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-        & + zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
-    elseif(imass.eq.3)then
-      zkappa = cmplx(0.0,am)
-      Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-        & Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-        & + zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
-      Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-        & Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-        & - zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
-    elseif(imass.eq.5)then
-      zkappa = cmplx(0.0,am)
-      Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-        & Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-        & - zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
-      Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-        & Phi(1,1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-        & - zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
-    endif
+    Phi(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+            Phi(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          - R(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
 
-    return 
+    Phi(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+            Phi(2:kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          - R(1:kthird-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+    !
+    !   Mass term (couples the two walls unless imass=5)
+    if (imass .eq. 1) then
+      zkappa = cmplx(am, 0.0)
+
+      Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+            Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          + zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+
+      Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+            Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          + zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+
+    else if (imass .eq. 3) then
+      zkappa = cmplx(0.0, am)
+
+      Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+            Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          + zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+
+      Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+            Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          - zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+
+    else if (imass .eq. 5) then
+      zkappa = cmplx(0.0, am)
+
+      Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+            Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          - zkappa * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+
+      Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+            Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          - zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+    end if
+
+    return
   end subroutine dslashd_local
+
+!***********************************************************************
+
 #ifdef MPI
-  subroutine dslashd(Phi,R,u,am,imass,reqs_R)
+  subroutine dslashd(Phi, R, u, am, imass, reqs_R)
 #else
-  pure subroutine dslashd(Phi,R,u,am,imass)
+  pure subroutine dslashd(Phi, R, u, am, imass)
 #endif
     use comms, only : complete_halo_update
     complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
@@ -176,44 +198,45 @@ contains
     !
     !   taking care of the part that does not need the halo
     !   diagonal term (hermitian)
-    call dslashd_local(am,Phi,R,imass)
-    !   call complete_halo_update_5(4, phi)
+    call dslashd_local(am, Phi, R, imass)
+    !   call complete_halo_update_5(4, Phi)
     !
     !   taking care of the part that does need the halo
     !   wilson term (hermitian) and dirac term (antihermitian)
 #ifdef MPI
-    if(present(reqs_r)) then
+    if (present(reqs_R)) then
       call complete_halo_update(reqs_R)
-    endif
+    end if
 #endif
-    do mu=1,3
+    do mu = 1, 3
       ixup = kdelta(1, mu)
       iyup = kdelta(2, mu)
       itup = kdelta(3, mu)
 
-      do idirac=1,4
-        igork=gamin(mu,idirac)
-        do it = 1,ksizet_l
-          do iy = 1,ksizey_l
-            do ix = 1,ksizex_l
-              phi(:,ix,iy,it,idirac)=phi(:,ix,iy,it,idirac) &
-                !   wilson term (hermitian)
-              &    - akappa * (u(ix,iy,it,mu) &
-                &              * r(:, ix+ixup, iy+iyup, it+itup, idirac) &
-                &             + conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
-                &              * r(:, ix-ixup, iy-iyup, it-itup, idirac)) &
-                !   dirac term (antihermitian)
-              &    - gamval(mu,idirac) * &
-                &       (u(ix,iy,it,mu) &
-                &         * r(:, ix+ixup, iy+iyup, it+itup, igork) &
-                &        - conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
-                &         * r(:, ix-ixup, iy-iyup, it-itup, igork))
+      do idirac = 1, 4
+        igork = gamin(mu, idirac)
+        do it = 1, ksizet_l
+          do iy = 1, ksizey_l
+            do ix = 1, ksizex_l
+              Phi(:, ix, iy, it, idirac) = Phi(:, ix, iy, it, idirac) &
+                        ! Wilson term (hermitian)
+                            - akappa &
+                            * (u(ix,iy,it,mu) &
+                             * R(:, ix+ixup, iy+iyup, it+itup, idirac) &
+                             + conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
+                             * R(:, ix-ixup, iy-iyup, it-itup, idirac)) &
+                        ! Dirac term (antihermitian)
+                            - gamval(mu, idirac) &
+                            * (u(ix, iy, it, mu) &
+                             * R(:, ix+ixup, iy+iyup, it+itup, igork) &
+                             - conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
+                             * R(:, ix-ixup, iy-iyup, it-itup, igork))
             enddo
           enddo
         enddo
       enddo
     enddo
-    !
+
     return
 #ifdef MPI
   end subroutine dslashd
@@ -223,50 +246,52 @@ contains
 
 
   !***********************************************************************
-  pure subroutine dslash2d(phi,r,u)
-    !     calculates phi = m*r
+  pure subroutine dslash2d(Phi, R, u)
+    !     calculates Phi = m*R
     !
     !     complex, intent(in) :: u(ksizex_l, ksizey_l, ksizet_l, 3)
-    !     complex, intent(out) :: phi(ksizex_l,ksizey_l,ksizet_l, 4)
-    !     complex, intent(in) :: r(ksizex_l,ksizey_l,ksizet_l,4)
+    !     complex, intent(out) :: Phi(ksizex_l,ksizey_l,ksizet_l, 4)
+    !     complex, intent(in) :: R(ksizex_l,ksizey_l,ksizet_l,4)
     complex(dp), intent(in) ::  u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
-    complex(dp), intent(out) :: phi(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(in) :: r(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(out) :: Phi(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: R(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     integer :: ix, iy, it, idirac, mu, ixup, iyup, igork
     real(dp) :: diag
 
     !     diagonal term
-    diag=2.0d0
-    phi = diag * r
+    diag = 2.0d0
+    Phi = diag*R
 
     !     wilson and dirac terms
-    do mu=1,2
-      ixup=kdelta(1,mu)
-      iyup=kdelta(2,mu)
-      !
-      do idirac=1,4
-        igork=gamin(mu,idirac)
-        do it=1,ksizet_l
-          do iy=1,ksizey_l
-            do ix=1,ksizex_l
-              phi(ix,iy,it,idirac) = &
-                ! wilson term
-              &    phi(ix,iy,it,idirac) &
-                &    - akappa * (u(ix,iy,it,mu) * r(ix+ixup, iy+iyup, it, idirac) &
-                &             + conjg(u(ix-ixup, iy-iyup, it, mu)) &
-                &              * r(ix-ixup, iy-iyup, it, idirac)) &
-                ! dirac term
-              &     + gamval(mu,idirac) * &
-                &      (u(ix,iy,it,mu)*r(ix+ixup, iy+iyup, it, igork) &
-                &       - conjg(u(ix-ixup, iy-iyup, it,mu)) &
-                &        * r(ix-ixup, iy-iyup, it, igork))
+    do mu = 1, 2
+      ixup = kdelta(1, mu)
+      iyup = kdelta(2, mu)
+
+      do idirac = 1, 4
+        igork = gamin(mu, idirac)
+        do it = 1, ksizet_l
+          do iy = 1, ksizey_l
+            do ix = 1, ksizex_l
+              Phi(ix, iy, it, idirac) = Phi(ix, iy, it, idirac) &
+                        ! wilson term
+                            - akappa &
+                            * (u(ix, iy, it, mu) &
+                             * R(ix+ixup, iy+iyup, it, idirac) &
+                             + conjg(u(ix-ixup, iy-iyup, it, mu)) &
+                             * R(ix-ixup, iy-iyup, it, idirac)) &
+                        ! dirac term
+                            + gamval(mu, idirac) &
+                            * (u(ix, iy, it, mu) &
+                             * R(ix+ixup, iy+iyup, it, igork) &
+                             - conjg(u(ix-ixup, iy-iyup, it, mu)) &
+                             * R(ix-ixup, iy-iyup, it, igork))
             enddo
           enddo
         enddo
       enddo
     enddo
-    !    call complete_halo_update_4(4, phi)
-    !
+    !    call complete_halo_update_4(4, Phi)
+
     return
   end subroutine dslash2d
   !!***********************************************************************
@@ -275,4 +300,3 @@ contains
   !***********************************************************************
 
 end module dirac
-
