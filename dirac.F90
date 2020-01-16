@@ -1,4 +1,5 @@
 module dirac
+  use comms_common
   use params
   use gammamatrices
 
