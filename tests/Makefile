@@ -9,10 +9,10 @@ endif
 
 
 ifeq ($(MPI), yes)
-	MPI_RUNNER = mpirun -n $$(($(NP_X) * $(NP_Y) * $(NP_T)))
+	MPI_RUNNER = mpirun -n $$(($(NP_X) * $(NP_Y) * $(NP_T) * $(NP_THIRD)))
 else
 	COMMS_LIB = uncomms.o
-	MPI_RUNNER = 
+	MPI_RUNNER =
 endif
 
 
@@ -29,14 +29,14 @@ TESTS = test_dslash_1 test_dslash_3 test_dslash_5 test_dslashd_1 test_dslashd_3 
        test_dirac_split_ordering \
        test_dslash_split1 test_dslash_split3 test_dslash_split5 \
        test_dslashd_split1 test_dslashd_split3 test_dslashd_split5 test_qmrherm_split4 \
-       test_timer 
+       test_timer
 
 TEST_TO_FAIL = test_timer_noinit
 
 default: $(TESTS)
 tests: $(TESTS)
 
-runtests: $(TESTS) 
+runtests: $(TESTS)
 	@for test in $(TESTS); do \
 	    printf "$$test: "; \
 	    OUTPUT=$$($(MPI_RUNNER) ./$$test) && \
@@ -46,7 +46,7 @@ runtests: $(TESTS)
 	        echo; \
 	        echo $$OUTPUT; \
 	    fi; \
-	done 
+	done
 	@for test in $(TESTS_TO_FAIL); do \
 	    printf "$$test: "; \
 		if ./$$test >/dev/null ; then \
@@ -88,6 +88,5 @@ MODS=$(patsubst %.o,%.mod,$(LIBOBJS))
 test_%.o: test_%.F90 .makefile.uptodate test_utils.F90 test_utils.fh $(MODS)
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o $@ $<
 
-$(TEST_TO_FAIL) $(TESTS) : % : %.o $(LIBOBJS) 
+$(TEST_TO_FAIL) $(TESTS) : % : %.o $(LIBOBJS)
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -o $@ $^
-
