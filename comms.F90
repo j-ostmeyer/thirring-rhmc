@@ -34,7 +34,7 @@ contains
   !   Initialise MPI variables
   !***********************************************************************
   subroutine init_MPI()
-    integer :: coords(3)
+    integer :: coords(4)
 #ifdef WITH_MUST
     integer, parameter :: must_rank = 1
 #else
