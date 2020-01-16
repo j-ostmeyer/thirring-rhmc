@@ -101,11 +101,11 @@ program test_dslash
   end do
   ! check output
   if (generate) then
-    write_file(Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_dslash_3.dat', MPI_Double_Complex)
+    write_file(Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_dslash_3.dat', MPI_Double_Complex)
   else
     read_file(Phiref, 'test_dslash_3.dat', MPI_Double_Complex)
 
-    diff = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - Phiref
+    diff = Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - Phiref
     check_max(diff, 1e-11, 'Phi', max_diff, MPI_Double_Precision, 'test_dslash_3')
     check_sum(diff, 1e-11, 'Phi', sum_diff, MPI_Double_Complex, 'test_dslash_3')
   end if
