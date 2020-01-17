@@ -13,7 +13,7 @@ contains
   subroutine gdbwait()
     use comms
     implicit none
-    logical,volatile :: wfi ! Wait For Intervention
+    logical, volatile :: wfi ! Wait For Intervention
     integer :: ierr
 
     wfi = .true.
@@ -23,7 +23,7 @@ contains
         call sleep(1)
       end do
     end if
-    call MPI_Barrier(MPI_Comm_World,ierr)
+    call MPI_Barrier(MPI_Comm_World, ierr)
   end subroutine gdbwait
 
   subroutine rw_file_mpi(array, array_shape, rank, filename, mpi_dtype, write_out)
@@ -76,10 +76,10 @@ contains
     call MPI_Type_Create_Subarray(rank, global_size, local_size, start, &
                                   MPI_Order_Fortran, mpi_dtype, local_mpiio_type, &
                                   ierr)
-    call MPI_Type_Commit(local_mpiio_type,ierr)
-    call MPI_File_Open(comm, filename, mode, MPI_Info_Null, mpi_fh,ierr)
+    call MPI_Type_Commit(local_mpiio_type, ierr)
+    call MPI_File_Open(comm, filename, mode, MPI_Info_Null, mpi_fh, ierr)
     call MPI_File_Set_View(mpi_fh, 4_8, mpi_dtype, local_mpiio_type, &
-                           "native", MPI_Info_Null,ierr)
+                           "native", MPI_Info_Null, ierr)
     if (write_out) then
       call MPI_File_Write_All(mpi_fh, array, count, mpi_dtype, status, ierr)
     else
