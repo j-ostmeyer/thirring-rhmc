@@ -33,7 +33,7 @@ program test_dslash
   integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
   integer :: idx
 #ifdef MPI
-  integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi
+  integer, dimension(16) :: reqs_R, reqs_u, reqs_Phi
   integer :: ierr
   call init_MPI
 #endif
