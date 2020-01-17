@@ -57,6 +57,9 @@ contains
       offset = 0
     else
       offset = 1
+      ! Less changes if we modify the first index here
+      global_size(0 + offset) = kthird
+      start(0 + offset) = ip_third * kthird_l
     end if
 
     ! Work out how many elements to transfer
