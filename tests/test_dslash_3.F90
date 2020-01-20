@@ -102,6 +102,7 @@ program test_dslash
   end do
   ! check output
   if (generate) then
+    print *, "Generating .dat file..."
     write_file(Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_dslash_3.dat', MPI_Double_Complex)
   else
     read_file(Phiref, 'test_dslash_3.dat', MPI_Double_Complex)
