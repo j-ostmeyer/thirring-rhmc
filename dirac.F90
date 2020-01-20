@@ -61,43 +61,57 @@ contains
     enddo
 
     ! s-like term exploiting projection
-    if (ip_third .eq. 0) then
-      Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-              Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-            - R(2:kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
-
-      Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-              Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-            - R(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
-
-    else if (ip_third .eq. np_third-1) then
+    ! If only one rank along third dimension
+    if (np_third .eq. 1) then
       Phi(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
               Phi(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
             - R(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
 
-      Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-              Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-            - R(0:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
-
+      Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+              Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+            - R(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+    ! If more than one rank along third dimension
     else
-      Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-              Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-            - R(2:kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+      if (ip_third .eq. 0) then
+        Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+                Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+              - R(2:kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
 
-      Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-              Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-            - R(0:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+        Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+                Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+              - R(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+
+      else if (ip_third .eq. np_third-1) then
+        Phi(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+                Phi(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+              - R(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+
+        Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+                Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+              - R(0:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+
+      else
+        Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+                Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+              - R(2:kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+
+        Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+                Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+              - R(0:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+      end if
     end if
 
     ! Mass term (couples the two walls unless imass=5)
     if (imass .eq. 1) then
       zkappa = cmplx(am, 0.0)
 
+      ! Separate if statements. Needed when np_third == 1
       if (ip_third .eq. np_third-1) then
         Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
               Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
             + zkappa * R(kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
-      else if (ip_third .eq. 0) then
+      end if
+      if (ip_third .eq. 0) then
         Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
               Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
             + zkappa * R(0, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
@@ -106,11 +120,13 @@ contains
     else if (imass .eq. 3) then
       zkappa = cmplx(0.0, -am)
 
+      ! Separate if statements. Needed when np_third == 1
       if (ip_third .eq. np_third-1) then
         Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
               Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
             - zkappa * R(kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
-      else if (ip_third .eq. 0) then
+      end if
+      if (ip_third .eq. 0) then
         Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
               Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
             + zkappa * R(0, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
@@ -120,6 +136,8 @@ contains
       zkappa = cmplx(0.0, -am)
       !         do idirac=3,4
       !         igork=gamin(5,idirac)
+
+      ! Separate if statements. Needed when np_third == 1
       if (ip_third .eq. np_third-1) then
         Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
               Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
@@ -130,7 +148,8 @@ contains
       !         enddo
       !         do idirac=1,2
       !         igork=gamin(5,idirac)
-      else if (ip_third .eq. 0) then
+      end if
+      if (ip_third .eq. 0) then
         Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
               Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
             - zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
@@ -159,43 +178,57 @@ contains
     Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = diag*R(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
 
     ! s-like term exploiting projection
-    if (ip_third .eq. 0) then
-      Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-              Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-            - R(2:kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
-
-      Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-              Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-            - R(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
-
-    else if (ip_third .eq. np_third-1) then
+    ! If only one rank along third dimension
+    if (np_third == 1) then
       Phi(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
               Phi(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
             - R(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
 
-      Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-              Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-            - R(0:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
-
+      Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+              Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+            - R(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+    ! If more than one rank along third dimension
     else
-      Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-              Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-            - R(2:kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+      if (ip_third .eq. 0) then
+        Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+                Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+              - R(2:kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
 
-      Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-              Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-            - R(0:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+        Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+                Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+              - R(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+
+      else if (ip_third .eq. np_third-1) then
+        Phi(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+                Phi(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+              - R(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+
+        Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+                Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+              - R(0:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+
+      else
+        Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+                Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+              - R(2:kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+
+        Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+                Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+              - R(0:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+      end if
     end if
 
     ! Mass term (couples the two walls unless imass=5)
     if (imass .eq. 1) then
       zkappa = cmplx(am, 0.0)
 
+      ! Separate if statements. Needed when np_third == 1
       if (ip_third .eq. np_third-1) then
         Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
               Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
             + zkappa * R(kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
-      else if (ip_third .eq. 0) then
+      end if
+      if (ip_third .eq. 0) then
         Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
               Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
             + zkappa * R(0, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
@@ -204,11 +237,13 @@ contains
     else if (imass .eq. 3) then
       zkappa = cmplx(0.0, am)
 
+      ! Separate if statements. Needed when np_third == 1
       if (ip_third .eq. np_third-1) then
         Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
               Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
             + zkappa * R(kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
-      else if (ip_third .eq. 0) then
+      end if
+      if (ip_third .eq. 0) then
         Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
               Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
             - zkappa * R(0, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
@@ -217,11 +252,13 @@ contains
     else if (imass .eq. 5) then
       zkappa = cmplx(0.0, am)
 
+      ! Separate if statements. Needed when np_third == 1
       if (ip_third .eq. np_third-1) then
         Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
               Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
             - zkappa * R(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
-      else if (ip_third .eq. 0) then
+      end if
+      if (ip_third .eq. 0) then
         Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
               Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
             - zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
