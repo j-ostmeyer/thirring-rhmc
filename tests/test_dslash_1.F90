@@ -1,12 +1,13 @@
 #include "test_utils.fh"
 program test_dslash
   use params
-  use dwf3d_lib
+  ! use dwf3d_lib
   use dirac
   use comms
   use comms4
   use comms5
   use test_utils
+
   implicit none
 
   ! general parameters
@@ -16,11 +17,11 @@ program test_dslash
   real(dp), parameter :: tau = 8*atan(1.0_8)
 
   ! initialise function parameters
-  complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
-  complex(dp) Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-  complex(dp) Phiref(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
-  complex(dp) R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-  complex(dp) diff(kthird, ksizex_l, ksizey_l, ksizet_l, 4)
+  complex(dp) u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
+  complex(dp) Phi(0:kthird_l+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) Phiref(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4)
+  complex(dp) R(0:kthird_l+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) diff(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4)
   complex(dp) sum_diff
   real(dp) max_diff
 
@@ -31,7 +32,7 @@ program test_dslash
   integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
   integer :: idx
 #ifdef MPI
-  integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi
+  integer, dimension(16) :: reqs_R, reqs_u, reqs_Phi
   integer :: ierr
   call init_MPI
 #endif
@@ -39,11 +40,13 @@ program test_dslash
     do it = 1, ksizet_l
       do iy = 1, ksizey_l
         do ix = 1, ksizex_l
-          do ithird = 1, kthird
-            idx = ithird + (ip_x*ksizex_l + ix - 1)*kthird &
-              & + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
-              & + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
-              & + (j - 1)*kthird*ksize*ksize*ksizet
+          do ithird = 1, kthird_l
+            idx = ip_third*kthird_l + ithird &
+                + (ip_x*ksizex_l + ix - 1)*kthird &
+                + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
+                + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
+                + (j - 1)*kthird*ksize*ksize*ksizet
+
             Phi(ithird, ix, iy, it, j) = 1.1*exp(iunit*idx*tau/idxmax)
             R(ithird, ix, iy, it, j) = 1.3*exp(iunit*idx*tau/idxmax)
           enddo
@@ -60,9 +63,10 @@ program test_dslash
       do iy = 1, ksizey_l
         do ix = 1, ksizex_l
           idx = ip_x*ksizex_l + ix &
-            & + (ip_y*ksizey_l + iy - 1)*ksize &
-            & + (ip_t*ksizet_l + it - 1)*ksize*ksize &
-            & + (j - 1)*ksize*ksize*ksizet
+              + (ip_y*ksizey_l + iy - 1)*ksize &
+              + (ip_t*ksizet_l + it - 1)*ksize*ksize &
+              + (j - 1)*ksize*ksize*ksizet
+
           u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
         enddo
       enddo
@@ -97,11 +101,12 @@ program test_dslash
   end do
   ! check output
   if (generate) then
-    write_file(Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_dslash_1.dat', MPI_Double_Complex)
+    print *, "Generating .dat file..."
+    write_file(Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_dslash_1.dat', MPI_Double_Complex)
   else
     read_file(Phiref, 'test_dslash_1.dat', MPI_Double_Complex)
 
-    diff = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - Phiref
+    diff = Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - Phiref
     check_max(diff, 1e-11, 'Phi', max_diff, MPI_Double_Precision, 'test_dslash_1')
     check_sum(diff, 1e-11, 'Phi', sum_diff, MPI_Double_Complex, 'test_dslash_1')
   end if
