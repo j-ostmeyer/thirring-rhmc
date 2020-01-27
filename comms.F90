@@ -71,6 +71,10 @@ contains
     ip_t = coords(3)
     ip_third = coords(4)
 
+    ! Group ranks that differ only on ip_third
+    ! Multiplying ip_[xyt] with powers of two will create unique colors
+    call MPI_Comm_split(MPI_COMM_WORLD, ip_x*4 + ip_y*2 + ip_t*1, ip_third, comm_grp_third, ierr)
+
     ! Prepare file format for MPI-IO
     call MPI_Type_Create_Subarray(4, &! dimensionality
                                   (/ ksize, ksize, ksizet, 3 /), &! global volume
