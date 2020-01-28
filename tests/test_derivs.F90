@@ -45,10 +45,10 @@ program test_derivs
         do ix = 1, ksizex_l
           do ithird = 1, kthird_l
             idx = ip_third*kthird_l + ithird &
-                + (ip_x*ksizex_l + ix - 1)*kthird &
-                + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
-                + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
-                + (j - 1)*kthird*ksize*ksize*ksizet
+                  + (ip_x*ksizex_l + ix - 1)*kthird &
+                  + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
+                  + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
+                  + (j - 1)*kthird*ksize*ksize*ksizet
 
             Phi(ithird, ix, iy, it, j) = 1.1*exp(iunit*idx*tau/idxmax)
             R(ithird, ix, iy, it, j) = 1.3*exp(iunit*idx*tau/idxmax)
@@ -70,9 +70,9 @@ program test_derivs
       do iy = 1, ksizey_l
         do ix = 1, ksizex_l
           idx = ip_x*ksizex_l + ix &
-              + (ip_y*ksizey_l + iy - 1)*ksize &
-              + (ip_t*ksizet_l + it - 1)*ksize*ksize &
-              + (j - 1)*ksize*ksize*ksizet
+                + (ip_y*ksizey_l + iy - 1)*ksize &
+                + (ip_t*ksizet_l + it - 1)*ksize*ksize &
+                + (j - 1)*ksize*ksize*ksizet
 
           u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
           dSdpi_ref(ix, iy, it, j) = real(tau*exp(iunit*idx*tau/idxmax), sp)
@@ -99,12 +99,8 @@ program test_derivs
   call init_gammas()
   ! call function
   do i = 1, timing_loops
-    ! dSdpi = dSdpi_ref ! Commented out for the mpi third version
+    dSdpi = dSdpi_ref
     call derivs(R, X2, anum, iflag)
-    ! dSdpi_ref should be added after calling derivs subroutine
-    ! otherwise the reference value is added more than once in each group
-    ! due to the MPI_AllReduce operation inside derivs
-    dSdpi = dSdpi + dSdpi_ref
   end do
 
   ! check output
