@@ -14,10 +14,10 @@ contains
 
     complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp), intent(in) :: X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    real(dp) :: dSdpi_tmp(ksizex_l, ksizey_l, ksizet_l, 3)
     real(dp), intent(in) :: anum
     integer, intent(in) :: iflag
     integer :: ierr
-    real(dp)  :: dSdpi_tmp(ksizex_l, ksizey_l, ksizet_l, 3)
 
     !      complex(dp) :: tzi
     real :: tzi_real
@@ -32,6 +32,7 @@ contains
     !      tzi=cmplx(0.0,2*anum)
     tzi_real = 2*real(anum)
     !     factor of 2 picks up second term in M&M (7.215)
+
     dSdpi_tmp = 0.0
 
     do mu = 1, 3
@@ -44,11 +45,11 @@ contains
           do iy = 1, ksizey_l
             do ix = 1, ksizex_l
               dSdpi_tmp(ix, iy, it, mu) = dSdpi_tmp(ix, iy, it, mu) &
-                                          + tzi_real*real(akappa) &
-                                          *sum(aimag(conjg(R(1:kthird_l, ix, iy, it, idirac)) &
-                                                     *X2(1:kthird_l, ix + ixup, iy + iyup, it + itup, idirac)) &
-                                               - aimag(conjg(R(1:kthird_l, ix + ixup, iy + iyup, it + itup, idirac)) &
-                                                       *X2(1:kthird_l, ix, iy, it, idirac)))
+                        + tzi_real*real(akappa) &
+                        * sum(aimag(conjg(R(1:kthird_l, ix, iy, it, idirac)) &
+                                        * X2(1:kthird_l, ix + ixup, iy + iyup, it + itup, idirac)) &
+                            - aimag(conjg(R(1:kthird_l, ix + ixup, iy + iyup, it + itup, idirac)) &
+                                        * X2(1:kthird_l, ix, iy, it, idirac)))
             enddo
           enddo
         enddo
@@ -61,12 +62,12 @@ contains
             do iy = 1, ksizey_l
               do ix = 1, ksizex_l
                 dSdpi_tmp(ix, iy, it, mu) = dSdpi_tmp(ix, iy, it, mu) &
-                                            + tzi_real &
-                                            *sum(aimag(gamval(mu, idirac) &
-                                                       *(conjg(R(1:kthird_l, ix, iy, it, idirac)) &
-                                                         *X2(1:kthird_l, ix + ixup, iy + iyup, it + itup, igork1) &
-                                                         + conjg(R(1:kthird_l, ix + ixup, iy + iyup, it + itup, idirac)) &
-                                                         *X2(1:kthird_l, ix, iy, it, igork1))))
+                            + tzi_real &
+                            * sum(aimag(gamval(mu, idirac) &
+                                * (conjg(R(1:kthird_l, ix, iy, it, idirac)) &
+                                  * X2(1:kthird_l, ix + ixup, iy + iyup, it + itup, igork1) &
+                                 + conjg(R(1:kthird_l, ix + ixup, iy + iyup, it + itup, idirac)) &
+                                  * X2(1:kthird_l, ix, iy, it, igork1))))
               enddo
             enddo
           enddo
@@ -77,12 +78,12 @@ contains
             do iy = 1, ksizey_l
               do ix = 1, ksizex_l
                 dSdpi_tmp(ix, iy, it, mu) = dSdpi_tmp(ix, iy, it, mu) &
-                                            - tzi_real &
-                                            *sum(aimag(gamval(mu, idirac) &
-                                                       *(conjg(R(1:kthird_l, ix, iy, it, idirac)) &
-                                                         *X2(1:kthird_l, ix + ixup, iy + iyup, it + itup, igork1) &
-                                                         + conjg(R(1:kthird_l, ix + ixup, iy + iyup, it + itup, idirac)) &
-                                                         *X2(1:kthird_l, ix, iy, it, igork1))))
+                            - tzi_real &
+                            * sum(aimag(gamval(mu, idirac) &
+                                * (conjg(R(1:kthird_l, ix, iy, it, idirac)) &
+                                  * X2(1:kthird_l, ix + ixup, iy + iyup, it + itup, igork1) &
+                                 + conjg(R(1:kthird_l, ix + ixup, iy + iyup, it + itup, idirac)) &
+                                  * X2(1:kthird_l, ix, iy, it, igork1))))
               enddo
             enddo
           enddo
@@ -96,6 +97,7 @@ contains
     call MPI_AllReduce(MPI_IN_PLACE, dSdpi_tmp, ksizex_l*ksizey_l*ksizet_l*3, &
                        MPI_DOUBLE_PRECISION, MPI_Sum, comm_grp_third, ierr)
 #endif
+
     dSdpi = dSdpi + dSdpi_tmp
 
     return
