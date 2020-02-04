@@ -1,0 +1,68 @@
+include ./MkFlags
+
+GNU_MPIFC    = mpif90
+GNU_FC       = gfortran
+GNU_FCFLAGS  = -O3 -Wall -ffree-line-length-none -g -mcmodel=medium -c
+GNU_FLFLAGS  =
+
+RANDOM_FLAGS = -DSITE_RANDOM
+
+ifeq ($(COMPILER), GNU)
+MPIFC   = $(GNU_MPIFC)
+FC      = $(GNU_FC)
+FCFLAGS = $(GNU_FCFLAGS)
+FLFLAGS = $(GNU_FLFLAGS)
+endif
+
+ifeq ($(MPI), yes)
+COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T) -DNP_THIRD=$(NP_THIRD)
+FC = $(MPIFC)
+endif
+
+COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS)
+LINK = $(FC) $(FLFLAGS)
+
+VPATH=./:../
+
+OBJS =  params.o comms_common.o comms4.o comms4_sp.o comms5.o comms5_sp.o \
+        comms6.o comms.o gammamatrices.o gforce.o dirac.o dirac_sp.o \
+        reductions.o multishift_module.o derivs_module.o trial.o random.o \
+        qmrherm_module.o trial.o vector.o test_utils.o
+
+TESTS = test_dslash_1 test_dslash_3 test_dslash_5 \
+        test_dslashd_1 test_dslashd_3 test_dslashd_5 \
+				test_derivs test_qmrherm_0
+
+default: $(TESTS) compile_flags
+
+$(TESTS) : % : $(OBJS) %.o
+	$(LINK) -o $@ $^
+
+params.o : test_params.F90
+	$(COMPILE) -o $@ $<
+
+%.o : %.F90
+	$(COMPILE) -I ../ -o $@ $<
+
+%.o : %.f90
+	$(COMPILE) -I ../ -o $@ $<
+
+../dirac_sp.F90 : ../dirac.F90
+	bash ../convert_to_sp.sh $<
+
+../comms4_sp.F90 : ../comms4.F90
+	bash ../convert_to_sp.sh $<
+
+../comms5_sp.F90 : ../comms5.F90
+	bash ../convert_to_sp.sh $<
+
+.PHONY : clean compile_flags
+
+compile_flags: MkFlags
+	echo $(COMPILE) > $@
+
+clean :
+	@echo "Cleaning up..."
+	@rm -f $(TESTS) *.mod *.o ../*_sp.F90 compile_flags
+
+# mpirun -n $NP $TESTS
