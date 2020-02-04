@@ -1,7 +1,7 @@
 #include "test_utils.fh"
 program test_dslashd
   use params
-  use dwf3d_lib
+  ! use dwf3d_lib
   use dirac
   use comms
   use comms4
