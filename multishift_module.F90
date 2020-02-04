@@ -10,8 +10,8 @@ contains
 
   ! From https://arxiv.org/abs/hep-lat/9612014
   ! Krylov space solvers for shifted linear systems, B. Jegerlehner, 1996
-  subroutine multishift_solver(u, am, imass, ndiagq, aden, anum, output, input, res,&
-    &maxcg, cg_return, cg_returns)
+  subroutine multishift_solver(u, am, imass, ndiagq, aden, anum, output, input, &
+                               res, maxcg, cg_return, cg_returns)
     use dirac
     use params
     use reductions
@@ -26,19 +26,19 @@ contains
     integer, intent(in) :: ndiagq
     real(dp), intent(in) :: aden(ndiagq)
     real(dp), intent(in) :: anum(ndiagq)
-    complex(dp) :: output(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
-    complex(dp) :: input(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: output(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
+    complex(dp) :: input(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real, intent(in) :: res
     integer, intent(in) :: maxcg
     integer, intent(out) :: cg_return
     integer, intent(out), optional :: cg_returns(ndiagq)
 
     ! temporary variables - large vectors
-    complex(dp) ::         r(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) ::         h(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) ::         s(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) ::         p(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) :: shiftferm(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
+    complex(dp) ::         r(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) ::         h(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) ::         s(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) ::         p(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: shiftferm(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
 
     ! temporary variables - short vectors
     real(dp) :: zeta_i(ndiag)
@@ -56,9 +56,9 @@ contains
     real(dp) :: correction(ndiagq)
     real(dp) :: source_norm
 #ifdef MPI
-    integer, dimension(12) :: reqs_h, reqs_p
+    integer, dimension(16) :: reqs_h, reqs_p
     integer :: ierr
-    real(dp) :: dp_reduction ! DEBUG
+    real(dp) :: dp_reduction ! DEBUG_
 #endif
     integer :: idirac, it, iy, ix, iz
     integer, parameter :: shift = 4
@@ -70,7 +70,7 @@ contains
 
     r = input ! vector
     p = r     ! vector
-    delta = sum(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
+    delta = sum(abs(r(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
 #ifdef MPI
     call MPI_AllReduce(delta, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
     delta = dp_reduction
@@ -85,15 +85,16 @@ contains
     call init_halo_update_5(4, p, 2, reqs_p)
 
     correction = abs(anum/aden) ! ndiagq-long
-    correction = correction/exp(sum(log(correction))/ndiagq) !
+    correction = correction/exp(sum(log(correction))/ndiagq)
 
     do ishift = 1, ndiagq
       flags(ishift) = .true.
-      shiftferm(:, :, :, :, :, ishift) = input(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
+      shiftferm(:, :, :, :, :, ishift) = input(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
       zeta_i(ishift) = 1.0d0
       zeta_ii(ishift) = 1.0d0
       gammas(ishift) = 0.0d0
     enddo
+
     gammag = 0.0d0
     cg_return = 0
     maxishift = ndiagq
@@ -104,8 +105,9 @@ contains
 
       ! DIRAC OPERATOR
       call dslash(h, p, u, am, imass)
+
 #ifdef MPI
-      call MPI_Startall(12, reqs_h, ierr)
+      call MPI_Startall(16, reqs_h, ierr)
       !call complete_halo_update(reqs_h) ! Now this call happens in dslashd
       call dslashd(s, h, u, am, imass, reqs_h)
 #else
@@ -113,8 +115,8 @@ contains
       call dslashd(s, h, u, am, imass)
 #endif
 
-      alpha = sum(real(conjg(p(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
-                      &                *s(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
+      alpha = sum(real(conjg(p(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
+                           * s(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 
 #ifdef MPI
       call MPI_AllReduce(alpha, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
@@ -125,14 +127,15 @@ contains
       omega = -delta/alpha
 
       do ishift = minishift, maxishift
-        zeta_iii(ishift) = (zeta_i(ishift)*zeta_ii(ishift)*omega_save)/ &
-          & (omega*gammag*(zeta_i(ishift) - zeta_ii(ishift)) + &
-          &   zeta_i(ishift)*omega_save*(1.0 - aden(ishift)*omega))
+        zeta_iii(ishift) = (zeta_i(ishift)*zeta_ii(ishift)*omega_save) &
+                        / (omega*gammag*(zeta_i(ishift) - zeta_ii(ishift)) &
+                         + zeta_i(ishift)*omega_save*(1.0 - aden(ishift)*omega))
+
         omegas(ishift) = omega*zeta_iii(ishift)/zeta_ii(ishift)
       enddo
 
       r = r + omega*s
-      lambda = sum(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
+      lambda = sum(abs(r(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
 #ifdef MPI
       call MPI_AllReduce(lambda, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
       lambda = dp_reduction
@@ -140,29 +143,31 @@ contains
       gammag = lambda/delta
 
       p = r + gammag*p
-      call MPI_Startall(12, reqs_p, ierr)
+      call MPI_Startall(16, reqs_p, ierr)
 
-      gammas(minishift:maxishift) = gammag*zeta_iii(minishift:maxishift)* &
-                                    omegas(minishift:maxishift)/(zeta_ii(minishift:maxishift)*omega)
+      gammas(minishift:maxishift) = gammag*zeta_iii(minishift:maxishift) &
+                                  * omegas(minishift:maxishift) &
+                                  / (zeta_ii(minishift:maxishift)*omega)
 
 #ifdef SCOREPINST
-      SCOREP_USER_REGION_BEGIN(post, 'post',&
-        &SCOREP_USER_REGION_TYPE_COMMON)
+      SCOREP_USER_REGION_BEGIN(post, 'post', SCOREP_USER_REGION_TYPE_COMMON)
 #endif
       do ishift = minishift, maxishift
         do idirac = 1, 4
           do it = 1, ksizet_l
             do iy = 1, ksizey_l
               do ix = 1, ksizex_l
-                do iz = 1, kthird, shift
+                do iz = 1, kthird_l, shift
                   output(iz:iz + shift - 1, ix, iy, it, idirac, ishift) = &
-                    &output(iz:iz + shift - 1, ix, iy, it, idirac, ishift) -&
-                    &shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift)*&
-                    &omegas(ishift)
+                          output(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
+                        - shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
+                         * omegas(ishift)
+
                   shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift) = &
-                    &shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift)*&
-                   & gammas(ishift) +&
-                   & r(iz:iz + shift - 1, ix, iy, it, idirac)*zeta_iii(ishift)
+                          shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
+                         * gammas(ishift) &
+                        + r(iz:iz + shift - 1, ix, iy, it, idirac) &
+                         * zeta_iii(ishift)
                 enddo
               enddo
             enddo
@@ -224,6 +229,7 @@ contains
 
       maxishift = 0
       minishift = ndiagq + 1
+
       do ishift = 1, ndiagq
         if (flags(ishift)) then
 #ifdef MPI
@@ -280,8 +286,8 @@ contains
   ! From https://arxiv.org/abs/hep-lat/9612014
   ! Krylov space solvers for shifted linear systems, B. Jegerlehner, 1996
   ! Single precision version
-  subroutine multishift_solver_sp(udp, am, imass, ndiagq, aden, anum, outputdp, inputdp, res,&
-    &maxcg, cg_return, cg_returns)
+  subroutine multishift_solver_sp(udp, am, imass, ndiagq, aden, anum, outputdp, inputdp, &
+                                  res, maxcg, cg_return, cg_returns)
     use dirac_sp, only: dslash_sp, dslashd_sp
     use params
     use comms_common, only: comm, ip_global
@@ -297,21 +303,21 @@ contains
     integer, intent(in) :: ndiagq
     real(dp), intent(in) :: aden(ndiagq)
     real(dp), intent(in) :: anum(ndiagq)
-    complex(dp) :: outputdp(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
-    complex(sp) :: output(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
-    complex(dp) :: inputdp(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(sp) :: input(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: outputdp(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
+    complex(sp) :: output(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
+    complex(dp) :: inputdp(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(sp) :: input(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real, intent(in) :: res
     integer, intent(in) :: maxcg
     integer, intent(out) :: cg_return
     integer, intent(out), optional :: cg_returns(ndiagq)
 
     ! temporary variables - large vectors
-    complex(sp) ::         r(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(sp) ::         h(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(sp) ::         s(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(sp) ::         p(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(sp) :: shiftferm(kthird, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
+    complex(sp) ::         r(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(sp) ::         h(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(sp) ::         s(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(sp) ::         p(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(sp) :: shiftferm(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4, ndiag)
 
     ! temporary variables - short vectors
     real(dp) :: zeta_i(ndiag)
@@ -329,7 +335,7 @@ contains
     real(dp) :: correction(ndiagq)
     real(dp) :: source_norm
 #ifdef MPI
-    integer, dimension(12) :: reqs_h, reqs_p
+    integer, dimension(16) :: reqs_h, reqs_p
     integer :: ierr
     real(dp) :: dp_reduction ! DEBUG
 #endif
@@ -347,7 +353,7 @@ contains
 
     r = input ! vector
     p = r     ! vector
-    delta = reduce_real_dp5d(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
+    delta = reduce_real_dp5d(abs(r(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
 #ifdef MPI
     call MPI_AllReduce(delta, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
     delta = dp_reduction
@@ -366,16 +372,18 @@ contains
 
     do ishift = 1, ndiagq
       flags(ishift) = .true.
-      shiftferm(:, :, :, :, :, ishift) = input(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
+      shiftferm(:, :, :, :, :, ishift) = input(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
       zeta_i(ishift) = 1.0d0
       zeta_ii(ishift) = 1.0d0
       gammas(ishift) = 0.0d0
     enddo
+
     gammag = 0.0d0
     cg_return = 0
     if (present(cg_returns)) then
       cg_returns = 0
     endif
+
     maxishift = ndiagq
     minishift = 1
 
@@ -385,7 +393,7 @@ contains
       ! DIRAC OPERATOR
       call dslash_sp(h, p, u, am, imass)
 #ifdef MPI
-      call MPI_Startall(12, reqs_h, ierr)
+      call MPI_Startall(16, reqs_h, ierr)
       !call complete_halo_update(reqs_h) ! Now this call happens in dslashd
       call dslashd_sp(s, h, u, am, imass, reqs_h)
 #else
@@ -393,8 +401,8 @@ contains
       call dslashd_sp(s, h, u, am, imass)
 #endif
 
-      alpha = reduce_real_dp5d(real(conjg(p(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
-                                   &                *s(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
+      alpha = reduce_real_dp5d(real(conjg(p(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
+                                   *s(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 
 #ifdef MPI
       call MPI_AllReduce(alpha, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
@@ -405,14 +413,15 @@ contains
       omega = -delta/alpha
 
       do ishift = minishift, maxishift
-        zeta_iii(ishift) = (zeta_i(ishift)*zeta_ii(ishift)*omega_save)/ &
-          & (omega*gammag*(zeta_i(ishift) - zeta_ii(ishift)) + &
-          &   zeta_i(ishift)*omega_save*(1.0 - aden(ishift)*omega))
+        zeta_iii(ishift) = (zeta_i(ishift)*zeta_ii(ishift)*omega_save) &
+                        / (omega*gammag*(zeta_i(ishift) - zeta_ii(ishift)) &
+                         + zeta_i(ishift)*omega_save*(1.0 - aden(ishift)*omega))
+
         omegas(ishift) = omega*zeta_iii(ishift)/zeta_ii(ishift)
       enddo
 
       r = r + real(omega)*s
-      lambda = reduce_real_dp5d(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
+      lambda = reduce_real_dp5d(abs(r(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
 #ifdef MPI
       call MPI_AllReduce(lambda, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
       lambda = dp_reduction
@@ -420,29 +429,31 @@ contains
       gammag = lambda/delta
 
       p = r + real(gammag)*p
-      call MPI_Startall(12, reqs_p, ierr)
+      call MPI_Startall(16, reqs_p, ierr)
 
-      gammas(minishift:maxishift) = gammag*zeta_iii(minishift:maxishift)* &
-                                    omegas(minishift:maxishift)/(zeta_ii(minishift:maxishift)*omega)
+      gammas(minishift:maxishift) = gammag*zeta_iii(minishift:maxishift) &
+                                  * omegas(minishift:maxishift) &
+                                  / (zeta_ii(minishift:maxishift)*omega)
 
 #ifdef SCOREPINST
-      SCOREP_USER_REGION_BEGIN(post, 'post',&
-        &SCOREP_USER_REGION_TYPE_COMMON)
+      SCOREP_USER_REGION_BEGIN(post, 'post', SCOREP_USER_REGION_TYPE_COMMON)
 #endif
       do ishift = minishift, maxishift
         do idirac = 1, 4
           do it = 1, ksizet_l
             do iy = 1, ksizey_l
               do ix = 1, ksizex_l
-                do iz = 1, kthird, shift
+                do iz = 1, kthird_l, shift
                   output(iz:iz + shift - 1, ix, iy, it, idirac, ishift) = &
-                    &output(iz:iz + shift - 1, ix, iy, it, idirac, ishift) -&
-                    &shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift)*&
-                    &real(omegas(ishift))
+                          output(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
+                        - shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
+                         * real(omegas(ishift))
+
                   shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift) = &
-                    &shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift)*&
-                   & real(gammas(ishift)) +&
-              & r(iz:iz + shift - 1, ix, iy, it, idirac)*real(zeta_iii(ishift))
+                          shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
+                         * real(gammas(ishift)) &
+                        + r(iz:iz + shift - 1, ix, iy, it, idirac) &
+                         * real(zeta_iii(ishift))
                 enddo
               enddo
             enddo
