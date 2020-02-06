@@ -1,6 +1,7 @@
 #include "test_utils.fh"
 program test_dslashd
   use params
+  use mpi
   ! use dwf3d_lib
   use dirac
   use comms
@@ -33,7 +34,8 @@ program test_dslashd
   integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
   integer :: idx
 #ifdef MPI
-  integer, dimension(16) :: reqs_R, reqs_u, reqs_Phi
+  integer, dimension(16) :: reqs_R, reqs_Phi
+  integer, dimension(12) :: reqs_u
   integer :: ierr
   call init_MPI
 #endif
@@ -43,10 +45,10 @@ program test_dslashd
         do ix = 1, ksizex_l
           do ithird = 1, kthird_l
             idx = ip_third*kthird_l + ithird &
-                + (ip_x*ksizex_l + ix - 1)*kthird &
-                + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
-                + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
-                + (j - 1)*kthird*ksize*ksize*ksizet
+                  + (ip_x*ksizex_l + ix - 1)*kthird &
+                  + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
+                  + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
+                  + (j - 1)*kthird*ksize*ksize*ksizet
 
             Phi(ithird, ix, iy, it, j) = 1.1*exp(iunit*idx*tau/idxmax)
             R(ithird, ix, iy, it, j) = 1.3*exp(iunit*idx*tau/idxmax)
@@ -64,9 +66,9 @@ program test_dslashd
       do iy = 1, ksizey_l
         do ix = 1, ksizex_l
           idx = ip_x*ksizex_l + ix &
-              + (ip_y*ksizey_l + iy - 1)*ksize &
-              + (ip_t*ksizet_l + it - 1)*ksize*ksize &
-              + (j - 1)*ksize*ksize*ksizet
+                + (ip_y*ksizey_l + iy - 1)*ksize &
+                + (ip_t*ksizet_l + it - 1)*ksize*ksize &
+                + (j - 1)*ksize*ksize*ksizet
 
           u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
         enddo
@@ -77,7 +79,7 @@ program test_dslashd
   call start_halo_update_4(3, u, 1, reqs_u)
   call complete_halo_update(reqs_R)
   call complete_halo_update(reqs_Phi)
-  call complete_halo_update(reqs_u)
+  call MPI_WaitAll(12, reqs_u, MPI_STATUSES_IGNORE, ierr)
 #else
   call update_halo_5(4, R)
   call update_halo_5(4, Phi)
