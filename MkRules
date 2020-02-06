@@ -85,10 +85,11 @@ LIBOBJS = counters.o comms.o comms_common.o \
           comms6.o \
           comms_partitioning.o derivs_module.o  dirac.o dirac_sp.o \
           dirac_split.o dirac_split_nodir.o dum1.o dwf3d_lib.o \
-          gammamatrices.o gauge.o gaussian.o gforce.o inverter_utils.o \
-          measure_module.o multishift_module.o params.o partitioning.o \
-          qmrherm_module.o qmrherm_module_split.o \
-          qmrherm_module_split_nodir.o random.o reductions.o remez.o remezg.o \
+          gammamatrices.o gauge.o gaussian.o gdbhook.o gforce.o \
+          inverter_utils.o  measure_module.o multishift_module.o \
+          params.o partitioning.o  qmrherm_module.o \
+          qmrherm_module_split.o  qmrherm_module_split_nodir.o \
+          random.o reductions.o remez.o remezg.o  \
           remez_common_subroutines.o timer.o trial.o vector.o
 
 .PHONY: clean
@@ -114,6 +115,9 @@ $(TOPDIR)/comms5_sp.F90 : $(TOPDIR)/comms5.F90
 # trial,vector,partitioning
 %.o : $(TOPDIR)/%.F90 .makefile.uptodate params.mod
 	$(COMPILE) -o $*.o $<
+
+gdbhook.o : $(TOPDIR)/gdbhook.F90 
+	$(FC) $(COMMS_FLAGS) -O0 -g -c $<
 
 counters.o : $(TOPDIR)/counters.F90 .makefile.uptodate
 	$(COMPILE) -o counters.o $<
@@ -150,7 +154,7 @@ dwf3d_lib.o : $(TOPDIR)/dwf3d_lib.F90 \
               comms4.mod \
               dirac.mod \
               dum1.mod gauge.mod gaussian.mod gammamatrices.mod \
-              gforce.mod measure_module.mod \
+              gdbhook.mod gforce.mod measure_module.mod \
               params.mod qmrherm_module.mod random.mod remez.mod remezg.mod \
               remez_common_subroutines.mod timer.mod trial.mod vector.mod
 	$(COMPILE) -o dwf3d_lib.o $<

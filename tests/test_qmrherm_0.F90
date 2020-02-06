@@ -1,6 +1,7 @@
 #include "test_utils.fh"
 program test_qmrherm_0
   ! use dwf3d_lib
+  use gdbhook
   use qmrherm_module, only: qmrherm, phi0, qmrhprint => printall
   use trial, only: u
   use vector, only: X
@@ -45,9 +46,11 @@ program test_qmrherm_0
   integer :: idx = 0
 
 #ifdef MPI
-  integer, dimension(16) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
+  integer, dimension(16) :: reqs_R, reqs_Phi, reqs_Phi0
+  integer, dimension(12) :: reqs_u
   integer :: ierr
   call init_MPI
+  call gdb_wait
 #endif
   qmrhprint = .false.
 
@@ -71,16 +74,16 @@ program test_qmrherm_0
         do ix = 1, ksizex_l
           do ithird = 1, kthird_l
             idx = ip_third*kthird_l + ithird &
-                + (ip_x*ksizex_l + ix - 1)*kthird &
-                + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
-                + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
-                + (j - 1)*kthird*ksize*ksize*ksizet
+                  + (ip_x*ksizex_l + ix - 1)*kthird &
+                  + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
+                  + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
+                  + (j - 1)*kthird*ksize*ksize*ksizet
 
             Phi(ithird, ix, iy, it, j) = 1.1*exp(iunit*idx*tau/idxmax)
             R(ithird, ix, iy, it, j) = 1.3*exp(iunit*idx*tau/idxmax)
             do l = 1, 25
               Phi0_orig(ithird, ix, iy, it, j, l) = 1.7*exp(1.0) &
-                                                * exp(iunit*idx*tau/idxmax) + l
+                                                    *exp(iunit*idx*tau/idxmax) + l
             end do
           end do
         end do
@@ -99,9 +102,9 @@ program test_qmrherm_0
       do iy = 1, ksizey_l
         do ix = 1, ksizex_l
           idx = ip_x*ksizex_l + ix - 1 &
-              + (ip_y*ksizey_l + iy - 1)*ksize &
-              + (ip_t*ksizet_l + it - 1)*ksize*ksize &
-              + (j - 1)*ksize*ksize*ksizet
+                + (ip_y*ksizey_l + iy - 1)*ksize &
+                + (ip_t*ksizet_l + it - 1)*ksize*ksize &
+                + (j - 1)*ksize*ksize*ksizet
 
           u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
           dSdpi(ix, iy, it, j) = real(tau*exp(iunit*idx*tau/idxmax), sp)
@@ -120,7 +123,7 @@ program test_qmrherm_0
   call update_halo_6(4, 25, Phi0_orig)
   call update_halo_5(4, Phi)
   call update_halo_5(4, R)
-  call update_halo_4(3, u)
+  call MPI_WaitAll(12, reqs_u, MPI_Statuses_Ignore, ierr)
 #endif
 
   ! initialise common variables
@@ -161,5 +164,5 @@ program test_qmrherm_0
 #ifdef MPI
   call MPI_Finalize(ierr)
 #endif
-  
+
 end program test_qmrherm_0
