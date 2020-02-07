@@ -22,6 +22,8 @@ endif
 COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS)
 LINK = $(FC) $(FLFLAGS)
 
+VPATH=./:../
+
 OBJS =  params.o comms_common.o comms4.o comms4_sp.o comms5.o comms5_sp.o \
         comms6.o comms.o gammamatrices.o gdbhook.o gforce.o dirac.o dirac_sp.o \
         reductions.o multishift_module.o derivs_module.o trial.o random.o \
@@ -29,95 +31,30 @@ OBJS =  params.o comms_common.o comms4.o comms4_sp.o comms5.o comms5_sp.o \
 
 TESTS = test_dslash_1 test_dslash_3 test_dslash_5 \
         test_dslashd_1 test_dslashd_3 test_dslashd_5 \
-				test_derivs test_qmrherm_0
+				test_derivs test_qmrherm_0 test_qmrherm_1 test_qmrherm_2 test_qmrherm_3
 
 default: $(TESTS) compile_flags
 
 $(TESTS) : % : $(OBJS) %.o
 	$(LINK) -o $@ $^
 
-
-TOPDIR=..
-gdbhook.o : $(TOPDIR)/gdbhook.F90 
-	$(FC) $(COMMS_FLAGS) -O0 -g -c $<
-
 params.o : test_params.F90
 	$(COMPILE) -o $@ $<
 
-# START MPI
-comms4.o :  $(TOPDIR)/comms4.F90 .makefile.uptodate comms_common.mod params.mod
-	$(COMPILE) -o comms4.o $<
+%.o : %.F90
+	$(COMPILE) -I ../ -o $@ $<
 
-../comms4_sp.F90 : $(TOPDIR)/comms4.F90
-	bash ../convert_to_sp.sh $<
-
-comms5.o :  $(TOPDIR)/comms5.F90 .makefile.uptodate comms_common.mod params.mod
-	$(COMPILE) -o comms5.o $<
-
-../comms5_sp.F90 : $(TOPDIR)/comms5.F90
-	bash ../convert_to_sp.sh $<
-
-comms.o :  $(TOPDIR)/comms.F90 .makefile.uptodate comms_common.mod \
-           comms4.mod comms4_sp.mod \
-           comms5.mod comms5_sp.mod \
-           comms6.mod \
-           params.mod
-	$(COMPILE) -o comms.o $<
-# END MPI
-
-dirac.o : $(TOPDIR)/dirac.F90 .makefile.uptodate params.mod gammamatrices.mod
-	$(COMPILE) -o $*.o $<
+%.o : %.f90
+	$(COMPILE) -I ../ -o $@ $<
 
 ../dirac_sp.F90 : ../dirac.F90
 	bash ../convert_to_sp.sh $<
 
-dirac_sp.o : $(TOPDIR)/dirac_sp.F90 .makefile.uptodate params.mod \
-          gammamatrices.mod
-	$(COMPILE) -o $*.o $<
+../comms4_sp.F90 : ../comms4.F90
+	bash ../convert_to_sp.sh $<
 
-multishift_module.o :  $(TOPDIR)/multishift_module.F90 \
-                  .makefile.uptodate comms5.mod comms5_sp.mod \
-				  comms_common.mod dirac.mod dirac_sp.mod \
-                  params.mod reductions.mod
-	$(COMPILE) -o $*.o $<
-
-derivs_module.o : $(TOPDIR)/derivs_module.F90 .makefile.uptodate gforce.mod \
-                  dirac.mod
-	$(COMPILE) -o $*.o $<
-
-test_utils.o : test_utils.F90 .makefile.uptodate comms.mod params.mod random.mod
-
-	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o test_utils.o $<
-
-
-
-# RNG-RELATED
-ifeq ($(SITE_RANDOM), yes)
-RANDOM_FLAGS = -DSITE_RANDOM
-
-random.o :  ../site_random.f90 .makefile.uptodate comms.mod params.mod
-	$(COMPILE) -o random.o $<
-
-else ifeq ($(SITE_RANDOM), no)
-
-RANDOM_FLAGS =
-
-random.o : ../random.f90 .makefile.uptodate comms.mod
-	$(COMPILE) -o random.o $<
-else
- $(error SITE_RANDOM not correctly specified (watch for whitespaces))
-endif
-
-# generic rule for dum,gauge,gforce,remez,remezg, remez_common_subroutine
-# trial,vector,partitioning
-%.o : $(TOPDIR)/%.F90 .makefile.uptodate params.mod
-	$(COMPILE) -o $*.o $<
-
-%.o : ./%.F90 .makefile.uptodate params.mod
-	$(COMPILE) -o $*.o $<
-
-
-
+../comms5_sp.F90 : ../comms5.F90
+	bash ../convert_to_sp.sh $<
 
 .PHONY : clean compile_flags
 
@@ -127,5 +64,3 @@ compile_flags: MkFlags
 clean :
 	@echo "Cleaning up..."
 	@rm -f $(TESTS) *.mod *.o ../*_sp.F90 compile_flags
-
-# mpirun -n $NP $TESTS
