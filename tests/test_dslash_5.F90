@@ -1,6 +1,7 @@
 #include "test_utils.fh"
 program test_dslash
   use params
+  use mpi
   ! use dwf3d_lib
   use dirac
   use comms
@@ -15,8 +16,6 @@ program test_dslash
   integer :: timing_loops = 1
   complex, parameter :: iunit = cmplx(0, 1)
   real(dp), parameter :: tau = 8*atan(1.0_8)
-
-  ! common blocks to function
 
   ! initialise function parameters
   complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
