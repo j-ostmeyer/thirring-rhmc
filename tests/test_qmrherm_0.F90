@@ -118,12 +118,12 @@ program test_qmrherm_0
   call complete_halo_update(reqs_R)
   call complete_halo_update(reqs_Phi)
   call complete_halo_update(reqs_Phi0)
-  call complete_halo_update(reqs_u)
+  call MPI_WaitAll(12, reqs_u, MPI_Statuses_Ignore, ierr)
 #else
   call update_halo_6(4, 25, Phi0_orig)
   call update_halo_5(4, Phi)
   call update_halo_5(4, R)
-  call MPI_WaitAll(12, reqs_u, MPI_Statuses_Ignore, ierr)
+  call update_halo_4(3, u)
 #endif
 
   ! initialise common variables
