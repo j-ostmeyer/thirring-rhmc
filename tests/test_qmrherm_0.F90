@@ -1,7 +1,7 @@
 #include "test_utils.fh"
 program test_qmrherm_0
   ! use dwf3d_lib
-  use gdbhook
+  ! use gdbhook
   use qmrherm_module, only: qmrherm, phi0, qmrhprint => printall
   use trial, only: u
   use vector, only: X
@@ -50,7 +50,7 @@ program test_qmrherm_0
   integer, dimension(12) :: reqs_u
   integer :: ierr
   call init_MPI
-  call gdb_wait
+  ! call gdb_wait
 #endif
   qmrhprint = .false.
 
