@@ -26,12 +26,13 @@ VPATH=./:../
 
 OBJS =  params.o comms_common.o comms4.o comms4_sp.o comms5.o comms5_sp.o \
         comms6.o comms.o gammamatrices.o gdbhook.o gforce.o dirac.o dirac_sp.o \
-        reductions.o multishift_module.o derivs_module.o trial.o random.o \
-        qmrherm_module.o trial.o vector.o test_utils.o
+        reductions.o multishift_module.o derivs_module.o inverter_utils.o \
+        trial.o random.o qmrherm_module.o trial.o vector.o test_utils.o
 
 TESTS = test_dslash_1 test_dslash_3 test_dslash_5 \
         test_dslashd_1 test_dslashd_3 test_dslashd_5 \
-				test_derivs test_qmrherm_0 test_qmrherm_1 test_qmrherm_2 test_qmrherm_3
+        test_derivs test_qmrherm_0 test_qmrherm_1 test_qmrherm_2 test_qmrherm_3 \
+        test_qmrherm_4
 
 default: $(TESTS) compile_flags
 

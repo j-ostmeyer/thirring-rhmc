@@ -1,7 +1,7 @@
 #include "test_utils.fh"
 program test_qmrherm_4
   use inverter_utils
-  use dwf3d_lib
+  ! use dwf3d_lib
   use qmrherm_module, only: qmrherm, phi0, R, x1, qmrhprint => printall
   use vector, only: X
   use trial
@@ -21,11 +21,11 @@ program test_qmrherm_4
   ! common blocks to function
 
   ! initialise function parameters
-  complex(dp) Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+  complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp), allocatable :: Phi0_ref(:, :, :, :, :, :)
   complex(dp), allocatable :: Phi0_orig(:, :, :, :, :, :)
   complex(dp), allocatable :: delta_Phi(:, :, :, :, :)
-  complex(dp) :: xin(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+  complex(dp) :: xin(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   !complex(dp) :: R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 
   integer :: imass, iflag
@@ -39,16 +39,16 @@ program test_qmrherm_4
   integer :: idx = 0, idiag
 
 #ifdef MPI
-  integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
-  integer, dimension(12) :: reqs_xin
+  integer, dimension(16) :: reqs_R, reqs_Phi, reqs_Phi0, reqs_xin
+  integer, dimension(12) :: reqs_u
   integer :: ierr
   call init_MPI
 #endif
 
   qmrhprint = .false.
-  allocate (Phi0_ref(kthird, ksizex_l, ksizey_l, ksizet_l, 4, 25))
-  allocate (Phi0_orig(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, 25))
-  allocate (delta_Phi(kthird, ksizex_l, ksizey_l, ksizet_l, 4))
+  allocate (Phi0_ref(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4, 25))
+  allocate (Phi0_orig(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, 25))
+  allocate (delta_Phi(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4))
 
   res = 1e-8
   am = 0.05
@@ -61,39 +61,45 @@ program test_qmrherm_4
     read (36, *) anum(i), aden(i)
   enddo
   close (36)
+
   do j = 1, 4
     do it = 1, ksizet_l
       do iy = 1, ksizey_l
         do ix = 1, ksizex_l
-          do ithird = 1, kthird
-            idx = ithird + (ip_x*ksizex_l + ix - 1)*kthird &
-              & + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
-              & + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
-              & + (j - 1)*kthird*ksize*ksize*ksizet
+          do ithird = 1, kthird_l
+            idx = ip_third*kthird_l + ithird &
+                + (ip_x*ksizex_l + ix - 1)*kthird &
+                + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
+                + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
+                + (j - 1)*kthird*ksize*ksize*ksizet
+
             Phi(ithird, ix, iy, it, j) = 1.1*exp(iunit*idx*tau/idxmax)
             R(ithird, ix, iy, it, j) = 1.3*exp(iunit*idx*tau/idxmax)
             do l = 1, 25
-              Phi0_orig(ithird, ix, iy, it, j, l) = &
-                & 1.7*exp(1.0)*exp(iunit*idx*tau/idxmax) + l
+              Phi0_orig(ithird, ix, iy, it, j, l) = 1.7*exp(1.0) &
+                                                    *exp(iunit*idx*tau/idxmax) + l
             end do
           end do
         end do
       end do
     end do
   end do
+
 #ifdef MPI
   call start_halo_update_5(4, R, 0, reqs_R)
   call start_halo_update_5(4, Phi, 1, reqs_Phi)
   call start_halo_update_6(4, 25, Phi0_orig, 2, reqs_Phi0)
 #endif
+
   do j = 1, 3
     do it = 1, ksizet_l
       do iy = 1, ksizey_l
         do ix = 1, ksizex_l
           idx = ip_x*ksizex_l + ix - 1 &
-            & + (ip_y*ksizey_l + iy - 1)*ksize &
-            & + (ip_t*ksizet_l + it - 1)*ksize*ksize &
-            & + (j - 1)*ksize*ksize*ksizet
+              + (ip_y*ksizey_l + iy - 1)*ksize &
+              + (ip_t*ksizet_l + it - 1)*ksize*ksize &
+              + (j - 1)*ksize*ksize*ksizet
+
           u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
           dSdpi(ix, iy, it, j) = real(tau*exp(iunit*idx*tau/idxmax), sp)
         enddo
@@ -108,19 +114,21 @@ program test_qmrherm_4
   if (ibound .eq. -1 .and. ip_t .eq. (np_t - 1)) then
     u(:, :, ksizet_l, 3) = -u(:, :, ksizet_l, 3)
   end if
+
 #ifdef MPI
   call start_halo_update_4(3, u, 3, reqs_u)
   call complete_halo_update(reqs_R)
   call complete_halo_update(reqs_Phi)
   call complete_halo_update(reqs_Phi0)
-  call complete_halo_update(reqs_u)
+  ! call complete_halo_update(reqs_u)
+  call MPI_WaitAll(12, reqs_u, MPI_Statuses_Ignore, ierr)
 #else
   call update_halo_6(4, 25, Phi0_orig)
   call update_halo_5(4, Phi)
   call update_halo_5(4, R)
   call update_halo_4(3, u)
 #endif
-  !
+
   call init_gammas()
   ! call function
   Phi0 = Phi0_orig
@@ -128,7 +136,7 @@ program test_qmrherm_4
   call qmrherm(Phi, X, res, itercg, am, imass, anum, aden, ndiag, iflag, .false., itercgs)
   ! check output
   do idiag = 1, ndiag
-    xin(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(:, :, :, :, :, idiag)
+    xin(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(:, :, :, :, :, idiag)
 #ifdef MPI
     call start_halo_update_5(4, xin, 10, reqs_xin)
     call complete_halo_update(reqs_xin)
@@ -138,17 +146,17 @@ program test_qmrherm_4
     adenf = aden(idiag)
     call dirac_op_shifted(xout, xin, u, am, imass, adenf)
 
-    delta_Phi = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
-      &                xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
+    delta_Phi = Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
+                - xout(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
     ! relative error
-    delta_Phi = abs(delta_Phi)**2/sum(abs(xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
+    delta_Phi = abs(delta_Phi)**2/sum(abs(xout(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
     check_sum(delta_Phi, 1e-14, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_dp')
   enddo
 
   call qmrherm(Phi, X, res, itercg, am, imass, anum, aden, ndiag, iflag, .true., itercgs)
   ! check output
   do idiag = 1, ndiag
-    xin(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(:, :, :, :, :, idiag)
+    xin(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = x1(:, :, :, :, :, idiag)
 #ifdef MPI
     call start_halo_update_5(4, xin, 10, reqs_xin)
     call complete_halo_update(reqs_xin)
@@ -158,10 +166,10 @@ program test_qmrherm_4
     adenf = aden(idiag)
     call dirac_op_shifted(xout, xin, u, am, imass, adenf)
 
-    delta_Phi = Phi(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) - &
-      &                xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
+    delta_Phi = Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
+              - xout(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
     ! relative error
-    delta_Phi = abs(delta_Phi)**2/sum(abs(xout(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
+    delta_Phi = abs(delta_Phi)**2/sum(abs(xout(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
     check_sum(delta_Phi, 1e-9, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_sp')
 
   enddo
