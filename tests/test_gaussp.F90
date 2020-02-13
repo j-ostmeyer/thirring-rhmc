@@ -73,12 +73,12 @@ program test_gaussp
     print *, 'Unable to check results in parallel without using site_random'
   end if
 #else
-  check_float_equality(sumps, -22.13475, 0.001, 'sum', 'test_gaussp')
+  check_float_equality(sumps/NP_THIRD, -22.13475, 0.001, 'sum', 'test_gaussp')
   check_float_equality(maxps, 3.914956, 0.001, 'max', 'test_gaussp')
   check_float_equality(minps, -3.558903, 0.001, 'min', 'test_gaussp')
 #endif
 #else
-  check_float_equality(sumps, 20.4506, 0.001, 'sum', 'test_gaussp')
+  check_float_equality(sumps/NP_THIRD, 20.4506, 0.001, 'sum', 'test_gaussp')
   check_float_equality(maxps, 3.67040, 0.001, 'max', 'test_gaussp')
   check_float_equality(minps, -3.452905, 0.001, 'min', 'test_gaussp')
   if (ip_global .eq. 0) then
