@@ -5,7 +5,14 @@ GNU_FC       = gfortran
 GNU_FCFLAGS  = -O3 -Wall -ffree-line-length-none -g -mcmodel=medium -c
 GNU_FLFLAGS  =
 
+# RNG-RELATED
+ifeq ($(SITE_RANDOM), yes)
 RANDOM_FLAGS = -DSITE_RANDOM
+else ifeq ($(SITE_RANDOM), no)
+RANDOM_FLAGS =
+else
+$(error SITE_RANDOM not correctly specified (watch for whitespaces))
+endif
 
 ifeq ($(COMPILER), GNU)
 MPIFC   = $(GNU_MPIFC)
@@ -24,44 +31,52 @@ LINK = $(FC) $(FLFLAGS)
 
 VPATH=./:../
 
-OBJS =  params.o comms_common.o comms4.o comms4_sp.o comms5.o comms5_sp.o \
+OBJS =  params.o dum1.o gauge.o counters.o trial.o comms_common.o comms4.o comms4_sp.o comms5.o comms5_sp.o \
         comms6.o comms.o gammamatrices.o gdbhook.o gforce.o dirac.o dirac_sp.o \
-        reductions.o multishift_module.o derivs_module.o inverter_utils.o \
-        trial.o random.o qmrherm_module.o trial.o vector.o test_utils.o
+        timer.o reductions.o multishift_module.o derivs_module.o inverter_utils.o \
+        random.o gaussian.o qmrherm_module.o vector.o test_utils.o measure_module.o
 
 TESTS = test_dslash_1 test_dslash_3 test_dslash_5 \
         test_dslashd_1 test_dslashd_3 test_dslashd_5 \
         test_derivs test_qmrherm_0 test_qmrherm_1 test_qmrherm_2 test_qmrherm_3 \
-        test_qmrherm_4
+        test_qmrherm_4 test_gauss0 test_gaussp
 
 default: $(TESTS) compile_flags
 
 $(TESTS) : % : $(OBJS) %.o
 	$(LINK) -o $@ $^
 
-params.o : test_params.F90
+params.o: test_params.F90
 	$(COMPILE) -o $@ $<
 
-%.o : %.F90
+ifeq ($(SITE_RANDOM), yes)
+random.o: site_random.f90
+	$(COMPILE) -o $@ $<
+else ifeq ($(SITE_RANDOM), no)
+random.o: random.f90
+	$(COMPILE) -o random.o $<
+endif
+
+%.o: %.F90
 	$(COMPILE) -I ../ -o $@ $<
 
-%.o : %.f90
+%.o: %.f90
 	$(COMPILE) -I ../ -o $@ $<
 
-../dirac_sp.F90 : ../dirac.F90
+../dirac_sp.F90: ../dirac.F90
 	bash ../convert_to_sp.sh $<
 
-../comms4_sp.F90 : ../comms4.F90
+../comms4_sp.F90: ../comms4.F90
 	bash ../convert_to_sp.sh $<
 
-../comms5_sp.F90 : ../comms5.F90
+../comms5_sp.F90: ../comms5.F90
 	bash ../convert_to_sp.sh $<
 
-.PHONY : clean compile_flags
+.PHONY: clean compile_flags
 
 compile_flags: MkFlags
 	echo $(COMPILE) > $@
 
-clean :
+clean:
 	@echo "Cleaning up..."
 	@rm -f $(TESTS) *.mod *.o ../*_sp.F90 compile_flags
