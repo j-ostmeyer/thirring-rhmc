@@ -1,5 +1,12 @@
 include ./MkFlags
 
+include ./MkFlags
+.makefile.uptodate: delMakefile-Michele MkFlags
+	make clean
+	touch .makefile.uptodate
+
+
+
 GNU_MPIFC    = mpif90
 GNU_FC       = gfortran
 GNU_FCFLAGS  = -O3 -Wall -ffree-line-length-none -g -mcmodel=medium -c
@@ -23,13 +30,11 @@ COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS)
 LINK = $(FC) $(FLFLAGS)
 
 OBJS =  params.o comms_common.o comms4.o comms4_sp.o comms5.o comms5_sp.o \
-        comms6.o comms.o gammamatrices.o gdbhook.o gforce.o dirac.o dirac_sp.o \
-        reductions.o multishift_module.o derivs_module.o trial.o random.o \
-        qmrherm_module.o trial.o vector.o test_utils.o
+        comms6.o comms.o gammamatrices.o gauge.o gaussian.o gdbhook.o gforce.o dirac.o dirac_sp.o reductions.o multishift_module.o derivs_module.o trial.o random.o qmrherm_module.o trial.o vector.o test_utils.o 
 
 TESTS = test_dslash_1 test_dslash_3 test_dslash_5 \
         test_dslashd_1 test_dslashd_3 test_dslashd_5 \
-				test_derivs test_qmrherm_0
+		test_derivs test_qmrherm_0 test_gaussp test_gauss0
 
 default: $(TESTS) compile_flags
 
@@ -41,7 +46,7 @@ TOPDIR=..
 gdbhook.o : $(TOPDIR)/gdbhook.F90
 	$(FC) $(COMMS_FLAGS) -O0 -g -c $<
 
-params.o : test_params.F90
+params.o : test_params.F90 .makefile.uptodate
 	$(COMPILE) -o $@ $<
 
 # START MPI
@@ -75,6 +80,9 @@ dirac_sp.o : $(TOPDIR)/dirac_sp.F90 .makefile.uptodate params.mod \
           gammamatrices.mod
 	$(COMPILE) -o $*.o $<
 
+gaussian.o : $(TOPDIR)/gaussian.F90 .makefile.uptodate params.mod random.mod
+	$(COMPILE) -o $*.o $<
+
 multishift_module.o :  $(TOPDIR)/multishift_module.F90 \
                   .makefile.uptodate comms5.mod comms5_sp.mod \
 				  comms_common.mod dirac.mod dirac_sp.mod \
@@ -89,7 +97,9 @@ test_utils.o : test_utils.F90 .makefile.uptodate comms.mod params.mod random.mod
 
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o test_utils.o $<
 
-
+test_gaussp.o : test_gaussp.F90 .makefile.uptodate params.mod random.mod
+	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o test_gaussp.o $<
+    
 
 # RNG-RELATED
 ifeq ($(SITE_RANDOM), yes)
@@ -116,8 +126,8 @@ endif
 %.o : ./%.F90 .makefile.uptodate params.mod
 	$(COMPILE) -o $*.o $<
 
-
-
+%.mod : %.o .makefile.uptodate
+	touch $@
 
 .PHONY : clean compile_flags
 

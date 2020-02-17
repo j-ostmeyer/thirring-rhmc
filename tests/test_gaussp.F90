@@ -8,12 +8,12 @@ program test_gaussp
   use random
   implicit none
 
-  real(dp) :: seed
   real :: ps(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 2)
   integer :: ix, iy, it, ix2, iy2, it2, i, j
   integer, dimension(4) :: duplicate_position1, duplicate_position2
   logical :: has_duplicates = .false.
   real :: sumps, maxps, minps
+  real(dp) :: seed
 
   ! initialise MPI
 #ifdef MPI
@@ -68,7 +68,7 @@ program test_gaussp
   call MPI_AllReduce(MPI_IN_PLACE, sumps, 1, MPI_REAL, MPI_SUM, comm, ierr)
   call MPI_AllReduce(MPI_IN_PLACE, maxps, 1, MPI_REAL, MPI_MAX, comm, ierr)
   call MPI_AllReduce(MPI_IN_PLACE, minps, 1, MPI_REAL, MPI_MIN, comm, ierr)
-  call MPI_AllReduce(MPI_IN_PLACE, has_duplicates, 1, MPI_LOGICAL, MPI_LOR, comm,ierr)
+  call MPI_AllReduce(MPI_IN_PLACE, has_duplicates, 1, MPI_LOGICAL, MPI_LOR, comm, ierr)
 #endif
 
 #ifndef SITE_RANDOM
@@ -88,8 +88,8 @@ program test_gaussp
   if (ip_global .eq. 0) then
     if (has_duplicates) then
       print *, 'duplicate random numbers observed at:'
-      write(*, '(4i3)') duplicate_position1
-      write(*, '(4i3)') duplicate_position2
+      write (*, '(4i3)') duplicate_position1
+      write (*, '(4i3)') duplicate_position2
     end if
   end if
 #endif
