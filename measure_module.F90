@@ -15,7 +15,7 @@ contains
     use dirac
     use params
     implicit none
-    complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     !     complex, intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real, intent(in) :: res, am
     integer, intent(out) :: itercg
@@ -23,15 +23,15 @@ contains
     integer, intent(out), optional :: iterations
 
     !     complex x1(kferm),x2(kferm),p(kferm),r(kferm)
-    complex(dp) :: x1(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) :: x2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) :: p(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) :: r(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: x1(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: x2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: p(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: r(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real :: resid
     real(dp) :: betacg, betacgn, betacgd, alpha, alphan, alphad
     integer :: nx
 #ifdef MPI
-    integer, dimension(12) :: reqs_x1, reqs_r
+    integer, dimension(16) :: reqs_x1, reqs_r
     integer :: ierr
 !#else
     !    integer :: reqs_x1, reqs_r
@@ -60,7 +60,7 @@ contains
       !  x1=Mp
       call dslash(x1, p, u, am, imass)
 #ifdef MPI
-      call MPI_Startall(12, reqs_x1, ierr)
+      call MPI_Startall(16, reqs_x1, ierr)
       !call start_halo_update_5(4, x1, 8, reqs_x1) ! ATTEMPT
 #endif
       !
@@ -68,7 +68,7 @@ contains
         !
         !   alpha=(r,r)/(p,(Mdagger)Mp)
         !   Don't need x1's halo at this point
-        alphad = sum(abs(x1(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
+        alphad = sum(abs(x1(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
 #ifdef MPI
         call MPI_AllReduce(MPI_In_Place, alphad, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
 #endif
@@ -95,25 +95,25 @@ contains
       !   Now update halo for r instead since we can hide communication during the summation
       !   x2 is discarded so we no longer care about its halo
 #ifdef MPI
-      call MPI_Startall(12, reqs_r, ierr)              ! ATTEMPT
+      call MPI_Startall(16, reqs_r, ierr)              ! ATTEMPT
       !call start_halo_update_5(4, r, 10, reqs_r) ! ATTEMPT
 #endif
 
       !   betacg=(r_k+1,r_k+1)/(r_k,r_k)
-      betacgn = sum(abs(r(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
+      betacgn = sum(abs(r(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))**2)
 #ifdef MPI
       call MPI_AllReduce(MPI_In_Place, betacgn, 1, MPI_Double_precision, MPI_Sum, comm, ierr)
 #endif
       betacg = betacgn/betacgd
       betacgd = betacgn
       alphan = betacgn
-      !
+
       if (nx .eq. 1) betacg = 0.0
-      !
+
       !   p=r+betacg*p
       !   Now the correct value of r is needed to avoid having to communicate p as well
 #ifdef MPI
-      call complete_halo_update(reqs_r)! ATTEMPT
+      call complete_halo_update(reqs_r) ! ATTEMPT
 #else
       call update_halo_5(4, r)
 #endif
@@ -163,7 +163,7 @@ contains
     !     complex :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     !     complex :: psibarpsi1,psibarpsi2
     complex(dp) :: x(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: psibarpsi1, psibarpsi2
     real(dp) :: cnum(0:1), cden(1)
     real :: ps(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 2)
@@ -173,7 +173,7 @@ contains
     integer :: iter, itercg
     real :: susclsing
 #ifdef MPI
-    integer, dimension(12) :: reqs_ps, reqs_pt, reqs_Phi
+    integer, dimension(16) :: reqs_ps, reqs_pt, reqs_Phi
     integer :: ierr
 #endif
     !     write(6,*) 'hi from measure'
@@ -198,7 +198,7 @@ contains
       call gauss0(pt)
       psibarpsi2 = (0.0, 0.0)
 #endif
-      !
+
       do idsource = 1, 2
         !
         !  source on domain wall at ithird=1
@@ -216,7 +216,7 @@ contains
         else
           x(:, :, :, idsource + 2) = cmplx(ps(:, :, :, 1), ps(:, :, :, 2))
         endif
-        !
+
         xi = cmplx(0.0, 0.0)
         if (imass .ne. 5) then
           xi(1, :, :, :, :) = x
@@ -238,45 +238,52 @@ contains
 #endif
         call congrad(Phi, res, itercg, am, imass)
         iter = iter + itercg
-        !
+
         if (imass .ne. 5) then
-          !     pbp1 = x^dagger (0.5(1+gamma_4)) xi(kthird)
-          psibarpsi1 = psibarpsi1 &
-    &           + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource))* &
-      &               xi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource))
+          if (ip_third .eq. np_third-1) then
+            !     pbp1 = x^dagger (0.5(1+gamma_4)) xi(kthird)
+            psibarpsi1 = psibarpsi1 &
+                   + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource)) &
+                       * xi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource))
+          end if
         else
-          !     pbp1 = x^dagger (0.5(1-gamma_4)) xi(1)
-          psibarpsi1 = psibarpsi1 &
- &           + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource + 2)) &
-    &                 *xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource + 2))
+          if (ip_third .eq. 0) then
+            !     pbp1 = x^dagger (0.5(1-gamma_4)) xi(1)
+            psibarpsi1 = psibarpsi1 &
+                   + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource + 2)) &
+                       * xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource + 2))
+          end if
         endif
-        !
-        !
+
         !  source on domain wall at ithird=kthird
         idsource2 = idsource + 2
         !
         x = cmplx(0.0, 0.0)
+
 #ifdef MPI
         !  Again, if this isn't finished by now we have to wait for it
         if (idsource .eq. 1) then
           call complete_halo_update(reqs_pt)
         end if
 #endif
+
         if (imass .ne. 5) then
           x(:, :, :, idsource2) = cmplx(pt(:, :, :, 1), pt(:, :, :, 2))
         else
           x(:, :, :, idsource2 - 2) = cmplx(pt(:, :, :, 1), pt(:, :, :, 2))
         endif
-        !
+
         xi = cmplx(0.0, 0.0)
-        if (imass .ne. 5) then
-          !   xi = 0.5(1-gamma_4)*eta on DW at ithird=kthird
-          xi(kthird, :, :, :, :) = x
-        else
-          !   xi = 0.5(1-gamma_4)*gamma_5*eta on DW at ithird=kthird
-          xi(kthird, :, :, :, 3:4) = -x(:, :, :, 1:2)
-        endif
-        !
+        if (ip_third .eq. np_third-1) then
+          if (imass .ne. 5) then
+            !   xi = 0.5(1-gamma_4)*eta on DW at ithird=kthird
+            xi(kthird_l, :, :, :, :) = x
+          else
+            !   xi = 0.5(1-gamma_4)*gamma_5*eta on DW at ithird=kthird
+            xi(kthird_l, :, :, :, 3:4) = -x(:, :, :, 1:2)
+          endif
+        end if
+
         ! Phi= Mdagger*xi
         !
         call dslashd(Phi, xi, u, am, imass)
@@ -287,35 +294,40 @@ contains
 #else
         call update_halo_5(4, Phi)
 #endif
-        !
+
         ! xi= (M)**-1 * Phi
         !
         call congrad(Phi, res, itercg, am, imass)
         iter = iter + itercg
-        !
+
         if (imass .ne. 5) then
-          ! pbp2= - x^dagger (0.5(1-gamma_4)) xi(1)
-          psibarpsi2 = psibarpsi2 &
-    &           + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource2)) &
-        &                *xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource2))
+          if (ip_third .eq. 0) then
+            ! pbp2= - x^dagger (0.5(1-gamma_4)) xi(1)
+            psibarpsi2 = psibarpsi2 &
+                   + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource2)) &
+                       *xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource2))
+          end if
         else
-          ! pbp2= - x^dagger (0.5(1-gamma_4)) xi(kthird)
-          psibarpsi2 = psibarpsi2 &
-     &           + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource)) &
-         &           *xi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource))
+          if (ip_third .eq. np_third-1) then
+            ! pbp2= - x^dagger (0.5(1-gamma_4)) xi(kthird)
+            psibarpsi2 = psibarpsi2 &
+                   + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource)) &
+                       *xi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource))
+          end if
         endif
-        !
+
         !  end trace on Dirac indices....
       enddo
+
 #ifdef MPI
       !  The sums psibarpsi1 and psibarpsi2 are initialised to 0 outside the loop
       !  So can be summed up per process, then collected here at the end
       call MPI_AllReduce(MPI_In_Place, psibarpsi1, 1, MPI_Double_Complex, &
-        & MPI_Sum, comm, ierr)
+                         MPI_Sum, comm, ierr)
       call MPI_AllReduce(MPI_In_Place, psibarpsi2, 1, MPI_Double_Complex, &
-        & MPI_Sum, comm, ierr)
+                         MPI_Sum, comm, ierr)
 #endif
-      !
+
       if (imass .eq. 1) then
         psibarpsi1 = psibarpsi1/kvol
         psibarpsi2 = psibarpsi2/kvol
@@ -329,30 +341,34 @@ contains
         psibarpsi2 = cmplx(0.0, -1.0)*psibarpsi2/kvol
         pbp(inoise) = psibarpsi1 + psibarpsi2
       endif
+
       !write(6,*) real(psibarpsi1),aimag(psibarpsi1), real(psibarpsi2),aimag(psibarpsi2)
       if (ip_global .eq. 0) then
         open (unit=100, file='fort.100', action='write', position='append')
         if (present(isweep_total)) then
           write (100, '(I5,4E17.9E3)') isweep_total, real(psibarpsi1), aimag(psibarpsi1), &
-             & real(psibarpsi2), aimag(psibarpsi2)
+                                       real(psibarpsi2), aimag(psibarpsi2)
         else
           write (100, '(4E17.9E3)') real(psibarpsi1), aimag(psibarpsi1), &
-             & real(psibarpsi2), aimag(psibarpsi2)
+                                    real(psibarpsi2), aimag(psibarpsi2)
         endif
         close (100)
       end if
-      !
+
       ! end loop on noise
     enddo
-    !
+
     susclsing = 0.0
-    !
+
     psibarpsi = real(sum(pbp))
+
     do inoise = 1, knoise
       susclsing = susclsing + real(sum(pbp(inoise)*pbp(inoise + 1:knoise)))
     enddo
+
     psibarpsi = psibarpsi/knoise
     susclsing = 2*kvol*susclsing/(knoise*(knoise - 1))
+
     if (ip_global .eq. 0) then
       open (unit=200, file='fort.200', action='write', position='append')
       if (present(isweep_total)) then
@@ -362,8 +378,10 @@ contains
       endif
       close (200)
     end if
+
     aviter = float(iter)/(4*knoise)
     return
+
   end subroutine measure
 
   !******************************************************************
