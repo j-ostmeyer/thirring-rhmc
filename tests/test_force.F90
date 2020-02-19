@@ -25,10 +25,10 @@ program test_force
   real :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
 
   ! initialise function parameters
-  complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, 1)
-  complex(dp) :: Phi0_orig(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, 25)
+  complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, 1)
+  complex(dp) :: Phi0_orig(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, 25)
   real :: diff(ksizex_l, ksizey_l, ksizet_l, 3)
-  complex(dp) :: R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+  complex(dp) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   real :: sum_diff, max_diff
 
   integer :: imass, iflag, isweep, iter
@@ -40,7 +40,8 @@ program test_force
   integer :: idx = 0
 
 #ifdef MPI
-  integer, dimension(12) :: reqs_R, reqs_X, reqs_U, reqs_Phi, reqs_Phi0
+  integer, dimension(16) :: reqs_R, reqs_X, reqs_Phi, reqs_Phi0
+  integer, dimension(12) :: reqs_u
   integer :: ierr
   call init_MPI
 #endif
@@ -97,11 +98,13 @@ program test_force
     do it = 1, ksizet_l
       do iy = 1, ksizey_l
         do ix = 1, ksizex_l
-          do ithird = 1, kthird
-            idx = ithird + (ip_x*ksizex_l + ix - 1)*kthird &
-              & + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
-              & + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
-              & + (j - 1)*kthird*ksize*ksize*ksizet
+          do ithird = 1, kthird_l
+            idx = ip_third*kthird_l + ithird &
+                  + (ip_x*ksizex_l + ix - 1)*kthird &
+                  + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
+                  + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
+                  + (j - 1)*kthird*ksize*ksize*ksizet
+
             Phi(ithird, ix, iy, it, j, 1) = 1.1*exp(iunit*idx*tau/idxmax)
             R(ithird, ix, iy, it, j) = 1.3*exp(iunit*idx*tau/idxmax)
             X(ithird, ix, iy, it, j) = 0.5*exp(1.0)*exp(iunit*idx*tau/idxmax)
@@ -113,20 +116,23 @@ program test_force
       enddo
     enddo
   enddo
+
 #ifdef MPI
   call start_halo_update_5(4, R, 0, reqs_R)
   call start_halo_update_5(4, X, 0, reqs_X)
   call start_halo_update_6(4, 1, Phi, 1, reqs_Phi)
   call start_halo_update_6(4, 25, Phi0_orig, 2, reqs_Phi0)
 #endif
+
   do j = 1, 3
     do it = 1, ksizet_l
       do iy = 1, ksizey_l
         do ix = 1, ksizex_l
           idx = ip_x*ksizex_l + ix &
-            & + (ip_y*ksizey_l + iy - 1)*ksize &
-            & + (ip_t*ksizet_l + it - 1)*ksize*ksize &
-            & + (j - 1)*ksize*ksize*ksizet
+                + (ip_y*ksizey_l + iy - 1)*ksize &
+                + (ip_t*ksizet_l + it - 1)*ksize*ksize &
+                + (j - 1)*ksize*ksize*ksizet
+
           u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
           theta(ix, iy, it, j) = 1.9*exp(iunit*idx*tau/idxmax)
           pp(ix, iy, it, j) = -1.1*exp(iunit*idx*tau/idxmax)
@@ -135,13 +141,15 @@ program test_force
       enddo
     enddo
   enddo
+
 #ifdef MPI
   call start_halo_update_4(3, u, 3, reqs_u)
   call complete_halo_update(reqs_R)
   call complete_halo_update(reqs_X)
   call complete_halo_update(reqs_Phi)
   call complete_halo_update(reqs_Phi0)
-  call complete_halo_update(reqs_u)
+  ! call complete_halo_update(reqs_u)
+  call MPI_WaitAll(12, reqs_u, MPI_Statuses_Ignore, ierr)
 #else
   call update_halo_6(4, 25, Phi0_orig)
   call update_halo_6(4, 1, Phi)
@@ -167,16 +175,20 @@ program test_force
   call hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass)
   s_old = s
   u_variation = 0.0001
+
   if (ip_global .eq. 1) then ! changing only one link in the whole lattice
     u(1, 1, 1, 1) = u(1, 1, 1, 1) + cmplx(0.0, u_variation/2)
     theta(1, 1, 1, 1) = theta(1, 1, 1, 1) + u_variation/2
   endif
+
   ! calculating force half way
   call force(Phi, res1, am, imass, isweep, iter)
+
   if (ip_global .eq. 1) then! changing only one link in the whole lattice
     u(1, 1, 1, 1) = u(1, 1, 1, 1) + cmplx(0.0, u_variation/2)
     theta(1, 1, 1, 1) = theta(1, 1, 1, 1) + u_variation/2
   endif
+
   call hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass)
 
   check: block
