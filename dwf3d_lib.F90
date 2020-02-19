@@ -584,11 +584,13 @@ contains
     hp = 0.5*sum(pp**2)
 #ifdef MPI
     call MPI_AllReduce(MPI_In_Place, hp, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
+    hp = hp/np_third
 #endif
 
     hg = 0.5*Nf*beta*sum(theta**2)
 #ifdef MPI
     call MPI_AllReduce(MPI_In_Place, hg, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
+    hg = hg/np_third
 #endif
     h = hg + hp
 
@@ -603,13 +605,13 @@ contains
 
       call qmrherm(R, Xresult, res2, itercg, One, 1, anum4, aden4, ndiag, 0)
       ancghpv = ancghpv + float(itercg)
-      call check_qmr_iterations(niterations=itercg, abort_on_max_reached=.true.)
+      call check_qmr_iterations(niterations=itercg, abort_on_max_reached=.false.)
 
       R = Xresult
 
       call qmrherm(R, Xresult, res2, itercg, am, imass, bnum2, bden2, ndiag, 0)
       ancgh = ancgh + float(itercg)
-      call check_qmr_iterations(niterations=itercg, abort_on_max_reached=.true.)
+      call check_qmr_iterations(niterations=itercg, abort_on_max_reached=.false.)
 
       hf = hf + sum(real(conjg(R(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
                             *Xresult(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
