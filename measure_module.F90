@@ -173,7 +173,8 @@ contains
     integer :: iter, itercg
     real :: susclsing
 #ifdef MPI
-    integer, dimension(16) :: reqs_ps, reqs_pt, reqs_Phi
+    integer, dimension(16) :: reqs_Phi
+    integer, dimension(12) :: reqs_ps, reqs_pt
     integer :: ierr
 #endif
     !     write(6,*) 'hi from measure'
@@ -208,7 +209,8 @@ contains
         !  We started a halo update in the gauss0 call;
         !  Now we need it to be complete if it isn't already
         if (idsource .eq. 1) then
-          call complete_halo_update(reqs_ps)
+          ! call complete_halo_update(reqs_ps)
+          call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
         end if
 #endif
         if (imass .ne. 5) then
@@ -218,14 +220,16 @@ contains
         endif
 
         xi = cmplx(0.0, 0.0)
-        if (imass .ne. 5) then
-          xi(1, :, :, :, :) = x
-        else
-          !     xi = 0.5(1+gamma_4)*gamma_5*eta on DW at ithird=1
-          xi(1, :, :, :, 1:2) = -x(:, :, :, 3:4)
-          !     xi = 0.5(1+gamma_4)*eta on DW at ithird=1
-        endif
-        !
+        if (ip_third .eq. 0) then
+          if (imass .ne. 5) then
+            xi(1, :, :, :, :) = x
+          else
+            !     xi = 0.5(1+gamma_4)*gamma_5*eta on DW at ithird=1
+            xi(1, :, :, :, 1:2) = -x(:, :, :, 3:4)
+            !     xi = 0.5(1+gamma_4)*eta on DW at ithird=1
+          endif
+        end if
+
         ! Phi= Mdagger*xi
         !
         call dslashd(Phi, xi, u, am, imass)
@@ -263,7 +267,8 @@ contains
 #ifdef MPI
         !  Again, if this isn't finished by now we have to wait for it
         if (idsource .eq. 1) then
-          call complete_halo_update(reqs_pt)
+          ! call complete_halo_update(reqs_pt)
+          call MPI_WaitAll(12, reqs_pt, MPI_Statuses_Ignore, ierr)
         end if
 #endif
 
