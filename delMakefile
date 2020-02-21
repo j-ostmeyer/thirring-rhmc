@@ -1,0 +1,80 @@
+include ./MkFlags
+
+GNU_MPIFC    = mpif90
+GNU_FC       = gfortran
+GNU_FCFLAGS  = -O3 -Wall -ffree-line-length-none -g -mcmodel=medium -c
+GNU_FLFLAGS  =
+
+# RNG-RELATED
+ifeq ($(SITE_RANDOM), yes)
+RANDOM_FLAGS = -DSITE_RANDOM
+else ifeq ($(SITE_RANDOM), no)
+RANDOM_FLAGS =
+else
+$(error SITE_RANDOM not correctly specified (watch for whitespaces))
+endif
+
+ifeq ($(COMPILER), GNU)
+MPIFC   = $(GNU_MPIFC)
+FC      = $(GNU_FC)
+FCFLAGS = $(GNU_FCFLAGS)
+FLFLAGS = $(GNU_FLFLAGS)
+endif
+
+ifeq ($(MPI), yes)
+COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T) -DNP_THIRD=$(NP_THIRD)
+FC = $(MPIFC)
+endif
+
+COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS)
+LINK = $(FC) $(FLFLAGS)
+
+VPATH=./
+
+OBJS =  params.o remez.o remezg.o remez_common_subroutines.o dum1.o gauge.o counters.o trial.o \
+        comms_common.o comms4.o comms4_sp.o comms5.o comms5_sp.o comms6.o comms.o \
+        gammamatrices.o gdbhook.o gforce.o dirac.o dirac_sp.o \
+        timer.o reductions.o multishift_module.o derivs_module.o inverter_utils.o \
+        random.o gaussian.o qmrherm_module.o vector.o measure_module.o \
+        dwf3d_lib.o bulk_rhmc.o
+
+default: bulk_rhmc compile_flags
+
+bulk_rhmc: $(OBJS)
+	$(LINK) -o $@ $^
+
+# Change this for the tests. This is only for the main programs.
+params.o: params.F90
+	$(COMPILE) -o $@ $<
+
+ifeq ($(SITE_RANDOM), yes)
+random.o: site_random.f90
+	$(COMPILE) -o $@ $<
+else ifeq ($(SITE_RANDOM), no)
+random.o: random.f90
+	$(COMPILE) -o random.o $<
+endif
+
+%.o: %.F90
+	$(COMPILE) -o $@ $<
+
+%.o: %.f90
+	$(COMPILE) -o $@ $<
+
+dirac_sp.F90: dirac.F90
+	bash convert_to_sp.sh $<
+
+comms4_sp.F90: comms4.F90
+	bash convert_to_sp.sh $<
+
+comms5_sp.F90: comms5.F90
+	bash convert_to_sp.sh $<
+
+.PHONY: clean compile_flags
+
+compile_flags: MkFlags
+	echo $(COMPILE) > $@
+
+clean:
+	@echo "Cleaning up..."
+	@rm -f bulk_rhmc *.mod *.o *_sp.F90 compile_flags
