@@ -1,9 +1,16 @@
 include ./MkFlags
 
+#GNU SETTINGS
 GNU_MPIFC    = mpif90
 GNU_FC       = gfortran
 GNU_FCFLAGS  = -O3 -Wall -ffree-line-length-none -g -mcmodel=medium -c
 GNU_FLFLAGS  =
+
+#INTEL SETTINGS
+INTEL_MPIFC  = mpiifort #mpif90
+INTEL_FC     = ifort
+INTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -c
+INTEL_FLFLAGS=
 
 # RNG-RELATED
 ifeq ($(SITE_RANDOM), yes)
@@ -19,6 +26,13 @@ MPIFC   = $(GNU_MPIFC)
 FC      = $(GNU_FC)
 FCFLAGS = $(GNU_FCFLAGS)
 FLFLAGS = $(GNU_FLFLAGS)
+else ifeq ($(COMPILER), INTEL)
+MPIFC   = $(INTEL_MPIFC)
+FC      = $(INTEL_FC)
+FCFLAGS = $(INTEL_FCFLAGS)
+FLFLAGS = $(INTEL_FLFLAGS)
+else
+$(error COMPILER not correctly specified (watch for whitespaces))
 endif
 
 ifeq ($(MPI), yes)
