@@ -47,7 +47,7 @@ VPATH=./
 
 OBJS =  params.o remez.o remezg.o remez_common_subroutines.o dum1.o gauge.o counters.o trial.o \
         comms_common.o comms4.o comms4_sp.o comms5.o comms5_sp.o comms6.o comms.o \
-        gammamatrices.o gdbhook.o gforce.o dirac.o dirac_sp.o \
+        gammamatrices.o gforce.o dirac.o dirac_sp.o \
         timer.o reductions.o multishift_module.o derivs_module.o inverter_utils.o \
         random.o gaussian.o qmrherm_module.o vector.o measure_module.o \
         dwf3d_lib.o bulk_rhmc.o
