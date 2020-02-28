@@ -173,7 +173,7 @@ contains
     integer :: iter, itercg
     real :: susclsing
 #ifdef MPI
-    integer, dimension(16) :: reqs_Phi
+    integer, dimension(16) :: reqs_Phi, reqs_xi
     integer, dimension(12) :: reqs_ps, reqs_pt
     integer :: ierr
 #endif
@@ -229,6 +229,12 @@ contains
             !     xi = 0.5(1+gamma_4)*eta on DW at ithird=1
           endif
         end if
+#ifdef MPI
+        call start_halo_update_5(4, xi, 11, reqs_xi)
+        call complete_halo_update(reqs_xi)
+#else
+        call update_halo_5(4, xi)
+#endif
 
         ! Phi= Mdagger*xi
         !
@@ -244,18 +250,18 @@ contains
         iter = iter + itercg
 
         if (imass .ne. 5) then
-          if (ip_third .eq. np_third-1) then
+          if (ip_third .eq. np_third - 1) then
             !     pbp1 = x^dagger (0.5(1+gamma_4)) xi(kthird)
             psibarpsi1 = psibarpsi1 &
-                   + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource)) &
-                       * xi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource))
+                         + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource)) &
+                               *xi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource))
           end if
         else
           if (ip_third .eq. 0) then
             !     pbp1 = x^dagger (0.5(1-gamma_4)) xi(1)
             psibarpsi1 = psibarpsi1 &
-                   + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource + 2)) &
-                       * xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource + 2))
+                         + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource + 2)) &
+                               *xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource + 2))
           end if
         endif
 
@@ -279,7 +285,7 @@ contains
         endif
 
         xi = cmplx(0.0, 0.0)
-        if (ip_third .eq. np_third-1) then
+        if (ip_third .eq. np_third - 1) then
           if (imass .ne. 5) then
             !   xi = 0.5(1-gamma_4)*eta on DW at ithird=kthird
             xi(kthird_l, :, :, :, :) = x
@@ -288,6 +294,12 @@ contains
             xi(kthird_l, :, :, :, 3:4) = -x(:, :, :, 1:2)
           endif
         end if
+#ifdef MPI
+        call start_halo_update_5(4, xi, 11, reqs_xi)
+        call complete_halo_update(reqs_xi)
+#else
+        call update_halo_5(4, xi)
+#endif
 
         ! Phi= Mdagger*xi
         !
@@ -309,15 +321,15 @@ contains
           if (ip_third .eq. 0) then
             ! pbp2= - x^dagger (0.5(1-gamma_4)) xi(1)
             psibarpsi2 = psibarpsi2 &
-                   + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource2)) &
-                       *xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource2))
+                         + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource2)) &
+                               *xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource2))
           end if
         else
-          if (ip_third .eq. np_third-1) then
+          if (ip_third .eq. np_third - 1) then
             ! pbp2= - x^dagger (0.5(1-gamma_4)) xi(kthird)
             psibarpsi2 = psibarpsi2 &
-                   + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource)) &
-                       *xi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource))
+                         + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource)) &
+                               *xi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource))
           end if
         endif
 
@@ -352,10 +364,10 @@ contains
         open (unit=100, file='fort.100', action='write', position='append')
         if (present(isweep_total)) then
           write (100, '(I5,4E17.9E3)') isweep_total, real(psibarpsi1), aimag(psibarpsi1), &
-                                       real(psibarpsi2), aimag(psibarpsi2)
+            real(psibarpsi2), aimag(psibarpsi2)
         else
           write (100, '(4E17.9E3)') real(psibarpsi1), aimag(psibarpsi1), &
-                                    real(psibarpsi2), aimag(psibarpsi2)
+            real(psibarpsi2), aimag(psibarpsi2)
         endif
         close (100)
       end if
