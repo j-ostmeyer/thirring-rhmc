@@ -401,383 +401,384 @@ contains
 
   end subroutine measure
 
-  !******************************************************************
-  !   Calculate meson correlators using point sources on domain walls
-  !   -matrix inversion via conjugate gradient algorithm
-  !       solves Mx=x1
-  !     (Numerical Recipes section 2.10 pp.70-73)
-  !*******************************************************************
-  ! TODO: adjust calls to meson to supply output arrays
-!   subroutine meson(cpm, cmm, cferm1, cferm2, res, itercg, aviter, am, imass)
-!     use random
-!     use vector, xi => x
-!     use dirac
-!     use trial
-! #ifdef MPI
-!     use comms4, only: start_halo_update_4
-!     use comms5, only: start_halo_update_5
-! #else
-!     use comms4, only: update_halo_4
-!     use comms5, only: update_halo_5
-!
-! #endif
-!
-!     real, intent(in) :: res, am
-!     integer, intent(out) :: itercg
-!     real, intent(out) :: aviter
-!     integer, intent(in) :: imass
-!     real(dp), intent(out) :: cpm(0:ksizet - 1), cmm(0:ksizet - 1)
-!     real(dp) :: tempcpmm_r(0:ksizet - 1)
-!     complex(dp) :: tempcpmm_c(0:ksizet - 1)
-!     !    complex, intent(out) :: cferm1(0:ksizet-1), cferm2(0:ksizet-1)
-!     complex(dp), intent(out) :: cferm1(0:ksizet - 1), cferm2(0:ksizet - 1)
-!     !     complex x(kvol,4),x0(kvol,4),Phi(kthird,kvol,4)
-!     !     complex xi,gamval
-!     !     complex prop00(kvol,3:4,1:2),prop0L(kvol,3:4,3:4)
-!     complex(dp) :: x(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-!     complex(dp) :: x0(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-!     complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-!     complex(dp) :: prop00(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
-!     complex(dp) :: prop0L(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
-!     !    complex :: prop00n(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
-!     !    complex :: prop0Ln(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
-!     !    complex :: cpmn(0:ksizet-1),cmmn(0:ksizet-1)
-!     !    real :: ps(ksizex_l, ksizey_l, ksizet_l, 2)
-!     real(dp) :: chim, chip
-!     integer :: ip_xxx, ip_yyy, ip_ttt, ixxx_l, iyyy_l, ittt_l
-!     integer :: ixxx, iyyy, ittt
-!     !     write(6,*) 'hi from meson'
-!     !
-!     integer, parameter :: nsource = 5
-!     integer, parameter :: nsmear = 10
-!     real(dp), parameter :: c = 0.25d0
-!     integer :: iter, idsource, ksource, ismear, isign
-!     integer :: it, itt, ittl, idd
-! #ifdef MPI
-!     integer, dimension(12) :: mpireqs
-!     integer :: ierr
-! #endif
-!     !
-!     iter = 0
-!     itercg = 0
-!     !
-!     cpm = 0.0d0
-!     cmm = 0.0d0
-!     !    cpmn = (0.0,0.0)
-!     !    cmmn = (0.0,0.0)
-!     cferm1 = (0.0d+0, 0.0d+0)
-!     cferm2 = (0.0d+0, 0.0d+0)
-!     !
-!     !      susceptibility
-!     chim = 0.0
-!     chip = 0.0
-!     !
-!     do ksource = 1, nsource
-!       !
-!       !   random location for +m source
-! #ifdef MPI
-!       if (ip_global .eq. 0) then
-! #endif
-!         ixxx = int(ksize*rano(yran, idum, 1, 1, 1)) + 1
-!         iyyy = int(ksize*rano(yran, idum, 1, 1, 1)) + 1
-!         ittt = int(ksizet*rano(yran, idum, 1, 1, 1)) + 1
-! #ifdef MPI
-!       endif
-!       call MPI_Bcast(ixxx, 1, MPI_INTEGER, 0, comm, ierr)
-!       call MPI_Bcast(iyyy, 1, MPI_INTEGER, 0, comm, ierr)
-!       call MPI_Bcast(ittt, 1, MPI_INTEGER, 0, comm, ierr)
-! #endif
-!
-!       ip_xxx = int((ixxx - 1)/ksizex_l)
-!       ip_yyy = int((iyyy - 1)/ksizey_l)
-!       ip_ttt = int((ittt - 1)/ksizet_l)
-!       ixxx_l = mod(ixxx - 1, ksizex_l) + 1
-!       iyyy_l = mod(iyyy - 1, ksizey_l) + 1
-!       ittt_l = mod(ittt - 1, ksizet_l) + 1
-!
-!       do idsource = 3, 4
-!         !  source on domain wall at ithird=1
-!         xi = (0.0d+0, 0.0d+0)
-!         x = (0.0d+0, 0.0d+0)
-!         !  wall source
-!         !  if (ip_t .eq. np_t) then
-!         !    x(:, :, ksizet_l, :) = cmplx(1.0,0.0) / ksize2
-!         !  end if
-!         !  point source at fixed site, spin...
-!         if (ip_xxx .eq. ip_x .and. ip_yyy .eq. ip_y .and. ip_ttt .eq. ip_t) then
-!           x(ixxx_l, iyyy_l, ittt_l, idsource) = (1.0d+0, 0.0d+0)
-!         end if
-!         !
-!         ! now smear it.....
-!         !
-! #ifdef MPI
-!         call start_halo_update_4(4, x, 1, mpireqs)
-!         call complete_halo_update(mpireqs)
-! #else
-!         call update_halo_4(4, x)
-! #endif
-!
-!         do ismear = 1, nsmear
-!           call dslash2d(x0, x, u)
-! #ifdef MPI
-!           call start_halo_update_4(4, x0, 1, mpireqs)
-!           call complete_halo_update(mpireqs)
-! #else
-!           call update_halo_4(4, x0)
-! #endif
-!           x = (1.0d+0 - c)*x + c*x0
-!         enddo! do ismear=1,nsmear
-!         !
-!         !
-!         !   xi = x  on DW at ithird=1
-!         !
-!         xi(1, :, :, :, :) = x
-!         !
-!         ! Phi= Mdagger*xi
-!         !
-!         call dslashd(Phi, xi, u, am, imass)
-! #ifdef MPI
-!         call start_halo_update_5(4, Phi, 1, mpireqs)
-!         call complete_halo_update(mpireqs)
-! #else
-!         call update_halo_5(4, Phi)
-! #endif
-!         !  preconditioning (no,really)
-!         call dslashd(xi, Phi, u, am, imass)
-! #ifdef MPI
-!         call start_halo_update_5(4, xi, 1, mpireqs)
-!         call complete_halo_update(mpireqs)
-! #else
-!         call update_halo_5(4, xi)
-! #endif
-!         !
-!         ! xi= (MdaggerM)**-1 * Phi
-!         !
-!         call congrad(Phi, res, itercg, am, imass)  ! solution is vector::x, here called xi
-!         iter = iter + itercg
-!         !
-!         prop00(:, :, :, idsource, 1:2) = xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
-!         prop0L(:, :, :, idsource, 3:4) = xi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
-!         !
-!         ! if(imass.ne.1)then
-!         !  now evaluate with sign of mass reversed (not needed for hermitian mass term)
-!         ! am=-am
-!         !  source on domain wall at ithird=1
-!         ! xi = (0.0,0.0)
-!         ! if (ip_t .eq. np_t) then
-!         !   xi(1, :, :, :, :) = x
-!         ! end if
-!         !
-!         ! Phi= Mdagger*xi
-!         !
-!         ! call dslashd(Phi,xi,u,am,imass)
-!         !#ifdef MPI
-!         !call start_halo_update_4(4,Phi , 1, mpireqs)
-!         !call complete_halo_update(mpireqs)
-!         !#else
-!         !call update_halo_4(4, Phi)
-!         !#endif
-!         !call dslashd(xi, Phi, u, am, imass)
-!         !#ifdef MPI
-!         !call start_halo_update_4(4,xi, 1, mpireqs)
-!         !call complete_halo_update(mpireqs)
-!         !#else
-!         !call update_halo_4(4, xi)
-!         !#endif
-!
-!         !
-!         ! xi= (MdaggerM)**-1 * Phi
-!         !
-!         ! call congrad(Phi,res,itercg,am,imass)
-!         ! iter=iter+itercg
-!         !
-!         ! prop00n(:, :, :, idsource, 1:2) = xi(1, :, :, :, 1:2)
-!         ! prop0Ln(:, :, :, idsource, 3:4) = xi(kthird, :, :, :, 3:4)
-!         !
-!         ! am=-am
-!         !
-!         !  end loop on source Dirac index....
-!       enddo ! do idsource=3,4
-!       !
-!       !  Now tie up the ends....
-!       !
-!       !  First C+-
-!       !
-!       !  now evaluate the trace (exploiting projection)
-!       tempcpmm_r = 0.d0
-!       do it = 0, ksizet - 1
-!         itt = mod((ittt + it - 1), ksizet) + 1
-!         ittl = itt - ip_t*ksizet_l
-!         if (ittl .ge. 1 .and. ittl .le. ksizet_l) then
-!           tempcpmm_r(it) = sum(abs(prop00(:, :, ittl, 3:4, 1:2))**2)
-!         endif
-!       enddo
-! #ifdef MPI
-!       call MPI_AllReduce(MPI_In_Place, tempcpmm_r, ksizet, MPI_DOUBLE_PRECISION, MPI_SUM, comm, ierr)
-!       if (ip_global .eq. 0) then
-! #endif
-!         !!! if(ip_global.eq.0) then
-!         cpm = cpm + tempcpmm_r
-! #ifdef MPI
-!       endif! if(ip_global.eq.0) then
-! #endif
-!       !
-!       ! if(imass.ne.1)then
-!       !     do it=0,ksizet-1
-!       !         itt=mod((ittt+it-1),ksizet)+1
-!       !         cpmn(it)=cpmn(it) &
-!       !        & + sum(prop00(:, :, itt, 3:4, 1:2)*conjg(prop00n(:, :, itt, 3:4, 1:2)))
-!       !     enddo
-!       ! endif
-!       !
-!       !  next C--
-!       !  now evaluate the trace exploiting projection
-!       tempcpmm_r = 0.d0
-!       do it = 0, ksizet - 1
-!         itt = mod((ittt + it - 1), ksizet) + 1
-!         ittl = itt - ip_t*ksizet_l
-!         if (ittl .ge. 1 .and. ittl .le. ksizet_l) then
-!           tempcpmm_r(it) = sum(abs(prop0L(:, :, ittl, 3:4, 3:4))**2)
-!         endif
-!       enddo
-! #ifdef MPI
-!       call MPI_AllReduce(MPI_In_Place, tempcpmm_r, ksizet, MPI_DOUBLE_PRECISION, MPI_SUM, comm, ierr)
-!       if (ip_global .eq. 0) then
-! #endif
-!         !!! if(ip_global.eq.0) then
-!         cmm = cmm + tempcpmm_r
-! #ifdef MPI
-!       endif
-! #endif
-!
-!       !
-!       !     if(imass.ne.1)then
-!       !     do id1=3,4
-!       !     do id2=3,4
-!       !     do it=0,ksizet-1
-!       !     itt=mod((ittt+it-1),ksizet)+1
-!       !     ioff=(itt-1)*ksize2
-!       !     do i=1,ksize2
-!       !     cmmn(it)=cmmn(it) &
-!       !    &   +prop0L(i+ioff,id1,id2)*conjg(prop0Ln(i+ioff,id1,id2))
-!       !     enddo
-!       !     enddo
-!       !     enddo
-!       !     enddo
-!       !     endif
-!       !
-!       !    now the fermion propagator
-!       !  = tr{ P_-*Psi(0,1)Psibar(x,Ls) + gamma_0*P_-*Psi(0,1)Psibar(x,1) }
-!       tempcpmm_c = (0.0d+0, 0.0d+0)
-!       do idd = 3, 4
-!         do it = 0, ksizet - 1
-!           itt = mod((ittt + it - 1), ksizet) + 1
-!           ! correct for apbc
-!           if (itt .ge. ittt) then
-!             isign = 1
-!           else
-!             isign = ibound
-!           endif
-!           ittl = itt - ip_t*ksizet_l
-!           if (ittl .ge. 1 .and. ittl .le. ksizet_l) then
-!             tempcpmm_c(it) = tempcpmm_c(it) + &
-!               & isign*akappa*sum(prop0L(:, :, ittl, idd, idd))
-!           endif
-!         enddo
-!       enddo! do idd=3,4
-! #ifdef MPI
-!       call MPI_AllReduce(MPI_In_Place, tempcpmm_c, ksizet, MPI_DOUBLE_COMPLEX, MPI_SUM, comm, ierr)
-!       if (ip_global .eq. 0) then
-! #endif
-!         !!! if(ip_global.eq.0) then
-!         cferm1 = cferm1 + tempcpmm_c
-! #ifdef MPI
-!       endif
-! #endif
-!       tempcpmm_c = (0.0d0, 0.0d0)
-!       do idd = 3, 4
-!         do it = 0, ksizet - 1
-!           itt = mod((ittt + it - 1), ksizet) + 1
-!           ! correct for apbc
-!           if (itt .ge. ittt) then
-!             isign = 1
-!           else
-!             isign = ibound
-!           endif
-!           ittl = itt - ip_t*ksizet_l
-!           if (ittl .ge. 1 .and. ittl .le. ksizet_l) then
-!             tempcpmm_c(it) = tempcpmm_c(it) + &
-!              & isign*gamval(3, idd)*sum(prop00(:, :, ittl, idd, gamin(3, idd)))
-!           endif
-!         enddo
-!       enddo! do idd=3,4
-! #ifdef MPI
-!       call MPI_AllReduce(MPI_In_Place, tempcpmm_c, ksizet, MPI_DOUBLE_COMPLEX, MPI_SUM, comm, ierr)
-!       if (ip_global .eq. 0) then
-! #endif
-!         !!! if(ip_global.eq.0) then
-!         cferm2 = cferm2 + tempcpmm_c
-! #ifdef MPI
-!       endif
-! #endif
-!
-!       !
-!       !  finish loop over sources
-!     enddo! do ksource=1,nsource
-!     !
-! #ifdef MPI
-!     if (ip_global .eq. 0) then
-! #endif
-!       do it = 0, ksizet - 1
-!         cpm(it) = cpm(it)/nsource
-!         cmm(it) = cmm(it)/nsource
-!         !  Cf. (54) of 1507.07717
-!         chim = chim + 2*(cpm(it) + cmm(it))
-!       enddo
-!       !     if(imass.ne.1)then
-!       !       if(imass.eq.3)then
-!       !         do it=0,ksizet-1
-!       !           cpmn(it)=cpmn(it)/nsource
-!       !           cmmn(it)=cmmn(it)/nsource
-!       !  Cf. (54),(61) of 1507.07717
-!       !           chip=chip-2*(cpmn(it)-cmmn(it))
-!       !         enddo
-!       !       else
-!       !         do it=0,ksizet-1
-!       !           cpmn(it)=cpmn(it)/nsource
-!       !           cmmn(it)=cmmn(it)/nsource
-!       !  Cf. (64),(65) of 1507.07717
-!       !           chip=chip-2*(cpm(it)-cmm(it))
-!       !         enddo
-!       !       endif
-!       !     endif
-!       !
-!       do it = 0, ksizet - 1
-!         write (302, *) it, cpm(it), cmm(it)
-!         write (500, *) it, real(cferm1(it)), aimag(cferm1(it))
-!         write (501, *) it, real(cferm2(it)), aimag(cferm2(it))
-!       enddo
-!       !     write(6,*) chim
-!       write (400, *) chim
-! #ifdef MPI
-!     endif ! if(ip_global.eq.0) then
-! #endif
-!     !     if(imass.ne.1)then
-!     !     do it=0,ksizet-1
-!     !     write(402,*) it, real(cpmn(it)), real(cmmn(it))
-!     !     write(403,*) it, aimag(cpmn(it)), aimag(cmmn(it))
-!     !     enddo
-!     !     write(401,*) chip
-!     !     endif
-!     !
-!     !     if(imass.eq.1)then
-!     aviter = float(iter)/(2*nsource)
-!     !     else
-!     !     aviter=float(iter)/(4*nsource)
-!     !     endif
-!     !
-!     return
-!   end subroutine meson
-  !******************************************************************
+ !******************************************************************
+ !   Calculate meson correlators using point sources on domain walls
+ !   -matrix inversion via conjugate gradient algorithm
+ !       solves Mx=x1
+ !     (Numerical Recipes section 2.10 pp.70-73)
+ !*******************************************************************
+ ! TODO: adjust calls to meson to supply output arrays
+  subroutine meson(cpm, cmm, cferm1, cferm2, res, itercg, aviter, am, imass)
+    use random
+    use vector, xi => x
+    use dirac
+    use trial
+#ifdef MPI
+    use comms4, only: start_halo_update_4
+    use comms5, only: start_halo_update_5
+#else
+    use comms4, only: update_halo_4
+    use comms5, only: update_halo_5
+
+#endif
+
+    real, intent(in) :: res, am
+    integer, intent(out) :: itercg
+    real, intent(out) :: aviter
+    integer, intent(in) :: imass
+    real(dp), intent(out) :: cpm(0:ksizet - 1), cmm(0:ksizet - 1)
+    real(dp) :: tempcpmm_r(0:ksizet - 1)
+    complex(dp) :: tempcpmm_c(0:ksizet - 1)
+    !    complex, intent(out) :: cferm1(0:ksizet-1), cferm2(0:ksizet-1)
+    complex(dp), intent(out) :: cferm1(0:ksizet - 1), cferm2(0:ksizet - 1)
+    !     complex x(kvol,4),x0(kvol,4),Phi(kthird,kvol,4)
+    !     complex xi,gamval
+    !     complex prop00(kvol,3:4,1:2),prop0L(kvol,3:4,3:4)
+    complex(dp) :: x(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: x0(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: prop00(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
+    complex(dp) :: prop0L(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
+    !    complex :: prop00n(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
+    !    complex :: prop0Ln(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
+    !    complex :: cpmn(0:ksizet-1),cmmn(0:ksizet-1)
+    !    real :: ps(ksizex_l, ksizey_l, ksizet_l, 2)
+    real(dp) :: chim, chip
+    integer :: ip_xxx, ip_yyy, ip_ttt, ixxx_l, iyyy_l, ittt_l
+    integer :: ixxx, iyyy, ittt
+    !     write(6,*) 'hi from meson'
+    !
+    integer, parameter :: nsource = 5
+    integer, parameter :: nsmear = 10
+    real(dp), parameter :: c = 0.25d0
+    integer :: iter, idsource, ksource, ismear, isign
+    integer :: it, itt, ittl, idd
+#ifdef MPI
+    integer, dimension(16) :: mpireqs
+    integer, dimension(12) :: mpireqs_4
+    integer :: ierr
+#endif
+    !
+    iter = 0
+    itercg = 0
+    !
+    cpm = 0.0d0
+    cmm = 0.0d0
+    !    cpmn = (0.0,0.0)
+    !    cmmn = (0.0,0.0)
+    cferm1 = (0.0d+0, 0.0d+0)
+    cferm2 = (0.0d+0, 0.0d+0)
+    !
+    !      susceptibility
+    chim = 0.0
+    chip = 0.0
+    !
+    do ksource = 1, nsource
+      !
+      !   random location for +m source
+#ifdef MPI
+      if (ip_global .eq. 0) then
+#endif
+        ixxx = int(ksize*rano(yran, idum, 1, 1, 1)) + 1
+        iyyy = int(ksize*rano(yran, idum, 1, 1, 1)) + 1
+        ittt = int(ksizet*rano(yran, idum, 1, 1, 1)) + 1
+#ifdef MPI
+      endif
+      call MPI_Bcast(ixxx, 1, MPI_INTEGER, 0, comm, ierr)
+      call MPI_Bcast(iyyy, 1, MPI_INTEGER, 0, comm, ierr)
+      call MPI_Bcast(ittt, 1, MPI_INTEGER, 0, comm, ierr)
+#endif
+
+      ip_xxx = int((ixxx - 1)/ksizex_l)
+      ip_yyy = int((iyyy - 1)/ksizey_l)
+      ip_ttt = int((ittt - 1)/ksizet_l)
+      ixxx_l = mod(ixxx - 1, ksizex_l) + 1
+      iyyy_l = mod(iyyy - 1, ksizey_l) + 1
+      ittt_l = mod(ittt - 1, ksizet_l) + 1
+
+      do idsource = 3, 4
+        !  source on domain wall at ithird=1
+        xi = (0.0d+0, 0.0d+0)
+        x = (0.0d+0, 0.0d+0)
+        !  wall source
+        !  if (ip_t .eq. np_t) then
+        !    x(:, :, ksizet_l, :) = cmplx(1.0,0.0) / ksize2
+        !  end if
+        !  point source at fixed site, spin...
+        if (ip_xxx .eq. ip_x .and. ip_yyy .eq. ip_y .and. ip_ttt .eq. ip_t) then
+          x(ixxx_l, iyyy_l, ittt_l, idsource) = (1.0d+0, 0.0d+0)
+        end if
+        !
+        ! now smear it.....
+        !
+#ifdef MPI
+        call start_halo_update_4(4, x, 1, mpireqs_4)
+        call MPI_Waitall(12,mpireqs_4,MPI_STATUSES_IGNORE,ierr)
+#else
+        call update_halo_4(4, x)
+#endif
+
+        do ismear = 1, nsmear
+          call dslash2d(x0, x, u)
+#ifdef MPI
+          call start_halo_update_4(4, x0, 1, mpireqs_4)
+          call MPI_Waitall(12,mpireqs_4,MPI_STATUSES_IGNORE,ierr)
+#else
+          call update_halo_4(4, x0)
+#endif
+          x = (1.0d+0 - c)*x + c*x0
+        enddo! do ismear=1,nsmear
+        !
+        !
+        !   xi = x  on DW at ithird=1
+        !
+        xi(1, :, :, :, :) = x
+        !
+        ! Phi= Mdagger*xi
+        !
+        call dslashd(Phi, xi, u, am, imass)
+#ifdef MPI
+        call start_halo_update_5(4, Phi, 1, mpireqs)
+        call complete_halo_update(mpireqs)
+#else
+        call update_halo_5(4, Phi)
+#endif
+        !  preconditioning (no,really)
+        call dslashd(xi, Phi, u, am, imass)
+#ifdef MPI
+        call start_halo_update_5(4, xi, 1, mpireqs)
+        call complete_halo_update(mpireqs)
+#else
+        call update_halo_5(4, xi)
+#endif
+        !
+        ! xi= (MdaggerM)**-1 * Phi
+        !
+        call congrad(Phi, res, itercg, am, imass)  ! solution is vector::x, here called xi
+        iter = iter + itercg
+        !
+        prop00(:, :, :, idsource, 1:2) = xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+        prop0L(:, :, :, idsource, 3:4) = xi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+        !
+        ! if(imass.ne.1)then
+        !  now evaluate with sign of mass reversed (not needed for hermitian mass term)
+        ! am=-am
+        !  source on domain wall at ithird=1
+        ! xi = (0.0,0.0)
+        ! if (ip_t .eq. np_t) then
+        !   xi(1, :, :, :, :) = x
+        ! end if
+        !
+        ! Phi= Mdagger*xi
+        !
+        ! call dslashd(Phi,xi,u,am,imass)
+        !#ifdef MPI
+        !call start_halo_update_4(4,Phi , 1, mpireqs_4)
+        !call MPI_Waitall(12,mpireqs_4,MPI_STATUSES_IGNORE,ierr)
+        !#else
+        !call update_halo_4(4, Phi)
+        !#endif
+        !call dslashd(xi, Phi, u, am, imass)
+        !#ifdef MPI
+        !call start_halo_update_4(4,xi, 1, mpireqs_4)
+        !call MPI_Waitall(12,mpireqs_4,MPI_STATUSES_IGNORE,ierr)
+        !#else
+        !call update_halo_4(4, xi)
+        !#endif
+
+        !
+        ! xi= (MdaggerM)**-1 * Phi
+        !
+        ! call congrad(Phi,res,itercg,am,imass)
+        ! iter=iter+itercg
+        !
+        ! prop00n(:, :, :, idsource, 1:2) = xi(1, :, :, :, 1:2)
+        ! prop0Ln(:, :, :, idsource, 3:4) = xi(kthird, :, :, :, 3:4)
+        !
+        ! am=-am
+        !
+        !  end loop on source Dirac index....
+      enddo ! do idsource=3,4
+      !
+      !  Now tie up the ends....
+      !
+      !  First C+-
+      !
+      !  now evaluate the trace (exploiting projection)
+      tempcpmm_r = 0.d0
+      do it = 0, ksizet - 1
+        itt = mod((ittt + it - 1), ksizet) + 1
+        ittl = itt - ip_t*ksizet_l
+        if (ittl .ge. 1 .and. ittl .le. ksizet_l) then
+          tempcpmm_r(it) = sum(abs(prop00(:, :, ittl, 3:4, 1:2))**2)
+        endif
+      enddo
+#ifdef MPI
+      call MPI_AllReduce(MPI_In_Place, tempcpmm_r, ksizet, MPI_DOUBLE_PRECISION, MPI_SUM, comm, ierr)
+      if (ip_global .eq. 0) then
+#endif
+        !!! if(ip_global.eq.0) then
+        cpm = cpm + tempcpmm_r
+#ifdef MPI
+      endif! if(ip_global.eq.0) then
+#endif
+      !
+      ! if(imass.ne.1)then
+      !     do it=0,ksizet-1
+      !         itt=mod((ittt+it-1),ksizet)+1
+      !         cpmn(it)=cpmn(it) &
+      !        & + sum(prop00(:, :, itt, 3:4, 1:2)*conjg(prop00n(:, :, itt, 3:4, 1:2)))
+      !     enddo
+      ! endif
+      !
+      !  next C--
+      !  now evaluate the trace exploiting projection
+      tempcpmm_r = 0.d0
+      do it = 0, ksizet - 1
+        itt = mod((ittt + it - 1), ksizet) + 1
+        ittl = itt - ip_t*ksizet_l
+        if (ittl .ge. 1 .and. ittl .le. ksizet_l) then
+          tempcpmm_r(it) = sum(abs(prop0L(:, :, ittl, 3:4, 3:4))**2)
+        endif
+      enddo
+#ifdef MPI
+      call MPI_AllReduce(MPI_In_Place, tempcpmm_r, ksizet, MPI_DOUBLE_PRECISION, MPI_SUM, comm, ierr)
+      if (ip_global .eq. 0) then
+#endif
+        !!! if(ip_global.eq.0) then
+        cmm = cmm + tempcpmm_r
+#ifdef MPI
+      endif
+#endif
+
+      !
+      !     if(imass.ne.1)then
+      !     do id1=3,4
+      !     do id2=3,4
+      !     do it=0,ksizet-1
+      !     itt=mod((ittt+it-1),ksizet)+1
+      !     ioff=(itt-1)*ksize2
+      !     do i=1,ksize2
+      !     cmmn(it)=cmmn(it) &
+      !    &   +prop0L(i+ioff,id1,id2)*conjg(prop0Ln(i+ioff,id1,id2))
+      !     enddo
+      !     enddo
+      !     enddo
+      !     enddo
+      !     endif
+      !
+      !    now the fermion propagator
+      !  = tr{ P_-*Psi(0,1)Psibar(x,Ls) + gamma_0*P_-*Psi(0,1)Psibar(x,1) }
+      tempcpmm_c = (0.0d+0, 0.0d+0)
+      do idd = 3, 4
+        do it = 0, ksizet - 1
+          itt = mod((ittt + it - 1), ksizet) + 1
+          ! correct for apbc
+          if (itt .ge. ittt) then
+            isign = 1
+          else
+            isign = ibound
+          endif
+          ittl = itt - ip_t*ksizet_l
+          if (ittl .ge. 1 .and. ittl .le. ksizet_l) then
+            tempcpmm_c(it) = tempcpmm_c(it) + &
+              & isign*akappa*sum(prop0L(:, :, ittl, idd, idd))
+          endif
+        enddo
+      enddo! do idd=3,4
+#ifdef MPI
+      call MPI_AllReduce(MPI_In_Place, tempcpmm_c, ksizet, MPI_DOUBLE_COMPLEX, MPI_SUM, comm, ierr)
+      if (ip_global .eq. 0) then
+#endif
+        !!! if(ip_global.eq.0) then
+        cferm1 = cferm1 + tempcpmm_c
+#ifdef MPI
+      endif
+#endif
+      tempcpmm_c = (0.0d0, 0.0d0)
+      do idd = 3, 4
+        do it = 0, ksizet - 1
+          itt = mod((ittt + it - 1), ksizet) + 1
+          ! correct for apbc
+          if (itt .ge. ittt) then
+            isign = 1
+          else
+            isign = ibound
+          endif
+          ittl = itt - ip_t*ksizet_l
+          if (ittl .ge. 1 .and. ittl .le. ksizet_l) then
+            tempcpmm_c(it) = tempcpmm_c(it) + &
+             & isign*gamval(3, idd)*sum(prop00(:, :, ittl, idd, gamin(3, idd)))
+          endif
+        enddo
+      enddo! do idd=3,4
+#ifdef MPI
+      call MPI_AllReduce(MPI_In_Place, tempcpmm_c, ksizet, MPI_DOUBLE_COMPLEX, MPI_SUM, comm, ierr)
+      if (ip_global .eq. 0) then
+#endif
+        !!! if(ip_global.eq.0) then
+        cferm2 = cferm2 + tempcpmm_c
+#ifdef MPI
+      endif
+#endif
+
+      !
+      !  finish loop over sources
+    enddo! do ksource=1,nsource
+    !
+#ifdef MPI
+    if (ip_global .eq. 0) then
+#endif
+      do it = 0, ksizet - 1
+        cpm(it) = cpm(it)/nsource
+        cmm(it) = cmm(it)/nsource
+        !  Cf. (54) of 1507.07717
+        chim = chim + 2*(cpm(it) + cmm(it))
+      enddo
+      !     if(imass.ne.1)then
+      !       if(imass.eq.3)then
+      !         do it=0,ksizet-1
+      !           cpmn(it)=cpmn(it)/nsource
+      !           cmmn(it)=cmmn(it)/nsource
+      !  Cf. (54),(61) of 1507.07717
+      !           chip=chip-2*(cpmn(it)-cmmn(it))
+      !         enddo
+      !       else
+      !         do it=0,ksizet-1
+      !           cpmn(it)=cpmn(it)/nsource
+      !           cmmn(it)=cmmn(it)/nsource
+      !  Cf. (64),(65) of 1507.07717
+      !           chip=chip-2*(cpm(it)-cmm(it))
+      !         enddo
+      !       endif
+      !     endif
+      !
+      do it = 0, ksizet - 1
+        write (302, *) it, cpm(it), cmm(it)
+        write (500, *) it, real(cferm1(it)), aimag(cferm1(it))
+        write (501, *) it, real(cferm2(it)), aimag(cferm2(it))
+      enddo
+      !     write(6,*) chim
+      write (400, *) chim
+#ifdef MPI
+    endif ! if(ip_global.eq.0) then
+#endif
+    !     if(imass.ne.1)then
+    !     do it=0,ksizet-1
+    !     write(402,*) it, real(cpmn(it)), real(cmmn(it))
+    !     write(403,*) it, aimag(cpmn(it)), aimag(cmmn(it))
+    !     enddo
+    !     write(401,*) chip
+    !     endif
+    !
+    !     if(imass.eq.1)then
+    aviter = float(iter)/(2*nsource)
+    !     else
+    !     aviter=float(iter)/(4*nsource)
+    !     endif
+    !
+    return
+  end subroutine meson
+!******************************************************************
 
 end module measure_module

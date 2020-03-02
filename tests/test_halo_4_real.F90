@@ -47,10 +47,10 @@ program test_halo_4_real
   ! Communicate
 #ifdef MPI
   call start_halo_update_4_real(2, test_array, 0, reqs)
-  call complete_halo_update(reqs)
+  call MPI_Waitall(12,reqs,MPI_STATUSES_IGNORE,ierr)
 
   call start_halo_update_4_real(2, test_array_2, 1, reqs2)
-  call complete_halo_update(reqs2)
+  call MPI_Waitall(12,reqs2,MPI_STATUSES_IGNORE,ierr)
 #else
   call update_halo_4_real(2, test_array)
   call update_halo_4_real(2, test_array_2)

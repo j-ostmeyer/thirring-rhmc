@@ -9,7 +9,7 @@ endif
 
 
 ifeq ($(MPI), yes)
-	MPI_RUNNER = mpirun -n $$(($(NP_X) * $(NP_Y) * $(NP_T) * $(NP_THIRD)))
+	MPI_RUNNER = mpirun --oversubscribe -n $$(($(NP_X) * $(NP_Y) * $(NP_T) * $(NP_THIRD)))
 else
 	COMMS_LIB = uncomms.o
 	MPI_RUNNER =
@@ -39,7 +39,7 @@ runtests: $(TESTS)
 	        echo "OK"; \
 	    else \
 	        echo; \
-	        echo $$OUTPUT; \
+	        echo "$$OUTPUT"; \
 	    fi; \
 	done
 	@for test in $(TESTS_TO_FAIL); do \
