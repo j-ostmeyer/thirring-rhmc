@@ -83,12 +83,11 @@ LIBOBJS = counters.o comms.o comms_common.o \
           comms4.o comms4_sp.o \
           comms5.o comms5_sp.o \
           comms6.o \
-          comms_partitioning.o derivs_module.o  dirac.o dirac_sp.o \
-          dirac_split.o dirac_split_nodir.o dum1.o dwf3d_lib.o \
+          derivs_module.o  dirac.o dirac_sp.o \
+          dum1.o dwf3d_lib.o \
           gammamatrices.o gauge.o gaussian.o gdbhook.o gforce.o \
           inverter_utils.o  measure_module.o multishift_module.o \
-          params.o partitioning.o  qmrherm_module.o \
-          qmrherm_module_split.o  qmrherm_module_split_nodir.o \
+          params.o qmrherm_module.o \
           random.o reductions.o remez.o remezg.o  \
           remez_common_subroutines.o timer.o trial.o vector.o
 
@@ -112,7 +111,7 @@ $(TOPDIR)/comms5_sp.F90 : $(TOPDIR)/comms5.F90
 	#touch $@
 
 # generic rule for dum,gauge,gforce,remez,remezg, remez_common_subroutine
-# trial,vector,partitioning
+# trial,vector
 %.o : $(TOPDIR)/%.F90 .makefile.uptodate params.mod
 	$(COMPILE) -o $*.o $<
 
@@ -126,10 +125,6 @@ bulk_rhmc.o : $(TOPDIR)/bulk_rhmc.f90 .makefile.uptodate \
         dwf3d_lib.mod
 	$(COMPILE) -o $*.o $<
 
-comms_partitioning.o : $(TOPDIR)/comms_partitioning.F90 .makefile.uptodate \
-                       params.mod partitioning.mod
-	$(COMPILE) -o $*.o $<
-
 derivs_module.o : $(TOPDIR)/derivs_module.F90 .makefile.uptodate gforce.mod \
                   dirac.mod
 	$(COMPILE) -o $*.o $<
@@ -139,14 +134,6 @@ dirac.o : $(TOPDIR)/dirac.F90 .makefile.uptodate params.mod gammamatrices.mod
 
 dirac_sp.o : $(TOPDIR)/dirac_sp.F90 .makefile.uptodate params.mod \
           gammamatrices.mod
-	$(COMPILE) -o $*.o $<
-
-dirac_split.o : $(TOPDIR)/dirac_split.F90 .makefile.uptodate params.mod \
-                comms.mod dirac.mod partitioning.mod
-	$(COMPILE) -o $*.o $<
-
-dirac_split_nodir.o : $(TOPDIR)/dirac_split_nodir.F90 .makefile.uptodate \
-                      params.mod comms.mod dirac.mod partitioning.mod
 	$(COMPILE) -o $*.o $<
 
 dwf3d_lib.o : $(TOPDIR)/dwf3d_lib.F90 \
@@ -177,27 +164,12 @@ multishift_module.o :  $(TOPDIR)/multishift_module.F90 \
                   params.mod reductions.mod
 	$(COMPILE) -o $*.o $<
 
-partitioning.o : $(TOPDIR)/partitioning.F90 .makefile.uptodate params.mod \
-                 comms.mod
-	$(COMPILE) -o $*.o $<
-
 qmrherm_module.o : $(TOPDIR)/qmrherm_module.F90 .makefile.uptodate params.mod \
                    vector.mod gforce.mod comms.mod \
                    comms_common.mod comms5.mod comms6.mod dirac.mod \
                    derivs_module.mod inverter_utils.mod multishift_module.mod \
                    reductions.mod
 	$(COMPILE) -o qmrherm_module.o $<
-
-qmrherm_module_split.o : $(TOPDIR)/qmrherm_module_split.F90 \
-                         .makefile.uptodate params.mod vector.mod gforce.mod \
-                         comms.mod dirac_split.mod dirac.mod derivs_module.mod
-	$(COMPILE) -o qmrherm_module_split.o $<
-
-qmrherm_module_split_nodir.o : $(TOPDIR)/qmrherm_module_split_nodir.F90 \
-                              .makefile.uptodate params.mod comms.mod \
-                              derivs_module.mod dirac.mod gforce.mod \
-                              params.mod trial.mod
-	$(COMPILE) -o qmrherm_module_split_nodir.o $<
 
 timer.o : $(TOPDIR)/timer.F90 comms_common.mod
 	$(COMPILE) -o timer.o $<
