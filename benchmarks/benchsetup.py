@@ -125,8 +125,6 @@ mkdir -p {directory}
 cd {directory} 
 ln -s ../benchmarks/benchmark_congrad.F90 ./
 ln -s ../benchmarks/benchmark_qmrherm_1.F90 ./
-ln -s ../benchmarks/benchmark_qmrherm_split1.F90 ./
-ln -s ../benchmarks/benchmark_qmrherm_split_nodir1.F90 ./
 cp ../benchmarks/MkFlags.tmpl ./MkFlags
 cp ../benchmarks/Makefile ./
 
@@ -151,15 +149,11 @@ def prepare(divs,ssize):
 make clean
 make -j8 benchmark_congrad NP_X={divX} NP_Y={divY} NP_T={divT}
 make -j8 benchmark_qmrherm_1 NP_X={divX} NP_Y={divY} NP_T={divT}
-make -j8 benchmark_qmrherm_split1 NP_X={divX} NP_Y={divY} NP_T={divT}
-make -j8 benchmark_qmrherm_split_nodir1 NP_X={divX} NP_Y={divY} NP_T={divT}
 NP_X={divX} NP_Y={divY} NP_T={divT}
 NEWDIR={divX}x{divY}x{divT}
 mkdir -p $NEWDIR
 cp benchmark_congrad $NEWDIR
 cp benchmark_qmrherm_1 $NEWDIR
-cp benchmark_qmrherm_split1 $NEWDIR
-cp benchmark_qmrherm_split_nodir1 $NEWDIR
 
 '''.format(divX = divX,divY = divY, divT = divT)
 
@@ -168,15 +162,11 @@ cp benchmark_qmrherm_split_nodir1 $NEWDIR
 make clean
 make -j8 benchmark_congrad NP_X={div} NP_Y={div} NP_T={div}
 make -j8 benchmark_qmrherm_1 NP_X={div} NP_Y={div} NP_T={div}
-make -j8 benchmark_qmrherm_split1 NP_X={div} NP_Y={div} NP_T={div}
-make -j8 benchmark_qmrherm_split_nodir1 NP_X={div} NP_Y={div} NP_T={div}
 
 NEWDIR={div}x{div}x{div}
 mkdir -p $NEWDIR
 cp benchmark_congrad $NEWDIR
 cp benchmark_qmrherm_1 $NEWDIR
-cp benchmark_qmrherm_split1 $NEWDIR
-cp benchmark_qmrherm_split_nodir1 $NEWDIR
 
 '''.format(div = divs)
 
@@ -211,8 +201,6 @@ def write_runscripts(divs,ssize):
     script='''
 /usr/bin/time -o timecongrad -p mpirun -n {nrank} ./benchmark_congrad > congradoutput
 /usr/bin/time -o timeqmr -p mpirun -n {nrank} ./benchmark_qmrherm_1 > qmroutput
-/usr/bin/time -o timeqmr_split -p mpirun -n {nrank} ./benchmark_qmrherm_split1 > qmrsplitoutput
-/usr/bin/time -o timeqmr_split_nodir -p mpirun -n {nrank} ./benchmark_qmrherm_split_nodir1 > qmrsplitnodiroutput
 '''.format(div = divs, nrank = nranks)
 
     suffix = str(int(math.ceil(float(nranks)/ranks_per_node)))
@@ -230,7 +218,7 @@ module use /home/s.michele.mesiti/modules
 module load extrae-gnu-8.1-mpi3.1.1 
 TRACE=$EXTRAE_HOME/share/example/MPI/ld-preload/trace.sh 
 ln -s $EXTRAE_HOME/share/example/MPI/extrae_fixed.xml ./extrae.xml
-for type in congrad qmrherm_1 qmrherm_split1 qmrherm_split_nodir1
+for type in congrad qmrherm_1
 do
 (
 mkdir -p $type
@@ -253,7 +241,7 @@ def write_runscripts_scalasca(divs,ssize):
     script='''
 module purge
 module load scalasca
-for type in congrad qmrherm_1 qmrherm_split1 qmrherm_split_nodir1
+for type in congrad qmrherm_1
 do
 (
 mkdir -p $type
