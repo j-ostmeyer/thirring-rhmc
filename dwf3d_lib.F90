@@ -82,6 +82,7 @@ contains
 !     variables to keep track of MPI requests
     integer :: reqs_ps(12)
     integer :: ierr
+    ! real :: sumvalue, maxvalue
 
 #endif
     ibound = -1
@@ -205,6 +206,15 @@ contains
               call gauss0(ps, reqs_ps)
               ! call complete_halo_update(reqs_ps)
               call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
+
+              ! sumvalue = sum(ps(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))
+              ! maxvalue = maxval(ps(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))
+              ! call MPI_AllReduce(MPI_IN_PLACE, sumvalue, 1, MPI_REAL, MPI_SUM, comm, ierr)
+              ! call MPI_AllReduce(MPI_IN_PLACE, maxvalue, 1, MPI_REAL, MPI_MAX, comm, ierr)
+              ! if (ip_global .eq. 0) then
+              !   print *, 'sumvalue:', sumvalue
+              !   print *, 'maxvalue:', maxvalue
+              ! end if
 #else
               call gauss0(ps)
 #endif
@@ -450,9 +460,9 @@ contains
              , ' am3=', f6.4, ' am=', f6.4/ &
              , ' imass=', i2)
 #ifdef MPI
-      write (7, 9002) NP_X, NP_Y, NP_T, ksizex_l, ksizey_l, ksizet_l
-9002  format(" NP_X=", i3, " NP_Y=", i3, " NP_T=", i3, / &
-             " ksizex_l=", i3, " ksizey_l=", i3, " ksizet_l=", i3)
+      write (7, 9002) NP_X, NP_Y, NP_T, NP_THIRD, ksizex_l, ksizey_l, ksizet_l, kthird_l
+9002  format(" NP_X=", i3, " NP_Y=", i3, " NP_T=", i3, " NP_THIRD=", i3, / &
+             " ksizex_l=", i3, " ksizey_l=", i3, " ksizet_l=", i3, " kthird_l=", i3)
 #endif
 !     write(6,9004) rescgg,rescga,respbp
       write (7, 9004) rescgg, rescga, respbp
