@@ -12,7 +12,7 @@ module dwf3d_lib
 contains
 
   subroutine dwf3d_main
-    ! use gdbhook
+    use gdbhook
     use random
     use gaussian
     use remez
@@ -88,7 +88,7 @@ contains
     qmrhprint = .true.
 #ifdef MPI
     call init_MPI
-    ! call gdb_wait()
+    call gdb_wait()
     call timeinit
 #endif
 
