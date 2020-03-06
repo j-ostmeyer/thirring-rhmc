@@ -436,7 +436,7 @@ contains
     !     complex prop00(kvol,3:4,1:2),prop0L(kvol,3:4,3:4)
     complex(dp) :: x(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: x0(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: Phi(0:kthird_l+1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: prop00(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
     complex(dp) :: prop0L(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
     !    complex :: prop00n(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)

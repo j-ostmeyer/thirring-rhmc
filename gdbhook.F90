@@ -3,7 +3,7 @@ module gdbhook
 contains
 
   subroutine gdb_wait()
-#ifdef MPI
+#if defined(MPI) && defined(__GNUC__)
     use mpi
     implicit none
     logical :: flag
