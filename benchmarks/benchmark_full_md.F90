@@ -19,8 +19,8 @@ program full_md
   !real, parameter :: rescgm=1e-9
   double precision :: t1i, t2i
   !integer, parameter :: itermax=1000
-  complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)!
-  complex(dp) :: Xresult(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+  complex(dp) :: Phi(0:kthird_l+1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)!
+  complex(dp) :: Xresult(0:kthird_l+1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   real(dp) :: H0, H1, S0, S1, dH, dS, hg, hp
   real :: action, paction, gaction
   real :: vel2, x, ytest, atraj
@@ -182,7 +182,7 @@ program full_md
         do ithird = 1, kthird
 #ifdef MPI
           call gauss0(ps, reqs_ps)
-          call complete_halo_update(reqs_ps)
+          call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
 #else
           call gauss0(ps)
 #endif
@@ -229,7 +229,7 @@ program full_md
     do mu = 1, 3
 #ifdef MPI
       call gaussp(ps, reqs_ps)
-      call complete_halo_update(reqs_ps)
+      call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
 #else
       call gaussp(ps)
 #endif

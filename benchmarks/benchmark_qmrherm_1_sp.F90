@@ -19,12 +19,12 @@ program benchmark_qmrherm_1
 
 
   ! initialise function parameters
-  complex(dp) :: Phi(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) :: Phi(0:kthird_l+1,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
   complex(dp), allocatable :: Phi0_ref(:, :, :, :, :, :)
   complex(dp), allocatable :: Phi0_orig(:, :, :, :, :, :)
   complex(dp), allocatable :: delta_Phi0(:, :, :, :, :, :)
-  complex(dp) :: R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-  complex(dp) :: X(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) :: R(0:kthird_l+1,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) :: X(0:kthird_l+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 
 
   integer :: imass, iflag
@@ -40,7 +40,8 @@ program benchmark_qmrherm_1
   double precision :: dt
   integer :: total_iterations
 #ifdef MPI
-  integer, dimension(12) :: reqs_R, reqs_U, reqs_Phi, reqs_Phi0
+  integer, dimension(16) :: reqs_R, reqs_Phi, reqs_Phi0
+  integer, dimension(12) :: reqs_u
   integer :: ierr
   call init_MPI
 #endif
@@ -104,7 +105,7 @@ program benchmark_qmrherm_1
   call complete_halo_update(reqs_R)
   call complete_halo_update(reqs_Phi)
   call complete_halo_update(reqs_Phi0)
-  call complete_halo_update(reqs_u)
+  call MPI_Waitall(12,reqs_u,MPI_STATUSES_IGNORE,ierr)
 #else
   call update_halo_6(4, 25, Phi0_orig)
   call update_halo_5(4, Phi)

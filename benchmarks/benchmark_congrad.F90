@@ -17,9 +17,9 @@ program benchmark_congrad
 
 
   ! initialise function parameters
-  complex(dp) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-  complex(dp) :: Phi0(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-  complex(dp) :: X0(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) :: Phi(0:kthird_l+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) :: Phi0(0:kthird_l+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+  complex(dp) :: X0(0:kthird_l+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 
   integer :: imass, iflag, isweep, iter
   real :: res, am
@@ -33,7 +33,8 @@ program benchmark_congrad
   double precision :: t1i, t2i
   double precision :: dt
 #ifdef MPI
-  integer, dimension(12) :: reqs_X, reqs_Phi, reqs_u
+  integer, dimension(16) :: reqs_X, reqs_Phi
+  integer, dimension(12) :: reqs_u
   integer :: ierr
 
   call init_MPI
@@ -50,7 +51,7 @@ program benchmark_congrad
     do it = 1,ksizet_l
       do iy = 1,ksizey_l
         do ix = 1,ksizex_l
-          do ithird = 1,kthird
+          do ithird = 1,kthird_l
             idx = ithird + (ip_x * ksizex_l + ix - 1) * kthird &
               & + (ip_y * ksizey_l + iy - 1) * kthird * ksize &
               & + (ip_t * ksizet_l + it - 1) * kthird * ksize * ksize &
@@ -84,7 +85,7 @@ program benchmark_congrad
   call start_halo_update_4(3, u, 1, reqs_u)
   call complete_halo_update(reqs_X)
   call complete_halo_update(reqs_Phi)
-  call complete_halo_update(reqs_u)
+  call MPI_Waitall(12,reqs_u,MPI_STATUSES_IGNORE,ierr)
 #else
   call update_halo_5(4, Phi)
   call update_halo_5(4, X)
