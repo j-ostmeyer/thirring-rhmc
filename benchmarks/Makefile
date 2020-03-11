@@ -9,10 +9,10 @@ endif
 
 
 ifeq ($(MPI), yes)
-	MPI_RUNNER = mpirun -n $$(($(NP_X) * $(NP_Y) * $(NP_T)))
+	MPI_RUNNER = mpirun -n $$(($(NP_X) * $(NP_Y) * $(NP_T) * $(NP_THIRD)))
 else
 	COMMS_LIB = uncomms.o
-	MPI_RUNNER = 
+	MPI_RUNNER =
 endif
 
 
@@ -57,6 +57,5 @@ MODS=$(patsubst %.o,%.mod,$(LIBOBJS))
 benchmark_%.o: benchmark_%.F90 .makefile.uptodate $(MODS)
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o $@ $<
 
-$(BENCHMARKS) : % : %.o $(LIBOBJS) 
+$(BENCHMARKS) : % : %.o $(LIBOBJS)
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -dynamic -o $@ $^
-

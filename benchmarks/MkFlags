@@ -1,7 +1,8 @@
-COMPILER=INTEL# See ../MkRules for available options
-MPI=yes#
-NP_X=2
-NP_Y=4
-NP_T=4
-SITE_RANDOM=yes#
-WITH_MUST=no#
+COMPILER=GNU
+MPI=yes
+NP_X=1
+NP_Y=2
+NP_T=1
+NP_THIRD=2
+SITE_RANDOM=yes
+WITH_MUST=no
