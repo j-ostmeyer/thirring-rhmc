@@ -426,10 +426,10 @@ contains
     integer, intent(out) :: itercg
     real, intent(out) :: aviter
     integer, intent(in) :: imass
+    !! NOTICE : Full ksizet range.
     real(dp), intent(out) :: cpm(0:ksizet - 1), cmm(0:ksizet - 1)
-    real(dp) :: tempcpmm_r(0:ksizet - 1)
+    real(dp) :: tempcpmm_r(0:ksizet - 1)    
     complex(dp) :: tempcpmm_c(0:ksizet - 1)
-    !    complex, intent(out) :: cferm1(0:ksizet-1), cferm2(0:ksizet-1)
     complex(dp), intent(out) :: cferm1(0:ksizet - 1), cferm2(0:ksizet - 1)
     !     complex x(kvol,4),x0(kvol,4),Phi(kthird,kvol,4)
     !     complex xi,gamval
@@ -505,7 +505,7 @@ contains
         !    x(:, :, ksizet_l, :) = cmplx(1.0,0.0) / ksize2
         !  end if
         !  point source at fixed site, spin...
-        if (ip_xxx .eq. ip_x .and. ip_yyy .eq. ip_y .and. ip_ttt .eq. ip_t) then
+        if (ip_xxx .eq. ip_x .and. ip_yyy .eq. ip_y .and. ip_ttt .eq. ip_t .and. ip_third .eq. 0) then
           x(ixxx_l, iyyy_l, ittt_l, idsource) = (1.0d+0, 0.0d+0)
         end if
         !
@@ -532,7 +532,18 @@ contains
         !
         !   xi = x  on DW at ithird=1
         !
-        xi(1, :, :, :, :) = x
+        if (ip_third .eq. 0) then
+          xi(1, :, :, :, :) = x
+        endif
+#ifdef MPI
+        ! Overkill....
+        call start_halo_update_5(4, xi, 1, mpireqs)
+        call complete_halo_update(mpireqs)
+#else
+        ! Overkill....
+        call update_halo_5(4, xi)
+#endif
+ 
         !
         ! Phi= Mdagger*xi
         !
@@ -557,8 +568,17 @@ contains
         call congrad(Phi, res, itercg, am, imass)  ! solution is vector::x, here called xi
         iter = iter + itercg
         !
-        prop00(:, :, :, idsource, 1:2) = xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
-        prop0L(:, :, :, idsource, 3:4) = xi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+        if (ip_third .eq. 0) then
+          prop00(:, :, :, idsource, 1:2) = xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+        else
+          prop00(:, :, :, idsource, 1:2) = (0.0d0,0.0d0)
+        endif
+
+        if (ip_third .eq. NP_THIRD -1 ) then
+          prop0L(:, :, :, idsource, 3:4) = xi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+        else
+          prop0L(:, :, :, idsource, 3:4) =  (0.0d0,0.0d0)
+        endif
         !
         ! if(imass.ne.1)then
         !  now evaluate with sign of mass reversed (not needed for hermitian mass term)
@@ -599,6 +619,16 @@ contains
         !
         !  end loop on source Dirac index....
       enddo ! do idsource=3,4
+   
+      ! Not actually necessary if result is used only by rank 0.
+      call MPI_Scatter( prop00,size(prop00),MPI_DOUBLE_COMPLEX,&
+        prop00,size(prop00),MPI_DOUBLE_COMPLEX,&
+        0,comm_grp_third,ierr)
+
+      call MPI_Scatter( prop0L,size(prop0L),MPI_DOUBLE_COMPLEX,&
+        prop0L,size(prop0L),MPI_DOUBLE_COMPLEX,&
+        NP_THIRD-1,comm_grp_third,ierr)
+
       !
       !  Now tie up the ends....
       !
@@ -680,6 +710,7 @@ contains
             isign = ibound
           endif
           ittl = itt - ip_t*ksizet_l
+          ! Working only on the local T range
           if (ittl .ge. 1 .and. ittl .le. ksizet_l) then
             tempcpmm_c(it) = tempcpmm_c(it) + &
               & isign*akappa*sum(prop0L(:, :, ittl, idd, idd))
@@ -706,6 +737,7 @@ contains
             isign = ibound
           endif
           ittl = itt - ip_t*ksizet_l
+          ! Working only on the local T range
           if (ittl .ge. 1 .and. ittl .le. ksizet_l) then
             tempcpmm_c(it) = tempcpmm_c(it) + &
              & isign*gamval(3, idd)*sum(prop00(:, :, ittl, idd, gamin(3, idd)))
@@ -726,16 +758,17 @@ contains
       !  finish loop over sources
     enddo! do ksource=1,nsource
     !
+    do it = 0, ksizet - 1
+       cpm(it) = cpm(it)/nsource
+       cmm(it) = cmm(it)/nsource
+       !  Cf. (54) of 1507.07717
+       chim = chim + 2*(cpm(it) + cmm(it))
+    enddo
+  
 #ifdef MPI
     if (ip_global .eq. 0) then
 #endif
-      do it = 0, ksizet - 1
-        cpm(it) = cpm(it)/nsource
-        cmm(it) = cmm(it)/nsource
-        !  Cf. (54) of 1507.07717
-        chim = chim + 2*(cpm(it) + cmm(it))
-      enddo
-      !     if(imass.ne.1)then
+     !     if(imass.ne.1)then
       !       if(imass.eq.3)then
       !         do it=0,ksizet-1
       !           cpmn(it)=cpmn(it)/nsource
