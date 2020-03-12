@@ -16,7 +16,6 @@ contains
     use params
     implicit none
     complex(dp), intent(in) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    !     complex, intent(in) :: Phi(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     real, intent(in) :: res, am
     integer, intent(out) :: itercg
     integer, intent(in) :: imass

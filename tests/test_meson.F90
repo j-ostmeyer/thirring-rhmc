@@ -10,13 +10,16 @@ program test_measure
   use gammamatrices
   use measure_module
   use test_utils
-
+  use gdbhook
   implicit none
 
   ! general parameters
   logical :: generate = .false.
   integer :: timing_loops = 1
   complex, parameter :: iunit = cmplx(0, 1)
+
+  ! initialise function parameters
+  complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   real(dp), parameter :: tau = 8*atan(1.0_8)
   complex(dp) :: cferm1(0:ksizet - 1), cferm2(0:ksizet - 1)
   real(dp) :: cpm(0:ksizet - 1), cmm(0:ksizet - 1)
@@ -27,7 +30,6 @@ program test_measure
   real :: aviter
   integer :: iflag = 0
 
-  complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   integer :: i, j, ix, iy, it, ithird, idx
   integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
   real :: res, am
@@ -86,7 +88,7 @@ program test_measure
 #ifdef MPI
   call start_halo_update_4(3, u, 1, reqs_u)
   call complete_halo_update(reqs_Phi)
-  call MPI_Waitall(12,reqs_u, MPI_STATUSES_IGNORE, ierr)
+  call MPI_Waitall(12, reqs_u, MPI_STATUSES_IGNORE, ierr)
 #else
   call update_halo_5(4, Phi)
   call update_halo_4(3, u)
