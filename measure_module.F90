@@ -643,7 +643,13 @@ contains
         endif
       enddo
 #ifdef MPI
-      call MPI_AllReduce(MPI_In_Place, tempcpmm_r, ksizet, MPI_DOUBLE_PRECISION, MPI_SUM, comm, ierr)
+      timered1: block
+        integer :: comm_grp_third_dual
+        call MPI_Comm_split(MPI_COMM_WORLD, ip_third, &
+                            ip_x + ip_y*np_x + ip_t*np_x*np_y, comm_grp_third_dual, ierr)
+
+        call MPI_AllReduce(MPI_In_Place, tempcpmm_r, ksizet, MPI_DOUBLE_PRECISION, MPI_SUM, comm_grp_third_dual, ierr)
+      end block timered1
       if (ip_global .eq. 0) then
 #endif
         !!! if(ip_global.eq.0) then
@@ -671,7 +677,14 @@ contains
         endif
       enddo
 #ifdef MPI
-      call MPI_AllReduce(MPI_In_Place, tempcpmm_r, ksizet, MPI_DOUBLE_PRECISION, MPI_SUM, comm, ierr)
+      timered2: block
+        integer :: comm_grp_third_dual
+        call MPI_Comm_split(MPI_COMM_WORLD, ip_third, &
+                            ip_x + ip_y*np_x + ip_t*np_x*np_y, comm_grp_third_dual, ierr)
+
+        call MPI_AllReduce(MPI_In_Place, tempcpmm_r, ksizet, MPI_DOUBLE_PRECISION, MPI_SUM, comm_grp_third_dual, ierr)
+      end block timered2
+
       if (ip_global .eq. 0) then
 #endif
         !!! if(ip_global.eq.0) then
@@ -717,7 +730,14 @@ contains
         enddo
       enddo! do idd=3,4
 #ifdef MPI
-      call MPI_AllReduce(MPI_In_Place, tempcpmm_c, ksizet, MPI_DOUBLE_COMPLEX, MPI_SUM, comm, ierr)
+      timered3: block
+        integer :: comm_grp_third_dual
+        call MPI_Comm_split(MPI_COMM_WORLD, ip_third, &
+                            ip_x + ip_y*np_x + ip_t*np_x*np_y, comm_grp_third_dual, ierr)
+
+        call MPI_AllReduce(MPI_In_Place, tempcpmm_c, ksizet, MPI_DOUBLE_COMPLEX, MPI_SUM, comm_grp_third_dual, ierr)
+      end block timered3
+
       if (ip_global .eq. 0) then
 #endif
         !!! if(ip_global.eq.0) then
@@ -744,7 +764,14 @@ contains
         enddo
       enddo! do idd=3,4
 #ifdef MPI
-      call MPI_AllReduce(MPI_In_Place, tempcpmm_c, ksizet, MPI_DOUBLE_COMPLEX, MPI_SUM, comm, ierr)
+      timered4: block
+        integer :: comm_grp_third_dual
+        call MPI_Comm_split(MPI_COMM_WORLD, ip_third, &
+                            ip_x + ip_y*np_x + ip_t*np_x*np_y, comm_grp_third_dual, ierr)
+
+        call MPI_AllReduce(MPI_In_Place, tempcpmm_c, ksizet, MPI_DOUBLE_COMPLEX, MPI_SUM, comm_grp_third_dual, ierr)
+      end block timered4
+
       if (ip_global .eq. 0) then
 #endif
         !!! if(ip_global.eq.0) then

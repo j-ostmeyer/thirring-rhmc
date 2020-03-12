@@ -57,7 +57,7 @@ program test_measure
     do it = 1, ksizet_l
       do iy = 1, ksizey_l
         do ix = 1, ksizex_l
-          do ithird = 1, kthird
+          do ithird = 1, kthird_l
             idx = ithird + (ip_x*ksizex_l + ix - 1)*kthird &
               & + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
               & + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
