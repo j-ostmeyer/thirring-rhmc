@@ -33,3 +33,4 @@ test_dslash.dat
 test_force_regression
 con
 random_seed
+test_timer
