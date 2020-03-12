@@ -31,6 +31,5 @@ test_dslashd_3_reqs
 test_dslashd_5_reqs
 test_dslash.dat
 test_force_regression
-con
 random_seed
 test_timer
