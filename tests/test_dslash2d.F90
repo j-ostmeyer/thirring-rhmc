@@ -31,8 +31,7 @@ program test_dslash2d
   integer, parameter :: idxmax = 4*ksize*ksize*ksizet
   integer :: idx
 #ifdef MPI
-  integer, dimension(16) :: reqs_R, reqs_Phi
-  integer, dimension(12) :: reqs_u
+  integer, dimension(12) :: reqs_R, reqs_Phi, reqs_u
   integer :: ierr
   call init_MPI
 #endif
@@ -69,9 +68,9 @@ program test_dslash2d
   enddo
 #ifdef MPI
   call start_halo_update_4(3, u, 2, reqs_u)
-  call complete_halo_update(reqs_Phi)
-  call complete_halo_update(reqs_R)
   call MPI_Waitall(12,reqs_u,MPI_STATUSES_IGNORE,ierr)
+  call MPI_Waitall(12,reqs_R,MPI_STATUSES_IGNORE,ierr)
+  call MPI_Waitall(12,reqs_Phi,MPI_STATUSES_IGNORE,ierr)
 #else
   call update_halo_4(4, Phi)
   call update_halo_4(4, R)
@@ -89,7 +88,7 @@ program test_dslash2d
     call dslash2d(Phi, R, u)
 #ifdef MPI
     call start_halo_update_4(4, Phi, 2, reqs_Phi)
-    call complete_halo_update(reqs_Phi)
+    call MPI_Waitall(12,reqs_Phi,MPI_STATUSES_IGNORE,ierr)
 #else
     call update_halo_4(4, Phi)
 #endif
