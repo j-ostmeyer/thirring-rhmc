@@ -204,17 +204,8 @@ contains
             do ithird = 1, kthird_l
 #ifdef MPI
               call gauss0(ps, reqs_ps)
-              ! call complete_halo_update(reqs_ps)
               call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
 
-              ! sumvalue = sum(ps(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))
-              ! maxvalue = maxval(ps(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :))
-              ! call MPI_AllReduce(MPI_IN_PLACE, sumvalue, 1, MPI_REAL, MPI_SUM, comm, ierr)
-              ! call MPI_AllReduce(MPI_IN_PLACE, maxvalue, 1, MPI_REAL, MPI_MAX, comm, ierr)
-              ! if (ip_global .eq. 0) then
-              !   print *, 'sumvalue:', sumvalue
-              !   print *, 'maxvalue:', maxvalue
-              ! end if
 #else
               call gauss0(ps)
 #endif
@@ -244,7 +235,6 @@ contains
         do mu = 1, 3
 #ifdef MPI
           call gaussp(ps, reqs_ps)
-          ! call complete_halo_update(reqs_ps)
           call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
 #else
           call gaussp(ps)
@@ -450,7 +440,7 @@ contains
 
     if (ip_global .eq. 0) then
       write (7, 9001) ksize, ksizet, kthird, Nf, dt, traj, ndiag, ndiagg, &
-             iter2, iter2_read, beta, am3, am, imass
+        iter2, iter2_read, beta, am3, am, imass
 9001  format(' ksize=', i3, ' ksizet=', i3, / &
              , ' kthird=', i3, / &
              , ' Nf =', i3, / &
@@ -628,7 +618,7 @@ contains
       call check_qmr_iterations(niterations=itercg, abort_on_max_reached=.false.)
 
       hf = hf + sum(real(conjg(R(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
-                            *Xresult(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
+                         *Xresult(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
     enddo
 
 #ifdef MPI
