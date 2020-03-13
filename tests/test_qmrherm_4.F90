@@ -68,10 +68,10 @@ program test_qmrherm_4
         do ix = 1, ksizex_l
           do ithird = 1, kthird_l
             idx = ip_third*kthird_l + ithird &
-                + (ip_x*ksizex_l + ix - 1)*kthird &
-                + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
-                + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
-                + (j - 1)*kthird*ksize*ksize*ksizet
+                  + (ip_x*ksizex_l + ix - 1)*kthird &
+                  + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
+                  + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
+                  + (j - 1)*kthird*ksize*ksize*ksizet
 
             Phi(ithird, ix, iy, it, j) = 1.1*exp(iunit*idx*tau/idxmax)
             R(ithird, ix, iy, it, j) = 1.3*exp(iunit*idx*tau/idxmax)
@@ -96,9 +96,9 @@ program test_qmrherm_4
       do iy = 1, ksizey_l
         do ix = 1, ksizex_l
           idx = ip_x*ksizex_l + ix - 1 &
-              + (ip_y*ksizey_l + iy - 1)*ksize &
-              + (ip_t*ksizet_l + it - 1)*ksize*ksize &
-              + (j - 1)*ksize*ksize*ksizet
+                + (ip_y*ksizey_l + iy - 1)*ksize &
+                + (ip_t*ksizet_l + it - 1)*ksize*ksize &
+                + (j - 1)*ksize*ksize*ksizet
 
           u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
           dSdpi(ix, iy, it, j) = real(tau*exp(iunit*idx*tau/idxmax), sp)
@@ -150,7 +150,7 @@ program test_qmrherm_4
                 - xout(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
     ! relative error
     delta_Phi = abs(delta_Phi)**2/sum(abs(xout(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
-    check_sum(delta_Phi, 1e-14, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_dp')
+    check_sum(delta_Phi, 2e-14, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_dp')
   enddo
 
   call qmrherm(Phi, X, res, itercg, am, imass, anum, aden, ndiag, iflag, .true., itercgs)
@@ -167,10 +167,10 @@ program test_qmrherm_4
     call dirac_op_shifted(xout, xin, u, am, imass, adenf)
 
     delta_Phi = Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
-              - xout(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
+                - xout(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
     ! relative error
     delta_Phi = abs(delta_Phi)**2/sum(abs(xout(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
-    check_sum(delta_Phi, 1e-9, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_sp')
+    check_sum(delta_Phi, 2.5e-9, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_sp')
 
   enddo
 

@@ -10,21 +10,6 @@ module test_utils
 contains
 
 #ifdef MPI
-  subroutine gdbwait()
-    use comms
-    implicit none
-    logical, volatile :: wfi ! Wait For Intervention
-    integer :: ierr
-
-    wfi = .true.
-
-    if (ip_global .eq. 0) then
-      do while(wfi)
-        call sleep(1)
-      end do
-    end if
-    call MPI_Barrier(MPI_Comm_World, ierr)
-  end subroutine gdbwait
 
   subroutine rw_file_mpi(array, array_shape, rank, filename, mpi_dtype, write_out)
     integer, intent(in) :: array_shape(:), rank
@@ -59,22 +44,22 @@ contains
       offset = 1
       ! Less changes if we modify the first index here
       global_size(0 + offset) = kthird
-      start(0 + offset) = ip_third * kthird_l
+      start(0 + offset) = ip_third*kthird_l
     end if
 
     ! Work out how many elements to transfer
     count = 1
     do size_index = 1, rank
-      count = count * local_size(size_index)
+      count = count*local_size(size_index)
     end do
 
     global_size(1 + offset) = ksize
     global_size(2 + offset) = ksize
     global_size(3 + offset) = ksizet
 
-    start(1 + offset) = ip_x * ksizex_l
-    start(2 + offset) = ip_y * ksizey_l
-    start(3 + offset) = ip_t * ksizet_l
+    start(1 + offset) = ip_x*ksizex_l
+    start(2 + offset) = ip_y*ksizey_l
+    start(3 + offset) = ip_t*ksizet_l
 
     call MPI_Type_Create_Subarray(rank, global_size, local_size, start, &
                                   MPI_Order_Fortran, mpi_dtype, local_mpiio_type, &

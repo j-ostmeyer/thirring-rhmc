@@ -38,7 +38,6 @@ program test_congrad
   integer :: ierr
 
   call init_MPI
-  !call gdbwait
 #endif
 
   res = 0.1
