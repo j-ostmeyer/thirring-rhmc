@@ -31,7 +31,8 @@ COMPILER=INTEL# GNU,INTEL,CRAY,IBM,SPINTEL
 MPI=yes#                                                                        
 NP_X=2#                                                                         
 NP_Y=2#                                                                         
-NP_T=2#                                                                         
+NP_T=2#
+NP_THIRD=2#
 SITE_RANDOM=yes#
 ```
 
@@ -48,12 +49,13 @@ and that there are no correct variables for the IBM compiler.
 
 #### Compiling for parallel
 
-Set `MPI` to `yes` to enable MPI. `NP_X`, `NP_Y`, and `NP_T` must be set as the 
+Set `MPI` to `yes` to enable MPI. `NP_X`, `NP_Y`, `NP_T`, `NP_THIRD` must be set as the 
 number of processes
-in the x, y, and t directions respectively; these are checked at compile time
+in the x, y, t and third directions respectively; these are checked at compile time
 so that the lattice dimensions are divisible by these, and at runtime against 
-the number of ranks available. 
-If `MPI` is set to `no`, `NP_X`, `NP_Y`, and `NP_T` will be ignored.
+the number of ranks available. Also, at runtime, it is checked whether the local lattice
+size along the third direction (`KTHIRD/NP_THIRD`) is divisible by 4, and if it isn't the execution aborts.
+If `MPI` is set to `no`, `NP_X`, `NP_Y`, `NP_T` and `NP_THIRD` will be ignored.
 
 #### Random numbers
 
