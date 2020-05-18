@@ -18,18 +18,13 @@ program test_force
   implicit none
 
   ! general parameters
-  logical :: generate = .false.
   complex, parameter :: iunit = cmplx(0, 1)
   real(dp), parameter :: tau = 8*atan(1.0_8)
-
-  real :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
 
   ! initialise function parameters
   complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, 1)
   complex(dp) :: Phi0_orig(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, 25)
-  real :: diff(ksizex_l, ksizey_l, ksizet_l, 3)
   complex(dp) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-  real :: sum_diff, max_diff
 
   integer :: imass, iflag, isweep, iter
   real :: res1, res2, am, u_variation
@@ -51,8 +46,8 @@ program test_force
   hg = 0
   hp = 0
   s = 0
-  res1 = 1.0d-6
-  res2 = 1.0d-8
+  res1 = 1.0e-6
+  res2 = 1.0e-8
   am = 0.05
   imass = 3
   iflag = 0
@@ -134,9 +129,9 @@ program test_force
                 + (j - 1)*ksize*ksize*ksizet
 
           u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
-          theta(ix, iy, it, j) = 1.9*exp(iunit*idx*tau/idxmax)
-          pp(ix, iy, it, j) = -1.1*exp(iunit*idx*tau/idxmax)
-          dSdpi(ix, iy, it, j) = tau*exp(iunit*idx*tau/idxmax)
+          theta(ix, iy, it, j) = sngl(real(1.9*exp(iunit*idx*tau/idxmax)))
+          pp(ix, iy, it, j) = sngl(real(-1.1*exp(iunit*idx*tau/idxmax)))
+          dSdpi(ix, iy, it, j) = real(tau*exp(iunit*idx*tau/idxmax))
         enddo
       enddo
     enddo

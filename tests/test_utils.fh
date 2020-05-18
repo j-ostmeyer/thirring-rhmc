@@ -32,8 +32,8 @@
 
 #define check_float_equality(_check_var, _true_var, _tol, _var_name, _unit_name) \
   if (ip_global .eq. 0) then; \
-    if (_check_var .lt. _true_var - abs(_true_var) * _tol .or.   \
-        _check_var .gt. _true_var + abs(_true_var) * _tol) then;	\
+    if (_check_var .lt. _true_var - abs(_true_var) * _tol .or. \
+        _check_var .gt. _true_var + abs(_true_var) * _tol) then; \
     print *, _unit_name, ': ', _var_name, ' looks wrong: ', _check_var, ' != ', _true_var; \
     end if; \
   end if

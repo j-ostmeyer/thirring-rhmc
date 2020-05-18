@@ -347,15 +347,15 @@ contains
       if (imass .eq. 1) then
         psibarpsi1 = psibarpsi1/kvol
         psibarpsi2 = psibarpsi2/kvol
-        pbp(inoise) = psibarpsi1 + psibarpsi2
+        pbp(inoise) = real(psibarpsi1 + psibarpsi2)
       elseif (imass .eq. 3) then
         psibarpsi1 = cmplx(0.0, -1.0)*psibarpsi1/kvol
         psibarpsi2 = cmplx(0.0, +1.0)*psibarpsi2/kvol
-        pbp(inoise) = psibarpsi1 + psibarpsi2
+        pbp(inoise) = real(psibarpsi1 + psibarpsi2)
       elseif (imass .eq. 5) then
         psibarpsi1 = cmplx(0.0, -1.0)*psibarpsi1/kvol
         psibarpsi2 = cmplx(0.0, -1.0)*psibarpsi2/kvol
-        pbp(inoise) = psibarpsi1 + psibarpsi2
+        pbp(inoise) = real(psibarpsi1 + psibarpsi2)
       endif
 
       !write(6,*) real(psibarpsi1),aimag(psibarpsi1), real(psibarpsi2),aimag(psibarpsi2)

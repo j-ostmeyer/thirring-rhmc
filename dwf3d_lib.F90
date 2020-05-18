@@ -122,6 +122,7 @@ contains
         ! ending with d0, but we do not care
       endif
     end block
+    action = -1
 
     if (ip_global .eq. 0) then
       write (7, *) 'seed: ', seed
@@ -256,7 +257,7 @@ contains
 !      half-step forward for p
 !*******************************************************************
         call force(Phi, rescgg, am, imass, isweep, 0)
-        pp = pp - 0.5*dt*dSdpi
+        pp = pp - real(0.5*dt*dSdpi)
 !*******************************************************************
 !     start of main loop for classical time evolution
 !*******************************************************************
@@ -283,10 +284,10 @@ contains
           call MPI_Bcast(ytest, 1, MPI_Real, 0, comm, ierr)
 #endif
           if (ytest .lt. proby) then
-            pp = pp - 0.5*dt*dSdpi
+            pp = pp - real(0.5*dt*dSdpi)
             exit
           else
-            pp = pp - dt*dSdpi
+            pp = pp - real(dt*dSdpi)
           endif
 
         enddo
@@ -327,6 +328,10 @@ contains
           open (unit=11, file='fort.11', action='write', position='append')
           write (11, *) isweep_total_start, isweep, gaction, paction
           close (11)
+        end if
+        if (action .eq. -1) then
+          print *, "action was not correctly initialised."
+          stop
         end if
         action_average = action_average + action
         vel2 = sum(pp*pp)

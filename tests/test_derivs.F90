@@ -115,7 +115,7 @@ program test_derivs
     ! and the MPI_AllReduce operation. For this the sum_diff
     ! will be larger than expected (np_third times larger).
     ! Because of that we divide by np_third
-    diff = dSdpi - dSdpi_ref
+    diff = real(dSdpi) - dSdpi_ref
     sum_diff = sum(diff)/np_third
     max_diff = maxval(abs(diff))
 #ifdef MPI

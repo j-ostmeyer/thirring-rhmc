@@ -63,10 +63,10 @@ program test_hamilton
   bnum4(0) = 0.53
 
   do i = 1, ndiag
-    anum2(i) = 0.4*exp(iunit*i*tau/ndiag)
-    aden2(i) = 0.4*exp(-iunit*0.5*i*tau/ndiag)
-    anum4(i) = 0.41*exp(iunit*i*tau/ndiag)
-    aden4(i) = 0.41*exp(-iunit*0.5*i*tau/ndiag)
+    anum2(i) = real(0.4*exp(iunit*i*tau/ndiag))
+    aden2(i) = real(0.4*exp(-iunit*0.5*i*tau/ndiag))
+    anum4(i) = real(0.41*exp(iunit*i*tau/ndiag))
+    aden4(i) = real(0.41*exp(-iunit*0.5*i*tau/ndiag))
   enddo
 
   do j = 1, 4
@@ -84,7 +84,7 @@ program test_hamilton
             R(ithird, ix, iy, it, j) = 1.3*exp(iunit*idx*tau/idxmax)
             do l = 1, 25
               Phi0_orig(ithird, ix, iy, it, j, l) = 1.7*exp(1.0) &
-                                                  *exp(iunit*idx*tau/idxmax) + l
+                                                    *exp(iunit*idx*tau/idxmax) + l
             end do
           end do
         end do
@@ -108,9 +108,9 @@ program test_hamilton
                 + (j - 1)*ksize*ksize*ksizet
 
           u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
-          theta(ix, iy, it, j) = 1.9*exp(iunit*idx*tau/idxmax)
-          pp(ix, iy, it, j) = -1.1*exp(iunit*idx*tau/idxmax)
-          dSdpi(ix, iy, it, j) = tau*exp(iunit*idx*tau/idxmax)
+          theta(ix, iy, it, j) = sngl(real(1.9*exp(iunit*idx*tau/idxmax)))
+          pp(ix, iy, it, j) = sngl(real(-1.1*exp(iunit*idx*tau/idxmax)))
+          dSdpi(ix, iy, it, j) = real(tau*exp(iunit*idx*tau/idxmax))
         enddo
       enddo
     enddo
@@ -168,6 +168,6 @@ program test_hamilton
       print *, "s looks wrong:", s
     end if
   end if
-  
+
   call MPI_Finalize(ierr)
 end program

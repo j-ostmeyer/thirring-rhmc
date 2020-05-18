@@ -25,6 +25,7 @@ program test_qmrherm_4
   complex(dp), allocatable :: Phi0_ref(:, :, :, :, :, :)
   complex(dp), allocatable :: Phi0_orig(:, :, :, :, :, :)
   complex(dp), allocatable :: delta_Phi(:, :, :, :, :)
+  real(dp), allocatable :: delta_Phi_Re(:, :, :, :, :)
   complex(dp) :: xin(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   !complex(dp) :: R(kthird,0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
 
@@ -143,14 +144,14 @@ program test_qmrherm_4
 #else
     call update_halo_5(4, xin)
 #endif
-    adenf = aden(idiag)
+    adenf = real(aden(idiag))
     call dirac_op_shifted(xout, xin, u, am, imass, adenf)
 
     delta_Phi = Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
                 - xout(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
     ! relative error
-    delta_Phi = abs(delta_Phi)**2/sum(abs(xout(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
-    check_sum(delta_Phi, 2e-14, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_dp')
+    delta_Phi_Re = abs(delta_Phi)**2/sum(abs(xout(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
+    check_sum(delta_Phi_Re, 2e-14, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_dp')
   enddo
 
   call qmrherm(Phi, X, res, itercg, am, imass, anum, aden, ndiag, iflag, .true., itercgs)
@@ -163,14 +164,14 @@ program test_qmrherm_4
 #else
     call update_halo_5(4, xin)
 #endif
-    adenf = aden(idiag)
+    adenf = real(aden(idiag))
     call dirac_op_shifted(xout, xin, u, am, imass, adenf)
 
     delta_Phi = Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) &
                 - xout(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
     ! relative error
-    delta_Phi = abs(delta_Phi)**2/sum(abs(xout(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
-    check_sum(delta_Phi, 2.5e-9, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_sp')
+    delta_Phi_Re = abs(delta_Phi)**2/sum(abs(xout(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)**2))
+    check_sum(delta_Phi_Re, 2.5e-9, 'xout', sum_delta_Phi, MPI_Double_Precision, 'test_qmrherm_4_sp')
 
   enddo
 

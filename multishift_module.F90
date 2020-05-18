@@ -116,7 +116,7 @@ contains
 #endif
 
       alpha = sum(real(conjg(p(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
-                           * s(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
+                       *s(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 
 #ifdef MPI
       call MPI_AllReduce(alpha, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
@@ -128,8 +128,8 @@ contains
 
       do ishift = minishift, maxishift
         zeta_iii(ishift) = (zeta_i(ishift)*zeta_ii(ishift)*omega_save) &
-                        / (omega*gammag*(zeta_i(ishift) - zeta_ii(ishift)) &
-                         + zeta_i(ishift)*omega_save*(1.0 - aden(ishift)*omega))
+                           /(omega*gammag*(zeta_i(ishift) - zeta_ii(ishift)) &
+                             + zeta_i(ishift)*omega_save*(1.0 - aden(ishift)*omega))
 
         omegas(ishift) = omega*zeta_iii(ishift)/zeta_ii(ishift)
       enddo
@@ -146,8 +146,8 @@ contains
       call MPI_Startall(16, reqs_p, ierr)
 
       gammas(minishift:maxishift) = gammag*zeta_iii(minishift:maxishift) &
-                                  * omegas(minishift:maxishift) &
-                                  / (zeta_ii(minishift:maxishift)*omega)
+                                    *omegas(minishift:maxishift) &
+                                    /(zeta_ii(minishift:maxishift)*omega)
 
 #ifdef SCOREPINST
       SCOREP_USER_REGION_BEGIN(post, 'post', SCOREP_USER_REGION_TYPE_COMMON)
@@ -159,15 +159,15 @@ contains
               do ix = 1, ksizex_l
                 do iz = 1, kthird_l, shift
                   output(iz:iz + shift - 1, ix, iy, it, idirac, ishift) = &
-                          output(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
-                        - shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
-                         * omegas(ishift)
+                    output(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
+                    - shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
+                    *omegas(ishift)
 
                   shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift) = &
-                          shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
-                         * gammas(ishift) &
-                        + r(iz:iz + shift - 1, ix, iy, it, idirac) &
-                         * zeta_iii(ishift)
+                    shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
+                    *gammas(ishift) &
+                    + r(iz:iz + shift - 1, ix, iy, it, idirac) &
+                    *zeta_iii(ishift)
                 enddo
               enddo
             enddo
@@ -348,8 +348,8 @@ contains
 #endif
 
     ! convert to single precision
-    u = udp  ! type conversion
-    input = inputdp ! type conversion
+    u = cmplx(udp)
+    input = cmplx(inputdp)
 
     r = input ! vector
     p = r     ! vector
@@ -402,7 +402,7 @@ contains
 #endif
 
       alpha = reduce_real_dp5d(real(conjg(p(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
-                                   *s(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
+                                    *s(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 
 #ifdef MPI
       call MPI_AllReduce(alpha, dp_reduction, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
@@ -414,8 +414,8 @@ contains
 
       do ishift = minishift, maxishift
         zeta_iii(ishift) = (zeta_i(ishift)*zeta_ii(ishift)*omega_save) &
-                        / (omega*gammag*(zeta_i(ishift) - zeta_ii(ishift)) &
-                         + zeta_i(ishift)*omega_save*(1.0 - aden(ishift)*omega))
+                           /(omega*gammag*(zeta_i(ishift) - zeta_ii(ishift)) &
+                             + zeta_i(ishift)*omega_save*(1.0 - aden(ishift)*omega))
 
         omegas(ishift) = omega*zeta_iii(ishift)/zeta_ii(ishift)
       enddo
@@ -432,8 +432,8 @@ contains
       call MPI_Startall(16, reqs_p, ierr)
 
       gammas(minishift:maxishift) = gammag*zeta_iii(minishift:maxishift) &
-                                  * omegas(minishift:maxishift) &
-                                  / (zeta_ii(minishift:maxishift)*omega)
+                                    *omegas(minishift:maxishift) &
+                                    /(zeta_ii(minishift:maxishift)*omega)
 
 #ifdef SCOREPINST
       SCOREP_USER_REGION_BEGIN(post, 'post', SCOREP_USER_REGION_TYPE_COMMON)
@@ -445,15 +445,15 @@ contains
               do ix = 1, ksizex_l
                 do iz = 1, kthird_l, shift
                   output(iz:iz + shift - 1, ix, iy, it, idirac, ishift) = &
-                          output(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
-                        - shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
-                         * real(omegas(ishift))
+                    output(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
+                    - shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
+                    *real(omegas(ishift))
 
                   shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift) = &
-                          shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
-                         * real(gammas(ishift)) &
-                        + r(iz:iz + shift - 1, ix, iy, it, idirac) &
-                         * real(zeta_iii(ishift))
+                    shiftferm(iz:iz + shift - 1, ix, iy, it, idirac, ishift) &
+                    *real(gammas(ishift)) &
+                    + r(iz:iz + shift - 1, ix, iy, it, idirac) &
+                    *real(zeta_iii(ishift))
                 enddo
               enddo
             enddo

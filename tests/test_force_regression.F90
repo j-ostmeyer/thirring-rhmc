@@ -155,7 +155,7 @@ program test_force
     write_file(dSdpi, 'test_force.dat', MPI_Real)
   else
     read_file(dSdpi_ref, 'test_force.dat', MPI_Real)
-    diff = (dSdpi_ref - dSdpi)/np_third
+    diff = sngl((dSdpi_ref - dSdpi)/np_third)
 
     check_equality(ancgpv, 2, 'ancgpv', 'test_force_regression')
     check_equality(ancg, 2, 'ancg', 'test_force_regression')
