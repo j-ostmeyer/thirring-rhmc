@@ -26,7 +26,7 @@ program test_hamilton
   complex(dp), allocatable :: Phi0_orig(:, :, :, :, :, :)
   complex(dp) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 
-  integer :: imass, iflag, isweep, iter
+  integer :: imass, iter
   real :: res2, am
   real(dp) :: h, hg, hp, s
 
@@ -53,8 +53,6 @@ program test_hamilton
   res2 = 0.1
   am = 0.05
   imass = 3
-  iflag = 0
-  isweep = 1
   iter = 0
 
   anum2(0) = 0.5
@@ -143,7 +141,7 @@ program test_hamilton
     hg = 0
     hp = 0
     s = 0
-    call hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass)
+    call hamilton(Phi, h, hg, hp, s, res2, am, imass, .false.)
   end do
 
   ! check output

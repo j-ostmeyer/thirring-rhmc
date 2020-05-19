@@ -31,7 +31,7 @@ program test_force
   complex(dp) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   real :: sum_diff, max_diff
 
-  integer :: imass, iflag, isweep, iter
+  integer :: imass
   real :: res1, am
   real(dp) :: h, hg, hp, s
 
@@ -54,9 +54,6 @@ program test_force
   res1 = 0.1
   am = 0.05
   imass = 3
-  iflag = 0
-  isweep = 1
-  iter = 0
 
   anum2g(0) = 0.5
   anum4g(0) = 0.51
@@ -147,7 +144,7 @@ program test_force
     hg = 0
     hp = 0
     s = 0
-    call force(Phi, res1, am, imass, isweep, iter)
+    call force(Phi, res1, am, imass)
   end do
 
   ! check output

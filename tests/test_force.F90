@@ -26,7 +26,7 @@ program test_force
   complex(dp) :: Phi0_orig(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, 25)
   complex(dp) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 
-  integer :: imass, iflag, isweep, iter
+  integer :: imass
   real :: res1, res2, am, u_variation
   real(dp) :: h, hg, hp, s, s_old
 
@@ -50,9 +50,6 @@ program test_force
   res2 = 1.0e-8
   am = 0.05
   imass = 3
-  iflag = 0
-  isweep = 1
-  iter = 0
 
   open (unit=36, file='remez2', status='old')
   open (unit=37, file='remez4', status='old')
@@ -167,7 +164,7 @@ program test_force
   s = 0
   max_qmr_iters = 10000
   !call gdbwait()
-  call hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass)
+  call hamilton(Phi, h, hg, hp, s, res2, am, imass)
   s_old = s
   u_variation = 0.0001
 
@@ -177,14 +174,14 @@ program test_force
   endif
 
   ! calculating force half way
-  call force(Phi, res1, am, imass, isweep, iter)
+  call force(Phi, res1, am, imass)
 
   if (ip_global .eq. 1) then! changing only one link in the whole lattice
     u(1, 1, 1, 1) = u(1, 1, 1, 1) + cmplx(0.0, u_variation/2)
     theta(1, 1, 1, 1) = theta(1, 1, 1, 1) + u_variation/2
   endif
 
-  call hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass)
+  call hamilton(Phi, h, hg, hp, s, res2, am, imass)
 
   check: block
     real(dp) :: action_difference

@@ -127,6 +127,11 @@ contains
     if (ip_global .eq. 0) then
       write (7, *) 'seed: ', seed
     end if
+
+#ifdef MPI
+    call seed_rank(seed)
+#endif
+
     call init_random(seed)
 
     if (ip_global .eq. 0) then
@@ -235,8 +240,13 @@ contains
 !     write(98,*) idum
         do mu = 1, 3
 #ifdef MPI
-          call gaussp(ps, reqs_ps)
-          call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
+          if (ip_third .eq. 0) then
+            call gaussp(ps, reqs_ps)
+            call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
+          endif
+          call MPI_Bcast(ps(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1), &
+                         ksizex_l*ksizey_l*ksizet_l, &
+                         MPI_Real, 0, comm_grp_third, ierr)
 #else
           call gaussp(ps)
 #endif
@@ -247,7 +257,7 @@ contains
         run_time = get_time_from_start()
 
         total_md_time = total_md_time - run_time
-        call hamilton(Phi, H0, hg, hp, S0, rescga, isweep, 0, am, imass)
+        call hamilton(Phi, H0, hg, hp, S0, rescga, am, imass)
         if (isweep .eq. 1) then
           action = real(S0)/kvol
           gaction = real(hg)/kvol
@@ -256,7 +266,7 @@ contains
 !*******************************************************************
 !      half-step forward for p
 !*******************************************************************
-        call force(Phi, rescgg, am, imass, isweep, 0)
+        call force(Phi, rescgg, am, imass)
         pp = pp - real(0.5*dt*dSdpi)
 !*******************************************************************
 !     start of main loop for classical time evolution
@@ -274,7 +284,7 @@ contains
           thetat = thetat + dt*pp
           !  step (ii)  p(t+3dt/2)=p(t+dt/2)-dSds(t+dt)*dt (1/2 step on last iteration)
           call coef(ut, thetat)
-          call force(Phi, rescgg, am, imass, isweep, iter)
+          call force(Phi, rescgg, am, imass)
 
           ! test for end of random trajectory
           if (ip_global .eq. 0) then
@@ -297,7 +307,7 @@ contains
 !              min(1,exp(H0-H1))
 !**********************************************************************
 
-        call hamilton(Phi, H1, hg, hp, S1, rescga, isweep, -1, am, imass)
+        call hamilton(Phi, H1, hg, hp, S1, rescga, am, imass)
         dH = H0 - H1
         dS = S0 - S1
         if (ip_global .eq. 0) then
@@ -337,6 +347,7 @@ contains
         vel2 = sum(pp*pp)
 #ifdef MPI
         call MPI_AllReduce(MPI_In_Place, vel2, 1, MPI_Real, MPI_Sum, comm, ierr)
+        vel2 = vel2/np_third
 #endif
         vel2 = vel2/(3*kvol)
         vel2a = vel2a + vel2
@@ -506,7 +517,7 @@ contains
 !******************************************************************
 !   calculate dSds for gauge fields at each intermediate time
 !******************************************************************
-  subroutine force(Phi, res1, am, imass, isweep, iter)
+  subroutine force(Phi, res1, am, imass)
     use remezg
     use trial
     use gforce
@@ -516,7 +527,7 @@ contains
 
     complex(dp), intent(in) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, Nf)
     real, intent(in) :: res1, am
-    integer, intent(in) :: imass, isweep, iter
+    integer, intent(in) :: imass
 !     complex Phi(kferm,Nf),X2(kferm)
 !     complex X1,u
     complex(dp) :: X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -568,7 +579,7 @@ contains
 !******************************************************************
 !   Evaluation of Hamiltonian function
 !******************************************************************
-  subroutine hamilton(Phi, h, hg, hp, s, res2, isweep, iflag, am, imass)
+  subroutine hamilton(Phi, h, hg, hp, s, res2, am, imass, abort_on_max_reached_in)
     use remez
     use trial, only: theta, pp
     use dum1
@@ -578,10 +589,12 @@ contains
     complex(dp), intent(in) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, Nf)
     real(dp), intent(out) :: h, hg, hp, s
     real, intent(in) :: res2, am
-    integer, intent(in) :: isweep, iflag, imass
+    integer, intent(in) :: imass
+    logical, intent(in), optional :: abort_on_max_reached_in
     complex(dp) :: Xresult(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp) :: hf
     integer :: itercg, ia
+    logical :: abort_on_max_reached
 #ifdef MPI
     integer :: ierr
 #endif
@@ -603,6 +616,12 @@ contains
 #endif
     h = hg + hp
 
+    if (present(abort_on_max_reached_in)) then
+      abort_on_max_reached = abort_on_max_reached_in
+    else
+      abort_on_max_reached = .true.
+    endif
+
 ! uncomment these lines to quench the fermions!
 !     return
 !
@@ -614,13 +633,13 @@ contains
 
       call qmrherm(R, Xresult, res2, itercg, One, 1, anum4, aden4, ndiag, 0)
       ancghpv = ancghpv + float(itercg)
-      call check_qmr_iterations(niterations=itercg, abort_on_max_reached=.false.)
+      call check_qmr_iterations(niterations=itercg, abort_on_max_reached=abort_on_max_reached)
 
       R = Xresult
 
       call qmrherm(R, Xresult, res2, itercg, am, imass, bnum2, bden2, ndiag, 0)
       ancgh = ancgh + float(itercg)
-      call check_qmr_iterations(niterations=itercg, abort_on_max_reached=.false.)
+      call check_qmr_iterations(niterations=itercg, abort_on_max_reached=abort_on_max_reached)
 
       hf = hf + sum(real(conjg(R(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
                          *Xresult(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
@@ -746,7 +765,7 @@ contains
     implicit none
     ! if the seed file is not correctly read, we do not want to change
     ! the vaule of globalseed passed as input
-    real(dp), intent(out) :: globalseed
+    real(dp), intent(inout) :: globalseed
     logical, intent(out) :: success
     integer :: seedreadstatus
 #ifdef MPI
@@ -787,6 +806,23 @@ contains
     endif
 #endif
   end subroutine saveseed
+
+#ifdef MPI
+! This subroutine takes the global seed and changes it so that it is
+! different for each rank.
+! Makes also sure that is positive and greater than 1.
+
+  subroutine seed_rank(seed)
+    use comms_common, only: ip_global
+    real(dp), intent(inout) :: seed
+
+    seed = seed + ip_global
+
+    if (seed .lt. 1) then
+      seed = abs(seed) + 1
+    endif
+  end subroutine seed_rank
+#endif
 
   subroutine init(nc)
     use gammamatrices, only: init_gammas
@@ -907,7 +943,7 @@ contains
         stop
 #endif
       else
-        print *, "WARNING: Max QMR iterations reached."
+        print *, "WARNING: Max QMR iterations reached - NON Aborting, as requested."
       endif
     endif
   end subroutine check_qmr_iterations
