@@ -157,7 +157,7 @@ program test_qmrherm_0
     check_equality(itercg, 2, 'itercg', 'test_qmrherm_0')
     check_sum(delta_x, 50, 'x', sum_delta_x, MPI_Double_Complex, 'test_qmrherm_0')
     check_max(delta_x, 0.5, 'x', max_delta_x, MPI_Double_Precision, 'test_qmrherm_0')
-    check_sum(delta_Phi0, 1e-12, 'Phi0', sum_delta_Phi0, MPI_Double_Complex, 'test_qmrherm_0')
+    check_sum(delta_Phi0, 6e-12, 'Phi0', sum_delta_Phi0, MPI_Double_Complex, 'test_qmrherm_0')
     check_max(delta_Phi0, 1e-14, 'Phi0', max_delta_Phi0, MPI_Double_Precision, 'test_qmrherm_0')
   end if
 
