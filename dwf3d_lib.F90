@@ -92,11 +92,11 @@ contains
     wait_on_master = .true.
     if (ip_global .eq. 0) then
       do while (wait_on_master)
-         print*,'Waiting on master for intervention with GDB...'
-         call sleep(1)
+        print *, 'Waiting on master for intervention with GDB...'
+        call sleep(1)
       enddo
     endif
-    call MPI_Barrier(MPI_COMM_WORLD,ierr)
+    call MPI_Barrier(MPI_COMM_WORLD, ierr)
 #endif
     call timeinit
 #endif
@@ -134,6 +134,11 @@ contains
     if (ip_global .eq. 0) then
       write (7, *) 'seed: ', seed
     end if
+
+#if defined(MPI)
+    call seed_rank(seed)
+#endif
+
     call init_random(seed)
 
     if (ip_global .eq. 0) then
@@ -614,13 +619,13 @@ contains
 
       call qmrherm(R, Xresult, res2, itercg, One, 1, anum4, aden4, ndiag, 0)
       ancghpv = ancghpv + float(itercg)
-      call check_qmr_iterations(niterations = itercg, abort_on_max_reached = .true. ) 
+      call check_qmr_iterations(niterations=itercg, abort_on_max_reached=.true.)
 !
       R = Xresult
 !
       call qmrherm(R, Xresult, res2, itercg, am, imass, bnum2, bden2, ndiag, 0)
       ancgh = ancgh + float(itercg)
-      call check_qmr_iterations(niterations = itercg, abort_on_max_reached = .true. ) 
+      call check_qmr_iterations(niterations=itercg, abort_on_max_reached=.true.)
 !
       hf = hf + sum(real(conjg(R(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
                         &        *Xresult(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
@@ -788,6 +793,28 @@ contains
 #endif
   end subroutine saveseed
 !
+#ifdef MPI
+! This subroutine takes the global seed and changes it so that it is
+! different for each rank.
+! Makes also sure that is positive and greater than 1.
+  subroutine seed_rank(seed)
+    use comms_common, only: ip_global
+    real(dp), intent(inout) :: seed
+#ifdef SITERANDOM
+    if (NP_THIRD .ne. 1) then
+      print *, "SITERANDOM should not be used with NP_THIRD>1"
+      stop
+    endif
+#endif
+
+    seed = seed + ip_global
+
+    if (seed .lt. 1) then
+      seed = abs(seed) + 1
+    endif
+  end subroutine seed_rank
+#endif
+
   subroutine init(nc)
     use gammamatrices, only: init_gammas
     use gauge
@@ -887,28 +914,28 @@ contains
     return
   end subroutine coef
 
-subroutine check_qmr_iterations(niterations, abort_on_max_reached)
-  use params, only: max_qmr_iters
+  subroutine check_qmr_iterations(niterations, abort_on_max_reached)
+    use params, only: max_qmr_iters
 #ifdef MPI
-  use mpi
-  integer :: ierr
+    use mpi
+    integer :: ierr
 #endif
-  integer, intent(in) :: niterations
-  logical, intent(in) :: abort_on_max_reached
+    integer, intent(in) :: niterations
+    logical, intent(in) :: abort_on_max_reached
 
-  if ( niterations .eq. max_qmr_iters ) then
-    if (abort_on_max_reached) then 
-      print*,"ERROR: Max QMR iterations reached."
+    if (niterations .eq. max_qmr_iters) then
+      if (abort_on_max_reached) then
+        print *, "ERROR: Max QMR iterations reached."
 #ifdef MPI
-      call MPI_Abort(MPI_COMM_WORLD,1,ierr)
+        call MPI_Abort(MPI_COMM_WORLD, 1, ierr)
 #else
-      stop
+        stop
 #endif
-    else
-      print*,"WARNING: Max QMR iterations reached."
-    endif 
-  endif
-end subroutine check_qmr_iterations
-  
+      else
+        print *, "WARNING: Max QMR iterations reached."
+      endif
+    endif
+  end subroutine check_qmr_iterations
+
 end module dwf3d_lib
 
