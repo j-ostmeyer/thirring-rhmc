@@ -816,6 +816,13 @@ contains
     use comms_common, only: ip_global
     real(dp), intent(inout) :: seed
 
+#ifdef SITERANDOM
+    if (NP_THIRD .ne. 1) then
+      print *, "SITERANDOM is not fully compatible with NP_THIRD > 1"
+      call MPI_Abort(MPI_COMM_WORLD, 1, ierr)
+      stop
+    endif
+#endif
     seed = seed + ip_global
 
     if (seed .lt. 1) then
