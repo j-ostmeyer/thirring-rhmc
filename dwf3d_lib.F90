@@ -768,7 +768,7 @@ contains
         stop
 #endif
       else
-        print *, "WARNING: Max QMR iterations reached - NON Aborting, as requested."
+        print *, "WARNING: Max QMR iterations reached - NOT Aborting, as requested."
       endif
     endif
   end subroutine check_qmr_iterations
