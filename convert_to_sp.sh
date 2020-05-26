@@ -16,7 +16,9 @@ then
     s/subroutine\s+(\w+)\s?\(/subroutine \1_sp(/;
     s/end\s+subroutine\s+(\w+)/end subroutine \1_sp/;
     s/complex\s*\(\s*dp\s*\)/complex(sp)/g;
-    s/real\s*\(\s*dp\s*\)/real(sp)/g;' $MODULE_SP
+    s/real\s*\(\s*dp\s*\)/real(sp)/g;
+    s/gamval/gamvalf/g;
+    s/akappa/akappaf/g; ' $MODULE_SP
 elif   grep "comms4.F90" <(echo $MODULE) &> /dev/null  ||  grep "comms5.F90" <(echo $MODULE) &> /dev/null 
 then
   KNOWN_TARGET=YES
