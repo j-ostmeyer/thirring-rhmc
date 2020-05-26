@@ -84,7 +84,7 @@ LIBOBJS = counters.o comms.o comms_common.o \
           comms5.o comms5_sp.o \
           comms6.o \
           derivs_module.o  dirac.o dirac_sp.o \
-          dum1.o dwf3d_lib.o \
+          dum1.o dwf3d_lib.o evolution.o force_module.o \
           gammamatrices.o gauge.o gaussian.o gdbhook.o gforce.o \
           inverter_utils.o  measure_module.o multishift_module.o \
           params.o qmrherm_module.o \
@@ -140,11 +140,21 @@ dwf3d_lib.o : $(TOPDIR)/dwf3d_lib.F90 \
               .makefile.uptodate counters.mod comms.mod comms_common.mod \
               comms4.mod \
               dirac.mod \
-              dum1.mod gauge.mod gaussian.mod gammamatrices.mod \
+              dum1.mod evolution.mod gauge.mod gaussian.mod gammamatrices.mod \
               gdbhook.mod gforce.mod measure_module.mod \
               params.mod qmrherm_module.mod random.mod remez.mod remezg.mod \
               remez_common_subroutines.mod timer.mod trial.mod vector.mod
-	$(COMPILE) -o dwf3d_lib.o $<
+	$(COMPILE) -o $*.o $<
+
+evolution.o : $(TOPDIR)/evolution.F90 \
+              .makefile.uptodate force_module.mod gauge.mod gaussian.mod \
+              gforce.mod params.mod random.mod remez.mod 
+	$(COMPILE) -o $*.o $<
+
+force_module.o : $(TOPDIR)/force_module.F90 \
+          .makefile.uptodate comms.mod counters.mod gforce.mod params.mod \
+		  qmrherm_module.mod remezg.mod trial.mod
+	$(COMPILE) -o $*.o $<
 
 gaussian.o : $(TOPDIR)/gaussian.F90 .makefile.uptodate \
              comms4.mod params.mod random.mod

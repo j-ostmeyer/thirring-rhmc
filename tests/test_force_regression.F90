@@ -6,6 +6,7 @@ program test_force
   use dirac
   use gammamatrices
   use gforce
+  use force_module, only: force
   use remezg
   use counters
   use comms

@@ -4,6 +4,7 @@ program test_force
   use trial
   use vector
   use dirac
+  use force_module, only: force
   use gammamatrices
   use gforce
   use remez

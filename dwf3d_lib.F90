@@ -19,15 +19,15 @@ contains
     use remezg
     use remez_common_subroutines
     use trial, ut => u, thetat => theta
-    use gauge
+    use gauge, only: theta, coef
     use vector, X1 => X
-    use gforce
     use counters ! ALL
     use dum1
     use comms
     use measure_module
     use qmrherm_module, only: qmrherm, qmrhprint => printall
     use timer, only: timeinit => initialise, get_time_from_start
+    use evolution, only: evolve_theta_pp, initialise_phi_1flavour, initialise_pp
 !*******************************************************************
 !    Rational Hybrid Monte Carlo algorithm for bulk Thirring Model with Domain Wall
 !         fermions
@@ -69,18 +69,15 @@ contains
 !*******************************************************************
     implicit none
     complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)!
-    complex(dp) :: Xresult(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp) :: H0, H1, S0, S1, dH, dS, hg, hp
     real :: action, paction, gaction
-    real :: vel2, x, ytest, atraj
-    real :: dt, am, y, traj, proby
-    integer :: imass, iter, iterl, iter2, iter2_read, ia, idirac, ithird
+    real :: vel2, x, atraj
+    real :: dt, am, y, traj
+    integer :: imass, iterl, iter2, iter2_read
     integer :: walltimesec
-    integer :: itercg, mu
     logical :: program_status_file_exists
 #ifdef MPI
 !     variables to keep track of MPI requests
-    integer :: reqs_ps(12)
     integer :: ierr
     ! real :: sumvalue, maxvalue
 
@@ -156,7 +153,6 @@ contains
 !     print heading
 !*******************************************************************
     traj = iterl*dt
-    proby = 1.0/float(iterl)
 !*******************************************************************
 !       initialize for averages
 !*******************************************************************
@@ -200,108 +196,26 @@ contains
         thetat = theta
 !
         call coef(ut, thetat)
-!*******************************************************************
-!  Pseudofermion fields: Phi = {MdaggerM(1)}^-1/4 * {MdaggerM(m)}^1/4 * R, where
-!   R is gaussian
-!*******************************************************************
-        do ia = 1, Nf
-!
-          do idirac = 1, 4
-            do ithird = 1, kthird_l
-#ifdef MPI
-              call gauss0(ps, reqs_ps)
-              call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
 
-#else
-              call gauss0(ps)
-#endif
-              R(ithird, :, :, :, idirac) = cmplx(ps(:, :, :, 1), ps(:, :, :, 2))
-            enddo
-          enddo
-!
-!  For now Phi = {MdaggerM}^0.25 * R
-!
-          call qmrherm(R, Xresult, rescga, itercg, am, imass, anum4, aden4, ndiag, 0)
-          ancgpf = ancgpf + float(itercg)
-!
-          R = Xresult
-!
-          call qmrherm(R, Xresult, rescga, itercg, One, 1, bnum4, bden4, ndiag, 0)
-          ancgpfpv = ancgpfpv + float(itercg)
-!
-          Phi = Xresult
-!
-        enddo
-!*******************************************************************
-!     heatbath for p
-!*******************************************************************
-!  for some occult reason this write statement is needed to ensure compatibility with earlier versions
-!     write(6,*) idum
-!     write(98,*) idum
-        do mu = 1, 3
-#ifdef MPI
-          if (ip_third .eq. 0) then
-            call gaussp(ps, reqs_ps)
-            call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
-          endif
-          call MPI_Bcast(ps(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1), &
-                         ksizex_l*ksizey_l*ksizet_l, &
-                         MPI_Real, 0, comm_grp_third, ierr)
-#else
-          call gaussp(ps)
-#endif
-          pp(:, :, :, mu) = ps(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1)
-        enddo
+        !! >> initialise_phi
+        call initialise_phi_1flavour(phi, am, imass)
+        !! >> initialise_pp
+        call initialise_pp(pp)
 
         ! Start computing time (including hamiltonian calls)
         run_time = get_time_from_start()
 
         total_md_time = total_md_time - run_time
         call hamilton(Phi, H0, hg, hp, S0, rescga, am, imass)
+
         if (isweep .eq. 1) then
           action = real(S0)/kvol
           gaction = real(hg)/kvol
           paction = real(hp)/kvol
         endif
-!*******************************************************************
-!      half-step forward for p
-!*******************************************************************
-        call force(Phi, rescgg, am, imass)
-        pp = pp - real(0.5*dt*dSdpi)
-!*******************************************************************
-!     start of main loop for classical time evolution
-!*******************************************************************
 
-        do iter = 1, (4*iterl)
-#ifdef MPI
-          if (ip_global .eq. 0) then
-#endif
-            write (6, "(A15,I4,A15,I4)") "MD iteration", iter, "of (average)", iterl
-#ifdef MPI
-          endif
-#endif
-          !  step (i) st(t+dt)=st(t)+p(t+dt/2)*dt;
-          thetat = thetat + dt*pp
-          !  step (ii)  p(t+3dt/2)=p(t+dt/2)-dSds(t+dt)*dt (1/2 step on last iteration)
-          call coef(ut, thetat)
-          call force(Phi, rescgg, am, imass)
+        call evolve_theta_pp(iterl, dt, pp, phi, rescgg, am, imass, itot)
 
-          ! test for end of random trajectory
-          if (ip_global .eq. 0) then
-            ytest = rano(yran, idum, 1, 1, 1)
-          end if
-#ifdef MPI
-          call MPI_Bcast(ytest, 1, MPI_Real, 0, comm, ierr)
-#endif
-          if (ytest .lt. proby) then
-            pp = pp - real(0.5*dt*dSdpi)
-            exit
-          else
-            pp = pp - real(dt*dSdpi)
-          endif
-
-        enddo
-        itot = itot + min(iter, 4*iterl)
 !**********************************************************************
 !  Monte Carlo step: accept new fields with probability=
 !              min(1,exp(H0-H1))
@@ -514,68 +428,6 @@ contains
 #endif
 !
   end subroutine dwf3d_main
-!******************************************************************
-!   calculate dSds for gauge fields at each intermediate time
-!******************************************************************
-  subroutine force(Phi, res1, am, imass)
-    use remezg
-    use trial
-    use gforce
-    use counters
-    use comms
-    use qmrherm_module, only: qmrherm
-
-    complex(dp), intent(in) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, Nf)
-    real, intent(in) :: res1, am
-    integer, intent(in) :: imass
-!     complex Phi(kferm,Nf),X2(kferm)
-!     complex X1,u
-    complex(dp) :: X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) :: Xresult(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    integer :: ia, itercg
-
-    dSdpi = 0.0
-
-! uncomment this line to quench the fermions!
-!     return
-
-! pseudofermion action is
-!   Phi^dagger {MdaggerM(1)}^1/4 {MdaggerM(m)})^-1/2 {MdaggerM(1)}^1/4 Phi
-!
-    do ia = 1, Nf
-!
-      X2 = Phi(:, :, :, :, :, ia)
-
-      call qmrherm(X2, Xresult, res1, itercg, One, 1, anum4g, aden4g, ndiagg, 1, spmd)
-      ancgpv = ancgpv + float(itercg)
-
-      X2 = Xresult
-!
-      call qmrherm(X2, Xresult, res1, itercg, am, imass, bnum2g, bden2g, ndiagg, 0, spmd)
-      ancg = ancg + float(itercg)
-!     write(111,*) itercg
-      X2 = Xresult
-!
-!  evaluates -X2dagger * d/dpi[{MdaggerM(m)}^1/2] * X2
-      call qmrherm(X2, Xresult, res1, itercg, am, imass, anum2g, aden2g, ndiagg, 2, spmd)
-      ancgf = ancgf + float(itercg)
-
-!     write(113,*) itercg
-!  evaluates +2Re{Phidagger * d/dpi[{MdaggerM(1)}^1/4] * X2}
-      call qmrherm(X2, Xresult, res1, itercg, One, 1, anum4g, aden4g, ndiagg, 3, spmd)
-      ancgfpv = ancgfpv + float(itercg)
-!
-    enddo
-!
-    if (ibound .eq. -1 .and. ip_t .eq. (np_t - 1)) then
-      dSdpi(:, :, ksizet_l, 3) = -dSdpi(:, :, ksizet_l, 3)
-    endif
-
-    dSdpi = dSdpi + beta*Nf*theta
-!
-    return
-  end subroutine force
-
 !******************************************************************
 !   Evaluation of Hamiltonian function
 !******************************************************************
@@ -897,40 +749,6 @@ contains
       return
     end select
   end subroutine init
-!******************************************************************
-!   calculate compact links from non-compact links
-!******************************************************************
-  subroutine coef(u, theta)
-    use comms4, only: start_halo_update_4
-    use comms_common, only: ip_t
-    use comms, only: complete_halo_update
-    implicit none
-!
-    complex(dp), intent(out) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
-    real, intent(in) :: theta(ksizex_l, ksizey_l, ksizet_l, 3)
-#ifdef MPI
-    integer, dimension(12) :: reqs_u
-    integer :: ierr
-#endif
-
-!     u(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = exp(cmplx(0.0, theta))
-    u(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = (1.0 + cmplx(0.0, theta))
-!
-!  anti-p.b.c. in timelike direction
-    if (ibound .eq. -1 .and. ip_t .eq. (np_t - 1)) then
-      u(:, :, ksizet_l, 3) = -u(:, :, ksizet_l, 3)
-    end if
-!
-!!!!    call complete_halo_update_4(3, u)
-#ifdef MPI
-    call start_halo_update_4(3, u, 3, reqs_u)
-    ! call complete_halo_update(reqs_u)
-    call MPI_WaitAll(12, reqs_u, MPI_Statuses_Ignore, ierr)
-#else
-    call update_halo_4(3, u)
-#endif
-    return
-  end subroutine coef
 
   subroutine check_qmr_iterations(niterations, abort_on_max_reached)
     use params, only: max_qmr_iters
@@ -956,3 +774,4 @@ contains
   end subroutine check_qmr_iterations
 
 end module dwf3d_lib
+
