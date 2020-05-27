@@ -5,6 +5,7 @@ module evolution
 contains
 
   subroutine initialise_phi_1flavour(phi, am, imass)
+    use comms5, only: start_halo_update_5
     use counters, only: ancgpf, ancgpfpv
     use dum1, only: R, ps
     use mpi
@@ -20,6 +21,7 @@ contains
 
     complex(dp) :: Xresult(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     integer :: reqs_ps(12)
+    integer :: reqs_R(16)
     integer :: ierr
     integer :: idirac, ithird
     integer :: itercg
@@ -40,6 +42,9 @@ contains
         R(ithird, :, :, :, idirac) = cmplx(ps(:, :, :, 1), ps(:, :, :, 2))
       enddo
     enddo
+    ! overkill because gauss0 should have already done the communications
+    ! along the x,y and t axes, but we miss the "third" axis.
+    call start_halo_update_5(4, R, 2342, reqs_R) ! "random" tag start
     !
     !  For now Phi = {MdaggerM}^0.25 * R
     !
@@ -78,8 +83,9 @@ contains
         call gaussp(ps, reqs_ps)
         call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
       endif
-      call MPI_Bcast(ps(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1), &
-                     ksizex_l*ksizey_l*ksizet_l, &
+      ! We also need to broadcast halos, but we don't need the second component
+      call MPI_Bcast(ps, &
+                     (ksizex_l + 2)*(ksizey_l + 2)*(ksizet_l + 2), &
                      MPI_Real, 0, comm_grp_third, ierr)
 #else
       call gaussp(ps)
