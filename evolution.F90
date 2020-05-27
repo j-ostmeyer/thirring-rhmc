@@ -83,6 +83,7 @@ contains
         call gaussp(ps, reqs_ps)
         call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
       endif
+      ! we need to wait for the ranks with ip_third = 0 - Barrier is implicit
       ! We also need to broadcast halos, but we don't need the second component
       call MPI_Bcast(ps, &
                      (ksizex_l + 2)*(ksizey_l + 2)*(ksizet_l + 2), &

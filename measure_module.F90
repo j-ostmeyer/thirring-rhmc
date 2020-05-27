@@ -188,10 +188,27 @@ contains
       !
       !     set up noise
 #ifdef MPI
-      call gauss0(ps, reqs_ps)
+      if (ip_third .eq. 0) then
+        call gauss0(ps, reqs_ps)
+        call gauss0(pt, reqs_pt)
+      endif
       psibarpsi1 = (0.0, 0.0)
-      call gauss0(pt, reqs_pt)
       psibarpsi2 = (0.0, 0.0)
+      ! we need to wait for the ranks with ip_third = 0 - Barrier is implicit
+      if (ip_third .eq. 0) then
+        call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
+      endif
+      ! We also need to broadcast halos
+      call MPI_Bcast(ps, &
+                     (ksizex_l + 2)*(ksizey_l + 2)*(ksizet_l + 2)*2, &
+                     MPI_Real, 0, comm_grp_third, ierr)
+      if (ip_third .eq. 0) then
+        call MPI_WaitAll(12, reqs_pt, MPI_Statuses_Ignore, ierr)
+      endif
+      ! We also need to broadcast halos
+      call MPI_Bcast(pt, &
+                     (ksizex_l + 2)*(ksizey_l + 2)*(ksizet_l + 2)*2, &
+                     MPI_Real, 0, comm_grp_third, ierr)
 #else
       call gauss0(ps)
       psibarpsi1 = (0.0, 0.0)
@@ -204,14 +221,6 @@ contains
         !  source on domain wall at ithird=1
         !
         x = cmplx(0.0, 0.0)
-#ifdef MPI
-        !  We started a halo update in the gauss0 call;
-        !  Now we need it to be complete if it isn't already
-        if (idsource .eq. 1) then
-          ! call complete_halo_update(reqs_ps)
-          call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
-        end if
-#endif
         if (imass .ne. 5) then
           x(:, :, :, idsource) = cmplx(ps(:, :, :, 1), ps(:, :, :, 2))
         else
@@ -268,14 +277,6 @@ contains
         idsource2 = idsource + 2
         !
         x = cmplx(0.0, 0.0)
-
-#ifdef MPI
-        !  Again, if this isn't finished by now we have to wait for it
-        if (idsource .eq. 1) then
-          ! call complete_halo_update(reqs_pt)
-          call MPI_WaitAll(12, reqs_pt, MPI_Statuses_Ignore, ierr)
-        end if
-#endif
 
         if (imass .ne. 5) then
           x(:, :, :, idsource2) = cmplx(pt(:, :, :, 1), pt(:, :, :, 2))
