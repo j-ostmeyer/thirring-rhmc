@@ -21,8 +21,9 @@ module params
 #ifndef MPI
   integer, parameter :: ksizex_l = ksize, ksizey_l = ksize, ksizet_l = ksizet
   integer, parameter :: kvol_l = kvol
-  integer, parameter :: np_x = 1, np_y = 1, np_t = 1, np_global = 1
   integer, parameter :: ip_x = 0, ip_y = 0, ip_t = 0, ip_global = 0
+  integer, parameter :: np_x = 1, np_y = 1, np_t = 1, np_third = 1, np_global = 1
+  integer, parameter :: ip_x = 0, ip_y = 0, ip_t = 0, ip_third = 0, ip_global = 0
 #else
 #if !(defined(NP_X) && defined(NP_Y) && defined(NP_T))
 #error "NP_X, NP_Y, and NP_T must be defined for MPI compilation."
@@ -34,10 +35,11 @@ module params
 #elif (KSIZET / NP_T) * NP_T != KSIZET
 #error "ksizet must be divisible by NP_T"
 #endif
-  integer, parameter :: np_x = NP_X, np_y = NP_Y, np_t = NP_T
+  integer, parameter :: np_x = NP_X, np_y = NP_Y, np_t = NP_T, np_third = NP_THIRD
   integer, parameter :: ksizex_l = ksize/np_x
   integer, parameter :: ksizey_l = ksize/np_y
   integer, parameter :: ksizet_l = ksizet/np_t
+  integer, parameter :: kthird_l = kthird/np_third
 #endif
 
   ! Control parameters
@@ -49,8 +51,17 @@ module params
   integer, parameter :: icheckpoint = 100
 
   ! Inverter
-  integer :: max_qmr_iters = 5    !QMRHERM
-  integer :: niterc = 5 !CONGRAD
+  integer :: max_qmr_iters = 100    !QMRHERM
+  integer :: niterc = 10 !CONGRAD
+
+  ! inverter residuals
+  real, parameter :: respbp = 1.0e-6, rescgg = 1.0e-6
+  real, parameter :: rescga = 1e-9
+  real, parameter :: rescgm = 1e-9
+  logical, parameter :: spmd = .true.
+
+  ! max step in molecular dynamics evolution
+  integer, parameter :: itermax = 1000
 
   ! Runtime parameters
   real :: beta
