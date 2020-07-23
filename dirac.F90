@@ -16,9 +16,10 @@ contains
     !     complex, intent(in) :: Phi(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
     !     complex, intent(in) :: R(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
     !     complex :: zkappa
-    complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
-    complex(dp), intent(out) :: Phi(0:kthird_l+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(in) :: R(0:kthird_l+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    implicit none
+    complex(dp), intent(in) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
+    complex(dp), intent(out) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     integer, intent(in) :: imass
     real, intent(in) :: am
     complex(dp) :: zkappa
@@ -42,18 +43,18 @@ contains
           do iy = 1, ksizey_l
             do ix = 1, ksizex_l
               Phi(1:kthird_l, ix, iy, it, idirac) = Phi(1:kthird_l, ix, iy, it, idirac) &
-                        ! Wilson term (hermitian)
-                            - akappa &
-                            * (u(ix, iy, it, mu) &
-                             * R(1:kthird_l, ix+ixup, iy+iyup, it+itup, idirac) &
-                             + conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
-                             * R(1:kthird_l, ix-ixup, iy-iyup, it-itup, idirac)) &
-                        ! Dirac term (antihermitian)
-                            + gamval(mu, idirac) &
-                            * (u(ix, iy, it, mu) &
-                             * R(1:kthird_l, ix+ixup, iy+iyup, it+itup, igork) &
-                             - conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
-                             * R(1:kthird_l, ix-ixup, iy-iyup, it-itup, igork))
+                                                    ! Wilson term (hermitian)
+                                                    - akappa &
+                                                    *(u(ix, iy, it, mu) &
+                                                      *R(1:kthird_l, ix + ixup, iy + iyup, it + itup, idirac) &
+                                                      + conjg(u(ix - ixup, iy - iyup, it - itup, mu)) &
+                                                      *R(1:kthird_l, ix - ixup, iy - iyup, it - itup, idirac)) &
+                                                    ! Dirac term (antihermitian)
+                                                    + gamval(mu, idirac) &
+                                                    *(u(ix, iy, it, mu) &
+                                                      *R(1:kthird_l, ix + ixup, iy + iyup, it + itup, igork) &
+                                                      - conjg(u(ix - ixup, iy - iyup, it - itup, mu)) &
+                                                      *R(1:kthird_l, ix - ixup, iy - iyup, it - itup, igork))
             enddo
           enddo
         enddo
@@ -63,41 +64,41 @@ contains
     ! s-like term exploiting projection
     ! If only one rank along third dimension
     if (np_third .eq. 1) then
-      Phi(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-              Phi(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-            - R(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+      Phi(1:kthird_l - 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+        Phi(1:kthird_l - 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+        - R(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
 
       Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-              Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-            - R(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
-    ! If more than one rank along third dimension
+        Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+        - R(1:kthird_l - 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+      ! If more than one rank along third dimension
     else
       if (ip_third .eq. 0) then
         Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-                Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-              - R(2:kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+          Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          - R(2:kthird_l + 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
 
         Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-                Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-              - R(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+          Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          - R(1:kthird_l - 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
 
-      else if (ip_third .eq. np_third-1) then
-        Phi(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-                Phi(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-              - R(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+      else if (ip_third .eq. np_third - 1) then
+        Phi(1:kthird_l - 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
+          Phi(1:kthird_l - 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          - R(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
 
         Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-                Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-              - R(0:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+          Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          - R(0:kthird_l - 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
 
       else
         Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-                Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-              - R(2:kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+          Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          - R(2:kthird_l + 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
 
         Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-                Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-              - R(0:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+          Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          - R(0:kthird_l - 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
       end if
     end if
 
@@ -106,30 +107,30 @@ contains
       zkappa = cmplx(am, 0.0)
 
       ! Separate if statements. Needed when np_third == 1
-      if (ip_third .eq. np_third-1) then
+      if (ip_third .eq. np_third - 1) then
         Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-              Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-            + zkappa * R(kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+          Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          + zkappa*R(kthird_l + 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
       end if
       if (ip_third .eq. 0) then
         Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-              Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-            + zkappa * R(0, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+          Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          + zkappa*R(0, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
       end if
 
     else if (imass .eq. 3) then
       zkappa = cmplx(0.0, -am)
 
       ! Separate if statements. Needed when np_third == 1
-      if (ip_third .eq. np_third-1) then
+      if (ip_third .eq. np_third - 1) then
         Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-              Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-            - zkappa * R(kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+          Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          - zkappa*R(kthird_l + 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
       end if
       if (ip_third .eq. 0) then
         Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-              Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-            + zkappa * R(0, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+          Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          + zkappa*R(0, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
       end if
 
     else if (imass .eq. 5) then
@@ -138,25 +139,25 @@ contains
       !         igork=gamin(5,idirac)
 
       ! Separate if statements. Needed when np_third == 1
-      if (ip_third .eq. np_third-1) then
+      if (ip_third .eq. np_third - 1) then
         Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-              Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-            - zkappa * R(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
-      !        Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac) = &
-      !            & Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac) &
-      !            & + 2 * zkappa * gamval(5,idirac) * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, igork)
-      !         enddo
-      !         do idirac=1,2
-      !         igork=gamin(5,idirac)
+          Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          - zkappa*R(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+        !        Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac) = &
+        !            & Phi(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac) &
+        !            & + 2 * zkappa * gamval(5,idirac) * R(kthird, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, igork)
+        !         enddo
+        !         do idirac=1,2
+        !         igork=gamin(5,idirac)
       end if
       if (ip_third .eq. 0) then
         Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-              Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-            - zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
-      !        Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac) = &
-      !            & Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac)
-      !            & + 2 * zkappa * gamval(5,idirac) * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, igork)
-      !         enddo
+          Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          - zkappa*R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+        !        Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac) = &
+        !            & Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idirac)
+        !            & + 2 * zkappa * gamval(5,idirac) * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, igork)
+        !         enddo
       end if
     end if
 
@@ -167,8 +168,8 @@ contains
 
   pure subroutine dslashd_local(am, Phi, R, imass)
     implicit none
-    complex(dp), intent(out) :: Phi(0:kthird_l+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(in) :: R(0:kthird_l+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(out) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real :: diag
     complex(dp) :: zkappa
     real, intent(in) :: am
@@ -180,41 +181,41 @@ contains
     ! s-like term exploiting projection
     ! If only one rank along third dimension
     if (np_third == 1) then
-      Phi(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-              Phi(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-            - R(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+      Phi(1:kthird_l - 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+        Phi(1:kthird_l - 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+        - R(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
 
       Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-              Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-            - R(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
-    ! If more than one rank along third dimension
+        Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+        - R(1:kthird_l - 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+      ! If more than one rank along third dimension
     else
       if (ip_third .eq. 0) then
         Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-                Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-              - R(2:kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+          Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          - R(2:kthird_l + 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
 
         Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-                Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-              - R(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+          Phi(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          - R(1:kthird_l - 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
 
-      else if (ip_third .eq. np_third-1) then
-        Phi(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-                Phi(1:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-              - R(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+      else if (ip_third .eq. np_third - 1) then
+        Phi(1:kthird_l - 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
+          Phi(1:kthird_l - 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          - R(2:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
 
         Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-                Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-              - R(0:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+          Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          - R(0:kthird_l - 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
 
       else
         Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-                Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-              - R(2:kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+          Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          - R(2:kthird_l + 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
 
         Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-                Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-              - R(0:kthird_l-1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+          Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          - R(0:kthird_l - 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
       end if
     end if
 
@@ -223,45 +224,45 @@ contains
       zkappa = cmplx(am, 0.0)
 
       ! Separate if statements. Needed when np_third == 1
-      if (ip_third .eq. np_third-1) then
+      if (ip_third .eq. np_third - 1) then
         Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-              Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-            + zkappa * R(kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+          Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          + zkappa*R(kthird_l + 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
       end if
       if (ip_third .eq. 0) then
         Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-              Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-            + zkappa * R(0, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+          Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          + zkappa*R(0, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
       end if
 
     else if (imass .eq. 3) then
       zkappa = cmplx(0.0, am)
 
       ! Separate if statements. Needed when np_third == 1
-      if (ip_third .eq. np_third-1) then
+      if (ip_third .eq. np_third - 1) then
         Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-              Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-            + zkappa * R(kthird_l+1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+          Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          + zkappa*R(kthird_l + 1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
       end if
       if (ip_third .eq. 0) then
         Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-              Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-            - zkappa * R(0, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+          Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          - zkappa*R(0, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
       end if
 
     else if (imass .eq. 5) then
       zkappa = cmplx(0.0, am)
 
       ! Separate if statements. Needed when np_third == 1
-      if (ip_third .eq. np_third-1) then
+      if (ip_third .eq. np_third - 1) then
         Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) = &
-              Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
-            - zkappa * R(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+          Phi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2) &
+          - zkappa*R(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
       end if
       if (ip_third .eq. 0) then
         Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) = &
-              Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
-            - zkappa * R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+          Phi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4) &
+          - zkappa*R(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
       end if
 
     end if
@@ -274,83 +275,83 @@ contains
 #ifdef MPI
   subroutine dslashd(Phi, R, u, am, imass, reqs_R)
 #else
-  pure subroutine dslashd(Phi, R, u, am, imass)
+    pure subroutine dslashd(Phi, R, u, am, imass)
 #endif
-    use comms, only : complete_halo_update
-    complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
-    complex(dp), intent(out) :: Phi(0:kthird_l+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(in) :: R(0:kthird_l+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    integer, intent(in) :: imass
-    real, intent(in) :: am
-    !complex(dp) :: zkappa
-    !real :: diag
-    integer :: ixup, iyup, itup, ix, iy, it, idirac, mu, igork
+      use comms, only: complete_halo_update
+      implicit none
+      complex(dp), intent(in) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
+      complex(dp), intent(out) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+      complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+      integer, intent(in) :: imass
+      real, intent(in) :: am
+      !complex(dp) :: zkappa
+      !real :: diag
+      integer :: ixup, iyup, itup, ix, iy, it, idirac, mu, igork
 #ifdef MPI
-    integer, dimension(16), intent(inout), optional :: reqs_R
+      integer, dimension(16), intent(inout), optional :: reqs_R
 #endif
 
-    ! We need to update the halo before calling dslashd_local
-    ! because the halo is now needed along the "third" dimension
+      ! We need to update the halo before calling dslashd_local
+      ! because the halo is now needed along the "third" dimension
 #ifdef MPI
-    if (present(reqs_R)) then
-      call complete_halo_update(reqs_R)
-    end if
+      if (present(reqs_R)) then
+        call complete_halo_update(reqs_R)
+      end if
 #endif
 
-    !   taking care of the part that does not need the halo (not valid anymore-halo is needed)
-    !   diagonal term (hermitian)
-    call dslashd_local(am, Phi, R, imass)
-    !   call complete_halo_update_5(4, Phi)
+      !   taking care of the part that does not need the halo (not valid anymore-halo is needed)
+      !   diagonal term (hermitian)
+      call dslashd_local(am, Phi, R, imass)
+      !   call complete_halo_update_5(4, Phi)
 
-    !   taking care of the part that does need the halo
-    !   wilson term (hermitian) and dirac term (antihermitian)
-    do mu = 1, 3
-      ixup = kdelta(1, mu)
-      iyup = kdelta(2, mu)
-      itup = kdelta(3, mu)
+      !   taking care of the part that does need the halo
+      !   wilson term (hermitian) and dirac term (antihermitian)
+      do mu = 1, 3
+        ixup = kdelta(1, mu)
+        iyup = kdelta(2, mu)
+        itup = kdelta(3, mu)
 
-      do idirac = 1, 4
-        igork = gamin(mu, idirac)
-        do it = 1, ksizet_l
-          do iy = 1, ksizey_l
-            do ix = 1, ksizex_l
-              Phi(1:kthird_l, ix, iy, it, idirac) = Phi(1:kthird_l, ix, iy, it, idirac) &
-                        ! Wilson term (hermitian)
-                            - akappa &
-                            * (u(ix,iy,it,mu) &
-                             * R(1:kthird_l, ix+ixup, iy+iyup, it+itup, idirac) &
-                             + conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
-                             * R(1:kthird_l, ix-ixup, iy-iyup, it-itup, idirac)) &
-                        ! Dirac term (antihermitian)
-                            - gamval(mu, idirac) &
-                            * (u(ix, iy, it, mu) &
-                             * R(1:kthird_l, ix+ixup, iy+iyup, it+itup, igork) &
-                             - conjg(u(ix-ixup, iy-iyup, it-itup, mu)) &
-                             * R(1:kthird_l, ix-ixup, iy-iyup, it-itup, igork))
+        do idirac = 1, 4
+          igork = gamin(mu, idirac)
+          do it = 1, ksizet_l
+            do iy = 1, ksizey_l
+              do ix = 1, ksizex_l
+                Phi(1:kthird_l, ix, iy, it, idirac) = Phi(1:kthird_l, ix, iy, it, idirac) &
+                                                      ! Wilson term (hermitian)
+                                                      - akappa &
+                                                      *(u(ix, iy, it, mu) &
+                                                        *R(1:kthird_l, ix + ixup, iy + iyup, it + itup, idirac) &
+                                                        + conjg(u(ix - ixup, iy - iyup, it - itup, mu)) &
+                                                        *R(1:kthird_l, ix - ixup, iy - iyup, it - itup, idirac)) &
+                                                      ! Dirac term (antihermitian)
+                                                      - gamval(mu, idirac) &
+                                                      *(u(ix, iy, it, mu) &
+                                                        *R(1:kthird_l, ix + ixup, iy + iyup, it + itup, igork) &
+                                                        - conjg(u(ix - ixup, iy - iyup, it - itup, mu)) &
+                                                        *R(1:kthird_l, ix - ixup, iy - iyup, it - itup, igork))
+              enddo
             enddo
           enddo
         enddo
       enddo
-    enddo
 
-    return
+      return
 #ifdef MPI
-  end subroutine dslashd
+    end subroutine dslashd
 #else
   end subroutine dslashd
 #endif
 
-
   !***********************************************************************
   pure subroutine dslash2d(Phi, R, u)
     !     calculates Phi = m*R
-    !
     !     complex, intent(in) :: u(ksizex_l, ksizey_l, ksizet_l, 3)
     !     complex, intent(out) :: Phi(ksizex_l,ksizey_l,ksizet_l, 4)
     !     complex, intent(in) :: R(ksizex_l,ksizey_l,ksizet_l,4)
-    complex(dp), intent(in) ::  u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
-    complex(dp), intent(out) :: Phi(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(in) :: R(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    implicit none
+    complex(dp), intent(in) ::  u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
+    complex(dp), intent(out) :: Phi(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     integer :: ix, iy, it, idirac, mu, ixup, iyup, igork
     real(dp) :: diag
 
@@ -369,18 +370,18 @@ contains
           do iy = 1, ksizey_l
             do ix = 1, ksizex_l
               Phi(ix, iy, it, idirac) = Phi(ix, iy, it, idirac) &
-                        ! wilson term
-                            - akappa &
-                            * (u(ix, iy, it, mu) &
-                             * R(ix+ixup, iy+iyup, it, idirac) &
-                             + conjg(u(ix-ixup, iy-iyup, it, mu)) &
-                             * R(ix-ixup, iy-iyup, it, idirac)) &
-                        ! dirac term
-                            + gamval(mu, idirac) &
-                            * (u(ix, iy, it, mu) &
-                             * R(ix+ixup, iy+iyup, it, igork) &
-                             - conjg(u(ix-ixup, iy-iyup, it, mu)) &
-                             * R(ix-ixup, iy-iyup, it, igork))
+                                        ! wilson term
+                                        - akappa &
+                                        *(u(ix, iy, it, mu) &
+                                          *R(ix + ixup, iy + iyup, it, idirac) &
+                                          + conjg(u(ix - ixup, iy - iyup, it, mu)) &
+                                          *R(ix - ixup, iy - iyup, it, idirac)) &
+                                        ! dirac term
+                                        + gamval(mu, idirac) &
+                                        *(u(ix, iy, it, mu) &
+                                          *R(ix + ixup, iy + iyup, it, igork) &
+                                          - conjg(u(ix - ixup, iy - iyup, it, mu)) &
+                                          *R(ix - ixup, iy - iyup, it, igork))
             enddo
           enddo
         enddo

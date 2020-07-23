@@ -7,6 +7,7 @@ module gammamatrices
 contains
 
   pure integer function kdelta(nu, mu)
+    implicit none
     integer, intent(in) :: nu
     integer, intent(in) :: mu
 

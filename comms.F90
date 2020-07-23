@@ -13,6 +13,7 @@ contains
     use comms4, only: init_halo_types_4, init_halo_types_4_real
     use comms4_sp, only: init_halo_types_4_sp, init_halo_types_4_real_sp
     use comms6, only: init_halo_types_6
+    implicit none
 
     call init_halo_types_4
     call init_halo_types_4_sp
@@ -24,6 +25,7 @@ contains
   end subroutine init_halo_types
 
   subroutine complete_halo_update(reqs)
+    implicit none
     integer, intent(inout) :: reqs(16)
     integer :: ierr
 
@@ -34,6 +36,7 @@ contains
   !   Initialise MPI variables
   !***********************************************************************
   subroutine init_MPI()
+    implicit none
     integer :: coords(4)
 #ifdef WITH_MUST
     integer, parameter :: must_rank = 1
@@ -61,8 +64,8 @@ contains
     end if
 
     ! Set up a Cartesian communicator; periodic boundaries, allow reordering
-    call MPI_cart_create(MPI_COMM_WORLD, 4, (/ NP_X, NP_Y, NP_T, NP_THIRD /), &
-                         (/ .true., .true., .true., .true. /), .true., comm, ierr)
+    call MPI_cart_create(MPI_COMM_WORLD, 4, (/NP_X, NP_Y, NP_T, NP_THIRD/), &
+                         (/.true., .true., .true., .true./), .true., comm, ierr)
 
     ! Know where I am
     call MPI_cart_coords(comm, ip_global, 4, coords, ierr)
@@ -77,9 +80,9 @@ contains
 
     ! Prepare file format for MPI-IO
     call MPI_Type_Create_Subarray(4, &! dimensionality
-                                  (/ ksize, ksize, ksizet, 3 /), &! global volume
-                                  (/ ksizex_l, ksizey_l, ksizet_l, 3 /), &! local volume
-                                  (/ ip_x*ksizex_l, ip_y*ksizey_l, ip_t*ksizet_l, 0 /), &! start location
+                                  (/ksize, ksize, ksizet, 3/), &! global volume
+                                  (/ksizex_l, ksizey_l, ksizet_l, 3/), &! local volume
+                                  (/ip_x*ksizex_l, ip_y*ksizey_l, ip_t*ksizet_l, 0/), &! start location
                                   MPI_Order_Fortran, &! array ordering
                                   MPI_Real, &! datatype to store
                                   mpiio_type, &! type descriptor for this subarray type

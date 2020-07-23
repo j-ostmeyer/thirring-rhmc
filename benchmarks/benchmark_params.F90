@@ -19,6 +19,7 @@ module params
   integer, parameter :: ndiag = 25, ndiagg = 12
   integer, parameter :: Nf = 1
   real(dp), parameter :: akappa = 0.5d0
+  real(sp), parameter :: akappaf = 0.5d0
 #ifndef MPI
   integer, parameter :: ksizex_l = ksize, ksizey_l = ksize, ksizet_l = ksizet, kthird_l = kthird
   integer, parameter :: kvol_l = kvol

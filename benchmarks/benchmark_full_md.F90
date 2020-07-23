@@ -1,4 +1,5 @@
 program full_md
+  use gdbhook
   use random
   use gaussian
   use remez
@@ -12,6 +13,8 @@ program full_md
   use comms
   use measure_module
   use qmrherm_module, only: qmrherm, qmrhprint => printall
+  use timer, only: timeinit => initialise, get_time_from_start
+  use evolution, only: evolve_theta_pp, initialise_phi_1flavour, initialise_pp
   use dwf3d_lib
   implicit none
   !real, parameter :: respbp=1.0e-6, rescgg=1.0e-6
@@ -19,21 +22,18 @@ program full_md
   !real, parameter :: rescgm=1e-9
   double precision :: t1i, t2i
   !integer, parameter :: itermax=1000
-  complex(dp) :: Phi(0:kthird_l+1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)!
-  complex(dp) :: Xresult(0:kthird_l+1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+  complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)!
+  complex(dp) :: Xresult(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   real(dp) :: H0, H1, S0, S1, dH, dS, hg, hp
   real :: action, paction, gaction
-  real :: vel2, x, ytest, atraj
+  real :: vel2, x, atraj
   real :: dt, am, y, traj, proby
-  real :: actiona, pbpa, yav, yyav
-  real :: ancgma
   integer :: imass, iter, iterl, iter2, i, ia, idirac, ithird
   integer :: isweep, itercg, mu
   !*******************************************************************
   !     variables to keep track of MPI requests
   !*******************************************************************
 #ifdef MPI
-  integer :: reqs_ps(12)
   integer :: ierr
 #endif
   !
@@ -45,6 +45,8 @@ program full_md
   qmrhprint = .true.
 #ifdef MPI
   call init_MPI
+  call gdb_wait()
+  call timeinit
 #endif
   !*******************************************************************
   !     end of input
@@ -52,11 +54,6 @@ program full_md
   !*******************************************************************
   !     check qmrherm is going to be OK
   !*******************************************************************
-  if (ndiagg .gt. ndiag) then
-    print *, 'The qmrherm_module module currently requires ndiag be greater than ndiagg.'
-    print *, 'Please adjust it and recompile.'
-    call exit(1)
-  endif
   if (ip_global .eq. 0) then
     open (unit=7, file='output', status='unknown')
     open (unit=98, file='control', status='unknown')
@@ -135,23 +132,9 @@ program full_md
   !*******************************************************************
   !       initialize for averages
   !*******************************************************************
-  actiona = 0.0
-  vel2a = 0.0
-  pbpa = 0.0
-  ancg = 0.0
-  ancgh = 0.0
-  ancgf = 0.0
-  ancgpf = 0.0
-  ancgpv = 0.0
-  ancghpv = 0.0
-  ancgfpv = 0.0
-  ancgpfpv = 0.0
-  ancgma = 0.0
-  yav = 0.0
-  yyav = 0.0
-  naccp = 0
-  ipbp = 0
-  itot = 0
+
+  call init_counters()
+
   !*******************************************************************
   !     start of classical evolution
   !*******************************************************************
@@ -172,131 +155,25 @@ program full_md
     thetat = theta
     !
     call coef(ut, thetat)
-    !*******************************************************************
-    !  Pseudofermion fields: Phi = {MdaggerM(1)}^-1/4 * {MdaggerM(m)}^1/4 * R, where
-    !   R is gaussian
-    !*******************************************************************
-    do ia = 1, Nf
-      !
-      do idirac = 1, 4
-        do ithird = 1, kthird
-#ifdef MPI
-          call gauss0(ps, reqs_ps)
-          call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
-#else
-          call gauss0(ps)
-#endif
-          R(ithird, :, :, :, idirac) = cmplx(ps(:, :, :, 1), ps(:, :, :, 2))
-        enddo
-      enddo
-      !
-      !  For now Phi = {MdaggerM}^0.25 * R
-      !
-#ifdef MPI
-      if (ip_global .eq. 0) then
-#endif
-        print *, "Setting up flavour no.", ia
-#ifdef MPI
-      endif
-#endif
 
-      call qmrherm(R, Xresult, rescga, itercg, am, imass, anum4, aden4, ndiag, 0)
-      ancgpf = ancgpf + float(itercg)
-      !
-      R = Xresult
-      !
-      call qmrherm(R, Xresult, rescga, itercg, One, 1, bnum4, bden4, ndiag, 0)
-      ancgpfpv = ancgpfpv + float(itercg)
-      !
-      Phi = Xresult
-      !
+    !! >> initialise_phi
+    call initialise_phi_1flavour(phi, am, imass)
 
-    enddo
-#ifdef MPI
-    if (ip_global .eq. 0) then
-#endif
-      print *, "Set up flavours"
-#ifdef MPI
-    endif
-#endif
+    !! >> initialise_pp
+    call initialise_pp(pp)
+    ! Start computing time (including hamiltonian calls)
 
-    !*******************************************************************
-    !     heatbath for p
-    !*******************************************************************
-    !  for some occult reason this write statement is needed to ensure compatibility with earlier versions
-    !     write(6,*) idum
-    !     write(98,*) idum
-    do mu = 1, 3
-#ifdef MPI
-      call gaussp(ps, reqs_ps)
-      call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
-#else
-      call gaussp(ps)
-#endif
-      pp(:, :, :, mu) = ps(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1)
-    enddo
-    !*******************************************************************
-    !  call to Hamiltonian
-    !
-    call hamilton(Phi, H0, hg, hp, S0, rescga, isweep, 0, am, imass)
+    call hamilton(Phi, H0, hg, hp, S0, rescga, am, imass)
     if (isweep .eq. 1) then
       action = real(S0)/kvol
       gaction = real(hg)/kvol
       paction = real(hp)/kvol
     endif
-    !     goto 501
-    !*******************************************************************
-    !      half-step forward for p
-    !*******************************************************************
-    call force(Phi, rescgg, am, imass, isweep, 0)
-    pp = pp - 0.5*dt*dSdpi
-    !*******************************************************************
-    !     start of main loop for classical time evolution
-    !*******************************************************************
+
 #ifdef MPI
-    if (ip_global .eq. 0) then
-#endif
-      print *, "Set up force"
-#ifdef MPI
-    endif
     t1i = MPI_Wtime()
 #endif
-
-    do iter = 1, itermax
-#ifdef MPI
-      if (ip_global .eq. 0) then
-#endif
-        write (6, "(A15,I4,A15,I4)") "MD iteration", iter, "of (average)", iterl
-#ifdef MPI
-      endif
-#endif
-      !
-      !  step (i) st(t+dt)=st(t)+p(t+dt/2)*dt;
-      !
-      thetat = thetat + dt*pp
-      !
-      !  step (ii)  p(t+3dt/2)=p(t+dt/2)-dSds(t+dt)*dt (1/2 step on last iteration)
-      !
-      call coef(ut, thetat)
-      call force(Phi, rescgg, am, imass, isweep, iter)
-      !
-      ! test for end of random trajectory
-      !
-      if (ip_global .eq. 0) then
-        ytest = 1.0/(iter + 1)
-      end if
-#ifdef MPI
-      call MPI_Bcast(ytest, 1, MPI_Real, 0, comm, ierr)
-#endif
-      if (ytest .lt. proby) then
-        pp = pp - 0.5*dt*dSdpi
-        itot = itot + iter
-        goto 501
-      else
-        pp = pp - dt*dSdpi
-      endif
-      !
-    end do
+    call evolve_theta_pp(iterl, dt, pp, phi, rescgg, am, imass, itot)
 
     !**********************************************************************
     !  Monte Carlo step: accept new fields with probability=
@@ -317,7 +194,7 @@ program full_md
 #ifdef MPI
     endif
 #endif
-    call hamilton(Phi, H1, hg, hp, S1, rescga, isweep, -1, am, imass)
+    call hamilton(Phi, H1, hg, hp, S1, rescga, am, imass)
     dH = H0 - H1
     dS = S0 - S1
     if (ip_global .eq. 0) then
@@ -325,8 +202,9 @@ program full_md
       write (6, *) "dH,dS ", dH, dS
     end if
     y = exp(real(dH))
-    yav = yav + y
-    yyav = yyav + y*y
+    y_average = y_average + y
+    ysq_average = ysq_average + y*y
+
     !
     if (dH .lt. 0.0) then
       x = rano(yran, idum, 1, 1, 1)
@@ -347,7 +225,7 @@ program full_md
     if (ip_global .eq. 0) then
       write (11, *) isweep, gaction, paction
     end if
-    actiona = actiona + action
+    action_average = action_average + action
     vel2 = sum(pp*pp)
 #ifdef MPI
     call MPI_AllReduce(MPI_In_Place, vel2, 1, MPI_Real, MPI_Sum, comm, ierr)
@@ -363,8 +241,8 @@ program full_md
       call coef(ut, thetat)
       call measure(pbp, respbp, ancgm, am, imass)
       !         call meson(rescgm,itercg,ancgm,am,imass)
-      pbpa = pbpa + pbp
-      ancgma = ancgma + ancgm
+      pbp_average = pbp_average + pbp
+      ancgm_average = ancgm_average + ancgm
       ipbp = ipbp + 1
       !        write(11,*) pbp
       if (ip_global .eq. 0) then
@@ -376,31 +254,15 @@ program full_md
   !*******************************************************************
   !     end of main loop
   !*******************************************************************
-  actiona = actiona/iter2
-  vel2a = vel2a/iter2
-  pbpa = pbpa/ipbp
-  ancg = ancg/(Nf*itot)
-  ancgh = ancgh/(2*Nf*iter2)
-  ancgpf = ancgpf/(Nf*iter2)
-  ancgpv = ancgpv/(Nf*itot)
-  ancgf = ancgf/(Nf*itot)
-  ancgfpv = ancgfpv/(Nf*itot)
-  ancghpv = ancghpv/(2*Nf*iter2)
-  ancgpfpv = ancgpfpv/(iter2*Nf)
-  ancgma = ancgma/ipbp
-  yav = yav/iter2
-  yyav = yyav/iter2 - yav*yav
-  yyav = sqrt(yyav/(iter2 - 1))
+  call final_averages(Nf, iter2)
   atraj = dt*itot/iter2
   !*******************************************************************
   !     print global averages
   !*******************************************************************
   if (ip_global .eq. 0) then
-    !     write(6, 9022) iter2,naccp,atraj,yav,yyav,ancg,ancgpv,ancgh,ancghpv,ancgf,
-    !    & ancgfpv,ancgpf,ancgpfpv,pbpa,vel2a,actiona
-    write (7, 9022) iter2, naccp, atraj, yav, yyav, &
+    write (7, 9022) iter2, naccp, atraj, y_average, ysq_average, &
       & ancg, ancgpv, ancgh, ancghpv, ancgf, ancgfpv, ancgpf, ancgpfpv, &
-      & pbpa, ancgma, vel2a, actiona
+      & pbp_average, ancgm_average, vel2a, action_average
 9022 format(' averages for last ', i6, ' trajectories', /  &
 & 1x, ' # of acceptances: ', i6, ' average trajectory length= ', f8.3/ &
 & 1x, ' <exp-dH>=', e11.4, ' +/-', e10.3/ &

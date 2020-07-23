@@ -392,10 +392,7 @@ contains
       write (7, 9044) rescgm
 9044  format(' Stopping residuals: meson: ', e11.4)
       call rranget(seed, 1, 1, 1)
-! c     write(6,*) 'seed: ', seed
       write (7, *) 'seed: ', seed
-!     write(6, 9022) iter2,naccp,atraj,y_average,ysq_average,ancg,ancgpv,ancgh,ancghpv,ancgf,
-!    & ancgfpv,ancgpf,ancgpfpv,pbpa,vel2a,action_average
       write (7, 9022) iter2, naccp, atraj, y_average, ysq_average, &
            & ancg, ancgpv, ancgh, ancghpv, ancgf, ancgfpv, ancgpf, ancgpfpv, &
            & pbp_average, ancgm_average, vel2a, action_average
@@ -438,6 +435,7 @@ contains
     use counters, only: ancghpv, ancgh
     use comms
     use qmrherm_module, only: qmrherm
+    implicit none
     complex(dp), intent(in) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, Nf)
     real(dp), intent(out) :: h, hg, hp, s
     real, intent(in) :: res2, am
@@ -565,6 +563,7 @@ contains
     use gauge
 #ifdef MPI
     use comms
+    implicit none
     integer, intent(in), optional :: traj_id
 
     integer :: mpi_fh

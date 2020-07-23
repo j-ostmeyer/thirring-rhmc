@@ -27,15 +27,16 @@ contains
   !   should be halo_{4,4_real,5,6}_{x,y,t}{up,dn}_{send,recv}(size{4,5}[, size6])
 
   subroutine init_single_halo_type_6(direction, position, size5, size6, typetarget)
+    implicit none
     integer, intent(in) :: direction, position, size5, size6
     integer, intent(out) :: typetarget
     integer, dimension(6) :: sizes, subsizes, starts
     integer :: ierr
 
-    sizes = (/ kthird_l + 2, ksizex_l + 2, ksizey_l + 2, ksizet_l + 2, size5, size6 /)
-    subsizes = (/ kthird_l, ksizex_l, ksizey_l, ksizet_l, size5, size6 /)
+    sizes = (/kthird_l + 2, ksizex_l + 2, ksizey_l + 2, ksizet_l + 2, size5, size6/)
+    subsizes = (/kthird_l, ksizex_l, ksizey_l, ksizet_l, size5, size6/)
     subsizes(direction + 2) = 1
-    starts = (/ 1, 1, 1, 1, 0, 0 /)
+    starts = (/1, 1, 1, 1, 0, 0/)
     starts(direction + 2) = position
 
     call MPI_Type_Create_Subarray(6, sizes, subsizes, starts, MPI_Order_Fortran, &
@@ -44,12 +45,11 @@ contains
     return
   end subroutine init_single_halo_type_6
 
-
-
   subroutine init_halo_types_6()
+    implicit none
     integer, parameter :: nsize5 = 1, nsize6 = 3
-    integer :: size5(nsize5) = (/ 4 /)
-    integer :: size6(nsize6) = (/ Nf, ndiag, ndiagg /)
+    integer :: size5(nsize5) = (/4/)
+    integer :: size6(nsize6) = (/Nf, ndiag, ndiagg/)
     integer :: i5, i6
 
     do i5 = 1, nsize5
@@ -93,13 +93,12 @@ contains
     end do
   end subroutine init_halo_types_6
 
-
   !***********************************************************************
   !   Update boundary terms
   !***********************************************************************
 
   subroutine start_halo_update_6(size5, size6, Array, tag, reqs)
-    !
+    implicit none
     integer, intent(in) :: size5, size6, tag
     complex(dp), intent(inout) :: Array(0:kthird_l + 1, &
                                         0:ksizex_l + 1, &

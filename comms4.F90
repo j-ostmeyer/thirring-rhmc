@@ -29,6 +29,7 @@ contains
   !   should be halo_{4,4_real,5,6}_{x,y,t}{up,dn}_{send,recv}(size{4,5}[, size6])
 
   subroutine init_single_halo_type_4(direction, position, size4, datatype, typetarget)
+    implicit none
     integer, intent(in) :: direction, position, size4
     integer, intent(in) :: datatype
     integer, intent(out) :: typetarget
@@ -48,6 +49,7 @@ contains
   end subroutine init_single_halo_type_4
 
   subroutine init_halo_types_4()
+    implicit none
     integer, parameter :: nsize4 = 2
     integer :: size4(nsize4) = (/3, 4/)
     integer :: i4
@@ -86,6 +88,7 @@ contains
   end subroutine init_halo_types_4
 
   subroutine init_halo_types_4_real()
+    implicit none
     integer, parameter :: nsize4 = 1
     integer :: size4(nsize4) = (/2/)
     integer :: i4
@@ -129,6 +132,7 @@ contains
 
   subroutine start_halo_update_4(size4, Array, tag, reqs)
     !
+    implicit none
     integer, intent(in) :: size4, tag
     complex(dp), intent(inout) :: Array(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, size4)
     integer, intent(out) :: reqs(12)
@@ -175,6 +179,7 @@ contains
 
   subroutine start_halo_update_4_real(size4, Array, tag, reqs)
     !
+    implicit none
     integer, intent(in) :: size4, tag
     real, intent(inout) :: Array(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, size4)
     integer, intent(out) :: reqs(12)

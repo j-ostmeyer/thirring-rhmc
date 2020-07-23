@@ -625,6 +625,7 @@ contains
                        prop00, size(prop00), MPI_DOUBLE_COMPLEX, &
                        0, comm_grp_third, ierr)
 
+      print *, "HERE1", ip_x, ip_y, ip_t, ip_third; call MPI_Barrier(MPI_COMM_WORLD, ierr)
       call MPI_Scatter(prop0L, size(prop0L), MPI_DOUBLE_COMPLEX, &
                        prop0L, size(prop0L), MPI_DOUBLE_COMPLEX, &
                        NP_THIRD - 1, comm_grp_third, ierr)
@@ -635,6 +636,7 @@ contains
       !  First C+-
       !
       !  now evaluate the trace (exploiting projection)
+      print *, "HERE2", ip_x, ip_y, ip_t, ip_third; call MPI_Barrier(MPI_COMM_WORLD, ierr)
       tempcpmm_r = 0.d0
       do it = 0, ksizet - 1
         itt = mod((ittt + it - 1), ksizet) + 1

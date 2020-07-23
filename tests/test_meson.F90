@@ -1,5 +1,6 @@
 #include "test_utils.fh"
 program test_measure
+  use gdbhook
   use dwf3d_lib
   use trial, only: u
   use vector
@@ -40,6 +41,7 @@ program test_measure
   integer :: ierr
 
   call init_MPI
+  call gdb_wait()
 #endif
   seed = 4139764973254.0
   idum = -1
