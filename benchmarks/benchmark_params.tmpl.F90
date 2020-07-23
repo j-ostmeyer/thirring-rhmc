@@ -12,7 +12,7 @@ module params
   ! Lattice parameters
 #define KSIZE SEDKSIZE
 #define KSIZET SEDKSIZE
-#define KTHIRD SETKTHIRD
+#define KTHIRD SEDKTHIRD
   integer, parameter :: ksize = KSIZE, ksizet = KSIZET
   integer, parameter :: kthird = KTHIRD
   integer, parameter :: kvol = ksize*ksize*ksizet

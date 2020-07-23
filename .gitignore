@@ -14,7 +14,6 @@ bulk_rhmc
 run???/
 *.out
 *.err
-*benchmarks?*
 time*txt
 *.tar
 playground
