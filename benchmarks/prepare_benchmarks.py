@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 import benchmarks_lib as bl
+from sys import argv
+import pandas as pd
+import os
 
 if __name__ == '__main__':
     # read setup file
@@ -7,7 +10,8 @@ if __name__ == '__main__':
         setup = pd.read_csv(argv[1], sep = '\s+')
         benchmarks_lib_location = argv[2]   
         mkrules = argv[3]
-    except:
+    except Exception as e:
+        print(e)
         print(f'Usage: {argv[0]} setup_file benchmark_lib_dir mkrules')
         exit(1)
 

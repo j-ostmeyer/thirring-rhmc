@@ -2,7 +2,6 @@
 This is supposed to be a slimmed version of 
 benchsetup.py.
 '''
-from sys import argv,exit
 import pandas as pd
 import os
 import shutil
@@ -92,12 +91,13 @@ def adjust_makefile(directory,topdir):
     pardict = {'TOPDIR':topdir_pos}
     sed(infilename,outfilename,pardict)
 
-def get_benchmark_run_order():
+def get_benchmark_run_order(benchmark_lib_location):
     '''
     We look at the order of executables in the run template.
     This is also the order of the timing in the slurm output files.
     '''
-    with open(run_tmpl,'r') as f:
+    run_tmpl_path = os.path.join(benchmark_lib_location, run_tmpl)
+    with open(run_tmpl_path,'r') as f:
         benchmarks_ordered = [ benchmark 
                            for line in f.readlines()
                            for bsource in benchmarks_sources

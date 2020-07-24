@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import benchmarks_lib as bl
+from sys import argv, exit
 import os
 from glob import glob
 import pandas as pd 
@@ -7,11 +8,13 @@ from tabulate import tabulate
 
 if __name__ == '__main__':
     try:
-        setup = pd.read_csv(argv[1], sep = '\s+')
+        benchmarks_lib_location = argv[1]   
         glob_expr = argv[2]
+        setup = pd.concat(pd.read_csv(filename, sep = '\s+') 
+                          for filename in argv[3:])
     except:
-        print(f'Usage: {argv[0]} setup_file glob_expr')
-        print(f"Example: {argv[0]} setup_file 'slurm*'")
+        print(f'Usage: {argv[0]} setup_file benchmark_lib_dir glob_expr')
+        print(f"Example: {argv[0]} setup_file ../benchmarks 'slurm*'")
         exit(1)
 
     timing_data = []
@@ -28,8 +31,8 @@ if __name__ == '__main__':
 
         timing_file = timing_file_candidates[0]   
 
-        timing_dict = dict(zip(get_benchmark_run_order(),
-                               parse_timing_file(timing_file)))
+        timing_dict = dict(zip(bl.get_benchmark_run_order(benchmarks_lib_location),
+                               bl.parse_timing_file(timing_file)))
 
         timing_datum = dict(**dict(row._asdict()),
                             **timing_dict)
@@ -46,7 +49,7 @@ if __name__ == '__main__':
                     timing_df,
                     headers = 'keys',
                     showindex = False,
-                    tablafmt = 'psql'))
+                    tablefmt = 'psql'))
 
 
 
