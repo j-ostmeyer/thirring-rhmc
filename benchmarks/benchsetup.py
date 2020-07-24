@@ -40,9 +40,10 @@ NOTE2: This script has many flaws. But it was built "on the way" without a preci
 NOTE3: The 'run' function must not be used on login nodes. 
 
 '''
-from os import system,listdir,walk
+from os import system,listdir
 from sys import argv
 import os
+import shutil
 import glob
 from contextlib import contextmanager
 import math
@@ -120,18 +121,19 @@ def createdir(size,directory,possible_subsizes):
         benchparam_tmpl_text = f.read()
 
     benchparam_text = benchparam_tmpl_text.replace('SEDKSIZE',str(size))
-    script='''
-mkdir -p {directory}
-cd {directory} 
-ln -s ../benchmarks/benchmark_congrad.F90 ./
-ln -s ../benchmarks/benchmark_qmrherm_1.F90 ./
-cp ../benchmarks/MkFlags.tmpl ./MkFlags
-cp ../benchmarks/Makefile ./
+    os.makedirs(directory,exists_ok = True)
+    with cd(directory):
+        for fname in ['benchmark_congrad.F90','benchmark_qmrherm_1.F90']:
+            os.symlink(f'../benchmarks/{fname}', f"./{fname}")
 
-'''.format(directory = directory)
-    if setFake:
-        fakecorrection = "\nsed -i 's/MPI=yes/MPI=fake/' ./MkFlags\n"
-        script += fakecorrection
+        shutil.copy('../benchmarks/MkFlags.tmpl','./MkFlags')
+        shutil.copy('../benchmarks/Makefile','./Makefile')
+
+        if setFake:
+            with open('./MkFlags','r') as f: 
+                text = f.read().replace('MPI=yes','MPI=fake')
+            with open('./MkFlags','w') as f: 
+                f.write(text)
 
     scriptname = 'script'
     with open(scriptname,'w') as f:
