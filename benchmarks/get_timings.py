@@ -12,9 +12,10 @@ if __name__ == '__main__':
         glob_expr = argv[2]
         setup = pd.concat(pd.read_csv(filename, sep = '\s+') 
                           for filename in argv[3:])
-    except:
-        print(f'Usage: {argv[0]} setup_file benchmark_lib_dir glob_expr')
-        print(f"Example: {argv[0]} setup_file ../benchmarks 'slurm*'")
+    except Exception as e:
+        print(e)
+        print(f'Usage: {argv[0]} benchmark_lib_dir glob_expr [setup_files]')
+        print(f"Example: {argv[0]} ../benchmarks 'slurm*' config1.tsv")
         exit(1)
 
     timing_data = []
@@ -33,7 +34,6 @@ if __name__ == '__main__':
 
         timing_dict = dict(zip(bl.get_benchmark_run_order(benchmarks_lib_location),
                                bl.parse_timing_file(timing_file)))
-
         timing_datum = dict(**dict(row._asdict()),
                             **timing_dict)
 

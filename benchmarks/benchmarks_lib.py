@@ -101,7 +101,7 @@ def get_benchmark_run_order(benchmark_lib_location):
         benchmarks_ordered = [ benchmark 
                            for line in f.readlines()
                            for bsource in benchmarks_sources
-                           if re.match(r'\W'+
+                           if re.search(r'\W'+
                                        (benchmark:=bsource.replace('.F90',''))+
                                        r'\W',line)]
 
