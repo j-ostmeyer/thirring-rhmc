@@ -5,6 +5,7 @@ import os
 from glob import glob
 import pandas as pd 
 from tabulate import tabulate
+from matplotlib import pyplot as plt
 
 if __name__ == '__main__':
     try:
@@ -25,10 +26,14 @@ if __name__ == '__main__':
 
         timing_file_glob_expr = os.path.join(newdir,glob_expr)
         timing_file_candidates = glob(timing_file_glob_expr)
-        assert len(timing_file_candidates) == 1, \
-                f"There are more than 1 file matching"\
+        assert len(timing_file_candidates) <= 1, \
+                f"There is not one or only one file matching "\
                 f"{timing_file_glob_expr}\n"\
                 f"{timing_file_candidates}"
+
+        if len(timing_file_candidates) == 0:
+            print(f"No canditates found for {timing_file_glob_expr}\n")
+            continue
 
         timing_file = timing_file_candidates[0]   
 
@@ -39,10 +44,11 @@ if __name__ == '__main__':
 
         timing_data.append(timing_datum)
 
+    
     timing_df = pd.DataFrame(data = timing_data)
 
     timing_df.to_csv("timing.tsv",sep = '\t')
-    
+
     with open("timing_table.txt",'w') as f:
         f.write(
                 tabulate(
@@ -52,9 +58,27 @@ if __name__ == '__main__':
                     tablefmt = 'psql'))
 
 
+    def plot_df(df,column):
+        df['x'] = (df.NP_X*
+                   df.NP_Y*
+                   df.NP_T*
+                   df.NP_THIRD)
 
-        
+        df = df.sort_values(by='x')
+        x = df.x
+        y = df[column].iloc[0]/df[column]
+        plt.scatter(x,y,label = column)
 
-
+    
+    for col in ( c for c in timing_df.columns if 'benchmark_' in c):
+        for (ksize,kthird),dfv in timing_df.groupby(['KSIZE','KTHIRD']):
+            plt.figure()
+            plot_df(dfv,col)
+            plt.ylim([0,None])
+            plt.xlim([0,None])
+            title = f'{col} L={ksize} Ls={kthird}'
+            plt.title(title)
+            #plt.show()
+            plt.savefig(title.replace(' ','_').replace('=','') + '.png')
 
 
