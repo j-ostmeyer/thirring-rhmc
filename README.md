@@ -18,8 +18,9 @@ Necessary files for:
   - `params.F90`: `KSIZE`,`KSIZET`,`KTHIRD`
 - Running:
   - compiled `bulk_rhmc` or link
+  - `con` (optional, start from random if not present)
   - `midout`
-  - `program_status`
+  - `program_status` (optional)
   - `random_seed` (see `Random Seed settings`)
   - `remez` files:
     - `remez2`
