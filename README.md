@@ -5,6 +5,25 @@ wall fermions in 2+1D. Developed by Simon Hands, and refactored and
 parallelised by Ed Bennett, Michele Mesiti, and the Swansea Academy of 
 Advanced Computing RSE team.
 
+## Quick info / checklists
+Necessary files for:
+- Compilation:
+  - `MkFlags`: compiler choice, n of mpi ranks.
+  - `params.F90`: `KSIZE`,`KSIZET`,`KTHIRD`
+- Running:
+  - compiled `bulk_rhmc` or link
+  - `midout`
+  - `program_status`
+  - `random_seed` (see `Random Seed settings`)
+  - `remez` files:
+    - `remez2`
+    - `remez2g`
+    - `remez4`
+    - `remez4g`
+See examples.
+Regarding Modules, see `Machine-Specific options and caveats`.
+
+
 ## Compilation
 
 Before compile time, the user may need to change the `MkFlags` file 
@@ -129,5 +148,13 @@ See the `benchmarks` directory.
 modules. Moreover, the `INTEL_MPIFC` in the `MkRules` file must be set to 
 `mpifort` instead of `mpiifort`.
 * On the `hawk` and `sunbird` clusters the modules to load are `compiler/intel` and `mpi/intel`.
+* On the `peta4` machine, the modules to load are 
+  - `intel/bundles/complib/2018.4`
+  It is better to unload the `2017.4` version 
+  of the intel compiler and libraries
+  first:
+  ```
+  module unload intel/bundles/complib/2017.4
+  ```
 
 
