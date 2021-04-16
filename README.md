@@ -6,6 +6,12 @@ parallelised by Ed Bennett, Michele Mesiti, and the Swansea Academy of
 Advanced Computing RSE team.
 
 ## Quick info / checklists
+Remember to:
+- checkout the `dev_mpithird` branch 
+- Load the correct modules.
+
+Regarding Modules, see `Machine-Specific options and caveats`.
+
 Necessary files for:
 - Compilation:
   - `MkFlags`: compiler choice, n of mpi ranks.
@@ -19,9 +25,9 @@ Necessary files for:
     - `remez2`
     - `remez2g`
     - `remez4`
-    - `remez4g`
+    - `remez4g`  
+
 See examples.
-Regarding Modules, see `Machine-Specific options and caveats`.
 
 
 ## Compilation
