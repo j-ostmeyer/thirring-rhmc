@@ -438,7 +438,9 @@ contains
     complex(dp) :: x0(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: prop00(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
+    complex(dp) :: prop00_cp(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
     complex(dp) :: prop0L(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
+    complex(dp) :: prop0L_cp(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
     !    complex :: prop00n(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
     !    complex :: prop0Ln(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
     !    complex :: cpmn(0:ksizet-1),cmmn(0:ksizet-1)
@@ -621,28 +623,22 @@ contains
       enddo ! do idsource=3,4
 
 
-      scatter00: block
-        complex(dp) :: prop00_cp(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
-        ! Not actually necessary if result is used only by rank 0.
-        call MPI_Scatter(prop00, size(prop00), MPI_DOUBLE_COMPLEX, &
-                         prop00_cp, size(prop00), MPI_DOUBLE_COMPLEX, &
-                         0, comm_grp_third, ierr)
-        if (ip_third .ne. 0) then
-          prop00 = prop00_cp
-        endif
-      end block scatter00
+      ! Not actually necessary if result is used only by rank 0.
+      call MPI_Scatter(prop00, size(prop00), MPI_DOUBLE_COMPLEX, &
+                       prop00_cp, size(prop00), MPI_DOUBLE_COMPLEX, &
+                       0, comm_grp_third, ierr)
+      if (ip_third .ne. 0) then
+        prop00 = prop00_cp
+      endif
 
       call MPI_Barrier(comm_grp_third,ierr)
 
-      scatter0L: block
-        complex(dp) :: prop0L_cp(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
-        call MPI_Scatter(prop0L, size(prop0L), MPI_DOUBLE_COMPLEX, &
-                         prop0L_cp, size(prop0L), MPI_DOUBLE_COMPLEX, &
-                         NP_THIRD - 1, comm_grp_third, ierr)
-        if (ip_third .ne. NP_THIRD-1) then
-          prop0L = prop0L_cp
-        endif
-      end block scatter0L
+      call MPI_Scatter(prop0L, size(prop0L), MPI_DOUBLE_COMPLEX, &
+                       prop0L_cp, size(prop0L), MPI_DOUBLE_COMPLEX, &
+                       NP_THIRD - 1, comm_grp_third, ierr)
+      if (ip_third .ne. NP_THIRD-1) then
+        prop0L = prop0L_cp
+      endif
 
       call MPI_Barrier(MPI_COMM_WORLD, ierr)
       !
