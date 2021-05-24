@@ -620,23 +620,37 @@ contains
         !  end loop on source Dirac index....
       enddo ! do idsource=3,4
 
-      ! Not actually necessary if result is used only by rank 0.
-      call MPI_Scatter(prop00, size(prop00), MPI_DOUBLE_COMPLEX, &
-                       prop00, size(prop00), MPI_DOUBLE_COMPLEX, &
-                       0, comm_grp_third, ierr)
 
-      print *, "HERE1", ip_x, ip_y, ip_t, ip_third; call MPI_Barrier(MPI_COMM_WORLD, ierr)
-      call MPI_Scatter(prop0L, size(prop0L), MPI_DOUBLE_COMPLEX, &
-                       prop0L, size(prop0L), MPI_DOUBLE_COMPLEX, &
-                       NP_THIRD - 1, comm_grp_third, ierr)
+      scatter00: block
+        complex(dp) :: prop00_cp(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
+        ! Not actually necessary if result is used only by rank 0.
+        call MPI_Scatter(prop00, size(prop00), MPI_DOUBLE_COMPLEX, &
+                         prop00_cp, size(prop00), MPI_DOUBLE_COMPLEX, &
+                         0, comm_grp_third, ierr)
+        if (ip_third .ne. 0) then
+          prop00 = prop00_cp
+        endif
+      end block scatter00
 
+      call MPI_Barrier(comm_grp_third,ierr)
+
+      scatter0L: block
+        complex(dp) :: prop0L_cp(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
+        call MPI_Scatter(prop0L, size(prop0L), MPI_DOUBLE_COMPLEX, &
+                         prop0L_cp, size(prop0L), MPI_DOUBLE_COMPLEX, &
+                         NP_THIRD - 1, comm_grp_third, ierr)
+        if (ip_third .ne. NP_THIRD-1) then
+          prop0L = prop0L_cp
+        endif
+      end block scatter0L
+
+      call MPI_Barrier(MPI_COMM_WORLD, ierr)
       !
       !  Now tie up the ends....
       !
       !  First C+-
       !
       !  now evaluate the trace (exploiting projection)
-      print *, "HERE2", ip_x, ip_y, ip_t, ip_third; call MPI_Barrier(MPI_COMM_WORLD, ierr)
       tempcpmm_r = 0.d0
       do it = 0, ksizet - 1
         itt = mod((ittt + it - 1), ksizet) + 1
