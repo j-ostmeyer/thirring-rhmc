@@ -10,13 +10,13 @@
 module timer
   implicit none
 
-  real :: initial_time
+  real :: initial_time_rank
   logical :: initialised = .false.
-  private :: initial_time, initialised
+  private :: initial_time_rank, initialised
 
 #ifndef MPI
-  real :: last_time
-  private :: last_time
+  real :: last_time_rank
+  private :: last_time_rank
 #endif
 
 contains
@@ -33,12 +33,12 @@ contains
 #endif
 
 #ifdef MPI
-    initial_time = real(MPI_Wtime())
-    call MPI_AllReduce(MPI_In_Place, initial_time, 1, MPI_Real, MPI_Min, comm, ierr)
+    initial_time_rank = real(MPI_Wtime())
+    !call MPI_AllReduce(MPI_In_Place, initial_time, 1, MPI_Real, MPI_Min, comm, ierr)
 #else
     call system_clock(count, count_rate, count_max)
-    initial_time = real(count)/count_rate
-    last_time = initial_time
+    initial_time_rank = real(count)/count_rate
+    last_time_rank = initial_time_rank
 #endif
 
     initialised = .true.
@@ -55,7 +55,8 @@ contains
     implicit none
     integer :: count, count_rate, count_max
 #endif
-    real :: time, time_from_start
+    real :: time_rank, time_from_start_rank
+    real :: time_from_start
 
     if (.not. initialised) then
 #ifdef MPI
@@ -72,18 +73,19 @@ contains
     endif
 
 #ifdef MPI
-    time = real(MPI_Wtime())
-    call MPI_AllReduce(MPI_In_Place, time, 1, MPI_Real, MPI_Max, comm, ierr)
+    time_rank = real(MPI_Wtime())
+    !call MPI_AllReduce(MPI_In_Place, time, 1, MPI_Real, MPI_Max, comm, ierr)
 #else
     call system_clock(count, count_rate, count_max)
-    time = real(count)/count_rate
-    do while (time .lt. last_time)
-      time = time + real(count_max)/count_rate
+    time_rank = real(count)/count_rate
+    do while (time_rank .lt. last_time_rank)
+      time_rank = time_rank + real(count_max)/count_rate
     enddo
-    last_time = time
+    last_time_rank = time_rank
 #endif
 
-    time_from_start = time - initial_time
+    time_from_start_rank = time_rank - initial_time_rank
+    call MPI_AllReduce(time_from_start_rank, time_from_start, 1, MPI_Real, MPI_Max, comm, ierr)
 
   end function get_time_from_start
 

@@ -306,6 +306,7 @@ contains
 
         keep_running_check: block
           real :: time_for_next_iteration
+          real :: time_left
           logical :: stop_file_exists
 
           time_for_next_iteration = time_per_md_step*4*iterl*2
@@ -321,10 +322,14 @@ contains
 #endif
             print *, 'Expected next run time with safety margin:', &
               run_time + time_for_next_iteration, ' of ', walltimesec
+            print *, 'Run so far for: ', run_time
 #ifdef MPI
           endif
 #endif
-          if (run_time + time_for_next_iteration .gt. walltimesec) then
+          time_left = walltimesec - (run_time + time_for_next_iteration)
+          MPI_Bcast(time_left,1,MPI_Real,0,comm, ierr)
+
+          if (time_left .lt. 0) then
 #ifdef MPI
             if (ip_global .eq. 0) then
 #endif
