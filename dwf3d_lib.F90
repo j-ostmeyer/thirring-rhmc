@@ -327,7 +327,7 @@ contains
           endif
 #endif
           time_left = walltimesec - (run_time + time_for_next_iteration)
-          MPI_Bcast(time_left,1,MPI_Real,0,comm, ierr)
+          call MPI_Bcast(time_left,1,MPI_Real,0,comm, ierr)
 
           if (time_left .lt. 0) then
 #ifdef MPI
