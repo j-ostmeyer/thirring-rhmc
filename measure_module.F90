@@ -408,7 +408,10 @@ contains
   !     (Numerical Recipes section 2.10 pp.70-73)
   !*******************************************************************
   ! TODO: adjust calls to meson to supply output arrays
-  subroutine meson(cpm, cmm, cferm1, cferm2, res, itercg, aviter, am, imass)
+  ! DONE:: restored original call so that output written to disk from within
+  ! subroutine SJH 3/11/21
+  !subroutine meson(cpm, cmm, cferm1, cferm2, res, itercg, aviter, am, imass)
+  subroutine meson(res, itercg, aviter, am, imass)
     use random
     use vector, xi => x
     use dirac
@@ -427,10 +430,16 @@ contains
     real, intent(out) :: aviter
     integer, intent(in) :: imass
     !! NOTICE : Full ksizet range.
-    real(dp), intent(out) :: cpm(0:ksizet - 1), cmm(0:ksizet - 1)
+    !real(dp), intent(out) :: cpm(0:ksizet - 1)
+    !real(dp), intent(out) :: cmm(0:ksizet - 1)
+    real(dp) :: cpm(0:ksizet - 1)
+    real(dp) :: cmm(0:ksizet - 1)
     real(dp) :: tempcpmm_r(0:ksizet - 1)
     complex(dp) :: tempcpmm_c(0:ksizet - 1)
-    complex(dp), intent(out) :: cferm1(0:ksizet - 1), cferm2(0:ksizet - 1)
+    !complex(dp), intent(out) :: cferm1(0:ksizet - 1)
+    !complex(dp), intent(out) :: cferm2(0:ksizet - 1)
+    complex(dp) :: cferm1(0:ksizet - 1)
+    complex(dp) :: cferm2(0:ksizet - 1)
     !     complex x(kvol,4),x0(kvol,4),Phi(kthird,kvol,4)
     !     complex xi,gamval
     !     complex prop00(kvol,3:4,1:2),prop0L(kvol,3:4,3:4)
@@ -449,7 +458,8 @@ contains
     !     write(6,*) 'hi from meson'
     !
     integer, parameter :: nsource = 5
-    integer, parameter :: nsmear = 10
+    integer, parameter :: nsmear = 0
+    !    integer, parameter :: nsmear = 10
     real(dp), parameter :: c = 0.25d0
     integer :: iter, idsource, ksource, ismear, isign
     integer :: it, itt, ittl, idd
