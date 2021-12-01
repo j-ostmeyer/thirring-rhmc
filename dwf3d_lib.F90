@@ -166,7 +166,7 @@ contains
 
       real :: run_time, time_per_md_step ! conservative estimates
       real :: measurement_time, total_md_time
-      integer :: isweep, isweep_total_start
+      integer :: isweep, isweep_total_start, itercg
 
       measurement_time = 100 ! an arbitrary value (that should be conservative)
       total_md_time = 0
@@ -280,7 +280,7 @@ contains
           thetat = theta
           call coef(ut, thetat)
           call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)
-!         call meson(rescgm,itercg,ancgm,am,imass)
+          call meson(rescgm,itercg,ancgm,am,imass)
           pbp_average = pbp_average + pbp
           ancgm_average = ancgm_average + ancgm
           ipbp = ipbp + 1
