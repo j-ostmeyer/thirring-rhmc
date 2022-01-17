@@ -33,6 +33,7 @@ contains
     use multishift_module, only: multishift_solver, multishift_solver_sp
     use params
     use trial, only: u
+    implicit none 
     complex(dp), intent(in) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp), intent(out) :: x(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     integer, intent(in) :: imass, ndiagq, iflag
@@ -41,6 +42,7 @@ contains
     logical, intent(in), optional :: use_sp
     integer, intent(out) :: itercg
     integer, intent(out), optional :: cg_returns(ndiagq)
+    logical :: use_sp_
     integer :: cg_returns_tmp(ndiagq)
     real(dp) :: coeff
     integer :: idiag
@@ -66,8 +68,14 @@ contains
       call exit(1)
     endif
 
+    if(present(use_sp)) then
+      use_sp_ = use_sp
+    else
+      use_sp_ = .false.
+    endif
+
     x = anum(0)*Phi
-    if (present(use_sp) .and. use_sp) then
+    if (use_sp_) then
       call multishift_solver_sp(u, am, imass, ndiagq, aden, anum(1:ndiagq), x1, Phi, res, max_qmr_iters, itercg, cg_returns_tmp)
     else
       call multishift_solver(u, am, imass, ndiagq, aden, anum(1:ndiagq), x1, Phi, res, max_qmr_iters, itercg, cg_returns_tmp)
@@ -170,7 +178,7 @@ contains
     endif ! if(iflag.lt.2)then , else
 
     if (ip_global .eq. 0 .and. printall) then
-      if (present(use_sp) .and. use_sp) then
+      if (use_sp_) then
         print *, "[SP] Qmrherm iterations,res:", itercg, res
       else
         print *, "[DP] Qmrherm iterations,res:", itercg, res

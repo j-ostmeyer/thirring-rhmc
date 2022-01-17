@@ -300,8 +300,6 @@ contains
           if (iwrite .eq. 1) then
             call swrite(isweep + isweep_total_start)
           endif
-          flush (100)
-          flush (200)
         endif
 
         keep_running_check: block
