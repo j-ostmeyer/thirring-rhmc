@@ -700,8 +700,10 @@ contains
     integer :: nc_temp
     integer :: ix, iy, it, mu
     real :: g
+    integer :: ierr
 
     call init_gammas()
+
     block
       logical :: success
       if ((istart .lt. 0) .or. (iread .eq. 1)) then
@@ -738,16 +740,24 @@ contains
       theta = 0.0
       return
     case (1)
-      g = 0.05
-      do mu = 1, 3
-        do it = 1, ksizet_l
-          do iy = 1, ksizey_l
-            do ix = 1, ksizex_l
-              theta(ix, iy, it, mu) = 2.0*g*rano(yran, idum, ix, iy, it) - 1.0
+      ! In this case we need to do the initialisation 
+      ! on the ranks with ip_third = 0,
+      ! and then broadcast the result.
+      if (ip_third .eq. 0) then
+        g = 0.05
+        do mu = 1, 3
+          do it = 1, ksizet_l
+            do iy = 1, ksizey_l
+              do ix = 1, ksizex_l
+                theta(ix, iy, it, mu) = 2.0*g*rano(yran, idum, ix, iy, it) - 1.0
+              enddo
             enddo
           enddo
         enddo
-      enddo
+      endif
+      call MPI_Bcast(theta, &
+                     (ksizex_l*ksizey_l*ksizet_l),&
+                     MPI_Real,0, comm_grp_third, ierr)
       return
     end select
   end subroutine init
