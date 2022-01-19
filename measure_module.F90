@@ -514,13 +514,13 @@ contains
         xi = (0.0d+0, 0.0d+0)
         x = (0.0d+0, 0.0d+0)
         !  wall source
-        !  if (ip_t .eq. np_t) then
-        !    x(:, :, ksizet_l, :) = cmplx(1.0,0.0) / ksize2
-        !  end if
-        !  point source at fixed site, spin...
-        if (ip_xxx .eq. ip_x .and. ip_yyy .eq. ip_y .and. ip_ttt .eq. ip_t .and. ip_third .eq. 0) then
-          x(ixxx_l, iyyy_l, ittt_l, idsource) = (1.0d+0, 0.0d+0)
+        if (ip_ttt .eq. ip_t .and. ip_third .eq. 0) then
+          x(:, :, ittt_l, idsource) = cmplx(1.0,0.0) / ksize
         end if
+        !  point source at fixed site, spin...
+        !  if (ip_xxx .eq. ip_x .and. ip_yyy .eq. ip_y .and. ip_ttt .eq. ip_t .and. ip_third .eq. 0) then
+        !    x(ixxx_l, iyyy_l, ittt_l, idsource) = (1.0d+0, 0.0d+0)
+        !  end if
         !
         ! now smear it.....
         !
