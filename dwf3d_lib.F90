@@ -79,6 +79,7 @@ contains
 #ifdef MPI
 !     variables to keep track of MPI requests
     integer :: ierr
+    integer :: itercg
     ! real :: sumvalue, maxvalue
 
 #endif
@@ -166,7 +167,7 @@ contains
 
       real :: run_time, time_per_md_step ! conservative estimates
       real :: measurement_time, total_md_time
-      integer :: isweep, isweep_total_start, itercg
+      integer :: isweep, isweep_total_start
 
       measurement_time = 100 ! an arbitrary value (that should be conservative)
       total_md_time = 0
@@ -279,8 +280,8 @@ contains
         if (mod((isweep + isweep_total_start), iprint) .eq. 0) then
           thetat = theta
           call coef(ut, thetat)
-          call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)
-          call meson(rescgm,itercg,ancgm,am,imass)
+!          call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)
+          call meson(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)
           pbp_average = pbp_average + pbp
           ancgm_average = ancgm_average + ancgm
           ipbp = ipbp + 1
@@ -300,6 +301,9 @@ contains
           if (iwrite .eq. 1) then
             call swrite(isweep + isweep_total_start)
           endif
+          !  now dealt with properly in measure_module
+          !flush (100)
+          !flush (200)
         endif
 
         keep_running_check: block
@@ -700,10 +704,8 @@ contains
     integer :: nc_temp
     integer :: ix, iy, it, mu
     real :: g
-    integer :: ierr
 
     call init_gammas()
-
     block
       logical :: success
       if ((istart .lt. 0) .or. (iread .eq. 1)) then
@@ -740,24 +742,16 @@ contains
       theta = 0.0
       return
     case (1)
-      ! In this case we need to do the initialisation 
-      ! on the ranks with ip_third = 0,
-      ! and then broadcast the result.
-      if (ip_third .eq. 0) then
-        g = 0.05
-        do mu = 1, 3
-          do it = 1, ksizet_l
-            do iy = 1, ksizey_l
-              do ix = 1, ksizex_l
-                theta(ix, iy, it, mu) = 2.0*g*rano(yran, idum, ix, iy, it) - 1.0
-              enddo
+      g = 0.05
+      do mu = 1, 3
+        do it = 1, ksizet_l
+          do iy = 1, ksizey_l
+            do ix = 1, ksizex_l
+              theta(ix, iy, it, mu) = 2.0*g*rano(yran, idum, ix, iy, it) - 1.0
             enddo
           enddo
         enddo
-      endif
-      call MPI_Bcast(theta, &
-                     (ksizex_l*ksizey_l*ksizet_l),&
-                     MPI_Real,0, comm_grp_third, ierr)
+      enddo
       return
     end select
   end subroutine init

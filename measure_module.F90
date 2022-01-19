@@ -411,7 +411,9 @@ contains
   ! DONE:: restored original call so that output written to disk from within
   ! subroutine SJH 3/11/21
   !subroutine meson(cpm, cmm, cferm1, cferm2, res, itercg, aviter, am, imass)
-  subroutine meson(res, itercg, aviter, am, imass)
+  ! output routines updated to be uniform with 'measure' subroutine
+  !  SJH 7/12/21
+  subroutine meson(res, itercg, aviter, am, imass, isweep_total)
     use random
     use vector, xi => x
     use dirac
@@ -429,6 +431,7 @@ contains
     integer, intent(out) :: itercg
     real, intent(out) :: aviter
     integer, intent(in) :: imass
+    integer, intent(in), optional :: isweep_total
     !! NOTICE : Full ksizet range.
     !real(dp), intent(out) :: cpm(0:ksizet - 1)
     !real(dp), intent(out) :: cmm(0:ksizet - 1)
@@ -823,14 +826,48 @@ contains
       !         enddo
       !       endif
       !     endif
+        open (unit=302, file='fort.302', action='write', position='append')
+        if (present(isweep_total)) then
+          do it = 0, ksizet - 1
+             write (302, *) isweep_total, it, cpm(it), cmm(it)
+          enddo
+        else
+          do it = 0, ksizet-1
+             write (302, *) it, cpm(it), cmm(it)
+          enddo
+        endif
+        close (302)
+        open (unit=500, file='fort.500', action='write', position='append')
+        if (present(isweep_total)) then
+          do it = 0, ksizet - 1
+             write (500, *) isweep_total, it, real(cferm1(it)), aimag(cferm1(it))
+          enddo
+        else
+          do it = 0, ksizet - 1
+             write (500, *) it, real(cferm1(it)), aimag(cferm1(it))
+          enddo
+        endif
+        close (500)
+        open (unit=501, file='fort.501', action='write', position='append')
+        if (present(isweep_total)) then
+          do it = 0, ksizet - 1
+             write (501, *) isweep_total, it, real(cferm2(it)), aimag(cferm2(it))
+          enddo
+        else
+          do it = 0, ksizet - 1
+             write (501, *) it, real(cferm2(it)), aimag(cferm2(it))
+          enddo
+        endif
+        close (501)
+        open (unit=400, file='fort.400', action='write', position='append')
+        if (present(isweep_total)) then
+             write (400, *) isweep_total, chim
+        else
+             write (400, *) chim
+        endif
+        close (400)
       !
-      do it = 0, ksizet - 1
-        write (302, *) it, cpm(it), cmm(it)
-        write (500, *) it, real(cferm1(it)), aimag(cferm1(it))
-        write (501, *) it, real(cferm2(it)), aimag(cferm2(it))
-      enddo
       !     write(6,*) chim
-      write (400, *) chim
 #ifdef MPI
     endif ! if(ip_global.eq.0) then
 #endif

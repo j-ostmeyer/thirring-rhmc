@@ -8,9 +8,9 @@ module params
   integer, parameter :: sp = kind(1.)
 
   ! Lattice parameters
-#define KSIZE 6
-#define KSIZET 6
-#define KTHIRD 8
+#define KSIZE 16
+#define KSIZET 48
+#define KTHIRD 64
   integer, parameter :: ksize = KSIZE, ksizet = KSIZET
   integer, parameter :: kthird = KTHIRD
   integer, parameter :: kvol = ksize*ksize*ksizet
@@ -52,7 +52,7 @@ module params
   integer, parameter :: icheckpoint = 100
 
   ! Inverter
-  integer :: max_qmr_iters = 30000 ! QMRHERM
+  integer :: max_qmr_iters = 50000 ! QMRHERM
   integer :: niterc = kthird*kvol ! CONGRAD
 
   ! inverter residuals
