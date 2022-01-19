@@ -23,3 +23,4 @@ dirac_sp.F90
 minibenchmarks/
 test_dirac_sunbird/
 test_walltime/
+longruns/
