@@ -11,6 +11,7 @@ fort.*
 **.optrpt
 compile_flags
 bulk_rhmc
+bulk_rhmc.f
 run???/
 *.out
 *.err
@@ -24,3 +25,5 @@ minibenchmarks/
 test_dirac_sunbird/
 test_walltime/
 longruns/
+correlators/
+README.pdf
