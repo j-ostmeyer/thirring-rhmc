@@ -492,21 +492,21 @@ contains
 #ifdef MPI
       if (ip_global .eq. 0) then
 #endif
-        ixxx = int(ksize*rano(yran, idum, 1, 1, 1)) + 1
-        iyyy = int(ksize*rano(yran, idum, 1, 1, 1)) + 1
+        !  ixxx = int(ksize*rano(yran, idum, 1, 1, 1)) + 1
+        !  iyyy = int(ksize*rano(yran, idum, 1, 1, 1)) + 1
         ittt = int(ksizet*rano(yran, idum, 1, 1, 1)) + 1
 #ifdef MPI
       endif
-      call MPI_Bcast(ixxx, 1, MPI_INTEGER, 0, comm, ierr)
-      call MPI_Bcast(iyyy, 1, MPI_INTEGER, 0, comm, ierr)
+      !  call MPI_Bcast(ixxx, 1, MPI_INTEGER, 0, comm, ierr)
+      !  call MPI_Bcast(iyyy, 1, MPI_INTEGER, 0, comm, ierr)
       call MPI_Bcast(ittt, 1, MPI_INTEGER, 0, comm, ierr)
 #endif
 
-      ip_xxx = int((ixxx - 1)/ksizex_l)
-      ip_yyy = int((iyyy - 1)/ksizey_l)
+      !  ip_xxx = int((ixxx - 1)/ksizex_l)
+      !  ip_yyy = int((iyyy - 1)/ksizey_l)
       ip_ttt = int((ittt - 1)/ksizet_l)
-      ixxx_l = mod(ixxx - 1, ksizex_l) + 1
-      iyyy_l = mod(iyyy - 1, ksizey_l) + 1
+      !  ixxx_l = mod(ixxx - 1, ksizex_l) + 1
+      !  iyyy_l = mod(iyyy - 1, ksizey_l) + 1
       ittt_l = mod(ittt - 1, ksizet_l) + 1
 
       do idsource = 3, 4
@@ -515,7 +515,7 @@ contains
         x = (0.0d+0, 0.0d+0)
         !  wall source
         if (ip_ttt .eq. ip_t .and. ip_third .eq. 0) then
-          x(:, :, ittt_l, idsource) = cmplx(1.0,0.0) / ksize
+          x(:, :, ittt_l, idsource) = cmplx(1.0,0.0) / ksize2
         end if
         !  point source at fixed site, spin...
         !  if (ip_xxx .eq. ip_x .and. ip_yyy .eq. ip_y .and. ip_ttt .eq. ip_t .and. ip_third .eq. 0) then

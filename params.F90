@@ -13,6 +13,7 @@ module params
 #define KTHIRD 64
   integer, parameter :: ksize = KSIZE, ksizet = KSIZET
   integer, parameter :: kthird = KTHIRD
+  integer, parameter :: ksize2 = ksize*ksize
   integer, parameter :: kvol = ksize*ksize*ksizet
   integer, parameter :: ndiag = 25, ndiagg = 12
   integer, parameter :: Nf = 1
