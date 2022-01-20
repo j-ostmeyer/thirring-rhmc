@@ -10,7 +10,8 @@
 #GNU SETTINGS
 GNU_MPIFC    = mpif90
 GNU_FC       = gfortran
-GNU_FCFLAGS  = -O2 -Wall -ffree-line-length-none -g -mcmodel=medium
+GNU_FCFLAGS  = -O2 -Wall -ffree-line-length-none -mcmodel=medium
+#GNU_FCFLAGS  = -Og -Wall -ffree-line-length-none -g -mcmodel=medium
 #GNU_FCFLAGS  = -O0 -Wall -ffree-line-length-none -g -mcmodel=medium
 
 #INTEL SETTINGS
