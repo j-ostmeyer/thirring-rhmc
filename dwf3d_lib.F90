@@ -282,6 +282,7 @@ contains
           call coef(ut, thetat)
 !          call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)
           call meson(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)
+          call fermion(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)
           pbp_average = pbp_average + pbp
           ancgm_average = ancgm_average + ancgm
           ipbp = ipbp + 1

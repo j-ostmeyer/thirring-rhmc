@@ -438,7 +438,6 @@ contains
     real(dp) :: cpm(0:ksizet - 1)
     real(dp) :: cmm(0:ksizet - 1)
     real(dp) :: tempcpmm_r(0:ksizet - 1)
-    complex(dp) :: tempcpmm_c(0:ksizet - 1)
     !     complex x(kvol,4),x0(kvol,4),Phi(kthird,kvol,4)
     !     complex xi,gamval
     !     complex prop00(kvol,3:4,1:2),prop0L(kvol,3:4,3:4)
@@ -460,8 +459,8 @@ contains
     integer, parameter :: nsmear = 0
     !    integer, parameter :: nsmear = 10
     real(dp), parameter :: c = 0.25d0
-    integer :: iter, idsource, ksource, ismear, isign
-    integer :: it, itt, ittl, idd
+    integer :: iter, idsource, ksource, ismear
+    integer :: it, itt, ittl
 #ifdef MPI
     integer, dimension(16) :: mpireqs
     integer, dimension(12) :: mpireqs_4
@@ -807,7 +806,6 @@ contains
     integer, intent(in) :: imass
     integer, intent(in), optional :: isweep_total
     !! NOTICE : Full ksizet range.
-    real(dp) :: tempcpmm_r(0:ksizet - 1)
     complex(dp) :: tempcpmm_c(0:ksizet - 1)
     !complex(dp), intent(out) :: cferm1(0:ksizet - 1)
     !complex(dp), intent(out) :: cferm2(0:ksizet - 1)
@@ -830,7 +828,7 @@ contains
     !
     integer, parameter :: nsource = 5
     real(dp), parameter :: c = 0.25d0
-    integer :: iter, idsource, ksource, ismear, isign
+    integer :: iter, idsource, ksource, isign
     integer :: it, itt, ittl, idd
 #ifdef MPI
     integer, dimension(16) :: mpireqs
