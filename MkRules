@@ -117,9 +117,6 @@ $(TOPDIR)/comms5_sp.F90 : $(TOPDIR)/comms5.F90
 %.o : $(TOPDIR)/%.F90 .makefile.uptodate params.mod
 	$(COMPILE) -o $*.o $<
 
-gdbhook.o : $(TOPDIR)/gdbhook.F90 
-	$(FC) $(COMMS_FLAGS) -O0 -g -c $<
-
 counters.o : $(TOPDIR)/counters.F90 .makefile.uptodate
 	$(COMPILE) -o counters.o $<
 
