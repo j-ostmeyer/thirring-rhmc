@@ -487,12 +487,15 @@ contains
 #ifdef MPI
       if (ip_global .eq. 0) then
 #endif
-        !  ixxx = int(ksize*rano(yran, idum, 1, 1, 1)) + 1
-        !  iyyy = int(ksize*rano(yran, idum, 1, 1, 1)) + 1
-        !  ittt = int(ksizet*rano(yran, idum, 1, 1, 1)) + 1
+#ifdef SITE_RANDOM
+        ixxx = int(ksize*rano(yran, idum, 1, 1, 1)) + 1
+        iyyy = int(ksize*rano(yran, idum, 1, 1, 1)) + 1
+        ittt = int(ksizet*rano(yran, idum, 1, 1, 1)) + 1
+#else
         ixxx = mod(2*isweep_total + ksource*(ksize/nsource), ksize) + 1
         iyyy = mod(3*isweep_total + ksource*(ksize/nsource), ksize) + 1
         ittt = mod(5*isweep_total + ksource*(ksizet/nsource), ksizet) + 1
+#endif
 #ifdef MPI
       endif
       call MPI_Bcast(ixxx, 1, MPI_INTEGER, 0, comm, ierr)
@@ -856,8 +859,11 @@ contains
 #ifdef MPI
       if (ip_global .eq. 0) then
 #endif
-        !  ittt = int(ksizet*rano(yran, idum, 1, 1, 1)) + 1
+#ifdef SITE_RANDOM
+        ittt = int(ksizet*rano(yran, idum, 1, 1, 1)) + 1
+#else
         ittt = mod(5*isweep_total + ksource*(ksizet/nsource), ksizet) + 1
+#endif
 #ifdef MPI
       endif
       call MPI_Bcast(ittt, 1, MPI_INTEGER, 0, comm, ierr)
