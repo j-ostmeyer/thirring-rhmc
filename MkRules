@@ -238,7 +238,7 @@ else ifeq ($(SITE_RANDOM), no)
 RANDOM_FLAGS =
 
 random.o : $(TOPDIR)/random.f90 .makefile.uptodate comms.mod
-	$(COMPILE) -o random.o $<
+	$(COMPILE) -Wno-unused-dummy-argument -o random.o $<
 else
  $(error SITE_RANDOM not correctly specified (watch for whitespaces))
 endif
