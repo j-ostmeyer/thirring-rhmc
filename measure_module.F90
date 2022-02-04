@@ -437,7 +437,10 @@ contains
     !real(dp), intent(out) :: cmm(0:ksizet - 1)
     real(dp) :: cpm(0:ksizet - 1)
     real(dp) :: cmm(0:ksizet - 1)
+    complex(dp) :: cpmn(0:ksizet - 1)
+    complex(dp) :: cmmn(0:ksizet - 1)
     real(dp) :: tempcpmm_r(0:ksizet - 1)
+    complex(dp) :: tempcpmm_c(0:ksizet - 1)
     !     complex x(kvol,4),x0(kvol,4),Phi(kthird,kvol,4)
     !     complex xi,gamval
     !     complex prop00(kvol,3:4,1:2),prop0L(kvol,3:4,3:4)
@@ -446,8 +449,8 @@ contains
     complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: prop00(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
     complex(dp) :: prop0L(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
-    !    complex :: prop00n(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
-    !    complex :: prop0Ln(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
+    complex(dp) :: prop00n(ksizex_l, ksizey_l, ksizet_l, 3:4, 1:2)
+    complex(dp) :: prop0Ln(ksizex_l, ksizey_l, ksizet_l, 3:4, 3:4)
     !    complex :: cpmn(0:ksizet-1),cmmn(0:ksizet-1)
     !    real :: ps(ksizex_l, ksizey_l, ksizet_l, 2)
     real(dp) :: chim, chip
@@ -472,10 +475,9 @@ contains
     !
     cpm = 0.0d0
     cmm = 0.0d0
-    !    cpmn = (0.0,0.0)
-    !    cmmn = (0.0,0.0)
-    cferm1 = (0.0d+0, 0.0d+0)
-    cferm2 = (0.0d+0, 0.0d+0)
+    !
+    cpmn = (0.0,0.0)
+    cmmn = (0.0,0.0)
     !
     !      susceptibility
     chim = 0.0
@@ -589,44 +591,66 @@ contains
         else
           prop0L(:, :, :, idsource, 3:4) = (0.0d0, 0.0d0)
         endif
-        !
-        ! if(imass.ne.1)then
-        !  now evaluate with sign of mass reversed (not needed for hermitian mass term)
-        ! am=-am
-        !  source on domain wall at ithird=1
-        ! xi = (0.0,0.0)
-        ! if (ip_t .eq. np_t) then
-        !   xi(1, :, :, :, :) = x
-        ! end if
-        !
-        ! Phi= Mdagger*xi
-        !
-        ! call dslashd(Phi,xi,u,am,imass)
-        !#ifdef MPI
-        !call start_halo_update_4(4,Phi , 1, mpireqs_4)
-        !call MPI_Waitall(12,mpireqs_4,MPI_STATUSES_IGNORE,ierr)
-        !#else
-        !call update_halo_4(4, Phi)
-        !#endif
-        !call dslashd(xi, Phi, u, am, imass)
-        !#ifdef MPI
-        !call start_halo_update_4(4,xi, 1, mpireqs_4)
-        !call MPI_Waitall(12,mpireqs_4,MPI_STATUSES_IGNORE,ierr)
-        !#else
-        !call update_halo_4(4, xi)
-        !#endif
+        
+        if (imass .ne. 1) then
+          !  now evaluate with sign of mass reversed (not needed for hermitian mass term)
+          !
+          !   xi = x  on DW at ithird=1
+          !
+          xi = (0.0d+0, 0.0d+0)
+          if (ip_third .eq. 0) then
+            xi(1, :, :, :, :) = x
+          endif
+#ifdef MPI
+          ! Overkill....
+          call start_halo_update_5(4, xi, 1, mpireqs)
+          call complete_halo_update(mpireqs)
+#else
+          ! Overkill....
+          call update_halo_5(4, xi)
+#endif
 
-        !
-        ! xi= (MdaggerM)**-1 * Phi
-        !
-        ! call congrad(Phi,res,itercg,am,imass)
-        ! iter=iter+itercg
-        !
-        ! prop00n(:, :, :, idsource, 1:2) = xi(1, :, :, :, 1:2)
-        ! prop0Ln(:, :, :, idsource, 3:4) = xi(kthird, :, :, :, 3:4)
-        !
-        ! am=-am
-        !
+          !
+          ! Phi= Mdagger*xi
+          !
+          call dslashd(Phi, xi, u, -am, imass)
+#ifdef MPI
+          call start_halo_update_5(4, Phi, 1, mpireqs)
+          call complete_halo_update(mpireqs)
+#else
+          call update_halo_5(4, Phi)
+#endif
+          !  preconditioning (no,really)
+          call dslashd(xi, Phi, u, -am, imass)
+#ifdef MPI
+          call start_halo_update_5(4, xi, 1, mpireqs)
+          call complete_halo_update(mpireqs)
+#else
+          call update_halo_5(4, xi)
+#endif
+          !
+          ! xi= (MdaggerM)**-1 * Phi
+          !
+          call congrad(Phi, res, itercg, -am, imass)  ! solution is vector::x, here called xi
+          iter = iter + itercg
+          !
+          if (ip_third .eq. 0) then
+            prop00n(:, :, :, idsource, 1:2) = xi(1, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1:2)
+          else
+            prop00n(:, :, :, idsource, 1:2) = (0.0d0, 0.0d0)
+          endif
+
+          if (ip_third .eq. NP_THIRD - 1) then
+            prop0Ln(:, :, :, idsource, 3:4) = xi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 3:4)
+          else
+            prop0Ln(:, :, :, idsource, 3:4) = (0.0d0, 0.0d0)
+          endif
+
+        else
+          prop00n = prop00
+          prop0Ln = prop0L
+        endif
+        
         !  end loop on source Dirac index....
       enddo ! do idsource=3,4
 
@@ -648,11 +672,13 @@ contains
       !
       !  now evaluate the trace (exploiting projection)
       tempcpmm_r = 0.d0
+      tempcpmm_c = (0.d0, 0.d0)
       do it = 0, ksizet - 1
         itt = mod((ittt + it - 1), ksizet) + 1
         ittl = itt - ip_t*ksizet_l
         if (ittl .ge. 1 .and. ittl .le. ksizet_l) then
           tempcpmm_r(it) = sum(abs(prop00(:, :, ittl, 3:4, 1:2))**2)
+          tempcpmm_c(it) = sum(prop00(:, :, ittl, 3:4, 1:2)*conjg(prop00n(:, :, ittl, 3:4, 1:2)))
         endif
       enddo
 #ifdef MPI
@@ -662,31 +688,26 @@ contains
                             ip_x + ip_y*np_x + ip_t*np_x*np_y, comm_grp_third_dual, ierr)
 
         call MPI_AllReduce(MPI_In_Place, tempcpmm_r, ksizet, MPI_DOUBLE_PRECISION, MPI_SUM, comm_grp_third_dual, ierr)
+        call MPI_AllReduce(MPI_In_Place, tempcpmm_c, ksizet, MPI_DOUBLE_COMPLEX, MPI_SUM, comm_grp_third_dual, ierr)
       end block timered1
       if (ip_global .eq. 0) then
 #endif
-        !!! if(ip_global.eq.0) then
         cpm = cpm + tempcpmm_r
+        cpmn = cpmn + tempcpmm_c
 #ifdef MPI
       endif! if(ip_global.eq.0) then
 #endif
       !
-      ! if(imass.ne.1)then
-      !     do it=0,ksizet-1
-      !         itt=mod((ittt+it-1),ksizet)+1
-      !         cpmn(it)=cpmn(it) &
-      !        & + sum(prop00(:, :, itt, 3:4, 1:2)*conjg(prop00n(:, :, itt, 3:4, 1:2)))
-      !     enddo
-      ! endif
-      !
       !  next C--
       !  now evaluate the trace exploiting projection
       tempcpmm_r = 0.d0
+      tempcpmm_c = (0.d0, 0.d0)
       do it = 0, ksizet - 1
         itt = mod((ittt + it - 1), ksizet) + 1
         ittl = itt - ip_t*ksizet_l
         if (ittl .ge. 1 .and. ittl .le. ksizet_l) then
           tempcpmm_r(it) = sum(abs(prop0L(:, :, ittl, 3:4, 3:4))**2)
+          tempcpmm_c(it) = sum(prop0L(:, :, ittl, 3:4, 3:4)*conjg(prop0Ln(:, :, ittl, 3:4, 3:4)))
         endif
       enddo
 #ifdef MPI
@@ -696,12 +717,13 @@ contains
                             ip_x + ip_y*np_x + ip_t*np_x*np_y, comm_grp_third_dual, ierr)
 
         call MPI_AllReduce(MPI_In_Place, tempcpmm_r, ksizet, MPI_DOUBLE_PRECISION, MPI_SUM, comm_grp_third_dual, ierr)
+        call MPI_AllReduce(MPI_In_Place, tempcpmm_c, ksizet, MPI_DOUBLE_COMPLEX, MPI_SUM, comm_grp_third_dual, ierr)
       end block timered2
 
       if (ip_global .eq. 0) then
 #endif
-        !!! if(ip_global.eq.0) then
         cmm = cmm + tempcpmm_r
+        cmmn = cmmn + tempcpmm_c
 #ifdef MPI
       endif
 #endif
@@ -713,29 +735,15 @@ contains
       cpm(it) = cpm(it)/nsource
       cmm(it) = cmm(it)/nsource
       !  Cf. (54) of 1507.07717
+      cpmn(it) = cpmn(it)/nsource
+      cmmn(it) = cmmn(it)/nsource
+      !  Cf. (60) of 1507.07717
       chim = chim + 2*(cpm(it) + cmm(it))
     enddo
 
 #ifdef MPI
     if (ip_global .eq. 0) then
 #endif
-      !     if(imass.ne.1)then
-      !       if(imass.eq.3)then
-      !         do it=0,ksizet-1
-      !           cpmn(it)=cpmn(it)/nsource
-      !           cmmn(it)=cmmn(it)/nsource
-      !  Cf. (54),(61) of 1507.07717
-      !           chip=chip-2*(cpmn(it)-cmmn(it))
-      !         enddo
-      !       else
-      !         do it=0,ksizet-1
-      !           cpmn(it)=cpmn(it)/nsource
-      !           cmmn(it)=cmmn(it)/nsource
-      !  Cf. (64),(65) of 1507.07717
-      !           chip=chip-2*(cpm(it)-cmm(it))
-      !         enddo
-      !       endif
-      !     endif
         open (unit=302, file='fort.302', action='write', position='append')
         if (present(isweep_total)) then
           do it = 0, ksizet - 1
@@ -747,6 +755,17 @@ contains
           enddo
         endif
         close (302)
+        open (unit=320, file='fort.320', action='write', position='append')
+        if (present(isweep_total)) then
+          do it = 0, ksizet - 1
+             write (320, *) isweep_total, it, real(cpmn(it)), aimag(cpmn(it)), real(cmmn(it)), aimag(cpmn(it))
+          enddo
+        else
+          do it = 0, ksizet-1
+             write (320, *) it, real(cpmn(it)), aimag(cpmn(it)), real(cmmn(it)), aimag(cpmn(it))
+          enddo
+        endif
+        close (320)
         open (unit=400, file='fort.400', action='write', position='append')
         if (present(isweep_total)) then
              write (400, *) isweep_total, chim
@@ -842,10 +861,6 @@ contains
     iter = 0
     itercg = 0
     !
-    cpm = 0.0d0
-    cmm = 0.0d0
-    !    cpmn = (0.0,0.0)
-    !    cmmn = (0.0,0.0)
     cferm1 = (0.0d+0, 0.0d+0)
     cferm2 = (0.0d+0, 0.0d+0)
     !
