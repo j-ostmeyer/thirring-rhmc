@@ -26,4 +26,5 @@ test_dirac_sunbird/
 test_walltime/
 longruns/
 correlators/
+test_c_tilde/
 README.pdf
