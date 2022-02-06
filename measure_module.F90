@@ -758,14 +758,25 @@ contains
         open (unit=320, file='fort.320', action='write', position='append')
         if (present(isweep_total)) then
           do it = 0, ksizet - 1
-             write (320, *) isweep_total, it, real(cpmn(it)), aimag(cpmn(it)), real(cmmn(it)), aimag(cpmn(it))
+             write (320, *) isweep_total, it, real(cpmn(it)), aimag(cpmn(it))
           enddo
         else
           do it = 0, ksizet-1
-             write (320, *) it, real(cpmn(it)), aimag(cpmn(it)), real(cmmn(it)), aimag(cpmn(it))
+             write (320, *) it, real(cpmn(it)), aimag(cpmn(it))
           enddo
         endif
         close (320)
+        open (unit=321, file='fort.321', action='write', position='append')
+        if (present(isweep_total)) then
+          do it = 0, ksizet - 1
+             write (321, *) isweep_total, it, real(cmmn(it)), aimag(cmmn(it))
+          enddo
+        else
+          do it = 0, ksizet-1
+             write (321, *) it, real(cmmn(it)), aimag(cmmn(it))
+          enddo
+        endif
+        close (321)
         open (unit=400, file='fort.400', action='write', position='append')
         if (present(isweep_total)) then
              write (400, *) isweep_total, chim
