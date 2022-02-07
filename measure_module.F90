@@ -661,7 +661,17 @@ contains
 
       call MPI_Barrier(comm_grp_third,ierr)
 
+      call MPI_Bcast(prop00n, size(prop00n), MPI_DOUBLE_COMPLEX, &
+                     0, comm_grp_third, ierr)
+
+      call MPI_Barrier(comm_grp_third,ierr)
+
       call MPI_Bcast(prop0L, size(prop0L), MPI_DOUBLE_COMPLEX, &
+                     NP_THIRD - 1, comm_grp_third, ierr)
+
+      call MPI_Barrier(comm_grp_third,ierr)
+
+      call MPI_Bcast(prop0Ln, size(prop0Ln), MPI_DOUBLE_COMPLEX, &
                      NP_THIRD - 1, comm_grp_third, ierr)
 
       call MPI_Barrier(MPI_COMM_WORLD, ierr)
