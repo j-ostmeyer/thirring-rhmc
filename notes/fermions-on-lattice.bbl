@@ -1,0 +1,475 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.1 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated as
+% required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+\datalist[entry]{none/global//global/global}
+  \entry{Intro_chiral_sym}{article}{}
+    \name{author}{1}{}{%
+      {{hash=CS}{%
+         family={Chandrasekharan},
+         familyi={C\bibinitperiod},
+         given={S},
+         giveni={S},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Elsevier BV}%
+    }
+    \strng{namehash}{CS1}
+    \strng{fullhash}{CS1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb 10.1016/j.ppnp.2004.05.003
+    \endverb
+    \field{issn}{0146-6410}
+    \field{number}{2}
+    \field{pages}{373–418}
+    \field{title}{An introduction to chiral symmetry on the lattice}
+    \verb{url}
+    \verb http://dx.doi.org/10.1016/j.ppnp.2004.05.003
+    \endverb
+    \field{volume}{53}
+    \field{journaltitle}{Progress in Particle and Nuclear Physics}
+    \field{year}{2004}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{NIELSEN1981219}{article}{}
+    \name{author}{2}{}{%
+      {{hash=NH}{%
+         family={Nielsen},
+         familyi={N\bibinitperiod},
+         given={H.B.},
+         giveni={H\bibinitperiod},
+      }}%
+      {{hash=NM}{%
+         family={Ninomiya},
+         familyi={N\bibinitperiod},
+         given={M.},
+         giveni={M\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{NHNM1}
+    \strng{fullhash}{NHNM1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb https://doi.org/10.1016/0370-2693(81)91026-1
+    \endverb
+    \field{issn}{0370-2693}
+    \field{number}{2}
+    \field{pages}{219\bibrangedash 223}
+    \field{title}{A no-go theorem for regularizing chiral fermions}
+    \verb{url}
+    \verb https://www.sciencedirect.com/science/article/pii/0370269381910261
+    \endverb
+    \field{volume}{105}
+    \field{journaltitle}{Physics Letters B}
+    \field{year}{1981}
+  \endentry
+
+  \entry{Gattringer:2010zz}{book}{}
+    \name{author}{2}{}{%
+      {{hash=GC}{%
+         family={Gattringer},
+         familyi={G\bibinitperiod},
+         given={Christof},
+         giveni={C\bibinitperiod},
+      }}%
+      {{hash=LCB}{%
+         family={Lang},
+         familyi={L\bibinitperiod},
+         given={Christian\bibnamedelima B.},
+         giveni={C\bibinitperiod\bibinitdelim B\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Springer}%
+    }
+    \strng{namehash}{GCLCB1}
+    \strng{fullhash}{GCLCB1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb 10.1007/978-3-642-01850-3
+    \endverb
+    \field{isbn}{978-3-642-01849-7, 978-3-642-01850-3}
+    \field{title}{{Quantum chromodynamics on the lattice}}
+    \field{volume}{788}
+    \list{location}{1}{%
+      {Berlin}%
+    }
+    \field{year}{2010}
+  \endentry
+
+  \entry{twisted_mass_2000}{article}{}
+    \name{author}{4}{}{%
+      {{hash=FR}{%
+         family={Frezzotti},
+         familyi={F\bibinitperiod},
+         given={Roberto},
+         giveni={R\bibinitperiod},
+      }}%
+      {{hash=GPA}{%
+         family={Grassi},
+         familyi={G\bibinitperiod},
+         given={Pietro\bibnamedelima Antonio},
+         giveni={P\bibinitperiod\bibinitdelim A\bibinitperiod},
+      }}%
+      {{hash=SS}{%
+         family={Sint},
+         familyi={S\bibinitperiod},
+         given={Stefan},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=WP}{%
+         family={Weisz},
+         familyi={W\bibinitperiod},
+         given={Peter},
+         giveni={P\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Elsevier BV}%
+    }
+    \strng{namehash}{FRGPASSWP1}
+    \strng{fullhash}{FRGPASSWP1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb 10.1016/s0920-5632(00)91852-8
+    \endverb
+    \field{issn}{0920-5632}
+    \field{pages}{941–946}
+    \field{title}{{A local formulation of lattice QCD without unphysical
+  fermion zero modes}}
+    \verb{url}
+    \verb http://dx.doi.org/10.1016/S0920-5632(00)91852-8
+    \endverb
+    \field{volume}{83–84}
+    \field{journaltitle}{Nuclear Physics B - Proceedings Supplements}
+    \field{year}{2000}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{Ginsparg_Wilson}{article}{}
+    \name{author}{2}{}{%
+      {{hash=GPH}{%
+         family={Ginsparg},
+         familyi={G\bibinitperiod},
+         given={Paul\bibnamedelima H.},
+         giveni={P\bibinitperiod\bibinitdelim H\bibinitperiod},
+      }}%
+      {{hash=WKG}{%
+         family={Wilson},
+         familyi={W\bibinitperiod},
+         given={Kenneth\bibnamedelima G.},
+         giveni={K\bibinitperiod\bibinitdelim G\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {American Physical Society}%
+    }
+    \strng{namehash}{GPHWKG1}
+    \strng{fullhash}{GPHWKG1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb 10.1103/PhysRevD.25.2649
+    \endverb
+    \field{issue}{10}
+    \field{pages}{2649\bibrangedash 2657}
+    \field{title}{A remnant of chiral symmetry on the lattice}
+    \verb{url}
+    \verb https://link.aps.org/doi/10.1103/PhysRevD.25.2649
+    \endverb
+    \field{volume}{25}
+    \field{journaltitle}{Phys. Rev. D}
+    \field{year}{1982}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{overlap_1998}{article}{}
+    \name{author}{1}{}{%
+      {{hash=NH}{%
+         family={Neuberger},
+         familyi={N\bibinitperiod},
+         given={Herbert},
+         giveni={H\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Elsevier BV}%
+    }
+    \strng{namehash}{NH1}
+    \strng{fullhash}{NH1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb 10.1016/s0370-2693(97)01368-3
+    \endverb
+    \field{issn}{0370-2693}
+    \field{number}{1–2}
+    \field{pages}{141–144}
+    \field{title}{Exactly massless quarks on the lattice}
+    \verb{url}
+    \verb http://dx.doi.org/10.1016/S0370-2693(97)01368-3
+    \endverb
+    \field{volume}{417}
+    \field{journaltitle}{Physics Letters B}
+    \field{year}{1998}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{kennedy2012algorithms}{misc}{}
+    \name{author}{1}{}{%
+      {{hash=KAD}{%
+         family={Kennedy},
+         familyi={K\bibinitperiod},
+         given={A.\bibnamedelima D.},
+         giveni={A\bibinitperiod\bibinitdelim D\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{KAD1}
+    \strng{fullhash}{KAD1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{eprint}
+    \verb hep-lat/0607038
+    \endverb
+    \field{title}{{Algorithms for Dynamical Fermions}}
+    \field{eprinttype}{arXiv}
+    \field{eprintclass}{hep-lat}
+    \field{year}{2012}
+  \endentry
+
+  \entry{domain_walls_1992}{article}{}
+    \name{author}{1}{}{%
+      {{hash=KDB}{%
+         family={Kaplan},
+         familyi={K\bibinitperiod},
+         given={David\bibnamedelima B.},
+         giveni={D\bibinitperiod\bibinitdelim B\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Elsevier BV}%
+    }
+    \strng{namehash}{KDB1}
+    \strng{fullhash}{KDB1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb 10.1016/0370-2693(92)91112-m
+    \endverb
+    \field{issn}{0370-2693}
+    \field{number}{3–4}
+    \field{pages}{342–347}
+    \field{title}{A method for simulating chiral fermions on the lattice}
+    \verb{url}
+    \verb http://dx.doi.org/10.1016/0370-2693(92)91112-M
+    \endverb
+    \field{volume}{288}
+    \field{journaltitle}{Physics Letters B}
+    \field{year}{1992}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{Neuberger_DW_overlap}{article}{}
+    \name{author}{1}{}{%
+      {{hash=NH}{%
+         family={Neuberger},
+         familyi={N\bibinitperiod},
+         given={Herbert},
+         giveni={H\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {American Physical Society}%
+    }
+    \strng{namehash}{NH1}
+    \strng{fullhash}{NH1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb 10.1103/PhysRevD.57.5417
+    \endverb
+    \field{issue}{9}
+    \field{pages}{5417\bibrangedash 5433}
+    \field{title}{Vectorlike gauge theories with almost massless fermions on
+  the lattice}
+    \verb{url}
+    \verb https://link.aps.org/doi/10.1103/PhysRevD.57.5417
+    \endverb
+    \field{volume}{57}
+    \field{journaltitle}{Phys. Rev. D}
+    \field{year}{1998}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{SHAMIR199390}{article}{}
+    \name{author}{1}{}{%
+      {{hash=SY}{%
+         family={Shamir},
+         familyi={S\bibinitperiod},
+         given={Yigal},
+         giveni={Y\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{SY1}
+    \strng{fullhash}{SY1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb https://doi.org/10.1016/0550-3213(93)90162-I
+    \endverb
+    \field{issn}{0550-3213}
+    \field{number}{1}
+    \field{pages}{90\bibrangedash 106}
+    \field{title}{Chiral fermions from lattice boundaries}
+    \verb{url}
+    \verb https://www.sciencedirect.com/science/article/pii/055032139390162I
+    \endverb
+    \field{volume}{406}
+    \field{journaltitle}{Nuclear Physics B}
+    \field{year}{1993}
+  \endentry
+
+  \entry{BROWER2006191}{article}{}
+    \name{author}{3}{}{%
+      {{hash=BR}{%
+         family={Brower},
+         familyi={B\bibinitperiod},
+         given={R.C.},
+         giveni={R\bibinitperiod},
+      }}%
+      {{hash=NH}{%
+         family={Neff},
+         familyi={N\bibinitperiod},
+         given={H.},
+         giveni={H\bibinitperiod},
+      }}%
+      {{hash=OK}{%
+         family={Orginos},
+         familyi={O\bibinitperiod},
+         given={K.},
+         giveni={K\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{BRNHOK1}
+    \strng{fullhash}{BRNHOK1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb https://doi.org/10.1016/j.nuclphysbps.2006.01.047
+    \endverb
+    \field{issn}{0920-5632}
+    \field{note}{Proceedings of the Workshop on Computational Hadron Physics}
+    \field{number}{1}
+    \field{pages}{191\bibrangedash 198}
+    \field{title}{{Möbius Fermions}}
+    \verb{url}
+    \verb https://www.sciencedirect.com/science/article/pii/S0920563206000296
+    \endverb
+    \field{volume}{153}
+    \field{journaltitle}{Nuclear Physics B - Proceedings Supplements}
+    \field{year}{2006}
+  \endentry
+
+  \entry{staggered_fermions}{article}{}
+    \name{author}{2}{}{%
+      {{hash=KJ}{%
+         family={Kogut},
+         familyi={K\bibinitperiod},
+         given={John},
+         giveni={J\bibinitperiod},
+      }}%
+      {{hash=SL}{%
+         family={Susskind},
+         familyi={S\bibinitperiod},
+         given={Leonard},
+         giveni={L\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {American Physical Society}%
+    }
+    \strng{namehash}{KJSL1}
+    \strng{fullhash}{KJSL1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb 10.1103/PhysRevD.11.395
+    \endverb
+    \field{issue}{2}
+    \field{pages}{395\bibrangedash 408}
+    \field{title}{{Hamiltonian formulation of Wilson's lattice gauge theories}}
+    \verb{url}
+    \verb https://link.aps.org/doi/10.1103/PhysRevD.11.395
+    \endverb
+    \field{volume}{11}
+    \field{journaltitle}{Phys. Rev. D}
+    \field{year}{1975}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{SLAC_fermions}{article}{}
+    \name{author}{3}{}{%
+      {{hash=DSD}{%
+         family={Drell},
+         familyi={D\bibinitperiod},
+         given={Sidney\bibnamedelima D.},
+         giveni={S\bibinitperiod\bibinitdelim D\bibinitperiod},
+      }}%
+      {{hash=WM}{%
+         family={Weinstein},
+         familyi={W\bibinitperiod},
+         given={Marvin},
+         giveni={M\bibinitperiod},
+      }}%
+      {{hash=YS}{%
+         family={Yankielowicz},
+         familyi={Y\bibinitperiod},
+         given={Shimon},
+         giveni={S\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {American Physical Society}%
+    }
+    \strng{namehash}{DSDWMYS1}
+    \strng{fullhash}{DSDWMYS1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb 10.1103/PhysRevD.14.1627
+    \endverb
+    \field{issue}{6}
+    \field{pages}{1627\bibrangedash 1647}
+    \field{title}{Strong-coupling field theories. II. Fermions and gauge fields
+  on a lattice}
+    \verb{url}
+    \verb https://link.aps.org/doi/10.1103/PhysRevD.14.1627
+    \endverb
+    \field{volume}{14}
+    \field{journaltitle}{Phys. Rev. D}
+    \field{year}{1976}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+\enddatalist
+\endinput

@@ -1,0 +1,65 @@
+This is BibTeX, Version 0.99d (TeX Live 2020/W32TeX)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: fermions-on-lattice.aux
+The style file: biblatex.bst
+Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
+Reallocated global_strs (elt_size=200001) to 20 items from 10.
+Reallocated glb_str_end (elt_size=4) to 20 items from 10.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Database file #1: fermions-on-lattice-blx.bib
+Database file #2: bibliography.bib
+Biblatex version: 3.13
+Reallocated wiz_functions (elt_size=4) to 9000 items from 6000.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+You've used 14 entries,
+            6365 wiz_defined-function locations,
+            1323 strings with 11787 characters,
+and the built_in function-call counts, 75439 in all, are:
+= -- 5064
+> -- 1728
+< -- 428
++ -- 1827
+- -- 759
+* -- 5215
+:= -- 7561
+add.period$ -- 0
+call.type$ -- 14
+change.case$ -- 259
+chr.to.int$ -- 58
+cite$ -- 26
+duplicate$ -- 7595
+empty$ -- 7005
+format.name$ -- 797
+if$ -- 15796
+int.to.chr$ -- 0
+int.to.str$ -- 38
+missing$ -- 0
+newline$ -- 472
+num.names$ -- 688
+pop$ -- 4384
+preamble$ -- 1
+purify$ -- 331
+quote$ -- 0
+skip$ -- 2662
+stack$ -- 0
+substring$ -- 8435
+swap$ -- 2081
+text.length$ -- 306
+text.prefix$ -- 1
+top$ -- 1
+type$ -- 464
+warning$ -- 0
+while$ -- 984
+width$ -- 0
+write$ -- 459
