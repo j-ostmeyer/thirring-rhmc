@@ -49,5 +49,137 @@
     \field{year}{2016}
     \warn{\item Invalid format of field 'month'}
   \endentry
+
+  \entry{Ginsparg_Wilson}{article}{}
+    \name{author}{2}{}{%
+      {{hash=GPH}{%
+         family={Ginsparg},
+         familyi={G\bibinitperiod},
+         given={Paul\bibnamedelima H.},
+         giveni={P\bibinitperiod\bibinitdelim H\bibinitperiod},
+      }}%
+      {{hash=WKG}{%
+         family={Wilson},
+         familyi={W\bibinitperiod},
+         given={Kenneth\bibnamedelima G.},
+         giveni={K\bibinitperiod\bibinitdelim G\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {American Physical Society}%
+    }
+    \strng{namehash}{GPHWKG1}
+    \strng{fullhash}{GPHWKG1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb 10.1103/PhysRevD.25.2649
+    \endverb
+    \field{issue}{10}
+    \field{pages}{2649\bibrangedash 2657}
+    \field{title}{A remnant of chiral symmetry on the lattice}
+    \verb{url}
+    \verb https://link.aps.org/doi/10.1103/PhysRevD.25.2649
+    \endverb
+    \field{volume}{25}
+    \field{journaltitle}{Phys. Rev. D}
+    \field{year}{1982}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{Gavai_2009}{article}{}
+    \name{author}{2}{}{%
+      {{hash=GRV}{%
+         family={Gavai},
+         familyi={G\bibinitperiod},
+         given={R.\bibnamedelima V.},
+         giveni={R\bibinitperiod\bibinitdelim V\bibinitperiod},
+      }}%
+      {{hash=SS}{%
+         family={Sharma},
+         familyi={S\bibinitperiod},
+         given={Sayantan},
+         giveni={S\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {American Physical Society ({APS})}%
+    }
+    \strng{namehash}{GRVSS1}
+    \strng{fullhash}{GRVSS1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb 10.1103/physrevd.79.074502
+    \endverb
+    \field{number}{7}
+    \field{title}{Thermodynamics of free domain wall fermions}
+    \verb{url}
+    \verb https://doi.org/10.1103%2Fphysrevd.79.074502
+    \endverb
+    \field{volume}{79}
+    \field{journaltitle}{Physical Review D}
+    \field{year}{2009}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{Peskin:1995ev}{book}{}
+    \name{author}{2}{}{%
+      {{hash=PME}{%
+         family={Peskin},
+         familyi={P\bibinitperiod},
+         given={Michael\bibnamedelima E.},
+         giveni={M\bibinitperiod\bibinitdelim E\bibinitperiod},
+      }}%
+      {{hash=SDV}{%
+         family={Schroeder},
+         familyi={S\bibinitperiod},
+         given={Daniel\bibnamedelima V.},
+         giveni={D\bibinitperiod\bibinitdelim V\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Addison-Wesley}%
+    }
+    \strng{namehash}{PMESDV1}
+    \strng{fullhash}{PMESDV1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{isbn}{978-0-201-50397-5}
+    \field{title}{{An Introduction to quantum field theory}}
+    \list{location}{1}{%
+      {Reading, USA}%
+    }
+    \field{year}{1995}
+  \endentry
+
+  \entry{worthy2021}{misc}{}
+    \name{author}{2}{}{%
+      {{hash=WJ}{%
+         family={Worthy},
+         familyi={W\bibinitperiod},
+         given={Jude},
+         giveni={J\bibinitperiod},
+      }}%
+      {{hash=HS}{%
+         family={Hands},
+         familyi={H\bibinitperiod},
+         given={Simon},
+         giveni={S\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{WJHS1}
+    \strng{fullhash}{WJHS1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{eprint}
+    \verb 2112.02988
+    \endverb
+    \field{title}{{Properties of Overlap and Domain Wall Fermions in the 2+1D
+  Thirring Model}}
+    \field{eprinttype}{arXiv}
+    \field{eprintclass}{hep-lat}
+    \field{year}{2021}
+  \endentry
 \enddatalist
 \endinput
