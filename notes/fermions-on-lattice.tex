@@ -27,12 +27,14 @@
 \DeclareMathOperator{\tr}{Tr}
 \DeclareMathOperator{\asinh}{asinh}
 \DeclareMathOperator{\acosh}{acosh}
+\DeclareMathOperator{\atanh}{atanh}
 \DeclareMathOperator{\ord}{\mathcal{O}}
 \newcommand{\matr}[2]{\left(\begin{array}{#1}#2\end{array}\right)}
 \newcommand{\del}[2]{\ensuremath{\frac{\partial #1}{\partial#2}}}
 \newcommand{\eto}[1]{\ensuremath{\mathrm{e}^{#1}}}
 \newcommand{\md}{\ensuremath{\mathrm{d}}}
 \newcommand{\mD}{\ensuremath{\mathcal{D}}}
+\newcommand{\deriv}[1]{\ensuremath{\frac{\md}{\md #1}}}
 \newcommand{\ordnung}[1]{\ensuremath{\ord\left(#1\right)}}
 \newcommand{\erwartung}[1]{\ensuremath{\left\langle#1\right\rangle}}
 
@@ -229,12 +231,54 @@
 	There are no branch cuts.
 	
 	\section{SLAC fermions}
-	SLAC fermions (named after the Stanford Linear Accelerator Center) are a means to avoid the fermion doubling problem~\cite{SLAC_fermions}. In fact, they restore the exact continuum dispersion relation within the first Brillouin zone by using a maximally de-localised derivative. In gauge theories this leads to non-local interactions making it very complicated to guarantee gauge invariance.
+	SLAC fermions (named after the Stanford Linear Accelerator Center) are a means to avoid the fermion doubling problem~\cite{SLAC_fermions}. In fact, they restore the exact continuum dispersion relation within the first Brillouin zone by using a maximally de-localised derivative.
+	
+	The na\"ive derivative
+	\begin{align}
+		\deriv x f(x) &= \lim_{a\rightarrow0} \frac{f(x+a)-f(x-a)}{2a}
+	\end{align}
+	of a function $f$ is replaced by
+	\begin{align}
+		\deriv x f(x) &= \lim_{a\rightarrow0} \frac1a\sum_{n\ge1} \frac{(-1)^{n+1}}{n}\left(f(x+na)-f(x-na)\right)\,.
+	\end{align}
+
+	The optimal dispersion relation comes with the price of a high computational cost.
+	Moreover in gauge theories the de-localisation leads to non-local interactions making it very complicated to guarantee gauge invariance.
 	
 	SLAC fermions do not contradict the \nnt\ because they explicitly violate locality.
 	
 	\subsection{Poles and branch cuts}
 	This formulation has the same single pole at $z=-m$ as the continuum version, up to the $2\pi\im$-periodicity between the Brillouin zones.
+	
+	There are no branch cuts.
+	
+	\section{Stacey fermions}
+	Stacey fermions are a means to avoid the fermion doubling problem~\cite{Stacey_1982}. Similarly to SLAC fermions they de-localise the fields in order to obtain a more favourable dispersion relation.
+	
+	The initial fields $\psi$ are replaced by a version $\tilde\psi$ smeared out over the $d$-dimensional hypercube
+	\begin{align}
+		\tilde{\psi}_x &\coloneqq \sum_{\mu\in\{0,\pm1\}^d}\frac{1}{2^{d+||\mu||_1}}\,\psi_{x+a\mu}\,,\\
+		\partial_\nu\tilde{\psi}_x &\coloneqq \sum_{\mu\in\{0,\pm1\}^d,\,\mu\perp\nu}\frac{1}{2^{d-1+||\mu||_1}}\,\frac1a \left(\psi_{x+a\mu+a\nu}-\psi_{x+a\mu-a\nu}\right)
+	\end{align}
+	and the action is evaluated on the $\tilde\psi$-fields.
+	As a result, the inverse fermion propagator takes the form
+	\begin{align}
+		C^{-1}(p) &= m + \frac{2\im}{a}\sum_\mu \gamma_\mu\tan\left(\frac{p_\mu a}{2}\right)
+	\end{align}
+	where the unphysical doublers at $pa=\pi$ obtain infinite mass and decouple.
+	
+	In gauge theories the de-localisation leads to non-local interactions making it very complicated to guarantee gauge invariance.
+	
+	As opposed to SLAC fermions, Stacey fermions do not reproduce the exact continuum dispersion relation. Instead they maintain some locality (the smearing operator itself is local, but its inverse that has to be included in the Dirac operator is not) allowing for a more stable and computationally efficient evaluation.
+	
+	Stacey fermions do not contradict the \nnt\ because they explicitly violate locality.
+	
+	\subsection{Poles and branch cuts}
+	This formulation has only one pole at
+	\begin{align}
+		z &= -2\atanh\frac m2\,,
+	\end{align}
+	the doubler is therefore eliminated completely.
 	
 	There are no branch cuts.
 	

@@ -461,14 +461,45 @@
     \endverb
     \field{issue}{6}
     \field{pages}{1627\bibrangedash 1647}
-    \field{title}{Strong-coupling field theories. II. Fermions and gauge fields
-  on a lattice}
+    \field{title}{{Strong-coupling field theories. II. Fermions and gauge
+  fields on a lattice}}
     \verb{url}
     \verb https://link.aps.org/doi/10.1103/PhysRevD.14.1627
     \endverb
     \field{volume}{14}
     \field{journaltitle}{Phys. Rev. D}
     \field{year}{1976}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{Stacey_1982}{article}{}
+    \name{author}{1}{}{%
+      {{hash=SR}{%
+         family={Stacey},
+         familyi={S\bibinitperiod},
+         given={Richard},
+         giveni={R\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {American Physical Society}%
+    }
+    \strng{namehash}{SR1}
+    \strng{fullhash}{SR1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb 10.1103/PhysRevD.26.468
+    \endverb
+    \field{issue}{2}
+    \field{pages}{468\bibrangedash 472}
+    \field{title}{Eliminating lattice fermion doubling}
+    \verb{url}
+    \verb https://link.aps.org/doi/10.1103/PhysRevD.26.468
+    \endverb
+    \field{volume}{26}
+    \field{journaltitle}{Phys. Rev. D}
+    \field{year}{1982}
     \warn{\item Invalid format of field 'month'}
   \endentry
 \enddatalist
