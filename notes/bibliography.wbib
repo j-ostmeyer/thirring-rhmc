@@ -1,0 +1,247 @@
+journal name=hands_thirring2016
+	|title="Towards critical physics in 2+1d with U(2N )-invariant fermions"
+	|volume=2016
+	|ISSN=1029-8479
+	|url=http://dx.doi.org/10.1007/JHEP11(2016)015
+	|DOI=10.1007/jhep11(2016)015
+	|number=11
+	|journal=Journal of High Energy Physics
+	|publisher=Springer Science and Business Media LLC
+	|author=Hands, Simon
+	|year=2016
+	|month=Nov 
+
+@miscworthy2021
+	|title="Properties of Overlap and Domain Wall Fermions in the 2+1D Thirring Model", 
+	|author=Jude Worthy and Simon Hands
+	|year=2021
+	|eprint=2112.02988
+	|archivePrefix=arXiv
+	|primaryClass=hep-lat
+
+
+@bookGattringer:2010zz
+	|author = "Gattringer, Christof and Lang, Christian B."
+	|title = "Quantum chromodynamics on the lattice"
+	|doi = "10.1007/978-3-642-01850-3"
+	|isbn = "978-3-642-01849-7, 978-3-642-01850-3"
+	|publisher = "Springer"
+	|address = "Berlin"
+	|volume = "788"
+	|year = "2010"
+
+
+@bookPeskin:1995ev
+	|author = "Peskin, Michael E. and Schroeder, Daniel V."
+	|title = "An Introduction to quantum field theory"
+	|isbn = "978-0-201-50397-5"
+	|publisher = "Addison-Wesley"
+	|address = "Reading, USA"
+	|year = "1995"
+
+
+journal name=Intro_chiral_sym
+	|title=An introduction to chiral symmetry on the lattice
+	|volume=53
+	|ISSN=0146-6410
+	|url=http://dx.doi.org/10.1016/j.ppnp.2004.05.003
+	|DOI=10.1016/j.ppnp.2004.05.003
+	|number=2
+	|journal=Progress in Particle and Nuclear Physics
+	|publisher=Elsevier BV
+	|author=Chandrasekharan, S
+	|year=2004
+	|month=Oct
+	|pages=373–418 
+
+journal name=NIELSEN1981219
+	|title = A no-go theorem for regularizing chiral fermions
+	|journal = Physics Letters B
+	|volume = 105
+	|number = 2
+	|pages = 219-223
+	|year = 1981
+	|issn = 0370-2693
+	|doi = https://doi.org/10.1016/0370-2693(81)91026-1
+	|url = https://www.sciencedirect.com/science/article/pii/0370269381910261
+	|author = H.B. Nielsen and M. Ninomiya
+
+
+journal name=Wilson_74
+	|title = Confinement of quarks
+	|author = Wilson, Kenneth G.
+	|journal = Phys. Rev. D
+	|volume = 10
+	|issue = 8
+	|pages = 2445--2459
+	|numpages = 0
+	|year = 1974
+	|month = Oct
+	|publisher = American Physical Society
+	|doi = 10.1103/PhysRevD.10.2445
+	|url = https://link.aps.org/doi/10.1103/PhysRevD.10.2445
+
+
+journal name=Ginsparg_Wilson
+	|title = A remnant of chiral symmetry on the lattice
+	|author = Ginsparg, Paul H. and Wilson, Kenneth G.
+	|journal = Phys. Rev. D
+	|volume = 25
+	|issue = 10
+	|pages = 2649--2657
+	|numpages = 0
+	|year = 1982
+	|month = May
+	|publisher = American Physical Society
+	|doi = 10.1103/PhysRevD.25.2649
+	|url = https://link.aps.org/doi/10.1103/PhysRevD.25.2649
+
+
+journal name=overlap_1998
+	|title=Exactly massless quarks on the lattice
+	|volume=417
+	|ISSN=0370-2693
+	|url=http://dx.doi.org/10.1016/S0370-2693(97)01368-3
+	|DOI=10.1016/s0370-2693(97)01368-3
+	|number=1–2
+	|journal=Physics Letters B
+	|publisher=Elsevier BV
+	|author=Neuberger, Herbert
+	|year=1998
+	|month=Jan
+	|pages=141–144 
+
+@misckennedy2012algorithms
+	|title="Algorithms for Dynamical Fermions", 
+	|author=A. D. Kennedy
+	|year=2012
+	|eprint=hep-lat/0607038
+	|archivePrefix=arXiv
+	|primaryClass=hep-lat
+
+
+journal name=Neuberger_DW_overlap
+	|title = Vectorlike gauge theories with almost massless fermions on the lattice
+	|author = Neuberger, Herbert
+	|journal = Phys. Rev. D
+	|volume = 57
+	|issue = 9
+	|pages = 5417--5433
+	|numpages = 0
+	|year = 1998
+	|month = May
+	|publisher = American Physical Society
+	|doi = 10.1103/PhysRevD.57.5417
+	|url = https://link.aps.org/doi/10.1103/PhysRevD.57.5417
+
+
+journal name=domain_walls_1992
+	|title=A method for simulating chiral fermions on the lattice
+	|volume=288
+	|ISSN=0370-2693
+	|url=http://dx.doi.org/10.1016/0370-2693(92)91112-M
+	|DOI=10.1016/0370-2693(92)91112-m
+	|number=3–4
+	|journal=Physics Letters B
+	|publisher=Elsevier BV
+	|author=Kaplan, David B.
+	|year=1992
+	|month=Aug
+	|pages=342–347 
+
+journal name=SHAMIR199390
+	|title = Chiral fermions from lattice boundaries
+	|journal = Nuclear Physics B
+	|volume = 406
+	|number = 1
+	|pages = 90-106
+	|year = 1993
+	|issn = 0550-3213
+	|doi = https://doi.org/10.1016/0550-3213(93)90162-I
+	|url = https://www.sciencedirect.com/science/article/pii/055032139390162I
+	|author = Yigal Shamir
+
+
+journal name=BROWER2006191
+	|title = "Möbius Fermions"
+	|journal = Nuclear Physics B - Proceedings Supplements
+	|volume = 153
+	|number = 1
+	|pages = 191-198
+	|year = 2006
+	|note = Proceedings of the Workshop on Computational Hadron Physics
+	|issn = 0920-5632
+	|doi = https://doi.org/10.1016/j.nuclphysbps.2006.01.047
+	|url = https://www.sciencedirect.com/science/article/pii/S0920563206000296
+	|author = R.C. Brower and H. Neff and K. Orginos
+
+
+journal name=twisted_mass_2000
+	|title="A local formulation of lattice QCD without unphysical fermion zero modes"
+	|volume=83–84
+	|ISSN=0920-5632
+	|url=http://dx.doi.org/10.1016/S0920-5632(00)91852-8
+	|DOI=10.1016/s0920-5632(00)91852-8
+	|journal=Nuclear Physics B - Proceedings Supplements
+	|publisher=Elsevier BV
+	|author=Frezzotti, Roberto and Grassi, Pietro Antonio and Sint, Stefan and Weisz, Peter
+	|year=2000
+	|month=Apr
+	|pages=941–946 
+
+journal name=staggered_fermions
+	|title = "Hamiltonian formulation of Wilson's lattice gauge theories"
+	|author = Kogut, John and Susskind, Leonard
+	|journal = Phys. Rev. D
+	|volume = 11
+	|issue = 2
+	|pages = 395--408
+	|numpages = 0
+	|year = 1975
+	|month = Jan
+	|publisher = American Physical Society
+	|doi = 10.1103/PhysRevD.11.395
+	|url = https://link.aps.org/doi/10.1103/PhysRevD.11.395
+
+
+journal name=SLAC_fermions
+	|title = "Strong-coupling field theories. II. Fermions and gauge fields on a lattice"
+	|author = Drell, Sidney D. and Weinstein, Marvin and Yankielowicz, Shimon
+	|journal = Phys. Rev. D
+	|volume = 14
+	|issue = 6
+	|pages = 1627--1647
+	|numpages = 0
+	|year = 1976
+	|month = Sep
+	|publisher = American Physical Society
+	|doi = 10.1103/PhysRevD.14.1627
+	|url = https://link.aps.org/doi/10.1103/PhysRevD.14.1627
+
+
+journal name=Gavai_2009
+	|doi = 10.1103/physrevd.79.074502,	
+	|url = https://doi.org/10.1103%2Fphysrevd.79.074502,	
+	|year = 2009
+	|month = apr,	
+	|publisher = American Physical Society (APS),	
+	|volume = 79,	
+	|number = 7,	
+	|author = R. V. Gavai and Sayantan Sharma,	
+	|title = Thermodynamics of free domain wall fermions,	
+	|journal = Physical Review D
+
+
+journal name=Stacey_1982
+	|title = Eliminating lattice fermion doubling
+	|author = Stacey, Richard
+	|journal = Phys. Rev. D
+	|volume = 26
+	|issue = 2
+	|pages = 468--472
+	|numpages = 0
+	|year = 1982
+	|month = Jul
+	|publisher = American Physical Society
+	|doi = 10.1103/PhysRevD.26.468
+	|url = https://link.aps.org/doi/10.1103/PhysRevD.26.468

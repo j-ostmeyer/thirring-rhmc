@@ -1,0 +1,288 @@
+\documentclass[a4paper]{article}
+\usepackage{a4wide}
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[UKenglish]{babel}
+\usepackage{placeins}
+\usepackage{siunitx}
+\sisetup{locale = UK}
+\usepackage{color}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{dsfont}
+\usepackage{slashed}
+\usepackage[backend=bibtex,style=ieee,citestyle=numeric-comp]{biblatex}
+\addbibresource{bibliography.bib}
+\usepackage{hyperref}
+
+\graphicspath{{figures/}}
+\newcommand{\inputtwofigs}[2]{\resizebox{0.443\textwidth}{!}{{\Large\input{#1}\input{#2}}}}
+
+\DeclareMathOperator{\im}{i}
+\DeclareMathOperator{\real}{Re}
+\DeclareMathOperator{\sign}{sign}
+\DeclareMathOperator{\res}{Res}
+\DeclareMathOperator{\tr}{Tr}
+\DeclareMathOperator{\asinh}{asinh}
+\DeclareMathOperator{\acosh}{acosh}
+\DeclareMathOperator{\atanh}{atanh}
+\DeclareMathOperator{\ord}{\mathcal{O}}
+\newcommand{\matr}[2]{\left(\begin{array}{#1}#2\end{array}\right)}
+\newcommand{\del}[2]{\ensuremath{\frac{\partial #1}{\partial#2}}}
+\newcommand{\eto}[1]{\ensuremath{\mathrm{e}^{#1}}}
+\newcommand{\md}{\ensuremath{\mathrm{d}}}
+\newcommand{\mD}{\ensuremath{\mathcal{D}}}
+\newcommand{\deriv}[1]{\ensuremath{\frac{\md}{\md #1}}}
+\newcommand{\ordnung}[1]{\ensuremath{\ord\left(#1\right)}}
+\newcommand{\erwartung}[1]{\ensuremath{\left\langle#1\right\rangle}}
+
+\newcommand{\kappadelta}{\ensuremath{\tilde{\kappa}}}
+
+\newcommand{\nnt}{Nielsen-Ninomiya ``No-Go'' theorem~<ref>{{cite \cite{NIELSEN1981219}}}}</ref>
+
+\newcommand{\todo}[1]{\textbf{\color{red}TODO: #1}}
+
+\newcommand{\bonn}{
+\\\textit{\footnotesize Helmholtz-Institut f\"{u}r Strahlen- und Kernphysik,
+Rheinische Friedrich-Wilhelms-Universit\"{a}t Bonn, Germany}
+}
+
+\newcommand{\liverpool}{
+\\\textit{\footnotesize Department of Mathematical Sciences,
+University of Liverpool, United Kingdom}
+}
+
+\pagestyle{headings}
+
+\begin{document}
+\title{Fermions on the Lattice}
+
+\author{Johann Ostmeyer\liverpool}
+\date{\today}
+\maketitle
+
+\begin{abstract}
+	We present a very compressed summary of the best known formulations of fermions on a lattice. We try to adapt an encyclopedic style, that is write the sections in such a way as one would like to find them on Wikipedia.
+	
+	The subsections concerning ``poles and branch cuts'' are purely for the author's personal benefit and not understandable from the given work without more prior knowledge.
+\end{abstract}
+
+\allowdisplaybreaks[1]
+
+\section{Naive discretisation}
+A straight forward discretisation of the free Dirac fermion action in <math>d</math> Euclidean dimensions
+:<math>
+	S = \int\md^d x \bar\psi\left(\im\slashed\partial-m\right)\psi
+</math>
+using finite differences reads~<ref>{{cite \cite{Intro_chiral_sym}}}</ref>
+:<math>
+	S = a^d\sum_{x,\mu}\frac{\im}{2a}\left(\bar\psi_x\gamma_\mu\psi_{x+\hat\mu}-\bar\psi_{x+\hat\mu}\gamma_\mu\psi_{x}\right) - a^d\sum_x m\bar\psi_x\psi_x 
+</math>
+where <math>a</math> is the lattice spacing.
+This discretisation leads to the well known inverse fermion propagator in momentum space
+:<math>
+	C^{-1}(p) = m + \frac\im a\sum_\mu \gamma_\mu\sin\left(p_\mu a\right)\,.
+</math>
+
+\subsection{Fermion doubling problem}
+Since the <math>\sin</math>-function takes the value 0 not only at <math>p=0<math> but also at <math>p=\pi/a<math>, a second, unphysical fermion emerges for every dimension, i.e.\ <math>2^d<math> so called ``tastes'' in total. This is the fermion doubling problem.
+
+The \nnt\ states that a local, real, free fermion lattice action, having chiral and translational invariance, necessarily has fermion doubling.
+
+\subsection{Poles and branch cuts}
+The continuum theory has exactly one pole in the complex plane at <math>z=-m</math> indicating the particle, i.e.\ its correlation function decays with <math>\eto{-mt}<math>. On the lattice a <math>2\pi\im<math>-periodicity is introduced, which we can ignore by taking only the first Brillouin zone (BZ) into account. Notably however within the first BZ we now encounter the two poles
+:<math>
+	z_- = -\asinh m\\
+	z_+ = \asinh m + \im\pi\,.
+</math>
+The latter is the doubler we have to get rid of.
+
+There are no branch cuts.
+
+\section{Wilson fermions}
+Wilson fermions<ref>{{cite \cite{Wilson_74} are a means to avoid the fermion doubling problem~\cite{Gattringer:2010zz}}}</ref>, widely used e.g.\ in lattice QCD.
+
+An additional so-called Wilson term
+:<math>
+	S_W = -a^{d+1}\sum_{x,\mu}\frac{\im}{2a^2}\left(\bar\psi_x\psi_{x+\hat\mu}+\bar\psi_{x+\hat\mu}\psi_{x}-2\bar\psi_x\psi_x\right)
+</math>
+is introduced supplementing the canonical lattice fermion action~\eqref{eq:naive_lattice_action} <math>S_0</math>, i.e.\ the total action becomes <math>S=S_0+S_W<math>. The inverse fermion propagator in momentum space now reads
+:<math>
+	C^{-1}(p) = m + \frac\im a\sum_\mu \gamma_\mu\sin\left(p_\mu a\right)+\frac1a\sum_\mu\left(1-\cos\left(p_\mu a\right)\right)\,,
+</math>
+where the last addend corresponds to the Wilson term again. It modifies the mass of the doublers to
+:<math>
+	m+\frac{2l}{a}\,,
+</math>
+where <math>l</math> is the number of momentum components with <math>p_\mu = \pi/a<math>. In the limit
+<math>a\rightarrow0</math> the doublers become very heavy and decouple from the theory.
+
+Wilson fermions do not contradict the \nnt\ because they explicitly violate chiral symmetry since the Wilson term does not anti-commute with <math>\gamma_5</math>.
+
+\subsection{Poles and branch cuts}
+This formulation has only one pole at
+:<math>
+	z = -\log\left(1+m\right)\,,
+</math>
+the doubler is therefore eliminated completely.
+
+There are no branch cuts.
+
+\section{Twisted mass fermions}
+Twisted mass fermions are an extension of Wilson fermions for two mass-degenerate fermions~<ref>{{cite \cite{twisted_mass_2000,Gattringer:2010zz}}}</ref>.
+
+The twisted mass Dirac operator is constructed from the (massive) Wilson Dirac operator <math>D_W</math> and reads
+:<math>
+	D_\text{tw} = D_W + \im\mu\gamma_5\sigma_3
+</math>
+where <math>\mu</math> is the so-called twisted mass and acts as an infrared regulator (all eigenvalues <math>\lambda<math> of <math>D_\text{tw}<math> obey <math>\lambda\ge\mu^2>0<math>). In the continuum limit <math>a\rightarrow0<math> the twisted mass becomes irrelevant in the physical sector and only appears in the doubler sectors which decouple due to the use of Wilson fermions. In the massless case, also called maximal or full twist, the action is <math>\ordnung{a}<math>-improved in addition.
+	
+\section{Ginsparg-Wilson fermions}
+Ginsparg-Wilson fermions summarise a class of different fermion lattice actions such as overlap, Domain wall and fixed point fermions~<ref>{{cite \cite{Ginsparg_Wilson,Gattringer:2010zz}}}</ref>. They are a means to avoid the fermion doubling problem, widely used e.g.\ in lattice QCD.
+
+Ginsparg-Wilson fermions do not contradict the \nnt\ because they explicitly violate chiral symmetry. More precisely, the continuum chiral symmetry relation <math>D\gamma_5+\gamma_5 D=0</math> (where <math>D<math> is the massless Dirac operator) is replaced by the Ginsparg-Wilson equation
+:<math>
+	D\gamma_5 + \gamma_5 D = a\,D\gamma_5 D\,,
+</math>
+which recovers the correct continuum expression as the lattice spacing <math>a</math> goes to zero.
+
+In contrast to Wilson fermions, Ginsparg-Wilson fermions do not modify the inverse fermion propagator additively but multiplicatively, thus lifting the unphysical poles at <math>p_\mu = \pi/a</math>. The exact form of this modification depends on the individual realisation.
+
+\subsection{Poles and branch cuts}
+Ideally the doubler pole is lifted exactly, though a singularity might remain (i.e.\ both numerator and denominator equal zero).
+
+See specific realisations for more details.
+
+\section{Overlap fermions}
+Overlap fermions are a means to avoid the fermion doubling problem~<ref>{{cite \cite{overlap_1998,Gattringer:2010zz}. They are a realisation of Ginsparg-Wilson fermions~\cite{Ginsparg_Wilson}}}</ref>.
+
+Overlap fermions are defined by the overlap Dirac operator
+:<math>
+	D_{\text{ov}} = \frac1a \left(\left(1+am\right)\mathds 1 + \left(1-am\right)\gamma_5\sign[\gamma_5 A]\right)\,,
+</math>
+where <math>A</math> is the ``kernel'' Dirac operator obeying <math>\gamma_5 A = A^\dagger\gamma_5<math>, i.e.\ <math>A<math> is <math>\gamma_5<math>-hermitian. The <math>\sign<math>-function usually has to be calculated numerically, e.g.\ by rational approximations~<ref>{{cite \cite{kennedy2012algorithms}}}</ref>. A common choice for the kernel is
+:<math>
+	A = aD - \mathds 1(1+s)\,,
+</math>
+where <math>D</math> is the massless Dirac operator and <math>s\in\left(-1,1\right)<math> is a free parameter that can be tuned to optimise locality of <math>D_\text{ov}<math>.
+
+Near <math>pa=0</math> the overlap Dirac operator recovers the correct continuum form
+:<math>
+	D_\text{ov} = m+\im\slashed p\frac{1}{1+s}+\ordnung{a}\,,
+</math>
+whereas the unphysical doublers near <math>pa=\pi</math> are suppressed by a high mass
+:<math>
+	D_\text{ov} = \frac1a+m+\im\slashed p\frac{1}{1-s}+\ordnung{a}
+</math>
+and decouple.
+
+Overlap fermions do not contradict the \nnt\ because they explicitly violate chiral symmetry (obeying the Ginsparg-Wilson equation~\eqref{eq:ginsparg_wilson_eq}) and locality.
+
+\subsection{Poles and branch cuts}
+The <math>\sign</math>-function is not holomorphic and can be represented by <math>\sqrt{(\cdot)^2}<math>. Therefore branch cuts are to be expected.
+
+See Domain wall fermions for more details.
+
+\section{Domain wall fermions}
+Domain wall (DW) fermions are a means to avoid the fermion doubling problem~<ref>{{cite \cite{domain_walls_1992,Gattringer:2010zz}. They are a realisation of Ginsparg-Wilson fermions~\cite{Ginsparg_Wilson} in the infinite separation limit \mbox{<math>L_s\rightarrow\infty</math>} where they become equivalent to overlap fermions~\cite{Neuberger_DW_overlap}. DW fermions have undergone numerous improvements since Kaplan's original formulation~\cite{domain_walls_1992} such as the reinterpretation by Shamir~\cite{SHAMIR199390} and the generalisation to Möbius DW fermions by Brower, Neff and Orginos~\cite{BROWER2006191}}}</ref>.
+
+The original <math>d</math>-dimensional lattice field theory is lifted into <math>d+1<math> dimensions. The additional dimension of length <math>L_s<math> has open boundary conditions and the so-called domain walls form its boundaries. The physics is now found to ``live'' on the domain walls and the doublers are located on opposite walls, that is at <math>L_s\rightarrow\infty<math> they completely decouple from the system.
+
+Kaplan's (and equivalently Shamir's) DW Dirac operator is defined by two addends
+:<math>
+	D_\text{DW}(x,s;y,r) = D(x;y)\delta_{sr} + \delta_{xy}D_{d+1}(s;r)\,,\\
+	D_{d+1}(s;r) = \delta_{sr} - (1-\delta_{s,L_s-1})P_-\delta_{s+1,r} - (1-\delta_{s0})P_+\delta_{s-1,r}\nonumber\\
+	&\quad + m\left(P_-\delta_{s,L_s-1}\delta_{0r} + P_+\delta_{s0}\delta_{L_s-1,r}\right)\,,
+</math>
+where <math>P_\pm=(\mathds1\pm\gamma_5)/2</math> is the chiral projection operator and <math>D<math> is the canonical Dirac operator in <math>d<math> dimensions. <math>x<math> and <math>y<math> are (multi-)indices in the physical space whereas <math>s<math> and <math>r<math> denote the position in the additional dimension.
+
+Domain wall fermions do not contradict the \nnt\ because they explicitly violate chiral symmetry (asymptotically obeying the Ginsparg-Wilson equation~\eqref{eq:ginsparg_wilson_eq}).
+
+\subsection{Poles and branch cuts}
+In the infinite separation limit <math>L_s\rightarrow\infty</math> the doubler poles are exactly lifted, only the physical pole remains (modified by trivial lattice artefacts). At finite separations the doubler is exponentially suppressed in <math>L_s<math>.
+
+The exact form of the operator is not manifest and can depend on the model. In general it includes square-root branch cuts that lead to unphysical changes of the propagator near <math>t=0</math> and <math>t=L_t<math>. These effects vanish in the continuum limit <math>a\rightarrow0<math>. Mathematically the square-root terms stem from the quadratic nature of <math>DD^\dagger<math> solved for the Greens function. Physically this corresponds to short-ranged interactions of the fermion with the doubler. As the continuum is approached, the start of the branch cuts is shifted to higher and higher masses corresponding to a decoupling heavy doubler.
+
+\section{Fixed point fermions}
+Overlap fermions are a means to avoid the fermion doubling problem~<ref>{{cite \cite{Gattringer:2010zz}. They are a realisation of Ginsparg-Wilson fermions~\cite{Ginsparg_Wilson}}}</ref> somehow following from renormalization group flow. The author did not (yet) find the motivation to understand them in detail.
+
+\section{Staggered fermions}
+Staggered fermions are a means to soften the fermion doubling problem~<ref>{{cite \cite{staggered_fermions,Gattringer:2010zz}}}</ref>, widely used e.g.\ in lattice QCD. They couple real space and the four-dimensional Dirac spinor space reducing the doubler degeneracy by a factor 4 without violating chiral symmetry.
+
+The naive fermion lattice action~\eqref{eq:naive_lattice_action} is modified by substituting the fermion fields <math>\psi_x</math>, <math>\bar\psi_x<math> using the so-called staggered transformation
+:<math>
+	\psi_x = \prod_{i=1}^{d}\gamma_i^{x_i}\,\psi_x'\,,\\
+	\bar\psi_x = \bar\psi_x'\prod_{i=d}^{1}\gamma_i^{x_i}\,.
+</math>
+Since all gamma-matrices are self-inverse, this leaves the mass term invariant and eliminates the <math>\gamma_\mu</math> from the finite difference term, so that only a sign due to the required number of permutations remains:
+:<math>
+	S = a^d\sum_{x,\mu}\frac{\im}{2a}\eta_\mu(x)\left(\bar\psi_x'\psi_{x+\hat\mu}'-\bar\psi_{x+\hat\mu}'\psi_{x}'\right) - a^d\sum_x m\bar\psi_x'\psi_x'\,, \\
+	\eta_\mu(x) = (-1)^{\sum_{i=1}^{\mu-1}x_i}\,.
+</math>
+Since all terms are now proportional to the identity in spinor space, the fields can be replaced by one-dimensional Grassmann fields. Considering only one of the four identical copies reduces the number of doubler degenerate fermions from <math>2^d</math> to <math>2^d/4<math> so-called tastes of staggered fermions.
+
+Staggered fermions do not contradict the \nnt\ because they explicitly violate translational invariance.
+
+\subsection{Poles and branch cuts}
+This formulation has the same poles as the naive version, simply with a reduced multiplicity.
+
+There are no branch cuts.
+
+\section{SLAC fermions}
+SLAC fermions (named after the Stanford Linear Accelerator Center) are a means to avoid the fermion doubling problem~<ref>{{cite \cite{SLAC_fermions}}}</ref>. In fact, they restore the exact continuum dispersion relation within the first Brillouin zone by using a maximally de-localised derivative.
+
+The na\"ive derivative
+:<math>
+	\deriv x f(x) = \lim_{a\rightarrow0} \frac{f(x+a)-f(x-a)}{2a}
+</math>
+of a function <math>f</math> is replaced by
+:<math>
+	\deriv x f(x) = \lim_{a\rightarrow0} \frac1a\sum_{n\ge1} \frac{(-1)^{n+1}}{n}\left(f(x+na)-f(x-na)\right)\,.
+</math>
+
+The optimal dispersion relation comes with the price of a high computational cost.
+Moreover in gauge theories the de-localisation leads to non-local interactions making it very complicated to guarantee gauge invariance.
+
+SLAC fermions do not contradict the \nnt\ because they explicitly violate locality.
+
+\subsection{Poles and branch cuts}
+This formulation has the same single pole at <math>z=-m</math> as the continuum version, up to the <math>2\pi\im<math>-periodicity between the Brillouin zones.
+
+There are no branch cuts.
+
+\section{Stacey fermions}
+Stacey fermions are a means to avoid the fermion doubling problem~<ref>{{cite \cite{Stacey_1982}}}</ref>. Similarly to SLAC fermions they de-localise the fields in order to obtain a more favourable dispersion relation.
+
+The initial fields <math>\psi</math> are replaced by a version <math>\tilde\psi<math> smeared out over the <math>d<math>-dimensional hypercube
+:<math>
+	\tilde{\psi}_x &\coloneqq \sum_{\mu\in\{0,\pm1\}^d}\frac{1}{2^{d+||\mu||_1}}\,\psi_{x+a\mu}\,,\\
+	\partial_\nu\tilde{\psi}_x &\coloneqq \sum_{\mu\in\{0,\pm1\}^d,\,\mu\perp\nu}\frac{1}{2^{d-1+||\mu||_1}}\,\frac1a \left(\psi_{x+a\mu+a\nu}-\psi_{x+a\mu-a\nu}\right)
+</math>
+and the action is evaluated on the <math>\tilde\psi</math>-fields.
+As a result, the inverse fermion propagator takes the form
+:<math>
+	C^{-1}(p) = m + \frac{2\im}{a}\sum_\mu \gamma_\mu\tan\left(\frac{p_\mu a}{2}\right)
+</math>
+where the unphysical doublers at <math>pa=\pi</math> obtain infinite mass and decouple.
+
+In gauge theories the de-localisation leads to non-local interactions making it very complicated to guarantee gauge invariance.
+
+As opposed to SLAC fermions, Stacey fermions do not reproduce the exact continuum dispersion relation. Instead they maintain some locality (the smearing operator itself is local, but its inverse that has to be included in the Dirac operator is not) allowing for a more stable and computationally efficient evaluation.
+
+Stacey fermions do not contradict the \nnt\ because they explicitly violate locality.
+
+\subsection{Poles and branch cuts}
+This formulation has only one pole at
+:<math>
+	z = -2\atanh\frac m2\,,
+</math>
+the doubler is therefore eliminated completely.
+
+There are no branch cuts.
+
+\clearpage
+\printbibliography
+\end{document}
+.

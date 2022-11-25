@@ -83,6 +83,37 @@
     \field{year}{1981}
   \endentry
 
+  \entry{Wilson_74}{article}{}
+    \name{author}{1}{}{%
+      {{hash=WKG}{%
+         family={Wilson},
+         familyi={W\bibinitperiod},
+         given={Kenneth\bibnamedelima G.},
+         giveni={K\bibinitperiod\bibinitdelim G\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {American Physical Society}%
+    }
+    \strng{namehash}{WKG1}
+    \strng{fullhash}{WKG1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb 10.1103/PhysRevD.10.2445
+    \endverb
+    \field{issue}{8}
+    \field{pages}{2445\bibrangedash 2459}
+    \field{title}{Confinement of quarks}
+    \verb{url}
+    \verb https://link.aps.org/doi/10.1103/PhysRevD.10.2445
+    \endverb
+    \field{volume}{10}
+    \field{journaltitle}{Phys. Rev. D}
+    \field{year}{1974}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
   \entry{Gattringer:2010zz}{book}{}
     \name{author}{2}{}{%
       {{hash=GC}{%
