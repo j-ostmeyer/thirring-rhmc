@@ -1,11 +1,36 @@
-# dwf3d_sjh / bulk_rhmc
+# Thirring Model in 2+1 dimensions with Domain Wall Fermions
+## Simon Hands and Johann Ostmeyer
 
-A program-come-library for computations in lattice field theory with domain
+This tar-archive contains the program and data required to reproduce the results presented in *"Spectroscopy in the 2+1d Thirring Model with N=1 Domain Wall Fermions"*, [arXiv:2210.04790 [hep-lat]](https://arxiv.org/abs/2210.04790).
+
+It contains a program-come-library for computations in lattice field theory with domain
 wall fermions in 2+1D. Developed by Simon Hands, and refactored and
 parallelised by Ed Bennett, Michele Mesiti, and the Swansea Academy of 
-Advanced Computing RSE team.
+Advanced Computing RSE team. Features and analysis scripts added by Johann Ostmeyer.
 
-## Quick info / checklists
+The code is also available on github: [github.com/sa2c/thirring-rhmc](https://github.com/sa2c/thirring-rhmc).
+
+## Data
+The raw data produced by the program described below can be found in the directory `logruns`. It mirrors the structure on the DiRAC supercomputer.
+
+The same data, but sorted in a systematic fashion, is repeated in the `correlators` directory. Therein it is analysed with the `ana.sh` and `ana_corr.R` scripts.
+
+Data files:
+- `fort.11` shows the average of the bose action (3rd column) for every trajectory (1st column).
+- `fort.302` contains meson correlator time series (time in 2nd column) involving gamma_5. Sum (difference) of 3rd and 4th columns is the gamma_5-Goldstone (gamma_5*gamma_3-Non-Goldstone).
+- `fort.501` contains real and imaginary parts of the fermion correlator time series (time in 2nd column) in 3rd and 4th columns.
+- `fort.500` is not used for the analysis.
+- `fort.320` and `fort.321` contain meson correlator time series (time in 2nd column) involving the identity. 3rd and 4th columns are real and imaginary parts respectively. Sum (difference) of correlators in both files is the id-Goldstone (gamma_3-Non-Goldstone).
+- `m_eff.csv` in the directory `correlators/results` contains all the fit results of the correlators using the appropriate effective mass ansatz.
+
+## Analysis and Plot scripts
+We use the `hadron` package in `R` for the analysis.
+
+The bose action in `fort.11` is analysed for its autocorrelation time in order to extract an appropriate analysis range (avoid trajectories before thermalisation) and block size for the blocked bootstrap procedure. Then all the correlators are averaged, their errors estimated via bootstrap and effective masses calculated. The effective masses are fitted. These steps can be reproduced by running `./ana.sh -c` in the `correlators` directory. To summarise the results run `./ana.sh -p`.
+
+The gnuplot script `plot_all.gp` automatically produces a summary of all the fit results. The resulting plots are located in `correlators/results` together with the script.
+
+## Quick info / checklists for the main program
 Remember to:
 - checkout the `dev_mpithird` branch 
 - Load the correct modules.
