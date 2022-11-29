@@ -26,7 +26,7 @@ Data files:
 ## Analysis and Plot scripts
 We use the `hadron` package in `R` for the analysis.
 
-The bose action in `fort.11` is analysed for its autocorrelation time in order to extract an appropriate analysis range (avoid trajectories before thermalisation) and block size for the blocked bootstrap procedure. Then all the correlators are averaged, their errors estimated via bootstrap and effective masses calculated. The effective masses are fitted. These steps can be reproduced by running `./ana.sh -c` in the `correlators` directory. To summarise the results run `./ana.sh -p`.
+The bose action in `fort.11` is analysed for its autocorrelation time in order to extract an appropriate analysis range (avoid trajectories before thermalisation) and block size for the blocked bootstrap procedure. Then all the correlators are averaged, their errors estimated via bootstrap and effective masses calculated. The effective masses are fitted. These steps can be reproduced by running `./ana.sh -c` in the `correlators` directory. Intermediate results are stored as `.RData` files and individual correlators are plotted in the respective directories as `Rplots.pdf`. To summarise the results run `./ana.sh -p`.
 
 The gnuplot script `plot_all.gp` automatically produces a summary of all the fit results. The resulting plots are located in `correlators/results` together with the script.
 
