@@ -12,6 +12,7 @@ contains
     use comms5, only: init_halo_update_5
     use comms_common, only: comm
     use comms
+    use params
     use dirac
     use params
     implicit none
@@ -118,6 +119,7 @@ contains
       call update_halo_5(4, r)
 #endif
       p = r + betacg*p
+!      print *,betacgn
       if (betacgn .lt. resid) exit
     end do
     !     write(6,1000)
@@ -152,6 +154,7 @@ contains
     use comms5, only: start_halo_update_5
     use comms
     use gaussian
+    use params
     use dirac
     !use qmrherm_module
     real, intent(out) :: psibarpsi, aviter
@@ -165,6 +168,8 @@ contains
     complex(dp) :: x(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: psibarpsi1, psibarpsi2
+    complex(dp) :: oslice(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: islice(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp) :: cnum(0:1), cden(1)
     real :: ps(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 2)
     real :: pt(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 2)
@@ -178,11 +183,15 @@ contains
 #endif
     !     write(6,*) 'hi from measure'
     !
+
+!    print *,"original Shamir measure"
+
     iter = 0
     !     pbp=0.0
     cnum(0) = 0.0
     cnum(1) = 1.0
     cden(1) = 0.0
+
     !
     do inoise = 1, knoise
       !
@@ -354,13 +363,13 @@ contains
     psibarpsi = psibarpsi/knoise
     susclsing = 2*kvol*susclsing/(knoise*(knoise - 1))
     if (ip_global .eq. 0) then
-      open (unit=200, file='fort.200', action='write', position='append')
+      open (unit=201, file='fort.201', action='write', position='append')
       if (present(isweep_total)) then
-        write (200, '(I5,2E15.7E3)') isweep_total, psibarpsi, susclsing
+        write (201, '(I5,2E15.7E3)') isweep_total, psibarpsi, susclsing
       else
-        write (200, '(2E15.7E3)') psibarpsi, susclsing
+        write (201, '(2E15.7E3)') psibarpsi, susclsing
       endif
-      close (200)
+      close (201)
     end if
     aviter = float(iter)/(4*knoise)
     return

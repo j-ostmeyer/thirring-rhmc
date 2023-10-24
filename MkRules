@@ -82,12 +82,14 @@ LIBOBJS = counters.o comms.o comms_common.o \
           comms4.o comms4_sp.o \
           comms5.o comms5_sp.o \
           comms6.o \
-          comms_partitioning.o derivs_module.o  dirac.o dirac_sp.o \
-          dirac_split.o dirac_split_nodir.o dum1.o dwf3d_lib.o \
+          comms_partitioning.o derivs_moduleBonza.o  dirac.o dirac_sp.o \
+          ellipticmodule.o zolomodule.o pfmodule.o ratfuncs.o \
+          diracShamir.o diracWilson.o \
+          dum1.o dwf3d_lib.o \
           gammamatrices.o gauge.o gaussian.o gforce.o inverter_utils.o \
-          measure_module.o multishift_module.o params.o partitioning.o \
-          qmrherm_module.o qmrherm_module_split.o \
-          qmrherm_module_split_nodir.o random.o reductions.o remez.o remezg.o \
+          measure_module.o measureWilson.o multishift_module.o params.o partitioning.o \
+          qmrherm_module.o \
+          random.o reductions.o remez.o remezg.o \
           remez_common_subroutines.o timer.o trial.o vector.o
 
 .PHONY: clean
@@ -125,31 +127,51 @@ comms_partitioning.o : $(TOPDIR)/comms_partitioning.F90 .makefile.uptodate \
                        params.mod partitioning.mod
 	$(COMPILE) -o $*.o $<
 
-derivs_module.o : $(TOPDIR)/derivs_module.F90 .makefile.uptodate gforce.mod \
-                  dirac.mod
+derivs_moduleBonza.o : $(TOPDIR)/derivs_moduleBonza.F90 .makefile.uptodate gforce.mod \
+                  dirac.mod diracShamir.o diracWilson.o trial.mod
 	$(COMPILE) -o $*.o $<
 
 dirac.o : $(TOPDIR)/dirac.F90 .makefile.uptodate params.mod gammamatrices.mod
+	$(COMPILE) -o $*.o $<
+
+ellipticmodule.o : $(TOPDIR)/ZOLO/ellipticmodule.f .makefile.uptodate
+	$(COMPILE) -o $*.o $<
+
+zolomodule.o : $(TOPDIR)/ZOLO/zolomodule.f .makefile.uptodate ellipticmodule.mod
+	$(COMPILE) -o $*.o $<
+
+pfmodule.o : $(TOPDIR)/ZOLO/pfmodule.f .makefile.uptodate ellipticmodule.mod
+	$(COMPILE) -o $*.o $<
+
+ratfuncs.o : $(TOPDIR)/ZOLO/ratfuncs.f .makefile.uptodate ellipticmodule.mod zolomodule.mod pfmodule.mod
+	$(COMPILE) -o $*.o $<
+
+diracShamir.o : $(TOPDIR)/diracShamir.F90 .makefile.uptodate params.mod gammamatrices.mod
+	$(COMPILE) -o $*.o $<
+
+diracWilson.o : $(TOPDIR)/diracWilson.F90 .makefile.uptodate params.mod gammamatrices.mod dum1.mod gaussian.mod zolomodule.mod ratfuncs.mod
 	$(COMPILE) -o $*.o $<
 
 dirac_sp.o : $(TOPDIR)/dirac_sp.F90 .makefile.uptodate params.mod \
           gammamatrices.mod
 	$(COMPILE) -o $*.o $<
 
-dirac_split.o : $(TOPDIR)/dirac_split.F90 .makefile.uptodate params.mod \
-                comms.mod dirac.mod partitioning.mod
-	$(COMPILE) -o $*.o $<
-
-dirac_split_nodir.o : $(TOPDIR)/dirac_split_nodir.F90 .makefile.uptodate \
-                      params.mod comms.mod dirac.mod partitioning.mod
-	$(COMPILE) -o $*.o $<
+#dirac_split.o : $(TOPDIR)/dirac_split.F90 .makefile.uptodate params.mod \
+#                comms.mod dirac.mod partitioning.mod
+#	$(COMPILE) -o $*.o $<
+#
+#dirac_split_nodir.o : $(TOPDIR)/dirac_split_nodir.F90 .makefile.uptodate \
+#                      params.mod comms.mod dirac.mod partitioning.mod
+#	$(COMPILE) -o $*.o $<
 
 dwf3d_lib.o : $(TOPDIR)/dwf3d_lib.F90 \
               .makefile.uptodate counters.mod comms.mod comms_common.mod \
               comms4.mod \
               dirac.mod \
+              ellipticmodule.mod zolomodule.mod \
+              diracShamir.mod diracWilson.mod \
               dum1.mod gauge.mod gaussian.mod gammamatrices.mod \
-              gforce.mod measure_module.mod \
+              gforce.mod measure_module.mod measureWilson.mod \
               params.mod qmrherm_module.mod random.mod remez.mod remezg.mod \
               remez_common_subroutines.mod timer.mod trial.mod vector.mod
 	$(COMPILE) -o dwf3d_lib.o $<
@@ -159,16 +181,21 @@ gaussian.o : $(TOPDIR)/gaussian.F90 .makefile.uptodate \
 	$(COMPILE) -o gaussian.o $<
 
 inverter_utils.o  : $(TOPDIR)/inverter_utils.F90 .makefile.uptodate dirac.mod \
-                    trial.mod comms.mod comms5.mod
+                    diracShamir.mod diracWilson.mod trial.mod comms.mod comms5.mod
 	$(COMPILE) -o inverter_utils.o $<
 
 measure_module.o : $(TOPDIR)/measure_module.F90 \
                   .makefile.uptodate params.mod gaussian.mod trial.mod \
-                  vector.mod comms5.mod comms_common.mod dirac.mod 
+                  vector.mod comms5.mod comms_common.mod dirac.mod diracShamir.mod diracWilson.mod
 	$(COMPILE) -o measure_module.o $<
 
+measureWilson.o : $(TOPDIR)/measureWilson.F90 \
+                  .makefile.uptodate params.mod gaussian.mod trial.mod \
+                  vector.mod comms5.mod comms_common.mod dirac.mod diracShamir.mod diracWilson.mod
+	$(COMPILE) -o measureWilson.o $<
+
 multishift_module.o :  $(TOPDIR)/multishift_module.F90 \
-                  .makefile.uptodate comms5.mod comms5_sp.mod comms_common.mod dirac.mod dirac_sp.mod \
+                  .makefile.uptodate comms5.mod comms5_sp.mod comms_common.mod dirac.mod diracShamir.mod diracWilson.mod dirac_sp.mod \
                   params.mod reductions.mod
 	$(COMPILE) -o $*.o $<
 
@@ -179,20 +206,21 @@ partitioning.o : $(TOPDIR)/partitioning.F90 .makefile.uptodate params.mod \
 qmrherm_module.o : $(TOPDIR)/qmrherm_module.F90 .makefile.uptodate params.mod \
                    vector.mod gforce.mod comms.mod \
                    comms_common.mod comms5.mod comms6.mod dirac.mod \
-                   derivs_module.mod inverter_utils.mod multishift_module.mod \
+                   diracShamir.mod diracWilson.mod \
+                   derivs_moduleBonza.mod inverter_utils.mod multishift_module.mod \
                    reductions.mod
 	$(COMPILE) -o qmrherm_module.o $<
 
-qmrherm_module_split.o : $(TOPDIR)/qmrherm_module_split.F90 \
-                         .makefile.uptodate params.mod vector.mod gforce.mod \
-                         comms.mod dirac_split.mod dirac.mod derivs_module.mod
-	$(COMPILE) -o qmrherm_module_split.o $<
+#qmrherm_module_split.o : $(TOPDIR)/qmrherm_module_split.F90 \
+#                         .makefile.uptodate params.mod vector.mod gforce.mod \
+#                         comms.mod dirac_split.mod dirac.mod derivs_module.mod
+#	$(COMPILE) -o qmrherm_module_split.o $<
 
-qmrherm_module_split_nodir.o : $(TOPDIR)/qmrherm_module_split_nodir.F90 \
-                              .makefile.uptodate params.mod comms.mod \
-                              derivs_module.mod dirac.mod gforce.mod \
-                              params.mod trial.mod
-	$(COMPILE) -o qmrherm_module_split_nodir.o $<
+#qmrherm_module_split_nodir.o : $(TOPDIR)/qmrherm_module_split_nodir.F90 \
+#                              .makefile.uptodate params.mod comms.mod \
+#                              derivs_module.mod dirac.mod gforce.mod \
+#                              params.mod trial.mod
+#	$(COMPILE) -o qmrherm_module_split_nodir.o $<
 
 timer.o : $(TOPDIR)/timer.F90 comms_common.mod
 	$(COMPILE) -o timer.o $<

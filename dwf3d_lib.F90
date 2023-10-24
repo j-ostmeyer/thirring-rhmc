@@ -1,3 +1,5 @@
+#include "kernel.h"
+
 module dwf3d_lib
   use params
   implicit none
@@ -23,7 +25,15 @@ contains
     use counters ! ALL
     use dum1
     use comms
+!#ifdef WILSONKERNEL
+    use diracWilson
+!#endif
+#ifdef MEASUREWILSON
+    use measureWilson
     use measure_module
+#else
+    use measure_module
+#endif
     use qmrherm_module, only: qmrherm, qmrhprint => printall
     use timer, only: timeinit => initialise, get_time_from_start
 !*******************************************************************
@@ -151,6 +161,7 @@ contains
 !     istart=1    : random start
 !*******************************************************************
     call init(istart)
+
 !  read in Remez coefficients
 
     call read_remez_file('remez2', ndiag, anum2, bnum2, aden2, bden2)
@@ -159,6 +170,19 @@ contains
     call read_remez_file('remez4', ndiag, anum4, bnum4, aden4, bden4)
     call read_remez_file('remez4g', ndiagg, anum4g, bnum4g, aden4g, bden4g)
 
+!  calculate Zolotarev coefficients
+!#ifdef WILSONKERNEL
+!    call prepZolo()
+    coeffs=1d0
+    revcoeffs=1d0
+!    thetat=0
+!    call coef(ut, thetat)
+!    call measure(pbp, respbp, ancgm, am, imass, 1)
+!    call measureW(pbp, respbp, ancgm, am, imass, 1)
+!    print *,ip_global,"pbp",pbp
+!    call MPI_BARRIER(MPI_COMM_WORLD,ierr)
+!    stop
+!#endif
 !*******************************************************************
 !     print heading
 !*******************************************************************
@@ -190,6 +214,37 @@ contains
         isweep_total_start = 0
       endif
 
+!!JW        thetat = theta
+!!JW        call coef(ut, thetat)
+!!JW        do mu = 1, 3
+!!JW          call gaussp(ps, reqs_ps)
+!!JW          call complete_halo_update(reqs_ps)
+!!JW          pp(:, :, :, mu) = ps(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, 1)
+!!JW        enddo
+!!JW          do idirac = 1, 4
+!!JW            do ithird = 1, kthird
+!!JW              call gauss0(ps, reqs_ps)
+!!JW              call complete_halo_update(reqs_ps)
+!!JW              R(ithird, :, :, :, idirac) = cmplx(ps(:, :, :, 1), ps(:, :, :, 2))
+!!JW            enddo
+!!JW          enddo
+!!JW          call qmrherm(R, Xresult, rescga, itercg, am, imass, anum4, aden4, ndiag, 0)
+!
+!!JW          R = Xresult
+!
+!!JW          call qmrherm(R, Xresult, rescga, itercg, One, 1, bnum4, bden4, ndiag, 0)
+!
+!!JW          Phi = Xresult
+!
+!!JW        call hamilton(Phi, H0, hg, hp, S0, rescga, isweep, 0, am, imass)
+!!JW        gaction = real(hg)/kvol
+!!JW        paction = real(hp)/kvol
+!!JW        if (ip_global .eq. 0) then
+!!JW          open (unit=11, file='fort.11', action='write', position='append')
+!!JW          write (11, *) isweep_total_start, 0 , gaction, paction
+!!JW          close (11)
+!!JW        end if
+
       do isweep = 1, iter2_read
 
 #ifdef MPI
@@ -199,6 +254,7 @@ contains
 #ifdef MPI
         endif
 #endif
+
 ! uncomment line below to go straight to measurement
 !     goto 666
 !*******************************************************************
@@ -310,6 +366,13 @@ contains
 
         call hamilton(Phi, H1, hg, hp, S1, rescga, isweep, -1, am, imass)
         dH = H0 - H1
+    
+!!DB if (ip_global .eq. 0) then
+!!DB     open(unit=106,file="fort.106",position="append")
+!!DB     write(106,*) dH,H0,H1
+!!DB     close(106)
+!!DB endif
+
         dS = S0 - S1
         if (ip_global .eq. 0) then
           write (98, *) isweep_total_start, isweep, dH, dS
@@ -356,13 +419,17 @@ contains
 
 !     uncomment to disable measurements
 !     goto 601
-!666    continue
+666    continue
 
         if (mod((isweep + isweep_total_start), iprint) .eq. 0) then
-          thetat = theta
+          thetat = theta ! this occurs regardless of acceptance 
           call coef(ut, thetat)
-          call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)
-!         call meson(rescgm,itercg,ancgm,am,imass)
+          print *,"measureW"
+          call measureW(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)
+          print *,"measureS"
+          call measure(pbpS, respbp, ancgmS, am, imass, isweep + isweep_total_start)
+          print *,"done"
+!!         call meson(rescgm,itercg,ancgm,am,imass)
           pbp_average = pbp_average + pbp
           ancgm_average = ancgm_average + ancgm
           ipbp = ipbp + 1
@@ -378,12 +445,23 @@ contains
         endif
 !
         if (mod((isweep + isweep_total_start), icheckpoint) .eq. 0) then
+!!JW hg = 0.5*Nf*beta*sum(theta**2)
+!!JW#ifdef MPI
+!!JW call MPI_AllReduce(MPI_In_Place, hg, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
+!!JW#endif
+!!JW gaction = real(hg)/kvol
+!!JW paction = 0
+!!JW if (ip_global .eq. 0) then
+!!JW   open (unit=11, file='fort.11', action='write', position='append')
+!!JW   write (11, *) -3, 0 , gaction, paction
+!!JW   close (11)
+!!JW end if
           call rranget(seed, 1, 1, 1)
           if (iwrite .eq. 1) then
             call swrite(isweep + isweep_total_start)
           endif
-          flush (100)
-          flush (200)
+!          flush (100)
+!          flush (200)
         endif
 
         keep_running_check: block
@@ -500,6 +578,17 @@ contains
     end if
 !
     if (iwrite .eq. 1) then
+ hg = 0.5*Nf*beta*sum(theta**2)
+#ifdef MPI
+ call MPI_AllReduce(MPI_In_Place, hg, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
+#endif
+ gaction = real(hg)/kvol
+ paction = 0
+ if (ip_global .eq. 0) then
+   open (unit=11, file='fort.11', action='write', position='append')
+   write (11, *) -4, 0 , gaction, paction
+   close (11)
+ end if
       call rranget(seed, 1, 1, 1)
       call swrite
       call saveseed(seed)
@@ -538,12 +627,18 @@ contains
 ! pseudofermion action is
 !   Phi^dagger {MdaggerM(1)}^1/4 {MdaggerM(m)})^-1/2 {MdaggerM(1)}^1/4 Phi
 !
+!     S = Phi^dagger H(1)^1/4 H(m)^-1/2 H(1)^1/4 Phi
+!       = Phi^dagger H1.Hm.H1 Phi
+
+
+
     do ia = 1, Nf
 !
       X2 = Phi(:, :, :, :, :, ia)
 
       call qmrherm(X2, Xresult, res1, itercg, One, 1, anum4g, aden4g, ndiagg, 1, spmd)
       ancgpv = ancgpv + float(itercg)
+!     Phi0 = H1 Phi is generated and stored
 
       X2 = Xresult
 !
@@ -551,6 +646,7 @@ contains
       ancg = ancg + float(itercg)
 !     write(111,*) itercg
       X2 = Xresult
+!     X2 = Hm.H1 Phi
 !
 !  evaluates -X2dagger * d/dpi[{MdaggerM(m)}^1/2] * X2
       call qmrherm(X2, Xresult, res1, itercg, am, imass, anum2g, aden2g, ndiagg, 2, spmd)
@@ -581,6 +677,7 @@ contains
     use counters, only: ancghpv, ancgh
     use comms
     use qmrherm_module, only: qmrherm
+    implicit none
     complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, Nf)
     real(dp), intent(out) :: h, hg, hp, s
     real, intent(in) :: res2, am
@@ -639,6 +736,11 @@ contains
 !
     h = hg + hp + hf
     s = hg + hf
+!!DB if (ip_global .eq. 0) then
+!!DB     open(unit=107,file="fort.107",position="append")
+!!DB     write(107,'(4f20.10)') hg,hp,hf,hg+hp+hf
+!!DB     close(107)
+!!DB  endif
 !
     return
   end subroutine hamilton
@@ -654,6 +756,8 @@ contains
     integer :: mpi_fh
     integer :: status(mpi_status_size)
     integer :: ierr
+    real(dp) hg
+    real gaction,paction
 
     inquire (file='con', exist=success)
 
@@ -667,7 +771,11 @@ contains
       call MPI_File_Read_All(mpi_fh, theta, 3*ksizex_l*ksizey_l*ksizet_l, &
            & MPI_Real, status, ierr)
       call MPI_File_Close(mpi_fh, ierr)
-! Get the see,ierrd
+
+
+!    hg = 0.5*beta*sum(theta**2)
+!    call MPI_AllReduce(MPI_In_Place, hg, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
+
       if (ip_global .eq. 0) then
         open (unit=10, file='con', status='old', form='unformatted', access='stream')
         !print*,"FSEEK CALL COMMENTED OUT, THIS WILL FAIL"
@@ -675,6 +783,7 @@ contains
         read (10) seed
         close (10)
         print *, "configuration file read."
+        print *,hg/kvol
       end if
 #else
       open (unit=10, file='con', status='old', form='unformatted')
@@ -692,6 +801,18 @@ contains
       success_out = success
     endif
 
+!!JW hg = 0.5*Nf*beta*sum(theta**2)
+!!JW#ifdef MPI
+!!JW call MPI_AllReduce(MPI_In_Place, hg, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
+!!JW#endif
+!!JW gaction = real(hg)/kvol
+!!JW paction = 0
+!!JW if (ip_global .eq. 0) then
+!!JW   open (unit=11, file='fort.11', action='write', position='append')
+!!JW   write (11, *) -6, 0 , gaction, paction
+!!JW   close (11)
+!!JW end if
+
   end subroutine sread
 !
   subroutine swrite(traj_id)
@@ -705,6 +826,21 @@ contains
     integer :: status(mpi_status_size)
     integer :: ierr
     character(len=20) :: configuration_filename
+
+    real(dp) hg
+    real gaction,paction
+
+!!JW hg = 0.5*Nf*beta*sum(theta**2)
+!!JW#ifdef MPI
+!!JW call MPI_AllReduce(MPI_In_Place, hg, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
+!!JW#endif
+!!JW gaction = real(hg)/kvol
+!!JW paction = 0
+!!JW if (ip_global .eq. 0) then
+!!JW   open (unit=11, file='fort.11', action='write', position='append')
+!!JW   write (11, *) -5, 0 , gaction, paction, beta, Nf
+!!JW   close (11)
+!!JW end if
 
     if (present(traj_id)) then
       write (configuration_filename, '(A4,I5.5)') 'con.', traj_id
@@ -861,6 +997,8 @@ contains
     endif
 #endif
 
+    print *,"nc_temp",nc_temp,"controls cold/hot start"
+
     select case (nc_temp)
     case (-1)
       return
@@ -895,9 +1033,13 @@ contains
 #ifdef MPI
     integer, dimension(12) :: reqs_u
 #endif
+!    logical,parameter :: COMPACT=.true.
 
-!     u(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = exp(cmplx(0.0, theta))
-    u(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = (1.0 + cmplx(0.0, theta))
+    if (COMPACT) then
+      u(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = exp(cmplx(0.0, theta))
+    else
+      u(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :) = (1.0 + cmplx(0.0, theta))
+    endif
 !
 !  anti-p.b.c. in timelike direction
     if (ibound .eq. -1 .and. ip_t .eq. (np_t - 1)) then

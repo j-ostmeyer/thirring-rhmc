@@ -8,10 +8,10 @@ module params
   integer, parameter :: sp = kind(1.)
 
   ! Lattice parameters
-#define KSIZE 6
-#define KSIZET 6
+#define KSIZE 8
+#define KSIZET 8
   integer, parameter :: ksize = KSIZE, ksizet = KSIZET
-  integer, parameter :: kthird = 8
+  integer, parameter :: kthird = 20
   integer, parameter :: kvol = ksize*ksize*ksizet
   integer, parameter :: ndiag = 25, ndiagg = 12
   integer, parameter :: Nf = 1
@@ -39,12 +39,13 @@ module params
 #endif
 
   ! Control parameters
+  logical,parameter :: COMPACT=.false.
   ! CAREFUL. Look into dwf3d_lib.F90 for the meaning.
-  integer, parameter :: istart = -1   ! Default -1
-  integer, parameter :: iread = 1     ! Default 1
+  integer, parameter :: istart = 0   ! Default -1 ! set istart=0 and iread=0 for cold start
+  integer, parameter :: iread = 0     ! Default 1
   integer, parameter :: iwrite = 1     ! Default 1
   integer, parameter :: iprint = 5     !
-  integer, parameter :: icheckpoint = 100
+  integer, parameter :: icheckpoint = 10 ! when to autput aux files
 
   ! Inverter
   integer :: max_qmr_iters = 30000 ! QMRHERM

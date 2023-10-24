@@ -6,7 +6,7 @@ module dirac
 
 contains 
 
-  pure subroutine dslash(Phi,R,u,am,imass)
+  subroutine dslash(Phi,R,u,am,imass)
     !
     !     calculates Phi = M*R
     !
@@ -23,7 +23,10 @@ contains
     real :: diag
     integer :: ixup, iyup, itup, ix, iy, it, idirac, mu, igork
     !     write(6,*) 'hi from dslash'
-    !
+    
+!    print *,"original Dirac Shamir"
+!    stop
+
     !     diagonal term
     diag=(3.0-am3)+1.0
     Phi=diag*R

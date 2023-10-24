@@ -1,3 +1,5 @@
+#include "kernel.h"
+
 module inverter_utils
   use params
   implicit none
@@ -18,7 +20,16 @@ contains
   end subroutine
 
   subroutine dirac_operator(xout, xin, u, am, imass)
+#if defined(NEWKERNEL) && defined(WILSONKERNEL)
+    use diracWilson, only: dslash, dslashd
+#endif
+#if defined(NEWKERNEL) && defined(SHAMIRKERNEL)
+    use diracShamir, only: dslash, dslashd
+#endif
+#ifndef NEWKERNEL
     use dirac, only: dslash, dslashd
+#endif
+
     use comms
 #ifdef MPI
     use comms5, only: start_halo_update_5

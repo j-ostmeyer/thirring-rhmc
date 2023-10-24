@@ -1,3 +1,5 @@
+#include "kernel.h"
+
 #ifdef SCOREPINST
 #include "scorep/SCOREP_User.inc"
 #endif
@@ -12,7 +14,15 @@ contains
   ! Krylov space solvers for shifted linear systems, B. Jegerlehner, 1996
   subroutine multishift_solver(u, am, imass, ndiagq, aden, anum, output, input, res,&
     &maxcg, cg_return, cg_returns)
+#if defined(NEWKERNEL) && defined(WILSONKERNEL)
+    use diracWilson
+#endif
+#if defined(NEWKERNEL) && defined(SHAMIRKERNEL)
+    use diracShamir
+#endif
+#ifndef NEWKERNEL
     use dirac
+#endif
     use params
     use reductions
     use mpi
@@ -280,6 +290,7 @@ contains
   ! From https://arxiv.org/abs/hep-lat/9612014
   ! Krylov space solvers for shifted linear systems, B. Jegerlehner, 1996
   ! Single precision version
+#ifndef NEWKERNEL
   subroutine multishift_solver_sp(udp, am, imass, ndiagq, aden, anum, outputdp, inputdp, res,&
     &maxcg, cg_return, cg_returns)
     use dirac_sp, only: dslash_sp, dslashd_sp
@@ -340,6 +351,9 @@ contains
     SCOREP_USER_REGION_DEFINE(dirac_op)
     SCOREP_USER_REGION_DEFINE(post)
 #endif
+
+    print *,"sp multishift - stop"
+    stop
 
     ! convert to single precision
     u = udp  ! type conversion
@@ -521,5 +535,6 @@ contains
     outputdp = output
 
   end subroutine multishift_solver_sp
+#endif
 
 end module multishift_module

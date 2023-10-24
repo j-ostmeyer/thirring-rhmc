@@ -1,3 +1,5 @@
+#include "kernel.h"
+
 module qmrherm_module
   use params
   implicit none
@@ -27,9 +29,22 @@ contains
     use comms6, only: update_halo_6
 #endif
     use derivs_module
+#if defined(NEWKERNEL) && defined(WILSONKERNEL)
+    use diracWilson
+#endif
+#if defined(NEWKERNEL) && defined(SHAMIRKERNEL)
+    use diracShamir
+#endif
+#ifndef NEWKERNEL
     use dirac
+#endif
+
     use gforce
+#ifndef NEWKERNEL
     use multishift_module, only: multishift_solver, multishift_solver_sp
+#else
+    use multishift_module, only: multishift_solver
+#endif
     use params
     use trial, only: u
     complex(dp), intent(in) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -58,11 +73,11 @@ contains
     endif
 
     x = anum(0)*Phi
-    if (present(use_sp) .and. use_sp) then
-      call multishift_solver_sp(u, am, imass, ndiagq, aden, anum(1:ndiagq), x1, Phi, res, max_qmr_iters, itercg, cg_returns_tmp)
-    else
+!    if (present(use_sp) .and. use_sp) then
+!      call multishift_solver_sp(u, am, imass, ndiagq, aden, anum(1:ndiagq), x1, Phi, res, max_qmr_iters, itercg, cg_returns_tmp)
+!    else
       call multishift_solver(u, am, imass, ndiagq, aden, anum(1:ndiagq), x1, Phi, res, max_qmr_iters, itercg, cg_returns_tmp)
-    endif
+!    endif
 
     if (present(cg_returns)) then
       cg_returns = cg_returns_tmp
@@ -129,14 +144,14 @@ contains
 #ifdef MPI
           call complete_halo_update(reqs_X2)
 #endif
-          call derivs(R, X2, coeff, 0)
+          call derivs(R, X2, coeff, 0, am, imass)
         else! if(iflag.eq.2)then
           coeff = -anum(idiag)
           R = Phi0(:, :, :, :, :, idiag)
 #ifdef MPI
           call complete_halo_update(reqs_X2)
 #endif
-          call derivs(R, X2, coeff, 0)
+          call derivs(R, X2, coeff, 0, am, imass)
           !
           ! Communication of X2 generated here can be hidden while R is updated
           call dslash(X2, R, u, am, imass)
@@ -154,17 +169,17 @@ contains
 #else
           call update_halo_5(4, R)
 #endif
-          call derivs(X2, R, coeff, 1)
+          call derivs(X2, R, coeff, 1, am, imass)
         endif! if(iflag.eq.2)then
       enddo! do idiag=1, ndiagq
     endif !if(iflag.lt.2)then , else
 
     if (ip_global .eq. 0 .and. printall) then
-      if (present(use_sp) .and. use_sp) then
-        print *, "[SP] Qmrherm iterations,res:", itercg, res
-      else
+!      if (present(use_sp) .and. use_sp) then
+!        print *, "[SP] Qmrherm iterations,res:", itercg, res
+!      else
         print *, "[DP] Qmrherm iterations,res:", itercg, res
-      endif
+!      endif
     endif
     return
   end subroutine qmrherm

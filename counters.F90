@@ -6,6 +6,7 @@ module counters
   real :: ancgpv, ancghpv, ancgfpv, ancgpfpv
   real :: action_average, vel2a, pbp, pbp_average, y_average, ysq_average
   real :: ancgm, ancgm_average
+  real :: ancgmS, ancgmS_average,pbpS
   integer :: naccp, ipbp, itot
 contains
 
