@@ -148,6 +148,83 @@
     \field{year}{2010}
   \endentry
 
+  \entry{Rothe:2005}{book}{}
+    \name{author}{1}{}{%
+      {{hash=RHJ}{%
+         family={Rothe},
+         familyi={R\bibinitperiod},
+         given={Heinz\bibnamedelima J.},
+         giveni={H\bibinitperiod\bibinitdelim J\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {World Scientific Publishing Company}%
+    }
+    \strng{namehash}{RHJ1}
+    \strng{fullhash}{RHJ1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{edition}{3}
+    \field{isbn}{9812560629; 9789812560629; 9789812567826; 9812567828}
+    \field{series}{World Scientific Lecture Notes in Physics}
+    \field{title}{{Lattice Gauge Theories: An Introduction}}
+    \field{year}{2005}
+  \endentry
+
+  \entry{montvay_munster_1994}{book}{}
+    \name{author}{2}{}{%
+      {{hash=MI}{%
+         family={Montvay},
+         familyi={M\bibinitperiod},
+         given={Istvan},
+         giveni={I\bibinitperiod},
+      }}%
+      {{hash=MG}{%
+         family={Münster},
+         familyi={M\bibinitperiod},
+         given={Gernot},
+         giveni={G\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Cambridge University Press}%
+    }
+    \strng{namehash}{MIMG1}
+    \strng{fullhash}{MIMG1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb 10.1017/CBO9780511470783
+    \endverb
+    \field{series}{Cambridge Monographs on Mathematical Physics}
+    \field{title}{{Quantum Fields on a Lattice}}
+    \field{year}{1994}
+  \endentry
+
+  \entry{smit_2002}{book}{}
+    \name{author}{1}{}{%
+      {{hash=SJ}{%
+         family={Smit},
+         familyi={S\bibinitperiod},
+         given={Jan},
+         giveni={J\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Cambridge University Press}%
+    }
+    \strng{namehash}{SJ1}
+    \strng{fullhash}{SJ1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb 10.1017/CBO9780511583971
+    \endverb
+    \field{series}{Cambridge Lecture Notes in Physics}
+    \field{title}{Introduction to Quantum Fields on a Lattice}
+    \field{year}{2002}
+  \endentry
+
   \entry{twisted_mass_2000}{article}{}
     \name{author}{4}{}{%
       {{hash=FR}{%
@@ -196,6 +273,36 @@
     \field{journaltitle}{Nuclear Physics B - Proceedings Supplements}
     \field{year}{2000}
     \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{JANSEN2005362}{article}{}
+    \name{author}{1}{}{%
+      {{hash=JK}{%
+         family={Jansen},
+         familyi={J\bibinitperiod},
+         given={Karl},
+         giveni={K\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{JK1}
+    \strng{fullhash}{JK1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb https://doi.org/10.1016/j.cpc.2005.03.080
+    \endverb
+    \field{issn}{0010-4655}
+    \field{note}{Proceedings of the Europhysics Conference on Computational
+  Physics 2004}
+    \field{number}{1}
+    \field{pages}{362\bibrangedash 364}
+    \field{title}{Going chiral: twisted mass versus overlap fermions}
+    \verb{url}
+    \verb https://www.sciencedirect.com/science/article/pii/S0010465505001773
+    \endverb
+    \field{volume}{169}
+    \field{journaltitle}{Computer Physics Communications}
+    \field{year}{2005}
   \endentry
 
   \entry{Ginsparg_Wilson}{article}{}
@@ -267,6 +374,36 @@
     \warn{\item Invalid format of field 'month'}
   \endentry
 
+  \entry{JANSEN2002191}{article}{}
+    \name{author}{1}{}{%
+      {{hash=JK}{%
+         family={Jansen},
+         familyi={J\bibinitperiod},
+         given={Karl},
+         giveni={K\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{JK1}
+    \strng{fullhash}{JK1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb https://doi.org/10.1016/S0920-5632(01)01660-7
+    \endverb
+    \field{issn}{0920-5632}
+    \field{note}{LATTICE 2001 Proceedings of the XIXth International Symposium
+  on Lattice Field Theory}
+    \field{pages}{191\bibrangedash 192}
+    \field{title}{Overlap and domainwall fermions: what is the price of
+  chirality?}
+    \verb{url}
+    \verb https://www.sciencedirect.com/science/article/pii/S0920563201016607
+    \endverb
+    \field{volume}{106-107}
+    \field{journaltitle}{Nuclear Physics B - Proceedings Supplements}
+    \field{year}{2002}
+  \endentry
+
   \entry{kennedy2012algorithms}{misc}{}
     \name{author}{1}{}{%
       {{hash=KAD}{%
@@ -319,6 +456,34 @@
     \field{journaltitle}{Physics Letters B}
     \field{year}{1992}
     \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{JANSEN19961}{article}{}
+    \name{author}{1}{}{%
+      {{hash=JK}{%
+         family={Jansen},
+         familyi={J\bibinitperiod},
+         given={Karl},
+         giveni={K\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{JK1}
+    \strng{fullhash}{JK1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb https://doi.org/10.1016/0370-1573(95)00081-X
+    \endverb
+    \field{issn}{0370-1573}
+    \field{number}{1}
+    \field{pages}{1\bibrangedash 54}
+    \field{title}{Domain wall fermions and chiral gauge theories}
+    \verb{url}
+    \verb https://www.sciencedirect.com/science/article/pii/037015739500081X
+    \endverb
+    \field{volume}{273}
+    \field{journaltitle}{Physics Reports}
+    \field{year}{1996}
   \endentry
 
   \entry{Neuberger_DW_overlap}{article}{}

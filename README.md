@@ -17,9 +17,9 @@ The same data, but sorted in a systematic fashion, is repeated in the `correlato
 
 Data files:
 - `fort.11` shows the average of the bose action (3rd column) for every trajectory (1st column).
+- `fort.501` contains real and imaginary parts of the fermion correlator time series (time in 2nd column) in 3rd and 4th columns, defined by S_0 = 0.25*tr{gamma_0*S_f}  Cf. eqn (23).
+- `fort.500` contains real and imaginary parts of the fermion correlator time series (time in 2nd column) in 3rd and 4th columns, defined by 0.25*tr{S_f} from which S_3 in eqn (23) is derived.
 - `fort.302` contains meson correlator time series (time in 2nd column) involving gamma_5. Sum (difference) of 3rd and 4th columns is the gamma_5-Goldstone (gamma_5*gamma_3-Non-Goldstone).
-- `fort.501` contains real and imaginary parts of the fermion correlator time series (time in 2nd column) in 3rd and 4th columns.
-- `fort.500` is not used for the analysis.
 - `fort.320` and `fort.321` contain meson correlator time series (time in 2nd column) involving the identity. 3rd and 4th columns are real and imaginary parts respectively. Sum (difference) of correlators in both files is the id-Goldstone (gamma_3-Non-Goldstone).
 - `m_eff.csv` in the directory `correlators/results` contains all the fit results of the correlators using the appropriate effective mass ansatz.
 

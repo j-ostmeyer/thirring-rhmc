@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020/W32TeX) (preloaded format=pdflatex 2020.6.26)  17 OCT 2022 19:45
+This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020/W32TeX) (preloaded format=pdflatex 2020.6.26)  11 JAN 2023 16:49
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -847,6 +847,12 @@ LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 2
  (c:/texlive/2020/texmf-dist/tex/latex/base/t1cmtt.fd
 File: t1cmtt.fd 2019/12/16 v2.5j Standard LaTeX font definitions
 )
+Overfull \hbox (12.88934pt too wide) in paragraph at lines 287--287
+\T1/cmr/m/n/10 Notes in Phys-ics. World Sci-entific Pub-lish-ing Com-pany, 2005
+, \T1/cmr/m/sc/10 isbn\T1/cmr/m/n/10 : 9812560629; 9789812560629;
+ []
+
+
 Overfull \hbox (14.87776pt too wide) in paragraph at lines 287--287
 []\T1/cmr/m/n/10 A. D. Kennedy, \T1/cmr/m/it/10 Al-gorithms for Dy-nam-ical Fer
 -mi-ons\T1/cmr/m/n/10 , 2012. arXiv: []$\T1/cmtt/m/n/10 hep -[] lat / 0607038$ 
@@ -869,13 +875,13 @@ Package logreq Info: Writing requests to 'fermions-on-lattice.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 17851 strings out of 480471
- 335604 string characters out of 5903300
- 809013 words of memory out of 5000000
- 33522 multiletter control sequences out of 15000+600000
- 553341 words of font info for 81 fonts, out of 8000000 for 9000
+ 17877 strings out of 480471
+ 336524 string characters out of 5903300
+ 809357 words of memory out of 5000000
+ 33541 multiletter control sequences out of 15000+600000
+ 554117 words of font info for 82 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 41i,13n,46p,841b,2701s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 41i,13n,46p,841b,2762s stack positions out of 5000i,500n,10000p,200000b,80000s
 {c:/texlive/2020/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}<c:/texl
 ive/2020/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2020/
 texmf-dist/fonts/type1/public/amsfonts/cmextra/cmex7.pfb><c:/texlive/2020/texmf
@@ -889,20 +895,21 @@ texlive/2020/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texlive/2
 dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb><c:/texlive/2020/texmf-dist/fonts
 /type1/public/doublestroke/dsrom10.pfb><c:/texlive/2020/texmf-dist/fonts/type1/
 public/cm-super/sfbx0900.pfb><c:/texlive/2020/texmf-dist/fonts/type1/public/cm-
-super/sfbx1200.pfb><c:/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfbx
-1440.pfb><c:/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfcc1000.pfb><
-c:/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfrm0700.pfb><c:/texlive
-/2020/texmf-dist/fonts/type1/public/cm-super/sfrm0900.pfb><c:/texlive/2020/texm
-f-dist/fonts/type1/public/cm-super/sfrm1000.pfb><c:/texlive/2020/texmf-dist/fon
-ts/type1/public/cm-super/sfrm1200.pfb><c:/texlive/2020/texmf-dist/fonts/type1/p
-ublic/cm-super/sfrm1728.pfb><c:/texlive/2020/texmf-dist/fonts/type1/public/cm-s
-uper/sfsl1000.pfb><c:/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfti0
-800.pfb><c:/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfti1000.pfb><c
-:/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb>
-Output written on fermions-on-lattice.pdf (8 pages, 365866 bytes).
+super/sfbx1000.pfb><c:/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfbx
+1200.pfb><c:/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb><
+c:/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfcc1000.pfb><c:/texlive
+/2020/texmf-dist/fonts/type1/public/cm-super/sfrm0700.pfb><c:/texlive/2020/texm
+f-dist/fonts/type1/public/cm-super/sfrm0900.pfb><c:/texlive/2020/texmf-dist/fon
+ts/type1/public/cm-super/sfrm1000.pfb><c:/texlive/2020/texmf-dist/fonts/type1/p
+ublic/cm-super/sfrm1200.pfb><c:/texlive/2020/texmf-dist/fonts/type1/public/cm-s
+uper/sfrm1728.pfb><c:/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfsl1
+000.pfb><c:/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfti0800.pfb><c
+:/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfti1000.pfb><c:/texlive/
+2020/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb>
+Output written on fermions-on-lattice.pdf (8 pages, 389543 bytes).
 PDF statistics:
- 357 PDF objects out of 1000 (max. 8388607)
- 318 compressed objects within 4 object streams
- 71 named destinations out of 1000 (max. 500000)
+ 397 PDF objects out of 1000 (max. 8388607)
+ 357 compressed objects within 4 object streams
+ 77 named destinations out of 1000 (max. 500000)
  153 words of extra memory for PDF output out of 10000 (max. 10000000)
 
