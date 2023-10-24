@@ -1,0 +1,275 @@
+
+# HEAP OF OPTIONS THAT YOU MAY WANT TO TRY
+#FC = /usr/lib64/mpi/gcc/mvapich2/bin/mpif90
+#FC = /usr/lib64/mvapich2/bin/mpif90
+#FCFLAGS = -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g
+#FCFLAGS = -g -ipo -O3 -no-prec-div -fp-model fast=2 -xHost -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1 #-heap-arrays -CB -traceback
+#FCFLAGS = -g -O3 -march=native -mtune=native -DMPI -DNP_X=1 -DNP_Y=1 -DNP_T=1
+#FCFLAGS = -O0 -heap-arrays -warn all -C -traceback
+
+#GNU SETTINGS
+GNU_MPIFC    = mpif90
+GNU_FC       = gfortran
+GNU_FCFLAGS  = -O3 -Wall -ffree-line-length-none -g -mcmodel=medium 
+
+#INTEL SETTINGS
+INTEL_MPIFC  = mpiifort #mpif90 
+INTEL_FC     = ifort 
+INTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays
+#INTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g -fpe0 -traceback 
+#INTEL_FCFLAGS= -O2 -heap-arrays #-g -warn all
+#INTEL_FCFLAGS=-g -O0 -heap-arrays -warn all -C -traceback
+#INTEL_FCFLAGS=-g -O0 -heap-arrays 
+
+#CRAY SETTINGS
+CRAY_MPIFC    = ftn
+CRAY_FC       = ftn
+CRAY_FCFLAGS  = -O3
+
+#SCOREPR-INTEL SETTINGS
+SCOREPINTEL_MPIFC  =scorep --user mpif90 #mpiifort 
+SCOREPINTEL_FC     =scorep --user ifort 
+SCOREPINTEL_FCFLAGS= -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g -warn all -DSCOREPINST
+#INTEL_FCFLAGS=-g -O0 -heap-arrays -warn all -C -traceback
+#INTEL_FCFLAGS=-g -O0 -heap-arrays 
+
+#INTEL SETTINGS NO IPO OPENMPI3 - SCOREP 'DRY'
+SCOREPDRYINTEL_MPIFC  = mpif90 
+SCOREPDRYINTEL_FC     = ifort 
+SCOREPDRYINTEL_FCFLAGS= -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g 
+
+#IBM SETTINGS
+IBM_MPIFC  = #SETME
+IBM_FC     = #SETME
+IBM_FCFLAGS= #SETME
+
+
+ifeq ($(COMPILER), GNU)
+MPIFC  =$(GNU_MPIFC)
+FC     =$(GNU_FC)
+FCFLAGS=$(GNU_FCFLAGS)
+else ifeq ($(COMPILER), INTEL)
+MPIFC  =$(INTEL_MPIFC)
+FC     =$(INTEL_FC)
+FCFLAGS=$(INTEL_FCFLAGS)
+else ifeq ($(COMPILER), CRAY)
+MPIFC  =$(CRAY_MPIFC)
+FC     =$(CRAY_FC)
+FCFLAGS=$(CRAY_FCFLAGS)
+else ifeq ($(COMPILER), SPINTEL)
+MPIFC  =$(SCOREPINTEL_MPIFC)
+FC     =$(SCOREPINTEL_FC)
+FCFLAGS=$(SCOREPINTEL_FCFLAGS)
+else ifeq ($(COMPILER), SPDRYINTEL)
+MPIFC  =$(SCOREPDRYINTEL_MPIFC)
+FC     =$(SCOREPDRYINTEL_FC)
+FCFLAGS=$(SCOREPDRYINTEL_FCFLAGS)
+else ifeq ($(COMPILER), IBM)
+$(error COMPILER IBM not implemented - set flags in MkRules first.) 
+MPIFC  =$(IBM_MPIFC)
+FC     =$(IBM_FC)
+FCFLAGS=$(IBM_FCFLAGS)
+else 
+$(error COMPILER not correctly specified (watch for whitespaces)) 
+endif
+
+$(info COMPILER: $(COMPILER))
+$(info MPIFC   : $(MPIFC))
+$(info FC      : $(FC))
+$(info FCFLAGS : $(FCFLAGS))
+
+LIBOBJS = counters.o comms.o comms_common.o \
+          comms4.o comms4_sp.o \
+          comms5.o comms5_sp.o \
+          comms6.o \
+          comms_partitioning.o derivs_module.o  dirac.o dirac_sp.o \
+          diracShamir.o diracWilson.o \
+          dum1.o dwf3d_lib.o \
+          gammamatrices.o gauge.o gaussian.o gforce.o inverter_utils.o \
+          measure_module.o measureWilson.o multishift_module.o params.o partitioning.o \
+          qmrherm_module.o \
+          random.o reductions.o remez.o remezg.o \
+          remez_common_subroutines.o timer.o trial.o vector.o
+
+.PHONY: clean
+
+COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -c 
+
+$(TOPDIR)/dirac_sp.F90 : $(TOPDIR)/dirac.F90
+	bash $(TOPDIR)/convert_to_sp.sh $<
+
+$(TOPDIR)/comms4_sp.F90 : $(TOPDIR)/comms4.F90
+	bash $(TOPDIR)/convert_to_sp.sh $<
+
+$(TOPDIR)/comms5_sp.F90 : $(TOPDIR)/comms5.F90
+	bash $(TOPDIR)/convert_to_sp.sh $<
+
+
+# MODULES AND OBJECT FILES
+# generic rule for all modules
+%.mod : %.o
+	#touch $@
+
+# generic rule for dum,gauge,gforce,remez,remezg, remez_common_subroutine 
+# trial,vector,partitioning
+%.o : $(TOPDIR)/%.F90 .makefile.uptodate params.mod
+	$(COMPILE) -o $*.o $<
+
+counters.o : $(TOPDIR)/counters.F90 .makefile.uptodate
+	$(COMPILE) -o counters.o $<
+
+bulk_rhmc.o : $(TOPDIR)/bulk_rhmc.f90 .makefile.uptodate \
+        dwf3d_lib.mod
+	$(COMPILE) -o $*.o $<
+
+comms_partitioning.o : $(TOPDIR)/comms_partitioning.F90 .makefile.uptodate \
+                       params.mod partitioning.mod
+	$(COMPILE) -o $*.o $<
+
+derivs_module.o : $(TOPDIR)/derivs_module.F90 .makefile.uptodate gforce.mod \
+                  dirac.mod diracShamir.o diracWilson.o trial.mod
+	$(COMPILE) -o $*.o $<
+
+dirac.o : $(TOPDIR)/dirac.F90 .makefile.uptodate params.mod gammamatrices.mod
+	$(COMPILE) -o $*.o $<
+
+diracShamir.o : $(TOPDIR)/diracShamir.F90 .makefile.uptodate params.mod gammamatrices.mod
+	$(COMPILE) -o $*.o $<
+
+diracWilson.o : $(TOPDIR)/diracWilson.F90 .makefile.uptodate params.mod gammamatrices.mod dum1.mod gaussian.mod
+	$(COMPILE) -o $*.o $<
+
+dirac_sp.o : $(TOPDIR)/dirac_sp.F90 .makefile.uptodate params.mod \
+          gammamatrices.mod
+	$(COMPILE) -o $*.o $<
+
+#dirac_split.o : $(TOPDIR)/dirac_split.F90 .makefile.uptodate params.mod \
+#                comms.mod dirac.mod partitioning.mod
+#	$(COMPILE) -o $*.o $<
+#
+#dirac_split_nodir.o : $(TOPDIR)/dirac_split_nodir.F90 .makefile.uptodate \
+#                      params.mod comms.mod dirac.mod partitioning.mod
+#	$(COMPILE) -o $*.o $<
+
+dwf3d_lib.o : $(TOPDIR)/dwf3d_lib.F90 \
+              .makefile.uptodate counters.mod comms.mod comms_common.mod \
+              comms4.mod \
+              dirac.mod \
+              diracShamir.mod diracWilson.mod \
+              dum1.mod gauge.mod gaussian.mod gammamatrices.mod \
+              gforce.mod measure_module.mod measureWilson.mod \
+              params.mod qmrherm_module.mod random.mod remez.mod remezg.mod \
+              remez_common_subroutines.mod timer.mod trial.mod vector.mod
+	$(COMPILE) -o dwf3d_lib.o $<
+
+gaussian.o : $(TOPDIR)/gaussian.F90 .makefile.uptodate \
+             comms4.mod params.mod random.mod 
+	$(COMPILE) -o gaussian.o $<
+
+inverter_utils.o  : $(TOPDIR)/inverter_utils.F90 .makefile.uptodate dirac.mod \
+                    diracShamir.mod diracWilson.mod trial.mod comms.mod comms5.mod
+	$(COMPILE) -o inverter_utils.o $<
+
+measure_module.o : $(TOPDIR)/measure_module.F90 \
+                  .makefile.uptodate params.mod gaussian.mod trial.mod \
+                  vector.mod comms5.mod comms_common.mod dirac.mod diracShamir.mod diracWilson.mod
+	$(COMPILE) -o measure_module.o $<
+
+measureWilson.o : $(TOPDIR)/measureWilson.F90 \
+                  .makefile.uptodate params.mod gaussian.mod trial.mod \
+                  vector.mod comms5.mod comms_common.mod dirac.mod diracShamir.mod diracWilson.mod
+	$(COMPILE) -o measureWilson.o $<
+
+multishift_module.o :  $(TOPDIR)/multishift_module.F90 \
+                  .makefile.uptodate comms5.mod comms5_sp.mod comms_common.mod dirac.mod diracShamir.mod diracWilson.mod dirac_sp.mod \
+                  params.mod reductions.mod
+	$(COMPILE) -o $*.o $<
+
+partitioning.o : $(TOPDIR)/partitioning.F90 .makefile.uptodate params.mod \
+                 comms.mod
+	$(COMPILE) -o $*.o $<
+
+qmrherm_module.o : $(TOPDIR)/qmrherm_module.F90 .makefile.uptodate params.mod \
+                   vector.mod gforce.mod comms.mod \
+                   comms_common.mod comms5.mod comms6.mod dirac.mod \
+                   diracShamir.mod diracWilson.mod \
+                   derivs_module.mod inverter_utils.mod multishift_module.mod \
+                   reductions.mod
+	$(COMPILE) -o qmrherm_module.o $<
+
+#qmrherm_module_split.o : $(TOPDIR)/qmrherm_module_split.F90 \
+#                         .makefile.uptodate params.mod vector.mod gforce.mod \
+#                         comms.mod dirac_split.mod dirac.mod derivs_module.mod
+#	$(COMPILE) -o qmrherm_module_split.o $<
+
+#qmrherm_module_split_nodir.o : $(TOPDIR)/qmrherm_module_split_nodir.F90 \
+#                              .makefile.uptodate params.mod comms.mod \
+#                              derivs_module.mod dirac.mod gforce.mod \
+#                              params.mod trial.mod
+#	$(COMPILE) -o qmrherm_module_split_nodir.o $<
+
+timer.o : $(TOPDIR)/timer.F90 comms_common.mod
+	$(COMPILE) -o timer.o $<
+
+# COMMUNICATION-RELATED 
+ifeq ($(MPI), yes)
+COMMS_FLAGS = -DMPI -DNP_X=$(NP_X) -DNP_Y=$(NP_Y) -DNP_T=$(NP_T) 
+FC = $(MPIFC)
+
+comms.o :  $(TOPDIR)/comms.F90 .makefile.uptodate comms_common.mod \
+           comms4.mod comms4_sp.mod \
+           comms5.mod comms5_sp.mod \
+           comms6.mod \
+           params.mod
+	$(COMPILE) -o comms.o $<
+
+comms5.o :  $(TOPDIR)/comms5.F90 .makefile.uptodate comms_common.mod params.mod
+	$(COMPILE) -o comms5.o $<
+
+comms5_sp.o :  $(TOPDIR)/comms5_sp.F90 .makefile.uptodate comms_common.mod \
+            params.mod
+	$(COMPILE) -o comms5_sp.o $<
+
+comms4.o :  $(TOPDIR)/comms4.F90 .makefile.uptodate comms_common.mod params.mod
+	$(COMPILE) -o comms4.o $<
+
+comms4_sp.o :  $(TOPDIR)/comms4_sp.F90 .makefile.uptodate comms_common.mod \
+            params.mod
+	$(COMPILE) -o comms4_sp.o $<
+
+
+
+else ifeq ($(MPI), no)
+
+comms.o :  $(TOPDIR)/uncomms.f90 .makefile.uptodate params.mod
+	$(COMPILE) -o comms.o $<
+
+comms5.o :  $(TOPDIR)/uncomms5.f90 .makefile.uptodate params.mod
+	$(COMPILE) -o comms5.o $<
+
+else 
+$(error MPI not correctly specified (watch for whitespaces))
+endif
+
+# RNG-RELATED
+ifeq ($(SITE_RANDOM), yes)
+RANDOM_FLAGS = -DSITE_RANDOM
+
+random.o :  $(TOPDIR)/site_random.f90 .makefile.uptodate comms.mod params.mod
+	$(COMPILE) -o random.o $<
+
+else ifeq ($(SITE_RANDOM), no)
+
+RANDOM_FLAGS = 
+
+random.o : $(TOPDIR)/random.f90 .makefile.uptodate comms.mod
+	$(COMPILE) -o random.o $<
+else 
+ $(error SITE_RANDOM not correctly specified (watch for whitespaces))
+endif
+
+
+#MISC
+compile_flags: MkRules MkFlags
+	echo $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} > $@
+
