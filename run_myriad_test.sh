@@ -35,6 +35,10 @@ fi
 
 # Create output folder TEST_OUTPUT_<KSIZE>_<KSIZET>_<KTHIRD>_<ITER2>
 OUTPUT_DIR="TEST_OUTPUT_${KSIZE}_${KSIZET}_${KTHIRD}_${ITER2}_${NP_X}_${NP_Y}_${NP_T}_${NP_THIRD}"
+if [ -d "${OUTPUT_DIR}" ]; then
+	echo "Error: A submission for these inputs has already been made"
+	exit 0
+fi
 mkdir $OUTPUT_DIR
 
 # Copy myriad_submit.sh, con, midout and remez* files from samples into output folder
