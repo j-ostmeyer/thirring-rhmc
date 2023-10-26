@@ -48,27 +48,27 @@ cp $MIDOUT_FILE "./${OUTPUT_DIR}/midout"
 cp remez2 remez2g remez4 remez4g "${OUTPUT_DIR}/"
 
 # update params.F90 with user inputted KSIZE* values
-sed -i '' "s/#define KSIZE .*/#define KSIZE ${KSIZE}/g" params.F90
-sed -i '' "s/#define KSIZET .*/#define KSIZET ${KSIZET}/g" params.F90
-sed -i '' "s/#define KTHIRD .*/#define KTHIRD ${KTHIRD}/g" params.F90
+sed -i "s/#define KSIZE .*/#define KSIZE ${KSIZE}/g" params.F90
+sed -i "s/#define KSIZET .*/#define KSIZET ${KSIZET}/g" params.F90
+sed -i "s/#define KTHIRD .*/#define KTHIRD ${KTHIRD}/g" params.F90
 
 # Update MkFlags with NP values 
-sed -i '' "s/NP_X=.*/NP_X=${NP_X}/g" MkFlags
-sed -i '' "s/NP_Y=.*/NP_Y=${NP_Y}/g" MkFlags
-sed -i '' "s/NP_T=.*/NP_T=${NP_T}/g" MkFlags
-sed -i '' "s/NP_THIRD=.*/NP_THIRD=${NP_THIRD}/g" MkFlags
+sed -i "s/NP_X=.*/NP_X=${NP_X}/g" MkFlags
+sed -i "s/NP_Y=.*/NP_Y=${NP_Y}/g" MkFlags
+sed -i "s/NP_T=.*/NP_T=${NP_T}/g" MkFlags
+sed -i "s/NP_THIRD=.*/NP_THIRD=${NP_THIRD}/g" MkFlags
 
 # run make
 make
 
 # replace iter2 in midout with user input
-sed -i '' "s/<ITER2>/${ITER2}/g" "${OUTPUT_DIR}/midout"
+sed -i "s/<ITER2>/${ITER2}/g" "${OUTPUT_DIR}/midout"
 
 # Update submission script with total NP
 NP_TOTAL="$(($NP_X * $NP_Y * $NP_T * $NP_THIRD))"
 echo "NP_TOTAL: ${NP_TOTAL}"
 echo "Total number of processors: ${NP_TOTAL}"
-sed -i '' "s/#$ -pe mpi .*/#$ -pe mpi ${NP_TOTAL}/g" "${OUTPUT_DIR}/myriad_submit.sh"
+sed -i "s/#$ -pe mpi .*/#$ -pe mpi ${NP_TOTAL}/g" "${OUTPUT_DIR}/myriad_submit.sh"
 
 # submit job
 cd $OUTPUT_DIR
