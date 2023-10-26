@@ -59,8 +59,7 @@ sed -i '' "s/NP_T=.*/NP_T=${NP_T}/g" MkFlags
 sed -i '' "s/NP_THIRD=.*/NP_THIRD=${NP_THIRD}/g" MkFlags
 
 # run make
-echo "make"
-#make
+make
 
 # replace iter2 in midout with user input
 sed -i '' "s/<ITER2>/${ITER2}/g" "${OUTPUT_DIR}/midout"
