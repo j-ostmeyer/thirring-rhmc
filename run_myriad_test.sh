@@ -61,6 +61,9 @@ sed -i "s/NP_THIRD=.*/NP_THIRD=${NP_THIRD}/g" MkFlags
 # run make
 make
 
+# cp executable into output dir to allow recompiling for a different build without effecting this one
+cp bulk_rhmc "${OUTPUT_DIR}/bulk_rhmc"
+
 # replace iter2 in midout with user input
 sed -i "s/<ITER2>/${ITER2}/g" "${OUTPUT_DIR}/midout"
 
@@ -69,6 +72,7 @@ NP_TOTAL="$(($NP_X * $NP_Y * $NP_T * $NP_THIRD))"
 echo "NP_TOTAL: ${NP_TOTAL}"
 echo "Total number of processors: ${NP_TOTAL}"
 sed -i "s/#$ -pe mpi .*/#$ -pe mpi ${NP_TOTAL}/g" "${OUTPUT_DIR}/myriad_submit.sh"
+sed -i "s/<EXECUTABLE_PATH>/${OUTPUT_DIR}/bulk_rhmc/g" "${OUTPUT_DIR}/myriad_submit.sh"
 
 # submit job
 cd $OUTPUT_DIR
