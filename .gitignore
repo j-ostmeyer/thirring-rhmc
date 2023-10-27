@@ -29,3 +29,4 @@ correlators/
 test_c_tilde/
 shamir-kernel/
 README.pdf
+.DS_store
