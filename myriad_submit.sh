@@ -19,4 +19,4 @@
 #$ -cwd
 
 # Run our MPI job.  GERun is a wrapper that launches MPI jobs on our clusters.
-gerun /home/ccaecai/Scratch/thirring-rhmc/bulk_rhmc
+gerun /home/ccaecai/Scratch/thirring-rhmc/<EXECUTABLE_PATH>
