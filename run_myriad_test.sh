@@ -47,16 +47,19 @@ cp $CON_FILE "./${OUTPUT_DIR}/con"
 cp $MIDOUT_FILE "./${OUTPUT_DIR}/midout"
 cp remez2 remez2g remez4 remez4g "${OUTPUT_DIR}/"
 
-# update params.F90 with user inputted KSIZE* values
+# update params.F90 with user inputted KSIZE* values and setting to start from con 
 sed -i "s/#define KSIZE .*/#define KSIZE ${KSIZE}/g" params.F90
 sed -i "s/#define KSIZET .*/#define KSIZET ${KSIZET}/g" params.F90
 sed -i "s/#define KTHIRD .*/#define KTHIRD ${KTHIRD}/g" params.F90
+sed -i "s/integer, parameter :: istart = .*/integer, parameter :: istart = -1/g" params.F90
+sed -i "s/integer, parameter :: iread = .*/integer, parameter :: iread = 1/g" params.F90
 
 # Update MkFlags with NP values 
 sed -i "s/NP_X=.*/NP_X=${NP_X}/g" MkFlags
 sed -i "s/NP_Y=.*/NP_Y=${NP_Y}/g" MkFlags
 sed -i "s/NP_T=.*/NP_T=${NP_T}/g" MkFlags
 sed -i "s/NP_THIRD=.*/NP_THIRD=${NP_THIRD}/g" MkFlags
+sed -i "s/SITE_RANDOM=no/SITE_RANDOM=yes/g" MkFlags
 
 # run make
 make
