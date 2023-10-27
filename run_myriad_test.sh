@@ -72,7 +72,7 @@ NP_TOTAL="$(($NP_X * $NP_Y * $NP_T * $NP_THIRD))"
 echo "NP_TOTAL: ${NP_TOTAL}"
 echo "Total number of processors: ${NP_TOTAL}"
 sed -i "s/#$ -pe mpi .*/#$ -pe mpi ${NP_TOTAL}/g" "${OUTPUT_DIR}/myriad_submit.sh"
-sed -i "s/<EXECUTABLE_PATH>/${OUTPUT_DIR}/bulk_rhmc/g" "${OUTPUT_DIR}/myriad_submit.sh"
+sed -i "s/<EXECUTABLE_PATH>/${OUTPUT_DIR}\/bulk_rhmc/g" "${OUTPUT_DIR}/myriad_submit.sh"
 
 # submit job
 cd $OUTPUT_DIR
