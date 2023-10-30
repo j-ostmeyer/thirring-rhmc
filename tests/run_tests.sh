@@ -8,6 +8,7 @@ MYRIAD_SUBMIT_FILE="myriad_submit_test.sh"
 # A comma separated list of all tests to be ran
 TESTS="test_dslash_1"
 GENERATE="${GENERATE:-0}"
+SKIP_COMPILE="${SKIP_COMPILE:-0}"
 
 # get inputs from cli
 if [[ ( -z "${KSIZE}" ) || ( -z "${KSIZET}" ) || \
@@ -18,15 +19,16 @@ if [[ ( -z "${KSIZE}" ) || ( -z "${KSIZET}" ) || \
 	exit 0
 else
 	echo "Using config:"
-	echo "  KSIZE:    ${KSIZE}"
-	echo "  KSIZET:   ${KSIZET}"
-	echo "  KTHIRD:   ${KTHIRD}"
-	echo "  ITER2:    ${ITER2}"
-	echo "  NP_X:     ${NP_X}"
-	echo "  NP_Y:     ${NP_Y}"
-	echo "  NP_T:     ${NP_T}"
-	echo "  NP_THIRD: ${NP_THIRD}"
-	echo "  GENERATE: ${GENERATE}"
+	echo "  KSIZE:        ${KSIZE}"
+	echo "  KSIZET:       ${KSIZET}"
+	echo "  KTHIRD:       ${KTHIRD}"
+	echo "  ITER2:        ${ITER2}"
+	echo "  NP_X:         ${NP_X}"
+	echo "  NP_Y:         ${NP_Y}"
+	echo "  NP_T:         ${NP_T}"
+	echo "  NP_THIRD:     ${NP_THIRD}"
+	echo "  GENERATE:     ${GENERATE}"
+	echo "  SKIP_COMPILE: ${SKIP_COMPILE}"
 fi
 
 # Turn on generate if set by user
@@ -52,7 +54,9 @@ sed -i "s/NP_THIRD=.*/NP_THIRD=${NP_THIRD}/g" MkFlags
 sed -i "s/SITE_RANDOM=no/SITE_RANDOM=yes/g" MkFlags
 
 # Compile
-make -f ./MakefileNew
+if [ $SKIP_COMPILE -ne 1 ]; then
+	make -f ./MakefileNew
+fi
 
 # Run test
 NP_TOTAL="$(($NP_X * $NP_Y * $NP_T * $NP_THIRD))"
