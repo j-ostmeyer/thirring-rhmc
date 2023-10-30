@@ -29,26 +29,13 @@ fi
 
 # TODO: Write above to file
 
-# Create output folder TEST_OUTPUT_<KSIZE>_<KSIZET>_<KTHIRD>_<ITER2>
-OUTPUT_DIR="TEST_OUTPUT_${KSIZE}_${KSIZET}_${KTHIRD}_${ITER2}_${NP_X}_${NP_Y}_${NP_T}_${NP_THIRD}"
-if [ -d "${OUTPUT_DIR}" ]; then
-	echo "Error: A submission for these inputs has already been made"
-	exit 0
-fi
-mkdir $OUTPUT_DIR
-
-# Copy MYRIAD_SUBMIT_FILE into output folder
-cp $MYRIAD_SUBMIT_FILE "./${OUTPUT_DIR}/${MYRIAD_SUBMIT_FILE}"
-cp $CON_FILE "./${OUTPUT_DIR}/con"
-cp $MIDOUT_FILE "./${OUTPUT_DIR}/midout"
-cp remez2 remez2g remez4 remez4g "${OUTPUT_DIR}/"
-
 # update params.F90 with user inputted KSIZE* values and setting to start from con 
 sed -i "s/#define KSIZE .*/#define KSIZE ${KSIZE}/g" test_params.F90
 sed -i "s/#define KSIZET .*/#define KSIZET ${KSIZET}/g" test_params.F90
 sed -i "s/#define KTHIRD .*/#define KTHIRD ${KTHIRD}/g" test_params.F90
 sed -i "s/integer, parameter :: istart = .*/integer, parameter :: istart = -1/g" test_params.F90
 sed -i "s/integer, parameter :: iread = .*/integer, parameter :: iread = 1/g" test_params.F90
+
 # Update MkFlags with NP values 
 sed -i "s/NP_X=.*/NP_X=${NP_X}/g" MkFlags
 sed -i "s/NP_Y=.*/NP_Y=${NP_Y}/g" MkFlags
@@ -57,18 +44,15 @@ sed -i "s/NP_THIRD=.*/NP_THIRD=${NP_THIRD}/g" MkFlags
 sed -i "s/SITE_RANDOM=no/SITE_RANDOM=yes/g" MkFlags
 
 # Compile
-make -f ./MakefileNew "TESTS='${TESTS}'"
-
-# cp executable into output dir to allow recompiling for a different build without effecting this one
-cp "${TESTS}" "${OUTPUT_DIR}/"
+make -f ./MakefileNew
 
 # replace iter2 in midout with user input
-sed -i "s/<ITER2>/${ITER2}/g" "${OUTPUT_DIR}/midout"
+sed -i "s/<ITER2>/${ITER2}/g" midout
 
 # Run test
 NP_TOTAL="$(($NP_X * $NP_Y * $NP_T * $NP_THIRD))"
-cd $OUTPUT_DIR
-for TEST in $TESTS; do
+for TEST in ${TESTS//,/ }
+do
 	mpirun --oversubscribe -n $NP_TOTAL "./${TEST}"
 done
 
