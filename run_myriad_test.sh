@@ -24,6 +24,8 @@ else
 	echo "  NP_THIRD: ${NP_THIRD}"
 fi
 
+# TODO: Write above to file
+
 # Check we have a con file matching the inputs
 CON_FILE="${CONS_DIR}/con_${KSIZE}x${KSIZET}"
 if [ -f "${CON_FILE}" ]; then
