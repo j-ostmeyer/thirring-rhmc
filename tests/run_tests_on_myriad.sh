@@ -60,7 +60,7 @@ make -f ./MakefileNew
 NP_TOTAL="$(($NP_X * $NP_Y * $NP_T * $NP_THIRD))"
 for TEST in ${TESTS//,/ }
 do
-	mpirun --oversubscribe -n $NP_TOTAL "./${TEST}"
+	mpirun -n $NP_TOTAL "./${TEST}"
 done
 
 # # Update submission script with total NP
