@@ -57,7 +57,7 @@ sed -i "s/NP_THIRD=.*/NP_THIRD=${NP_THIRD}/g" MkFlags
 sed -i "s/SITE_RANDOM=no/SITE_RANDOM=yes/g" MkFlags
 
 # Compile
-make -f ./MakefileNew
+make -f ./MakefileNew "TESTS='${TESTS}'"
 
 # cp executable into output dir to allow recompiling for a different build without effecting this one
 cp "${TESTS}" "${OUTPUT_DIR}/"
