@@ -29,8 +29,6 @@ else
 	echo "  GENERATE: ${GENERATE}"
 fi
 
-# TODO: Write above to file
-
 # Turn on generate if set by user
 if [ $GENERATE -ne 0 ]; then
 	for TEST in ${TESTS//,/ }
@@ -62,18 +60,6 @@ for TEST in ${TESTS//,/ }
 do
 	mpirun -n $NP_TOTAL "./${TEST}"
 done
-
-# # Update submission script with total NP
-# NP_TOTAL="$(($NP_X * $NP_Y * $NP_T * $NP_THIRD))"
-# echo "NP_TOTAL: ${NP_TOTAL}"
-# echo "Total number of processors: ${NP_TOTAL}"
-# sed -i "s/#$ -pe mpi .*/#$ -pe mpi ${NP_TOTAL}/g" "${OUTPUT_DIR}/${MYRIAD_SUBMIT_FILE}"
-
-# sed -i "s/<EXECUTABLE_PATH>/${OUTPUT_DIR}\/${TEST}/g" "${OUTPUT_DIR}/${MYRIAD_SUBMIT_FILE}"
-
-# # submit job
-# cd $OUTPUT_DIR
-# qsub $MYRIAD_SUBMIT_FILE
 
 # Turn off generate if set by user
 if [ $GENERATE -ne 0 ]; then
