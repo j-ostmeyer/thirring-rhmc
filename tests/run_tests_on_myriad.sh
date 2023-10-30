@@ -7,6 +7,7 @@ MYRIAD_SUBMIT_FILE="myriad_submit_test.sh"
 
 # A comma separated list of all tests to be ran
 TESTS="test_dslash_1"
+GENERATE="${GENERATE:-0}"
 
 # get inputs from cli
 if [[ ( -z "${KSIZE}" ) || ( -z "${KSIZET}" ) || \
@@ -25,9 +26,18 @@ else
 	echo "  NP_Y:     ${NP_Y}"
 	echo "  NP_T:     ${NP_T}"
 	echo "  NP_THIRD: ${NP_THIRD}"
+	echo "  GENERATE: ${GENERATE}"
 fi
 
 # TODO: Write above to file
+
+# Turn on generate if set by user
+if [ $GENERATE -ne 0 ]; then
+	for TEST in ${TESTS//,/ }
+	do
+		sed -i "s/logical :: generate = .false./logical :: generate = .true./g" "${TEST}.F90"
+	done
+fi
 
 # update params.F90 with user inputted KSIZE* values and setting to start from con 
 sed -i "s/#define KSIZE .*/#define KSIZE ${KSIZE}/g" test_params.F90
@@ -45,9 +55,6 @@ sed -i "s/SITE_RANDOM=no/SITE_RANDOM=yes/g" MkFlags
 
 # Compile
 make -f ./MakefileNew
-
-# replace iter2 in midout with user input
-sed -i "s/<ITER2>/${ITER2}/g" midout
 
 # Run test
 NP_TOTAL="$(($NP_X * $NP_Y * $NP_T * $NP_THIRD))"
@@ -67,3 +74,11 @@ done
 # # submit job
 # cd $OUTPUT_DIR
 # qsub $MYRIAD_SUBMIT_FILE
+
+# Turn off generate if set by user
+if [ $GENERATE -ne 0 ]; then
+	for TEST in ${TESTS//,/ }
+	do
+		sed -i "s/logical :: generate = .true./logical :: generate = .false./g" "${TEST}.F90"
+	done
+fi
