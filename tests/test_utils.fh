@@ -50,16 +50,12 @@
 #define check_max(_diff_array, _max_value, _var_name, _reduction_var,  _mpi_type, _unit_name) \
   _reduction_var = maxval(abs(_diff_array));                             \
   do_mpi_reduction(_reduction_var, MPI_Max, _mpi_type)                   \
-  if (ip_global .eq. 0) then;                                            \
   if (_reduction_var .gt. _max_value) then;                              \
   print *, _unit_name, ': max ', _var_name, ' difference too large: ', _reduction_var; \
-  end if;                                                                \
-  end if
+  end if                                                                
 #define check_sum(_diff_array, _max_value, _var_name, _reduction_var,  _mpi_type, _unit_name) \
   _reduction_var = sum(_diff_array);                                        \
   do_mpi_reduction(_reduction_var, MPI_Sum, _mpi_type)                      \
-  if (ip_global .eq. 0) then;                                               \
   if (abs(_reduction_var) .gt. _max_value) then;                            \
   print *, _unit_name, ': sum of ', _var_name, ' difference too large: ', _reduction_var; \
-  end if;                                                                   \
   end if
