@@ -16,7 +16,9 @@ The raw data produced by the program described below can be found in the directo
 The same data, but sorted in a systematic fashion, is repeated in the `correlators` directory. Therein it is analysed with the `ana.sh` and `ana_corr.R` scripts.
 
 Data files:
-- `fort.11` shows the average of the bose action (3rd column) for every trajectory (1st column).
+- `fort.11` shows the bosonic field (2nd column) and momentum (3rd column) contributions to the action for every trajectory (1st column).
+- `fort.100` is the contribution to the bilinear condensate from one set of stochastic source fields. Four columns are real, imaginary parts for respectively Psibar(0)Psi(L_s), Psibar(L_s)Psi(0).
+- `fort.200` contains in column 1: bilinear condensate averaged over knoise noisy estimators (the basic observable used in equation of state fits); in column 2: (bilinear condensate)^2 averaged over knoise*(knoise-1)/2 noisy estimators (to avoid bias from connected diagrams, used in calculation of susceptibility).
 - `fort.501` contains real and imaginary parts of the fermion correlator time series (time in 2nd column) in 3rd and 4th columns, defined by S_0 = 0.25*tr{gamma_0*S_f}  Cf. eqn (23).
 - `fort.500` contains real and imaginary parts of the fermion correlator time series (time in 2nd column) in 3rd and 4th columns, defined by 0.25*tr{S_f} from which S_3 in eqn (23) is derived.
 - `fort.302` contains meson correlator time series (time in 2nd column) involving gamma_5. Sum (difference) of 3rd and 4th columns is the gamma_5-Goldstone (gamma_5*gamma_3-Non-Goldstone).
