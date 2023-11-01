@@ -31,6 +31,9 @@ program test_dslash
     imassChar = ''
     imass = imasses(imass_index)
     write(imassChar, '(I1)') imass
+    if (ip_global == 0) then
+      print *, ' imass: ', imassChar
+    end if
 #ifdef MPI
     call MPI_Barrier(comm, ierr)
 #endif
