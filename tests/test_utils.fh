@@ -52,9 +52,9 @@
   do_mpi_reduction(_reduction_var, MPI_Max, _mpi_type)                   \
   if (ip_global .eq. 0) then;                                            \
   if (_reduction_var .gt. _max_value) then;                              \
-  print *, '  \x1B[31mFailed \x1B[0m', ' max ', _var_name, ' difference too large: ', _reduction_var; \
+  print *, '  \x1B[31mFailed \x1B[0m', _unit_name, ' max ', _var_name, ' difference too large: ', _reduction_var; \
   else;                                                                  \
-  print *, '  \x1B[32mPassed \x1B[0m', ' max ', _var_name, ' is within error'; \
+  print *, '  \x1B[32mPassed \x1B[0m', _unit_name, ' max ', _var_name, ' is within error'; \
   end if;                                                                \
   end if
 #define check_sum(_diff_array, _max_value, _var_name, _reduction_var,  _mpi_type, _unit_name) \
@@ -62,8 +62,8 @@
   do_mpi_reduction(_reduction_var, MPI_Sum, _mpi_type)                      \
   if (ip_global .eq. 0) then;                                               \
   if (abs(_reduction_var) .gt. _max_value) then;                            \
-  print *, '  \x1B[31mFailed \x1B[0m', ' sum of ', _var_name, ' difference too large: ', _reduction_var; \
+  print *, '  \x1B[31mFailed \x1B[0m', _unit_name, ' sum of ', _var_name, ' difference too large: ', _reduction_var; \
   else;                                                                  \
-  print *, '  \x1B[32mPassed \x1B[0m', ' sum of ', _var_name, ' is within error'; \
+  print *, '  \x1B[32mPassed \x1B[0m', _unit_name, ' sum of ', _var_name, ' is within error'; \
   end if;                                                                   \
   end if
