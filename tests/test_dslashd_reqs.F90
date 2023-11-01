@@ -16,7 +16,7 @@ program test_dslashd_reqs
   integer :: i, ierr, imass_index, imass
   integer, dimension(3) :: imasses = (/1,3,5/)
   character(len=4) :: imass_char
-  character(len=*) :: test_prefix = 'test_dslashd_reqs_'
+  character(len=*), parameter :: test_prefix = 'test_dslashd_reqs_'
 
   ! initialise function parameters
   complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
