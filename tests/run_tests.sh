@@ -5,7 +5,7 @@ CONS_DIR="${SAMPLES_DIR}/cons"
 MIDOUT_FILE="${SAMPLES_DIR}/midout"
 MYRIAD_SUBMIT_FILE="myriad_submit_test.sh"
 
-# A comma separated list of all tests to be ran
+# A space separated list of all tests to be ran
 ALL_TESTS="test_dslash_1"
 TESTS="${TESTS:-$ALL_TESTS}"
 GENERATE="${GENERATE:-0}"
@@ -62,7 +62,7 @@ if [ $SKIP_COMPILE -ne 1 ]; then
 	sed -i "s/SITE_RANDOM=no/SITE_RANDOM=yes/g" MkFlags
 
 	# Compile
-	make
+	make "TESTS=${TESTS}"
 fi
 
 # Run test
