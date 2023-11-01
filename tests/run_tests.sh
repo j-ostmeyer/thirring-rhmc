@@ -6,7 +6,7 @@ MIDOUT_FILE="${SAMPLES_DIR}/midout"
 MYRIAD_SUBMIT_FILE="myriad_submit_test.sh"
 
 # A space separated list of all tests to be ran
-ALL_TESTS="test_dslash"
+ALL_TESTS="test_dslash test_dslashd"
 TESTS="${TESTS:-$ALL_TESTS}"
 GENERATE="${GENERATE:-0}"
 SKIP_COMPILE="${SKIP_COMPILE:-0}"
