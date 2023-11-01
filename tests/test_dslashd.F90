@@ -15,7 +15,8 @@ program test_dslashd
   logical :: generate = .false.
   integer :: i, ierr, imass_index, imass, timing_loops = 1
   integer, dimension(3) :: imasses = (/1,3,5/)
-  character(len=4) :: imassChar
+  character(len=4) :: imass_char
+  character(len=*) :: test_prefix = 'test_dslashd_'
 
   ! initialise function parameters
   complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
@@ -28,11 +29,11 @@ program test_dslashd
 #endif 
 
   do imass_index = 1, size(imasses)
-    imassChar = ''
+    imass_char = ''
     imass = imasses(imass_index)
-    write(imassChar, '(I1)') imass
+    write(imass_char, '(I1)') imass
     if (ip_global == 0) then
-      print *, ' imass: ', imassChar
+      print *, ' imass: ', imass_char
     end if
 #ifdef MPI
     call MPI_Barrier(comm, ierr)
@@ -41,9 +42,9 @@ program test_dslashd
 
     call run_dslashd(Phi, R, u, imass, timing_loops, reqs_Phi)
     if (generate) then
-      call generate_data(Phi, 'test_dslashd_' // trim(imassChar))
+      call generate_data(Phi, test_prefix // trim(imass_char))
     else
-      call validate_results(Phi, 'test_dslashd_' // trim(imassChar))
+      call validate_results(Phi, test_prefix // trim(imass_char))
     end if
   end do
 
