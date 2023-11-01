@@ -20,6 +20,7 @@ program test_dslash
   ! initialise function parameters
   complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
   complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+  complex(dp) PhiToWrite(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4)
   complex(dp) Phiref(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4)
   complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) diff(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4)
@@ -104,7 +105,8 @@ program test_dslash
   ! check output
   if (generate) then
     print *, "Generating .dat file..."
-    write_file(Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_dslash_1.dat', MPI_Double_Complex)
+    PhiToWrite(:, :, :, :, :) = Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
+    write_file(PhiToWrite, 'test_dslash_1.dat', MPI_Double_Complex)
   else
     read_file(Phiref, 'test_dslash_1.dat', MPI_Double_Complex)
 
