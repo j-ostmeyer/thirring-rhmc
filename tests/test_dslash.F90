@@ -146,14 +146,16 @@ contains
   subroutine generate_data(Phi, test_name)
     complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) PhiToWrite(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4)
-
     character(len = 100), intent(in) :: test_name
+    character(len=100) :: dat_file
+
+    write(dat_file, *) trim(test_name)//'.dat'
     
     if (ip_global == 0) then
       print '(A27,A13)', '  Generating .dat file for ', trim(test_name)
     end if
     PhiToWrite(:, :, :, :, :) = Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
-    write_file(PhiToWrite, trim(test_name) // '.dat', MPI_Double_Complex)
+    write_file(PhiToWrite, dat_file, MPI_Double_Complex)
   end subroutine generate_data
 
   subroutine validate_results(Phi, test_name)

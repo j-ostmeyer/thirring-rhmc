@@ -42,6 +42,10 @@ contains
     integer :: mode
     integer :: ierr
 
+    if (ip_global == 0) then
+      print *, "Creating dat file ", filename
+    end if
+
     if (write_out) then
       mode = MPI_Mode_Wronly + MPI_Mode_Create
     else
