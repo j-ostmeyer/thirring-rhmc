@@ -146,11 +146,8 @@ contains
   subroutine generate_data(Phi, test_name)
     complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) PhiToWrite(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4)
-    character(len = 100), intent(in) :: test_name
+    character(len=*), intent(in) :: test_name
 
-    if (ip_global == 0) then
-      print *, '  Generating .dat file...'
-    end if
     PhiToWrite(:, :, :, :, :) = Phi(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
     write_file(PhiToWrite, trim(test_name)//'.dat', MPI_Double_Complex)
   end subroutine generate_data
@@ -161,7 +158,7 @@ contains
     complex(dp) diff(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4)
     complex(dp) sum_diff
     real(dp) max_diff
-    character(len = 100), intent(in) :: test_name
+    character(len=*), intent(in) :: test_name
 
     read_file(Phiref, trim(test_name)//'.dat', MPI_Double_Complex)
 
