@@ -6,7 +6,7 @@ MIDOUT_FILE="${SAMPLES_DIR}/midout"
 MYRIAD_SUBMIT_FILE="myriad_submit_test.sh"
 
 # A space separated list of all tests to be ran
-ALL_TESTS="test_dslash_1"
+ALL_TESTS="test_dslash"
 TESTS="${TESTS:-$ALL_TESTS}"
 GENERATE="${GENERATE:-0}"
 SKIP_COMPILE="${SKIP_COMPILE:-0}"
@@ -69,5 +69,6 @@ fi
 NP_TOTAL="$(($NP_X * $NP_Y * $NP_T * $NP_THIRD))"
 for TEST in ${TESTS//,/ }
 do
+    echo "Test ${TEST}:"
 	mpirun -n $NP_TOTAL "./${TEST}"
 done
