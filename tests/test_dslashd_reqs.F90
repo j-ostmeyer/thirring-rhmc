@@ -22,7 +22,7 @@ program test_dslashd_reqs
   complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
   complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-  integer, dimension(16) :: reqs_Phi
+  integer, dimension(16) :: reqs_Phi, reqs_R
 
 #ifdef MPI
   call init_MPI
@@ -38,9 +38,9 @@ program test_dslashd_reqs
 #ifdef MPI
     call MPI_Barrier(comm, ierr)
 #endif
-    call generate_starting_state(Phi, R, u, reqs_Phi)
+    call generate_starting_state(Phi, R, u, reqs_Phi, reqs_R)
 
-    call run_dslashd(Phi, R, u, imass, reqs_Phi)
+    call run_dslashd(Phi, R, u, imass, reqs_Phi, reqs_R)
     if (generate) then
       call generate_data(Phi, test_prefix // trim(imass_char))
     else
@@ -53,11 +53,11 @@ program test_dslashd_reqs
 #endif
 
 contains
-  subroutine generate_starting_state(Phi, R, u, reqs_Phi)
+  subroutine generate_starting_state(Phi, R, u, reqs_Phi, reqs_R)
     complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
-    integer, dimension(16), intent(inout) :: reqs_Phi
+    integer, dimension(16), intent(inout) :: reqs_Phi, reqs_R
 
     complex, parameter :: iunit = cmplx(0, 1)
     real(dp), parameter :: tau = 8*atan(1.0_8)
@@ -66,7 +66,6 @@ contains
     integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
     integer :: idx
 #ifdef MPI
-    integer, dimension(16) :: reqs_R
     integer, dimension(12) :: reqs_u
     integer :: ierr
 #endif
@@ -124,12 +123,12 @@ contains
     call init_gammas()
   end subroutine generate_starting_state
 
-  subroutine run_dslashd(Phi, R, u, imass, reqs_Phi)
+  subroutine run_dslashd(Phi, R, u, imass, reqs_Phi, reqs_R)
     complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
     integer, intent(in) :: imass
-    integer, dimension(16), intent(inout) :: reqs_Phi
+    integer, dimension(16), intent(inout) :: reqs_Phi, reqs_R
     
     real, parameter :: am = 0.05
 
