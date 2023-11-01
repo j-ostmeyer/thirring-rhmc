@@ -13,10 +13,10 @@ GNU_FC       = gfortran
 GNU_FCFLAGS  = -O3 -Wall -ffree-line-length-none -g -mcmodel=medium 
 
 #INTEL SETTINGS
-INTEL_MPIFC  = mpiifort #mpif90 
-INTEL_FC     = ifort 
-INTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays
-#INTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g -fpe0 -traceback 
+INTEL_MPIFC  = mpiifort #mpif90
+INTEL_FC     = ifort
+INTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -mcmodel=medium -no-wrap-margin -assume bscc
+#INTEL_FCFLAGS= -ipo -no-prec-div -fp-model fast=2 -xHost -O3 -heap-arrays -g -fpe0 -traceback
 #INTEL_FCFLAGS= -O2 -heap-arrays #-g -warn all
 #INTEL_FCFLAGS=-g -O0 -heap-arrays -warn all -C -traceback
 #INTEL_FCFLAGS=-g -O0 -heap-arrays 
