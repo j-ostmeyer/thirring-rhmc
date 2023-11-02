@@ -95,7 +95,7 @@ LIBOBJS = counters.o comms.o comms_common.o \
 
 .PHONY: clean
 
-COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} -c
+COMPILE = $(FC) $(FCFLAGS) $(COMMS_FLAGS) ${RANDOM_FLAGS} ${KERNEL_FLAGS} -c
 
 $(TOPDIR)/dirac_sp.F90 : $(TOPDIR)/dirac.F90
 	bash $(TOPDIR)/convert_to_sp.sh $<
@@ -240,6 +240,14 @@ else
  $(error SITE_RANDOM not correctly specified (watch for whitespaces))
 endif
 
+# Kernel choice
+ifeq ($(KERNEL), shamir)
+  KERNEL_FLAGS = -DSHAMIR_KERNEL
+else ifeq ($(KERNEL), wilson)
+  KERNEL_FLAGS = -DWILSON_KERNEL
+else
+ $(error Must specify either KERNEL=shamir or KERNEL=wilson)
+endif
 
 #MISC
 compile_flags: MkRules MkFlags

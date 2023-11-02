@@ -8,16 +8,34 @@ module dirac
 
 contains
 
+  pure subroutine verify_kernel_choice()
+#if defined(SHAMIR_KERNEL) && defined(WILSON_KERNEL)
+    Error: Must specify only one of SHAMIR_KERNEL or WILSON_KERNEL
+#endif
+
+#if !defined(SHAMIR_KERNEL) && !defined(WILSON_KERNEL)
+    Error: Must specify one of SHAMIR_KERNEL or WILSON_KERNEL
+#endif
+  end subroutine
+
   pure subroutine dslash(Phi, R, u, am, imass)
     implicit none
     complex(dp), intent(in) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
-    complex(dp), intent(out) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(inout) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     integer, intent(in) :: imass
     real, intent(in) :: am
 
-    ! call dslash_shamir(Phi, R, u, am, imass)
+    call verify_kernel_choice()
+
+#ifdef SHAMIR_KERNEL
+    call dslash_shamir(Phi, R, u, am, imass)
+#endif
+
+#ifdef WILSON_KERNEL
     call dslash_wilson(Phi, R, u, am, imass)
+#endif
+
   end subroutine
 
   pure subroutine dslash_shamir(Phi, R, u, am, imass)
@@ -408,14 +426,21 @@ contains
     use comms, only: complete_halo_update
     implicit none
     complex(dp), intent(in) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
-    complex(dp), intent(out) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(inout) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     integer, intent(in) :: imass
     real, intent(in) :: am
     integer, dimension(16), intent(inout), optional :: reqs_R
 
-  ! call dslashd_shamir(Phi, R, u, am, imass, reqs_R)
+    call verify_kernel_choice()
+
+#ifdef SHAMIR_KERNEL
+  call dslashd_shamir(Phi, R, u, am, imass, reqs_R)
+#endif
+
+#ifdef WILSON_KERNEL
   call dslashd_wilson(Phi, R, u, am, imass, reqs_R)
+#endif
 
 end subroutine dslashd
 
