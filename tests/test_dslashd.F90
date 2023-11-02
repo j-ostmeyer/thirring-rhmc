@@ -3,7 +3,7 @@ program test_dslashd
   use params
   use mpi
   ! use dwf3d_lib
-  use dirac
+  use diracWilson
   use comms
   use comms4
   use comms5
