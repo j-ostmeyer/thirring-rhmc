@@ -2,14 +2,16 @@ import os
 import pathlib
 import re
 import argparse
+import glob
+import datetime
 
-def open_file(filename):
+def open_file(filename, format):
     current_directory = pathlib.Path(__file__).parent.resolve()
     file_path = os.path.join(current_directory, filename)
     if not os.path.isfile(file_path):
         print(file_path + ": File not found.")
         exit(1)
-    return open(file_path)
+    return open(file_path, format)
 
 def get_first_integer_from_line(line):
     search = re.search("\d+", line)
@@ -43,6 +45,23 @@ def get_exp_dH(output_file):
             break
     print("exp-dH: " + line.split("<exp-dH>=")[-1].strip())
 
+def get_runtime(o_file):
+    first_line = o_file.readline().decode()
+
+    try:  # catch OSError in case of a one line file 
+        o_file.seek(-2, os.SEEK_END)
+        while o_file.read(1) != b'\n':
+            o_file.seek(-2, os.SEEK_CUR)
+    except OSError:
+        o_file.seek(0)
+
+    last_line = o_file.readline().decode()
+
+    start = datetime.datetime(first_line)
+    end = datetime.datetime(last_line)
+
+    print(start - end)
+
 def main():
     parser = argparse.ArgumentParser(description='Extract output from TEST_OUTPUT_* dir')
     parser.add_argument('output_dir', type=str, nargs=1,
@@ -50,12 +69,15 @@ def main():
 
     args = parser.parse_args()
 
-    output_file = open_file(os.path.join(args.output_dir[0], "output"))
+    output_file = open_file(os.path.join(args.output_dir[0], "output"), 'r')
+    o_file = open_file(os.path.join(args.output_dir[0], glob.glob('ThirringTest.o*')[0]), 'rb')
 
+    get_runtime(o_file)
     get_acceptance_rate(output_file)
     get_exp_dH(output_file)
 
     output_file.close()
+    o_file.close()
 
 if __name__ == "__main__":
     main()
