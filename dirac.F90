@@ -9,13 +9,20 @@ module dirac
 contains
 
   pure subroutine dslash(Phi, R, u, am, imass)
+    implicit none
+    complex(dp), intent(in) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
+    complex(dp), intent(out) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    integer, intent(in) :: imass
+    real, intent(in) :: am
+
+    call dslash_shamir(Phi, R, u, am, imass)
+  end subroutine
+
+  pure subroutine dslash_shamir(Phi, R, u, am, imass)
     !
     !     calculates Phi = M*R
     !
-    !     complex, intent(in) :: u(0:ksize+1,0:ksize+1,0:ksizet+1,3)
-    !     complex, intent(in) :: Phi(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
-    !     complex, intent(in) :: R(kthird,0:ksize+1,0:ksize+1,0:ksizet+1,4)
-    !     complex :: zkappa
     implicit none
     complex(dp), intent(in) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
     complex(dp), intent(out) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -162,11 +169,11 @@ contains
     end if
 
     return
-  end subroutine dslash
+  end subroutine dslash_shamir
 
   !***********************************************************************
 
-  pure subroutine dslashd_local(am, Phi, R, imass)
+  pure subroutine dslashd_local_shamir(am, Phi, R, imass)
     implicit none
     complex(dp), intent(out) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -268,14 +275,32 @@ contains
     end if
 
     return
-  end subroutine dslashd_local
+  end subroutine dslashd_local_shamir
 
 !***********************************************************************
 
 #ifdef MPI
   subroutine dslashd(Phi, R, u, am, imass, reqs_R)
 #else
-    pure subroutine dslashd(Phi, R, u, am, imass)
+  pure subroutine dslashd(Phi, R, u, am, imass, reqs_R)
+#endif
+    use comms, only: complete_halo_update
+    implicit none
+    complex(dp), intent(in) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
+    complex(dp), intent(out) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    integer, intent(in) :: imass
+    real, intent(in) :: am
+    integer, dimension(16), intent(inout), optional :: reqs_R
+
+  call dslashd_shamir(Phi, R, u, am, imass, reqs_R)
+
+end subroutine dslashd
+
+#ifdef MPI
+  subroutine dslashd_shamir(Phi, R, u, am, imass, reqs_R)
+#else
+  pure subroutine dslashd_shamir(Phi, R, u, am, imass, reqs_R)
 #endif
       use comms, only: complete_halo_update
       implicit none
@@ -284,12 +309,9 @@ contains
       complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
       integer, intent(in) :: imass
       real, intent(in) :: am
-      !complex(dp) :: zkappa
-      !real :: diag
-      integer :: ixup, iyup, itup, ix, iy, it, idirac, mu, igork
-#ifdef MPI
       integer, dimension(16), intent(inout), optional :: reqs_R
-#endif
+
+      integer :: ixup, iyup, itup, ix, iy, it, idirac, mu, igork
 
       ! We need to update the halo before calling dslashd_local
       ! because the halo is now needed along the "third" dimension
@@ -301,7 +323,7 @@ contains
 
       !   taking care of the part that does not need the halo (not valid anymore-halo is needed)
       !   diagonal term (hermitian)
-      call dslashd_local(am, Phi, R, imass)
+      call dslashd_local_shamir(am, Phi, R, imass)
       !   call complete_halo_update_5(4, Phi)
 
       !   taking care of the part that does need the halo
@@ -336,11 +358,7 @@ contains
       enddo
 
       return
-#ifdef MPI
-    end subroutine dslashd
-#else
-  end subroutine dslashd
-#endif
+  end subroutine dslashd_shamir
 
   !***********************************************************************
   pure subroutine dslash2d(Phi, R, u)
