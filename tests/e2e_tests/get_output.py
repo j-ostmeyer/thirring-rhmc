@@ -3,7 +3,7 @@ import pathlib
 import re
 import argparse
 import glob
-import datetime
+from datetime import datetime
 
 def open_file(filename, format):
     current_directory = pathlib.Path(__file__).parent.resolve()
@@ -57,8 +57,8 @@ def get_runtime(o_file):
 
     last_line = o_file.readline().decode()
 
-    start = datetime.strptime(first_line, '%a %d %b %H:%M:%S %Z %Y')
-    end = datetime.strptime(last_line, '%a %d %b %H:%M:%S %Z %Y')
+    start = datetime.strptime(first_line.strip(), '%a %d %b %H:%M:%S %Z %Y')
+    end = datetime.strptime(last_line.strip(), '%a %d %b %H:%M:%S %Z %Y')
 
     print(start - end)
 
