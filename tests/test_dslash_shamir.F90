@@ -1,5 +1,5 @@
 #include "test_utils.fh"
-program test_dslashd_reqs
+program test_dslash_shamir
   use params
   use mpi
   ! use dwf3d_lib
@@ -13,16 +13,16 @@ program test_dslashd_reqs
 
   ! general parameters
   logical :: generate = .false.
-  integer :: i, ierr, imass_index, imass
+  integer :: i, ierr, imass_index, imass, timing_loops = 1
   integer, dimension(3) :: imasses = (/1,3,5/)
   character(len=4) :: imass_char
-  character(len=*), parameter :: test_prefix = 'test_dslashd_reqs_'
+  character(len=*), parameter :: test_prefix = 'test_dslash_shamir_'
 
   ! initialise function parameters
   complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
   complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-  integer, dimension(16) :: reqs_Phi, reqs_R
+  integer, dimension(16) :: reqs_Phi
 
 #ifdef MPI
   call init_MPI
@@ -38,9 +38,9 @@ program test_dslashd_reqs
 #ifdef MPI
     call MPI_Barrier(comm, ierr)
 #endif
-    call generate_starting_state(Phi, R, u, reqs_Phi, reqs_R)
+    call generate_starting_state(Phi, R, u, reqs_Phi)
 
-    call run_dslashd(Phi, R, u, imass, reqs_Phi, reqs_R)
+    call run_dslash(Phi, R, u, imass, timing_loops, reqs_Phi)
     if (generate) then
       call generate_data(Phi, test_prefix // trim(imass_char))
     else
@@ -53,11 +53,11 @@ program test_dslashd_reqs
 #endif
 
 contains
-  subroutine generate_starting_state(Phi, R, u, reqs_Phi, reqs_R)
+  subroutine generate_starting_state(Phi, R, u, reqs_Phi)
     complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
-    integer, dimension(16), intent(inout) :: reqs_Phi, reqs_R
+    integer, dimension(16), intent(inout) :: reqs_Phi
 
     complex, parameter :: iunit = cmplx(0, 1)
     real(dp), parameter :: tau = 8*atan(1.0_8)
@@ -66,6 +66,7 @@ contains
     integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
     integer :: idx
 #ifdef MPI
+    integer, dimension(16) :: reqs_R
     integer, dimension(12) :: reqs_u
     integer :: ierr
 #endif
@@ -107,6 +108,7 @@ contains
       enddo
 #ifdef MPI
     call start_halo_update_4(3, u, 1, reqs_u)
+    call complete_halo_update(reqs_R)
     call complete_halo_update(reqs_Phi)
     call MPI_WaitAll(12, reqs_u, MPI_STATUSES_IGNORE, ierr)
 #else
@@ -123,25 +125,27 @@ contains
     call init_gammas()
   end subroutine generate_starting_state
 
-  subroutine run_dslashd(Phi, R, u, imass, reqs_Phi, reqs_R)
+  subroutine run_dslash(Phi, R, u, imass, timing_loops, reqs_Phi)
     complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
+    integer, intent(in) :: timing_loops
     integer, intent(in) :: imass
-    integer, dimension(16), intent(inout) :: reqs_Phi, reqs_R
+    integer, dimension(16), intent(inout) :: reqs_Phi
     
     real, parameter :: am = 0.05
 
     ! call function
+    do i = 1, timing_loops
+      call dslash_shamir(Phi, R, u, am, imass)
 #ifdef MPI
-    call dslashd(Phi, R, u, am, imass, reqs_R)
-    call start_halo_update_5(4, Phi, 2, reqs_Phi)
-    call complete_halo_update(reqs_Phi)
+      call start_halo_update_5(4, Phi, 2, reqs_Phi)
+      call complete_halo_update(reqs_Phi)
 #else
-    print *, 'Error!! this test requires MPI'
-    call exit(-1)
+      call update_halo_5(4, Phi)
 #endif
-  end subroutine run_dslashd
+    end do
+  end subroutine run_dslash
 
   subroutine generate_data(Phi, test_name)
     complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)

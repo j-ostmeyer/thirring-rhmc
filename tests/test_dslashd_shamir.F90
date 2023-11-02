@@ -1,5 +1,5 @@
 #include "test_utils.fh"
-program test_dslashd
+program test_dslashd_shamir
   use params
   use mpi
   ! use dwf3d_lib
@@ -16,7 +16,7 @@ program test_dslashd
   integer :: i, ierr, imass_index, imass, timing_loops = 1
   integer, dimension(3) :: imasses = (/1,3,5/)
   character(len=4) :: imass_char
-  character(len=*), parameter :: test_prefix = 'test_dslashd_'
+  character(len=*), parameter :: test_prefix = 'test_dslashd_shamir_'
 
   ! initialise function parameters
   complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
@@ -137,7 +137,7 @@ contains
 
     ! call function
     do i = 1, timing_loops
-      call dslashd(Phi, R, u, am, imass)
+      call dslashd_shamir(Phi, R, u, am, imass)
 #ifdef MPI
       call start_halo_update_5(4, Phi, 2, reqs_Phi)
       call complete_halo_update(reqs_Phi)

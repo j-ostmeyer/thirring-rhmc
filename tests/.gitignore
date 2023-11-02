@@ -2,10 +2,10 @@ test_bulk_rhmc
 test_congrad
 test_congrad_1
 test_derivs
-test_dslash
+test_dslash_shamir
 test_dslash2d
-test_dslashd
-test_dslashd_reqs
+test_dslashd_shamir
+test_dslashd_reqs_shamir
 test_force
 test_gauss0
 test_gaussp
