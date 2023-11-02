@@ -2,15 +2,10 @@ import sys
 import os
 import pathlib
 import re
+import argparse
 
 output_option = "--output-files"
 fort_option = "--fort-files"
-
-def help():
-    print("Usage: " + sys.argv[0] + " " + output_option + " <output_filenames> " + fort_option + " <fort.11_filenames>")
-    print("   " + output_option + " <output_filenames>: A space separated list of relative paths to output files to be tested.")
-    print("   " + fort_option + " <fort.11_filenames: A space separated list of relative paths to fort.11 files to be tested.")
-    exit()
 
 def print_results(passed, failed):
     if len(passed) > 0:
@@ -107,32 +102,16 @@ def test_fort_file(fort_filename):
     assert failed_index == -1, "The two sequences do not match for row " + str(failed_index)
 
 def main():
-    args = sys.argv[1:]
-    run_output_tests = output_option in args
-    run_fort_tests = fort_option in args
+    parser = argparse.ArgumentParser(description='Extract output from TEST_OUTPUT_* dir')
+    parser.add_argument("--output-files", dest="outputs", type=str, nargs='+', default=[],
+                        help='A space separated list of relative paths to the output files to test.')
+    parser.add_argument("--fort-files", dest="forts", type=str, nargs='+', default=[],
+                        help='A space separated list of relative paths to the fort.11 files to test.')
+    
+    args = parser.parse_args()
 
-    if not (run_output_tests or run_fort_tests):
-        help()
-
-    # Get list of output files
-    output_filenames = []
-    if run_output_tests:
-        output_filenames = args[args.index(output_option) + 1:]
-        if fort_option in output_filenames:
-            output_filenames = output_filenames[:output_filenames.index(fort_option)]
-
-    # Get list of fort.11 files
-    fort_filenames = []
-    if run_fort_tests:
-        fort_filenames = args[args.index(fort_option) + 1:]
-        if output_option in fort_filenames:
-            fort_filenames = fort_filenames[:fort_filenames.index(output_option)]
-
-    if len(fort_filenames) + len(output_filenames) == 0:
-        help()
-
-    output_passed, output_failed = run_test(output_filenames, test_acceptance)
-    fort_passed, fort_failed = run_test(fort_filenames, test_fort_file)
+    output_passed, output_failed = run_test(args.outputs, test_acceptance)
+    fort_passed, fort_failed = run_test(args.forts, test_fort_file)
 
     print_results(output_passed + fort_passed,
                   output_failed + fort_failed)
