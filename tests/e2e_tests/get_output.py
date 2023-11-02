@@ -57,8 +57,8 @@ def get_runtime(o_file):
 
     last_line = o_file.readline().decode()
 
-    start = time.strptime(first_line, '%a %b %d %H:%M:%S %Z %Y')
-    end = time.strptime(last_line, '%a %b %d %H:%M:%S %Z %Y')
+    start = time.strptime(first_line, '%a %d %b %H:%M:%S %Z %Y')
+    end = time.strptime(last_line, '%a %d %b %H:%M:%S %Z %Y')
 
     print(start - end)
 
