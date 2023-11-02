@@ -18,6 +18,7 @@ endif
 
 
 TESTS = test_dslash_shamir test_dslashd_shamir test_dslashd_reqs_shamir \
+			 test_dslash_wilson test_dslashd_wilson test_dslashd_reqs_wilson \
        test_dslash2d test_load test_save test_derivs test_qmrherm_0 \
        test_qmrherm_1 test_qmrherm_2 test_qmrherm_3 test_qmrherm_4 test_hamilton \
        test_force test_force_regression \
