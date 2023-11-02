@@ -1,5 +1,6 @@
 #!/bin/bash
 
+SOURCE_DIR="../.."
 SAMPLES_DIR="samples"
 CONS_DIR="${SAMPLES_DIR}/cons"
 MIDOUT_FILE="${SAMPLES_DIR}/midout"
@@ -56,27 +57,27 @@ echo "  NP_THIRD: ${NP_THIRD}" >> "${OUTPUT_DIR}/inputs"
 cp $MYRIAD_SUBMIT_FILE "./${OUTPUT_DIR}/${MYRIAD_SUBMIT_FILE}"
 cp $CON_FILE "./${OUTPUT_DIR}/con"
 cp $MIDOUT_FILE "./${OUTPUT_DIR}/midout"
-cp remez2 remez2g remez4 remez4g "${OUTPUT_DIR}/"
+cp "${SOURCE_DIR}/remez2" "${SOURCE_DIR}/remez2g" "${SOURCE_DIR}/remez4" "${SOURCE_DIR}/remez4g" "${OUTPUT_DIR}/"
 
-# update ../../params.F90 with user inputted KSIZE* values and setting to start from con 
-sed -i "s/#define KSIZE .*/#define KSIZE ${KSIZE}/g" ../../params.F90
-sed -i "s/#define KSIZET .*/#define KSIZET ${KSIZET}/g" ../../params.F90
-sed -i "s/#define KTHIRD .*/#define KTHIRD ${KTHIRD}/g" ../../params.F90
-sed -i "s/integer, parameter :: istart = .*/integer, parameter :: istart = -1/g" ../../params.F90
-sed -i "s/integer, parameter :: iread = .*/integer, parameter :: iread = 1/g" ../../params.F90
+# update params.F90 with user inputted KSIZE* values and setting to start from con 
+sed -i "s/#define KSIZE .*/#define KSIZE ${KSIZE}/g" "${SOURCE_DIR}/params.F90"
+sed -i "s/#define KSIZET .*/#define KSIZET ${KSIZET}/g" "${SOURCE_DIR}/params.F90"
+sed -i "s/#define KTHIRD .*/#define KTHIRD ${KTHIRD}/g" "${SOURCE_DIR}/params.F90"
+sed -i "s/integer, parameter :: istart = .*/integer, parameter :: istart = -1/g" "${SOURCE_DIR}/params.F90"
+sed -i "s/integer, parameter :: iread = .*/integer, parameter :: iread = 1/g" "${SOURCE_DIR}/params.F90"
 
-# Update ../../MkFlags with NP values 
-sed -i "s/NP_X=.*/NP_X=${NP_X}/g" ../../MkFlags
-sed -i "s/NP_Y=.*/NP_Y=${NP_Y}/g" ../../MkFlags
-sed -i "s/NP_T=.*/NP_T=${NP_T}/g" ../../MkFlags
-sed -i "s/NP_THIRD=.*/NP_THIRD=${NP_THIRD}/g" ../../MkFlags
-sed -i "s/SITE_RANDOM=no/SITE_RANDOM=yes/g" ../../MkFlags
+# Update MkFlags with NP values 
+sed -i "s/NP_X=.*/NP_X=${NP_X}/g" "${SOURCE_DIR}/MkFlags"
+sed -i "s/NP_Y=.*/NP_Y=${NP_Y}/g" "${SOURCE_DIR}/MkFlags"
+sed -i "s/NP_T=.*/NP_T=${NP_T}/g" "${SOURCE_DIR}/MkFlags"
+sed -i "s/NP_THIRD=.*/NP_THIRD=${NP_THIRD}/g" "${SOURCE_DIR}/MkFlags"
+sed -i "s/SITE_RANDOM=no/SITE_RANDOM=yes/g" "${SOURCE_DIR}/MkFlags"
 
 # run make
-make -f ../../Makefile
+make -f "${SOURCE_DIR}/Makefile"
 
 # cp executable into output dir to allow recompiling for a different build without effecting this one
-cp ../../bulk_rhmc "${OUTPUT_DIR}/bulk_rhmc"
+cp "${SOURCE_DIR}/bulk_rhmc" "${OUTPUT_DIR}/bulk_rhmc"
 
 # replace iter2 in midout with user input
 sed -i "s/<ITER2>/${ITER2}/g" "${OUTPUT_DIR}/midout"
