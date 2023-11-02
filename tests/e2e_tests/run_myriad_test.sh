@@ -74,7 +74,9 @@ sed -i "s/NP_THIRD=.*/NP_THIRD=${NP_THIRD}/g" "${SOURCE_DIR}/MkFlags"
 sed -i "s/SITE_RANDOM=no/SITE_RANDOM=yes/g" "${SOURCE_DIR}/MkFlags"
 
 # run make
-make -f "${SOURCE_DIR}/Makefile"
+pushd "${SOURCE_DIR}/"
+make
+popd
 
 # cp executable into output dir to allow recompiling for a different build without effecting this one
 cp "${SOURCE_DIR}/bulk_rhmc" "${OUTPUT_DIR}/bulk_rhmc"
