@@ -41,7 +41,7 @@ def get_exp_dH(output_file):
     for line in output_file:
         if "<exp-dH>=" in line:
             break
-    print(line.strip())
+    print("exp-dH: " + line.split("<exp-dH>=")[-1].strip())
 
 def main():
     parser = argparse.ArgumentParser(description='Extract output from TEST_OUTPUT_* dir')
