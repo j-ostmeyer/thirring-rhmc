@@ -244,9 +244,12 @@ endif
 ifeq ($(KERNEL), shamir)
   KERNEL_FLAGS = -DSHAMIR_KERNEL
 else ifeq ($(KERNEL), wilson)
+  ifneq ($(NP_THIRD), 1)
+    $(error Wilson kernel does not currently support NP_THIRD > 1)
+  endif
   KERNEL_FLAGS = -DWILSON_KERNEL
 else
- $(error Must specify either KERNEL=shamir or KERNEL=wilson)
+  $(error Must specify either KERNEL=shamir or KERNEL=wilson)
 endif
 
 #MISC
