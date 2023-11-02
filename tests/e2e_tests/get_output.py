@@ -70,7 +70,8 @@ def main():
     args = parser.parse_args()
 
     output_file = open_file(os.path.join(args.output_dir[0], "output"), 'r')
-    o_file = open_file(os.path.join(args.output_dir[0], glob.glob('ThirringTest.o*')[0]), 'rb')
+    o_filename = glob.glob(args.output_dir[0] + '/ThirringTest.o*')[0].split("/")[-1]
+    o_file = open_file(os.path.join(args.output_dir[0], o_filename), 'rb')
 
     get_runtime(o_file)
     get_acceptance_rate(output_file)
