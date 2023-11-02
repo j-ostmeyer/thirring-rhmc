@@ -41,6 +41,17 @@ if [ -d "${OUTPUT_DIR}" ]; then
 fi
 mkdir $OUTPUT_DIR
 
+touch "${OUTPUT_DIR}/inputs"
+echo "Using config:" >> "${OUTPUT_DIR}/inputs"
+echo "  KSIZE:    ${KSIZE}" >> "${OUTPUT_DIR}/inputs"
+echo "  KSIZET:   ${KSIZET}" >> "${OUTPUT_DIR}/inputs"
+echo "  KTHIRD:   ${KTHIRD}" >> "${OUTPUT_DIR}/inputs"
+echo "  ITER2:    ${ITER2}" >> "${OUTPUT_DIR}/inputs"
+echo "  NP_X:     ${NP_X}" >> "${OUTPUT_DIR}/inputs"
+echo "  NP_Y:     ${NP_Y}" >> "${OUTPUT_DIR}/inputs"
+echo "  NP_T:     ${NP_T}" >> "${OUTPUT_DIR}/inputs"
+echo "  NP_THIRD: ${NP_THIRD}" >> "${OUTPUT_DIR}/inputs"
+
 # Copy myriad_submit.sh, con, midout and remez* files from samples into output folder
 cp $MYRIAD_SUBMIT_FILE "./${OUTPUT_DIR}/${MYRIAD_SUBMIT_FILE}"
 cp $CON_FILE "./${OUTPUT_DIR}/con"

@@ -51,7 +51,7 @@ def get_first_integer_from_line(line):
 
 def test_acceptance(output_filename):
     expected_acceptance = 0.8
-    
+
     output_file = open_file(output_filename)
     total_line = ""
     accepted_line = ""
@@ -61,9 +61,9 @@ def test_acceptance(output_filename):
             break
         if " averages for last" in line:
             total_line = line
-    
+
     output_file.close()
-    
+
     if total_line == "" or accepted_line == "":
         print("Trajectry data not found in " + output_file.name)
         exit(1)
@@ -71,7 +71,7 @@ def test_acceptance(output_filename):
     # Get total number of attempted trajectories
     total_trajectories = get_first_integer_from_line(total_line)
 
-    # Get total accepted trajectories 
+    # Get total accepted trajectories 
     accepted_trajectories = get_first_integer_from_line(accepted_line)
 
     assert accepted_trajectories / total_trajectories >= expected_acceptance, "Acceptance is < " + str(int(expected_acceptance * 10)) + "%"
@@ -120,7 +120,7 @@ def main():
         output_filenames = args[args.index(output_option) + 1:]
         if fort_option in output_filenames:
             output_filenames = output_filenames[:output_filenames.index(fort_option)]
-    
+
     # Get list of fort.11 files
     fort_filenames = []
     if run_fort_tests:
@@ -133,7 +133,7 @@ def main():
 
     output_passed, output_failed = run_test(output_filenames, test_acceptance)
     fort_passed, fort_failed = run_test(fort_filenames, test_fort_file)
-    
+
     print_results(output_passed + fort_passed,
                   output_failed + fort_failed)
 
