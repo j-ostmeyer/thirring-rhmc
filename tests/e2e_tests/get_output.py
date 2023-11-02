@@ -60,7 +60,7 @@ def get_runtime(o_file):
     start = datetime.strptime(first_line.strip(), '%a %d %b %H:%M:%S %Z %Y')
     end = datetime.strptime(last_line.strip(), '%a %d %b %H:%M:%S %Z %Y')
 
-    print(start - end)
+    print("Runtime: " + end - start)
 
 def main():
     parser = argparse.ArgumentParser(description='Extract output from TEST_OUTPUT_* dir')
