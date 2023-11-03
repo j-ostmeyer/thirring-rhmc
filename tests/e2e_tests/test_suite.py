@@ -35,7 +35,7 @@ def test_acceptance(output_file):
     # Acceptance rate
     expected_acceptance = 0.8
     actual_acceptance = get_acceptance_rate(output_file)
-    assert actual_acceptance >= expected_acceptance, "Acceptance " + actual_acceptance + " is < " + str(int(expected_acceptance * 100)) + "%"
+    assert actual_acceptance >= expected_acceptance, "Acceptance " + str(actual_acceptance) + " is < " + str(int(expected_acceptance * 100)) + "%"
 
 def test_exp_dH(output_file):
     # exp-dH
@@ -46,7 +46,7 @@ def test_exp_dH(output_file):
 def get_fort_11_sequence(fort_11_file):
     sequence = []
     for line in fort_11_file:
-        sequence.append(line.split(' ')[2])
+        sequence.append(line.split()[2])
     return sequence
 
 def test_fort_11_file(fort_11_file):    
