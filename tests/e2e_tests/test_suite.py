@@ -1,8 +1,6 @@
+from os import path
 import argparse
 from utils import get_exp_dH, get_acceptance_rate, open_file
-
-output_option = "--output-files"
-fort_option = "--fort-11-files"
 
 def print_results(passed, failed):
     colour_end = "\033[0m"
@@ -19,50 +17,44 @@ def print_results(passed, failed):
     print("---------------------------------------------")
     print(str(len(passed)) + " of " + str(len(passed) + len(failed)) + " tests have passed")
 
-def run_test(filenames, test_function):
+def run_test(file, test_function):
     passed = []
     failed = []
-    for filename in filenames:
-        try:
-            test_function(filename)
-            passed.append({"name": filename, 
-                           "function": test_function.__name__})
-        except AssertionError as e:
-            failed.append({"name": filename,
-                           "function": test_function.__name__,
-                           "message": str(e)})
+    test_dir = file.name.split("/")[-2]
+    try:
+        test_function(file)
+        passed.append({"name": test_dir, 
+                       "function": test_function.__name__})
+    except AssertionError as e:
+        failed.append({"name": test_dir,
+                       "function": test_function.__name__,
+                       "message": str(e)})
     return passed, failed
 
-def test_acceptance(output_filename):
-    output_file = open_file(output_filename)
+def test_acceptance(output_file):
     # Acceptance rate
     expected_acceptance = 0.8
     actual_acceptance = get_acceptance_rate(output_file)
-    output_file.close()
-    assert actual_acceptance >= expected_acceptance, "Acceptance is < " + str(int(expected_acceptance * 10)) + "%"
+    assert actual_acceptance >= expected_acceptance, "Acceptance " + actual_acceptance + " is < " + str(int(expected_acceptance * 100)) + "%"
 
-def test_exp_dH(output_filename):
-    output_file = open_file(output_filename)
+def test_exp_dH(output_file):
     # exp-dH
     expected_exp_dH = 1
     actual_exp_dH_val, actual_exp_dH_err = get_exp_dH(output_file)
-    output_file.close()
     assert abs(expected_exp_dH - actual_exp_dH_val) <= actual_exp_dH_err, "Expected value of " + str(expected_exp_dH) + " is outside exp-dH = " + str(actual_exp_dH_val) + " +/- " + str(actual_exp_dH_err)
 
-def get_fort_11_sequence(filename):
-    file = open_file(filename)
+def get_fort_11_sequence(fort_11_file):
     sequence = []
-    for line in file:
+    for line in fort_11_file:
         sequence.append(line.split(' ')[2])
-    file.close()
     return sequence
 
-def test_fort_11_file(fort_filename):    
+def test_fort_11_file(fort_11_file):    
     # Get expected sequence 
-    expected_sequence = get_fort_11_sequence("samples/ref_fort.11")
+    expected_sequence = get_fort_11_sequence(open_file("samples/ref_fort.11"))
 
     # Get actual sequence 
-    actual_sequence = get_fort_11_sequence(fort_filename)
+    actual_sequence = get_fort_11_sequence(fort_11_file)
 
     # Compare with expected sequence
     assert len(actual_sequence) == len(expected_sequence), "The length of the actual sequence " + str(len(actual_sequence)) + " does not match that of the expected sequence " + str(len(expected_sequence))
@@ -76,19 +68,28 @@ def test_fort_11_file(fort_filename):
 
 def main():
     parser = argparse.ArgumentParser(description='Extract output from TEST_OUTPUT_* dir')
-    parser.add_argument(output_option, dest="outputs", type=str, nargs='+', default=[],
-                        help='A space separated list of relative paths to the output files to test.')
-    parser.add_argument(fort_option, dest="forts", type=str, nargs='+', default=[],
-                        help='A space separated list of relative paths to the fort.11 files to test.')
+    parser.add_argument('output_dirs', type=str, nargs='+',
+                        help='The relative paths to the output directories to test.')
     
     args = parser.parse_args()
 
-    acceptance_passed, acceptance_failed = run_test(args.outputs, test_acceptance)
-    exp_passed, exp_failed = run_test(args.outputs, test_exp_dH)
-    fort_passed, fort_failed = run_test(args.forts, test_fort_11_file)
+    passed = []
+    failed = []
+    for output_dir in args.output_dirs:
+        output_file = open_file(path.join(output_dir, "output"))
+        fort_11_file = open_file(path.join(output_dir, "fort.11"))
+        
+        acceptance_passed, acceptance_failed = run_test(output_file, test_acceptance)
+        exp_passed, exp_failed = run_test(output_file, test_exp_dH)
+        fort_passed, fort_failed = run_test(fort_11_file, test_fort_11_file)
+        
+        output_file.close()
+        fort_11_file.close()
 
-    print_results(acceptance_passed + exp_passed + fort_passed,
-                  acceptance_failed + exp_failed + fort_failed)
+        passed += acceptance_passed + exp_passed + fort_passed
+        failed += acceptance_failed + exp_failed + fort_failed
+
+    print_results(passed, failed)
 
 if __name__ == "__main__":
     main()
