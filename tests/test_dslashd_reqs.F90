@@ -12,7 +12,7 @@ program test_dslashd_reqs
   implicit none
 
   ! general parameters
-  logical :: generate = .false.
+  logical :: generate = .true.
   integer :: i, ierr, imass_index, imass
   integer, dimension(3) :: imasses = (/1,3,5/)
   character(len=4) :: imass_char
@@ -23,8 +23,8 @@ program test_dslashd_reqs
 
   ! initialise function parameters
   complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
-  complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-  complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+  complex(dp) Phi(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+  complex(dp) R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   integer, dimension(16) :: reqs_Phi, reqs_R
 
 #ifdef MPI
@@ -57,8 +57,8 @@ program test_dslashd_reqs
 
 contains
   subroutine generate_starting_state(Phi, R, u, reqs_Phi, reqs_R)
-    complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) Phi(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
     integer, dimension(16), intent(inout) :: reqs_Phi, reqs_R
 
@@ -127,8 +127,8 @@ contains
   end subroutine generate_starting_state
 
   subroutine run_dslashd(Phi, R, u, imass, reqs_Phi, reqs_R)
-    complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) Phi(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
     integer, intent(in) :: imass
     integer, dimension(16), intent(inout) :: reqs_Phi, reqs_R
@@ -147,7 +147,7 @@ contains
   end subroutine run_dslashd
 
   subroutine generate_data(Phi, test_name)
-    complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) Phi(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) PhiToWrite(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4)
     character(len=*), intent(in) :: test_name
 
@@ -156,7 +156,7 @@ contains
   end subroutine generate_data
 
   subroutine validate_results(Phi, test_name)
-    complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) Phi(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) Phiref(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4)
     complex(dp) diff(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4)
     complex(dp) sum_diff
