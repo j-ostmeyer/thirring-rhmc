@@ -57,10 +57,14 @@ def get_runtime(o_file):
 
     last_line = o_file.readline().decode()
 
-    start = datetime.strptime(first_line.strip(), '%a %d %b %H:%M:%S %Z %Y')
-    end = datetime.strptime(last_line.strip(), '%a %d %b %H:%M:%S %Z %Y')
+    try:
+        format = '%a %d %b %H:%M:%S %Z %Y'
+        start = datetime.strptime(first_line.strip(), format)
+        end = datetime.strptime(last_line.strip(), format)
+        print("Runtime: " + str(end - start))
+    except ValueError as e:
+        print("Runtime not found in " + o_file.name)
 
-    print("Runtime: " + str(end - start))
 
 def main():
     parser = argparse.ArgumentParser(description='Extract output from TEST_OUTPUT_* dir')
