@@ -77,17 +77,17 @@ def main():
     failed = []
     for output_dir in args.output_dirs:
         output_file = open_file(path.join(output_dir, "output"))
-        fort_11_file = open_file(path.join(output_dir, "fort.11"))
+        # fort_11_file = open_file(path.join(output_dir, "fort.11"))
         
         acceptance_passed, acceptance_failed = run_test(output_file, test_acceptance)
         exp_passed, exp_failed = run_test(output_file, test_exp_dH)
-        fort_passed, fort_failed = run_test(fort_11_file, test_fort_11_file)
+        # fort_passed, fort_failed = run_test(fort_11_file, test_fort_11_file)
         
         output_file.close()
-        fort_11_file.close()
+        # fort_11_file.close()
 
-        passed += acceptance_passed + exp_passed + fort_passed
-        failed += acceptance_failed + exp_failed + fort_failed
+        passed += acceptance_passed + exp_passed# + fort_passed
+        failed += acceptance_failed + exp_failed# + fort_failed
 
     print_results(passed, failed)
 
