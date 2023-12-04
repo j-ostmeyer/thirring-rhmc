@@ -6,15 +6,13 @@ CONS_DIR="${SAMPLES_DIR}/cons"
 MIDOUT_FILE="${SAMPLES_DIR}/midout"
 MYRIAD_SUBMIT_FILE="myriad_submit.sh"
 
-# optional inputs
-
+# E2E test inputs
 KSIZE="4"
 KSIZET="4"
 KTHIRD="8"
 ITER2="100"
 NP_THIRD="1"
 USE_MEASURE="yes"
-# Change
 NP_X="${NP_X:-'4'}"
 NP_Y="${NP_Y:-'4'}"
 NP_T="${NP_T:-'2'}"
@@ -28,7 +26,7 @@ else
 	exit 0
 fi
 
-# Create output folder TEST_OUTPUT_<KSIZE>_<KSIZET>_<KTHIRD>_<ITER2>
+# Create output folder
 OUTPUT_DIR="TEST_OUTPUT_${KSIZE}_${KSIZET}_${KTHIRD}_${ITER2}_${NP_X}_${NP_Y}_${NP_T}_${NP_THIRD}_${USE_MEASURE}"
 if [ -d "${OUTPUT_DIR}" ]; then
 	echo "Error: A submission for these inputs has already been made"

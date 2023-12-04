@@ -3,7 +3,7 @@
 # Batch script to run an MPI parallel job under SGE with Intel MPI.
 
 # Request ten minutes of wallclock time (format hours:minutes:seconds).
-#$ -l h_rt=2:00:0
+#$ -l h_rt=00:10:0
 
 # Request 1 gigabyte of RAM per process (must be an integer followed by M, G, or T)
 #$ -l mem=2G

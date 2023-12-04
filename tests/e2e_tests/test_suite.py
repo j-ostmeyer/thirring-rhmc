@@ -1,3 +1,20 @@
+# 
+# This script is intented to act as an end-to-end test for the thirring-rhmc code base.
+# The script validates simulation outputs such as the acceptance rate and the <exp-dH>
+# These values are extracted from the output files (i.e. output, fort.xxx) of a 
+# completed simulation.
+# 
+# To ensure these tests are reliable, consistent inputs must be used to generate the 
+# output files to be tested. Therefore, these inputs should be:
+#     -  KSIZE:    4
+#     -  KSIZET:   4
+#     -  KTHIRD:   8
+#     -  ITER2:    100
+#     -  NP_X:     4
+#     -  NP_Y:     4
+#     -  NP_T:     2
+#     -  NP_THIRD: 1
+# We should also be running using the measure method rather than meson in dwf3d_lib.f90.
 from os import path
 import argparse
 from utils import get_exp_dH, get_acceptance_rate, open_file
