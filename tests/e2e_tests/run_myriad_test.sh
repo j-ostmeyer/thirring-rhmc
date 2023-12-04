@@ -7,27 +7,17 @@ MIDOUT_FILE="${SAMPLES_DIR}/midout"
 MYRIAD_SUBMIT_FILE="myriad_submit.sh"
 
 # optional inputs
-USE_MEASURE="${USE_MEASURE:-"yes"}"
 
-# get inputs from cli
-if [[ ( -z "${KSIZE}" ) || ( -z "${KSIZET}" ) || \
-	  ( -z "${KTHIRD}" ) || ( -z "${ITER2}" ) || \
-	  ( -z "${NP_X}" ) || ( -z "${NP_Y}" ) || \
-	  ( -z "${NP_T}" ) || ( -z "${NP_THIRD}" ) ]]; then
-	echo "Please ensure, the env vars KSIZE, KSIZET, KTHIRD, ITER2, NP_X, NP_Y, NP_T and NP_THIRD are defined"
-	exit 0
-else
-	echo "Using config:"
-	echo "  KSIZE:       ${KSIZE}"
-	echo "  KSIZET:      ${KSIZET}"
-	echo "  KTHIRD:      ${KTHIRD}"
-	echo "  ITER2:       ${ITER2}"
-	echo "  NP_X:        ${NP_X}"
-	echo "  NP_Y:        ${NP_Y}"
-	echo "  NP_T:        ${NP_T}"
-	echo "  NP_THIRD:    ${NP_THIRD}"
-	echo "  USE_MEASURE: ${USE_MEASURE}"
-fi
+KSIZE="4"
+KSIZET="4"
+KTHIRD="8"
+ITER2="100"
+NP_THIRD="1"
+USE_MEASURE="yes"
+# Change
+NP_X="${NP_X:-'4'}"
+NP_Y="${NP_X:-'4'}"
+NP_T="${NP_X:-'2'}"
 
 # Check we have a con file matching the inputs
 CON_FILE="${CONS_DIR}/con_${KSIZE}x${KSIZE}x${KSIZET}"
