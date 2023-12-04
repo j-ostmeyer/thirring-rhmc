@@ -16,8 +16,8 @@ NP_THIRD="1"
 USE_MEASURE="yes"
 # Change
 NP_X="${NP_X:-'4'}"
-NP_Y="${NP_X:-'4'}"
-NP_T="${NP_X:-'2'}"
+NP_Y="${NP_Y:-'4'}"
+NP_T="${NP_T:-'2'}"
 
 # Check we have a con file matching the inputs
 CON_FILE="${CONS_DIR}/con_${KSIZE}x${KSIZE}x${KSIZET}"
