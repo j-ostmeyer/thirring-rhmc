@@ -70,4 +70,15 @@ module params
   real :: beta
   real :: am3
   integer :: ibound
+
+contains
+  pure subroutine verify_kernel_choice()
+#if defined(SHAMIR_KERNEL) && defined(WILSON_KERNEL)
+    Error: Must specify only one of SHAMIR_KERNEL or WILSON_KERNEL
+#endif
+
+#if !defined(SHAMIR_KERNEL) && !defined(WILSON_KERNEL)
+    Error: Must specify one of SHAMIR_KERNEL or WILSON_KERNEL
+#endif
+  end subroutine
 end module params
