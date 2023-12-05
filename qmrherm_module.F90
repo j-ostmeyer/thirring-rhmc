@@ -68,7 +68,12 @@ contains
 
     x = anum(0)*Phi
     if (present(use_sp) .and. use_sp) then
+      #ifdef SHAMIR_KERNEL
       call multishift_solver_sp(u, am, imass, ndiagq, aden, anum(1:ndiagq), x1, Phi, res, max_qmr_iters, itercg, cg_returns_tmp)
+      #else
+      print *, 'WARNING: Cannot use multishift_solver_sp with WILSON_KERNEL. Using multishift_solver instead'
+      call multishift_solver(u, am, imass, ndiagq, aden, anum(1:ndiagq), x1, Phi, res, max_qmr_iters, itercg, cg_returns_tmp)
+      #endif
     else
       call multishift_solver(u, am, imass, ndiagq, aden, anum(1:ndiagq), x1, Phi, res, max_qmr_iters, itercg, cg_returns_tmp)
     endif
