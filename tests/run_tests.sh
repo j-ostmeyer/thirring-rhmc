@@ -31,12 +31,12 @@ echo "  SKIP_COMPILE: ${SKIP_COMPILE}"
 if [ $GENERATE -ne 0 ]; then
 	for TEST in ${TESTS//,/ }
 	do
-		sed -i "s/logical :: generate = .false./logical :: generate = .true./g" "${TEST}.F90"
+		sed -i "s/logical :: generate = .false./logical :: generate = .true./g" "test_utils.F90"
 	done
 else 
     for TEST in ${TESTS//,/ }
 	do
-		sed -i "s/logical :: generate = .true./logical :: generate = .false./g" "${TEST}.F90"
+		sed -i "s/logical :: generate = .true./logical :: generate = .false./g" "test_utils.F90"
 	done
 fi
 
