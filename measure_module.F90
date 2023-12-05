@@ -139,13 +139,29 @@ contains
     return
   end subroutine congrad
 
+  subroutine measure(psibarpsi, res, aviter, am, imass, isweep_total)
+    implicit none
+    real, intent(out) :: psibarpsi, aviter
+    real, intent(in) :: res, am
+    integer, intent(in) :: imass
+    integer, intent(in), optional :: isweep_total
+
+#ifdef SHAMIR_KERNEL
+    call measure_shamir(psibarpsi, res, aviter, am, imass, isweep_total)
+#endif
+
+! #ifdef WILSON_KERNEL
+!     call measure_wilson(psibarpsi, res, aviter, am, imass, isweep_total)
+! #endif
+  end subroutine measure
+
   !*****************************************************************
   !   Calculate fermion expectation values via a noisy estimator
   !   -matrix inversion via conjugate gradient algorithm
   !       solves Mx=x1
   !     (Numerical Recipes section 2.10 pp.70-73)
   !*******************************************************************
-  subroutine measure(psibarpsi, res, aviter, am, imass, isweep_total)
+  subroutine measure_shamir(psibarpsi, res, aviter, am, imass, isweep_total)
     use trial, only: u
     use vector, xi => x
     use comms5, only: start_halo_update_5
@@ -399,7 +415,7 @@ contains
     aviter = float(iter)/(4*knoise)
     return
 
-  end subroutine measure
+  end subroutine measure_shamir
 
   !******************************************************************
   !   Calculate meson correlators using point sources on domain walls
