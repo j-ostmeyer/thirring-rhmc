@@ -347,6 +347,11 @@ contains
     SCOREP_USER_REGION_DEFINE(post)
 #endif
 
+#ifdef WILSON_KERNEL
+    print *,"ERROR: sp multishift is not implemented for the WILSON_KERNEL, stopping"
+    stop
+#endif
+
     ! convert to single precision
     u = cmplx(udp)
     input = cmplx(inputdp)
