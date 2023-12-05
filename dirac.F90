@@ -16,8 +16,6 @@ contains
     integer, intent(in) :: imass
     real, intent(in) :: am
 
-    call verify_kernel_choice()
-
 #ifdef SHAMIR_KERNEL
     call dslash_shamir(Phi, R, u, am, imass)
 #endif
@@ -421,8 +419,6 @@ contains
     integer, intent(in) :: imass
     real, intent(in) :: am
     integer, dimension(16), intent(inout), optional :: reqs_R
-
-    call verify_kernel_choice()
 
 #ifdef SHAMIR_KERNEL
   call dslashd_shamir(Phi, R, u, am, imass, reqs_R)
