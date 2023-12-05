@@ -53,23 +53,13 @@ program test_congrad
     read_file(x_ref, 'test_congrad.dat', MPI_Double_Complex)
 
     diff = x_ref - x(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
-    sum_diff = sum(diff)
-    max_diff = maxval(abs(diff))
 #ifdef MPI
     call MPI_AllReduce(MPI_IN_PLACE, sum_diff, 1, MPI_Double_Complex, MPI_Sum, comm, ierr)
     call MPI_AllReduce(MPI_IN_PLACE, max_diff, 1, MPI_Double_Precision, MPI_Max, comm, ierr)
 #endif
-    if (ip_global .eq. 0) then
-      if (itercg .ne. 27) then
-        print *, 'itercg looks wrong: ', itercg, ' != 27'
-      end if
-      if (abs(sum_diff) .gt. 2) then
-        print *, 'sum delta too large: ', sum_diff
-      end if
-      if (max_diff .gt. 5e-2) then
-        print *, 'max delta too large: ', max_diff
-      end if
-    end if
+    check_equal(itercg, 27, 'itercg', "test_congrad")
+    check_sum(diff, 2, 'Phi', sum_diff, MPI_Double_Complex, "test_congrad")
+    check_max(diff, 5e-2, 'Phi', max_diff, MPI_Double_Precision, "test_congrad")
   end if
 
   call MPI_Finalize(ierr)

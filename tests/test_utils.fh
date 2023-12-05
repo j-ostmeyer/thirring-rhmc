@@ -47,6 +47,14 @@
 #endif
 
 
+#define check_equal(actual, expected, _var_name, _unit_name) \
+  if (ip_global .eq. 0) then;                                            \
+  if (actual .ne. expected) then;                              \
+  print *, '  \x1B[31mFailed \x1B[0m', _unit_name, _var_name, ' is different to the expected value: ', actual, ' != ', expected; \
+  else;                                                                  \
+  print *, '  \x1B[32mPassed \x1B[0m', _unit_name, _var_name, ' is the expected value'; \
+  end if;                                                                \
+  end if
 #define check_max(_diff_array, _max_value, _var_name, _reduction_var,  _mpi_type, _unit_name) \
   _reduction_var = maxval(abs(_diff_array));                             \
   do_mpi_reduction(_reduction_var, MPI_Max, _mpi_type)                   \
