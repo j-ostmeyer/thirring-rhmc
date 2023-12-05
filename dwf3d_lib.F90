@@ -130,7 +130,7 @@ contains
       call MPI_Abort(MPI_COMM_WORLD, 1, ierr)
 #endif
       call exit(1)
-    else if (imass .eq. 5)
+    else if (imass .eq. 5) then
       print *, 'WARNING: imass of 5 may not be supported.'
     end if
 
