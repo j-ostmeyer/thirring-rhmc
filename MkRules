@@ -242,7 +242,7 @@ endif
 
 # Kernel choice
 ifeq ($(KERNEL), shamir)
-  KERNEL_FLAGS = -DSHAMIR_KERNEL
+  KERNEL_FLAGS = -DMEASURE_SHAMIR -DPRODUCTION_SHAMIR
 else ifeq ($(KERNEL), wilson)
   ifneq ($(NP_THIRD), 1)
     $(error Wilson kernel does not currently support NP_THIRD > 1)
