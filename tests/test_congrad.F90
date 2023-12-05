@@ -13,8 +13,7 @@ program test_congrad
   implicit none
 
   ! general parameters
-  logical :: generate = .false.
-  integer :: timing_loops = 1
+  integer :: i, ierr, iflag, imass, isweep, timing_loops = 1
   complex, parameter :: iunit = cmplx(0, 1)
   real*8, parameter :: tau = 8*atan(1.0_8)
 
@@ -25,17 +24,11 @@ program test_congrad
   complex(dp) :: sum_diff
   real(dp) :: max_diff
 
-  integer :: imass, iflag, isweep, iter
   real :: res, am
   integer :: itercg
 
-  integer :: i, j, ix, iy, it, ithird
-  integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
-  integer :: idx = 0
 #ifdef MPI
   integer, dimension(16) :: reqs_X, reqs_Phi
-  integer, dimension(12) :: reqs_u
-  integer :: ierr
 
   call init_MPI
 #endif
@@ -45,66 +38,8 @@ program test_congrad
   imass = 3
   iflag = 0
   isweep = 1
-  iter = 0
 
-  do j = 1, 4
-    do it = 1, ksizet_l
-      do iy = 1, ksizey_l
-        do ix = 1, ksizex_l
-          do ithird = 1, kthird_l
-            idx = ip_third*kthird_l + ithird &
-                  + (ip_x*ksizex_l + ix - 1)*kthird &
-                  + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
-                  + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
-                  + (j - 1)*kthird*ksize*ksize*ksizet
-
-            Phi(ithird, ix, iy, it, j) = 1.1*exp(iunit*idx*tau/idxmax)
-            X(ithird, ix, iy, it, j) = 0.5*exp(1.0)*exp(iunit*idx*tau/idxmax)
-          enddo
-        enddo
-      enddo
-    enddo
-  enddo
-
-#ifdef MPI
-  call start_halo_update_5(4, X, 0, reqs_X)
-  call start_halo_update_5(4, Phi, 0, reqs_Phi)
-#endif
-
-  idx = 0
-  do j = 1, 3
-    do it = 1, ksizet_l
-      do iy = 1, ksizey_l
-        do ix = 1, ksizex_l
-          idx = ip_x*ksizex_l + ix &
-                + (ip_y*ksizey_l + iy - 1)*ksize &
-                + (ip_t*ksizet_l + it - 1)*ksize*ksize &
-                + (j - 1)*ksize*ksize*ksizet
-
-          u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
-        enddo
-      enddo
-    enddo
-  enddo
-
-#ifdef MPI
-  call start_halo_update_4(3, u, 1, reqs_u)
-  call complete_halo_update(reqs_X)
-  call complete_halo_update(reqs_Phi)
-  ! call complete_halo_update(reqs_u)
-  call MPI_WaitAll(12, reqs_u, MPI_Statuses_Ignore, ierr)
-#else
-  call update_halo_5(4, Phi)
-  call update_halo_5(4, X)
-  call update_halo_4(3, u)
-#endif
-
-  ! initialise common variables
-  beta = 0.4
-  am3 = 1.0
-  ibound = -1
-
-  call init_gammas()
+  call generate_starting_state(Phi, X, u, reqs_Phi, reqs_X)
 
   ! call function
   do i = 1, timing_loops
