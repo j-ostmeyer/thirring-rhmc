@@ -19,6 +19,7 @@ program test_congrad
 
   ! initialise function parameters
   complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+  complex(dp) :: xToWrite(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4)
   complex(dp) :: x_ref(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4)
   complex(dp) :: diff(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4)
   complex(dp) :: sum_diff
@@ -48,7 +49,8 @@ program test_congrad
 
   ! check output
   if (generate) then
-    write_file(x(:, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :), 'test_congrad.dat', MPI_Double_Complex)
+    xToWrite(:, :, :, :, :) = x(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)
+    write_file(xToWrite, 'test_congrad.dat', MPI_Double_Complex)
   else
     read_file(x_ref, 'test_congrad.dat', MPI_Double_Complex)
 
@@ -58,8 +60,8 @@ program test_congrad
     call MPI_AllReduce(MPI_IN_PLACE, max_diff, 1, MPI_Double_Precision, MPI_Max, comm, ierr)
 #endif
     check_equal(itercg, 27, 'itercg', "test_congrad")
-    check_sum(diff, 2, 'Phi', sum_diff, MPI_Double_Complex, "test_congrad")
-    check_max(diff, 5e-2, 'Phi', max_diff, MPI_Double_Precision, "test_congrad")
+    check_sum(diff, 2, 'x', sum_diff, MPI_Double_Complex, "test_congrad")
+    check_max(diff, 5e-2, 'x', max_diff, MPI_Double_Precision, "test_congrad")
   end if
 
   call MPI_Finalize(ierr)
