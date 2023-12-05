@@ -12,7 +12,7 @@ KSIZET="4"
 KTHIRD="8"
 ITER2="100"
 NP_THIRD="1"
-USE_MEASURE="yes"
+USE_MEASURE="1"
 NP_X="${NP_X:-4}"
 NP_Y="${NP_Y:-4}"
 NP_T="${NP_T:-2}"
@@ -60,7 +60,7 @@ sed -i "s/integer, parameter :: istart = .*/integer, parameter :: istart = -1/g"
 sed -i "s/integer, parameter :: iread = .*/integer, parameter :: iread = 1/g" "${SOURCE_DIR}/params.F90"
 
 # Switch between meson and measure
-if [ $USE_MEASURE -eq "yes" ]; then
+if [ $(($USE_MEASURE)) -eq 1 ]; then
 	sed -i "s/!call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)/ call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)/g" "${SOURCE_DIR}/dwf3d_lib.F90"
 	sed -i "s/ call meson(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)/!call meson(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)/g" "${SOURCE_DIR}/dwf3d_lib.F90"
 else
