@@ -59,7 +59,7 @@ program test_congrad
     call MPI_AllReduce(MPI_IN_PLACE, sum_diff, 1, MPI_Double_Complex, MPI_Sum, comm, ierr)
     call MPI_AllReduce(MPI_IN_PLACE, max_diff, 1, MPI_Double_Precision, MPI_Max, comm, ierr)
 #endif
-    check_equal(itercg, 27, 'itercg', "test_congrad")
+    check_equal(itercg, 26, 'itercg', "test_congrad")
     check_sum(diff, 2, 'x', sum_diff, MPI_Double_Complex, "test_congrad")
     check_max(diff, 5e-2, 'x', max_diff, MPI_Double_Precision, "test_congrad")
   end if
