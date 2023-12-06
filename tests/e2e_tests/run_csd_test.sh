@@ -60,12 +60,14 @@ sed -i "s/integer, parameter :: istart = .*/integer, parameter :: istart = -1/g"
 sed -i "s/integer, parameter :: iread = .*/integer, parameter :: iread = 1/g" "${SOURCE_DIR}/params.F90"
 
 # Switch between meson and measure
+measure_line='call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)'
+meson_line='call meson(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)'
 if [ $(($USE_MEASURE)) -eq 1 ]; then
-	sed -i "s/!call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)/ call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)/g" "${SOURCE_DIR}/dwf3d_lib.F90"
-	sed -i "s/ call meson(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)/!call meson(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)/g" "${SOURCE_DIR}/dwf3d_lib.F90"
+	sed -E -i "s|^(\s*!*)\s*$measure_line|\1$measure_line|" "${SOURCE_DIR}/dwf3d_lib.F90"
+	sed -E -i "s|^(\s*)(!*)\s*$meson_line|\1!\2$meson_line|" "${SOURCE_DIR}/dwf3d_lib.F90"
 else
-	sed -i "s/ call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)/!call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)/g" "${SOURCE_DIR}/dwf3d_lib.F90"
-	sed -i "s/!call meson(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)/ call meson(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)/g" "${SOURCE_DIR}/dwf3d_lib.F90"
+	sed -E -i "s|^(\s*!*)\s*$meson_line|\1$meson_line|" "${SOURCE_DIR}/dwf3d_lib.F90"
+	sed -E -i "s|^(\s*)(!*)\s*$measure_line|\1!\2$measure_line|" "${SOURCE_DIR}/dwf3d_lib.F90"
 fi
 
 # Update MkFlags with NP values 
