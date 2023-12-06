@@ -19,18 +19,12 @@ program test_measure
 
   ! initialise function parameters
   complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-  real(dp), parameter :: tau = 8*atan(1.0_8)
-  complex(dp) :: cferm1(0:ksizet - 1), cferm2(0:ksizet - 1)
-  real(dp) :: cpm(0:ksizet - 1), cmm(0:ksizet - 1)
-  complex(dp) :: cferm1_ref(0:ksizet - 1), cferm2_ref(0:ksizet - 1)
-  real(dp) :: cpm_ref(0:ksizet - 1), cmm_ref(0:ksizet - 1), maxreldiff
 
   ! initialise function parameters
   real :: aviter
   integer :: iflag = 0
 
   integer :: i
-  integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
   real :: res, am
   integer :: imass, itercg
 #ifdef MPI
@@ -50,7 +44,7 @@ program test_measure
   imass = 3
   iflag = 0
 
-  generate_starting_state_Phi(Phi, u, reqs_Phi)
+  call generate_starting_state_Phi(Phi, u, reqs_Phi)
 
   ! initialise common variables
   seed = rano(yran, idum, 1, 1, 1)
@@ -59,48 +53,20 @@ program test_measure
   ! call function
   do i = 1, timing_loops
     x = (0.D0, 0.D0)
-    call meson(cpm, cmm, cferm1, cferm2, res, itercg, aviter, am, imass)
+    call meson(res, itercg, aviter, am, imass)
   end do
 
-  if (generate) then
-    open (3, file='test_meson.dat', form="unformatted", access="sequential")
-#ifdef MPI
-    if (ip_global .eq. 0) then
+#ifdef SITE_RANDOM
+  ! differing random numbers will throw off stochastic estimates like these
+  check_float_equality(psibarpsi, 2.504295e-4, 0.001, 'psibarpsi', 'test_meson')
+#else
+  if (ip_global .eq. 0) then
+    write (6, *) "This test is not supposed to work if SITE_RANDOM is not defined"
+  endif
+  check_float_equality(psibarpsi, 2.504295e-4, 0.001, 'psibarpsi', 'test_meson')
 #endif
-      write (3) cferm1, cferm2, cpm, cmm
-      print *, "cferm1"
-      print *, cferm1
-      print *, "cferm2"
-      print *, cferm2
-      print *, "cpm"
-      print *, cpm
-      print *, "cmm"
-      print *, cmm
-#ifdef MPI
-    endif! if(ip_global .eq. 0) then
-#endif
-  else
-    open (3, file='test_meson.dat', form="unformatted", access="sequential", status='old')
-#ifdef MPI
-    if (ip_global .eq. 0) then
-#endif
-      read (3) cferm1_ref, cferm2_ref, cpm_ref, cmm_ref
-      maxreldiff = maxval(2*abs(cferm1_ref - cferm1)/abs(cferm1_ref + cferm1))
-      if (maxreldiff .gt. 1.0e-07) then
-        print *, 'maxval(2*abs(cferm1_ref - cferm1)/abs(cferm1_ref + cferm1))=', maxreldiff
-      endif
-      maxreldiff = maxval(2*abs(cferm2_ref - cferm2)/abs(cferm2_ref + cferm2))
-      if (maxreldiff .gt. 1.0e-06) then
-        print *, 'maxval(2*abs(cferm2_ref - cferm2)/abs(cferm2_ref + cferm2))=', maxreldiff
-      endif
-      maxreldiff = maxval(2*abs(cpm_ref - cpm)/abs(cpm_ref + cpm))
-      if (maxreldiff .gt. 1.0e-07) then
-        print *, 'maxval(2*abs(cpm_ref - cpm)/abs(cpm_ref + cpm))=', maxreldiff
-      endif
-      maxreldiff = maxval(2*abs(cmm_ref - cmm)/abs(cmm_ref + cmm))
-      if (maxreldiff .gt. 1.0e-07) then
-        print *, 'maxval(2*abs(cmm_ref - cmm)/abs(cmm_ref + cmm))=', maxreldiff
-      endif
+
+  check_equality(aviter, 5, 'aviter', 'test_meson')
 
 #ifdef MPI
     endif! if(ip_global .eq. 0) then
