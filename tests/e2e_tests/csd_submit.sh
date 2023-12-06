@@ -13,7 +13,6 @@
 #SBATCH -J ThirringTest
 #! Which project should be charged:
 #SBATCH -A DIRAC-DP137-SL4-CPU
-#SBATCH -p skylake
 #! How many whole nodes should be allocated?
 #SBATCH --nodes=1
 #! How many (MPI) tasks will there be in total? (<= nodes*56)
@@ -27,6 +26,10 @@
 #! Uncomment this to prevent the job from being requeued (e.g. if
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
+
+# Specify the amount of memory your job needs (in Mb)
+# (Your job will be killed if it exceeds this for a significant length of time)
+#SBATCH --mem-per-cpu=2048
 
 #! sbatch directives end here (put any additional directives above this line)
 
