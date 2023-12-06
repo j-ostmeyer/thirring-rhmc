@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # A space separated list of all tests to be ran
-ALL_TESTS="test_meson test_measure test_congrad test_dslash_shamir test_dslashd_shamir test_dslashd_reqs_shamir test_dslash_wilson test_dslashd_wilson test_dslashd_reqs_wilson"
+ALL_TESTS="test_derivs test_meson test_measure test_congrad test_dslash_shamir test_dslashd_shamir test_dslashd_reqs_shamir test_dslash_wilson test_dslashd_wilson test_dslashd_reqs_wilson"
 
 # Read optional user inputs
 KSIZE="${KSIZE:-12}"
