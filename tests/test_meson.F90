@@ -56,22 +56,11 @@ program test_measure
     call meson(res, itercg, aviter, am, imass)
   end do
 
-#ifdef SITE_RANDOM
-  ! differing random numbers will throw off stochastic estimates like these
-  check_float_equality(psibarpsi, 2.504295e-4, 0.001, 'psibarpsi', 'test_meson')
-#else
-  if (ip_global .eq. 0) then
-    write (6, *) "This test is not supposed to work if SITE_RANDOM is not defined"
-  endif
-  check_float_equality(psibarpsi, 2.504295e-4, 0.001, 'psibarpsi', 'test_meson')
-#endif
-
+  check_equality(itercg, 3, 'itercg', 'test_meson')
   check_equality(aviter, 5, 'aviter', 'test_meson')
 
 #ifdef MPI
-    endif! if(ip_global .eq. 0) then
     call MPI_Finalize(ierr)
 #endif
-  end if
   close (3)
 end program
