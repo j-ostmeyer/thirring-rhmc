@@ -101,4 +101,4 @@ fi
 
 # submit job
 cd $OUTPUT_DIR
-qsub $SUBMIT_FILE
+sbatch $SUBMIT_FILE

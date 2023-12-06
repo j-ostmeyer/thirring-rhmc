@@ -27,9 +27,10 @@
 #! interrupted by node failure or system downtime):
 #SBATCH --no-requeue
 
-# Specify the amount of memory your job needs (in Mb)
-# (Your job will be killed if it exceeds this for a significant length of time)
-#SBATCH --mem-per-cpu=2048
+#! How much memory in MB is required _per node_? Not setting this
+#! as here will lead to a default amount per task.
+#! Setting a larger amount per task increases the number of CPUs.
+#SBATCH --mem=2048
 
 #! sbatch directives end here (put any additional directives above this line)
 
@@ -54,7 +55,9 @@ mpi_tasks_per_node=$(echo "$SLURM_TASKS_PER_NODE" | sed -e  's/^\([0-9][0-9]*\).
 #! (note that SLURM reproduces the environment at submission irrespective of ~/.bashrc):
 . /etc/profile.d/modules.sh                # Leave this line (enables the module command)
 module purge                               # Removes all modules still loaded
+module unload intel/bundles/complib/2017.4
 module load rhel7/default-ccl              # REQUIRED - loads the basic environment
+module load intel/bundles/complib/2018.4
 
 #! Insert additional module load commands after this line if needed:
 
