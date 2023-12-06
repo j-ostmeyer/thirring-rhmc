@@ -60,29 +60,6 @@ def test_exp_dH(output_file):
     actual_exp_dH_val, actual_exp_dH_err = get_exp_dH(output_file)
     assert abs(expected_exp_dH - actual_exp_dH_val) <= actual_exp_dH_err, "Expected value of " + str(expected_exp_dH) + " is outside exp-dH = " + str(actual_exp_dH_val) + " +/- " + str(actual_exp_dH_err)
 
-def get_fort_11_sequence(fort_11_file):
-    sequence = []
-    for line in fort_11_file:
-        sequence.append(line.split()[2])
-    return sequence
-
-def test_fort_11_file(fort_11_file):    
-    # Get expected sequence 
-    expected_sequence = get_fort_11_sequence(open_file("samples/ref_fort.11"))
-
-    # Get actual sequence 
-    actual_sequence = get_fort_11_sequence(fort_11_file)
-
-    # Compare with expected sequence
-    assert len(actual_sequence) == len(expected_sequence), "The length of the actual sequence " + str(len(actual_sequence)) + " does not match that of the expected sequence " + str(len(expected_sequence))
-    failed_index = -1
-    for i, actual in enumerate(actual_sequence):
-        expected = expected_sequence[i]
-        if actual != expected:
-            failed_index = i
-            break
-    assert failed_index == -1, "The two sequences do not match for row " + str(failed_index)
-
 def main():
     parser = argparse.ArgumentParser(description='Extract output from TEST_OUTPUT_* dir')
     parser.add_argument('output_dirs', type=str, nargs='+',
@@ -94,17 +71,14 @@ def main():
     failed = []
     for output_dir in args.output_dirs:
         output_file = open_file(path.join(output_dir, "output"))
-        # fort_11_file = open_file(path.join(output_dir, "fort.11"))
         
         acceptance_passed, acceptance_failed = run_test(output_file, test_acceptance)
         exp_passed, exp_failed = run_test(output_file, test_exp_dH)
-        # fort_passed, fort_failed = run_test(fort_11_file, test_fort_11_file)
         
         output_file.close()
-        # fort_11_file.close()
 
-        passed += acceptance_passed + exp_passed# + fort_passed
-        failed += acceptance_failed + exp_failed# + fort_failed
+        passed += acceptance_passed + exp_passed
+        failed += acceptance_failed + exp_failed
 
     print_results(passed, failed)
 
