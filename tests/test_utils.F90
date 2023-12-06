@@ -7,6 +7,7 @@ module test_utils
   use comms
   use comms4
   use comms5
+  use comms6
 #endif
 
   implicit none
@@ -28,10 +29,10 @@ subroutine generate_starting_state_Phi_and_X(Phi, reqs_Phi, u , X, reqs_X)
     integer, dimension(16) :: reqs_R
     complex(dp) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 
-    call generate_starting_state_Phi_and_R_and_X(Phi, reqs_Phi, u, R, reqs_R, X, reqs_X)
+    call generate_starting_state(Phi, reqs_Phi, u, R, reqs_R, X, reqs_X)
 end subroutine generate_starting_state_Phi_and_X
 
-subroutine generate_starting_state(Phi, u, reqs_Phi, R, reqs_R, X, reqs_X, dSdpi_ref, Phi0_orig)
+subroutine generate_starting_state(Phi, reqs_Phi, u, R, reqs_R, X, reqs_X, dSdpi_ref, Phi0_orig)
     implicit none
     ! Required inputs
     complex(dp), intent(inout) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -47,10 +48,11 @@ subroutine generate_starting_state(Phi, u, reqs_Phi, R, reqs_R, X, reqs_X, dSdpi
     complex, parameter :: iunit = cmplx(0, 1)
     real(dp), parameter :: tau = 8*atan(1.0_8)
 
-    integer :: i, j, ix, iy, it, ithird
+    integer :: l, i, j, ix, iy, it, ithird
     integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
     integer :: idx
 #ifdef MPI
+    integer, dimension(16) :: reqs_Phi0
     integer, dimension(12) :: reqs_u
     integer :: ierr
 #endif

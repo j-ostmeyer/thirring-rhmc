@@ -31,7 +31,7 @@ program test_derivs
   call init_MPI
 #endif
 
-  call generate_starting_state(Phi, reqs_Phi, u, R, reqs_R, X, reqs_X2, dSdpi_ref)
+  call generate_starting_state(Phi, reqs_Phi, u, R, reqs_R, X2, reqs_X2, dSdpi_ref)
 
   ! call function
   do i = 1, timing_loops
