@@ -15,9 +15,7 @@ program test_measure
   implicit none
 
   ! general parameters
-  logical :: generate = .false.
   integer :: timing_loops = 1
-  complex, parameter :: iunit = cmplx(0, 1)
 
   ! initialise function parameters
   complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -31,13 +29,12 @@ program test_measure
   real :: aviter
   integer :: iflag = 0
 
-  integer :: i, j, ix, iy, it, ithird, idx
+  integer :: i
   integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
   real :: res, am
-  integer :: imass, isweep, itercg, iter
+  integer :: imass, itercg
 #ifdef MPI
   integer, dimension(16) :: reqs_Phi
-  integer, dimension(12) :: reqs_u
   integer :: ierr
 
   call init_MPI
@@ -52,56 +49,11 @@ program test_measure
   am = 0.05
   imass = 3
   iflag = 0
-  isweep = 1
-  iter = 0
 
-  do j = 1, 4
-    do it = 1, ksizet_l
-      do iy = 1, ksizey_l
-        do ix = 1, ksizex_l
-          do ithird = 1, kthird_l
-            idx = ithird + (ip_x*ksizex_l + ix - 1)*kthird &
-              & + (ip_y*ksizey_l + iy - 1)*kthird*ksize &
-              & + (ip_t*ksizet_l + it - 1)*kthird*ksize*ksize &
-              & + (j - 1)*kthird*ksize*ksize*ksizet
-            Phi(ithird, ix, iy, it, j) = 1.1*exp(iunit*idx*tau/idxmax)
-          enddo
-        enddo
-      enddo
-    enddo
-  enddo
-#ifdef MPI
-  call start_halo_update_5(4, Phi, 0, reqs_Phi)
-#endif
-  idx = 0
-  do j = 1, 3
-    do it = 1, ksizet_l
-      do iy = 1, ksizey_l
-        do ix = 1, ksizex_l
-          idx = ip_x*ksizex_l + ix &
-            & + (ip_y*ksizey_l + iy - 1)*ksize &
-            & + (ip_t*ksizet_l + it - 1)*ksize*ksize &
-            & + (j - 1)*ksize*ksize*ksizet
-          u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
-        enddo
-      enddo
-    enddo
-  enddo
-#ifdef MPI
-  call start_halo_update_4(3, u, 1, reqs_u)
-  call complete_halo_update(reqs_Phi)
-  call MPI_Waitall(12, reqs_u, MPI_STATUSES_IGNORE, ierr)
-#else
-  call update_halo_5(4, Phi)
-  call update_halo_4(3, u)
-#endif
+  generate_starting_state_Phi(Phi, u, reqs_Phi)
 
   ! initialise common variables
-  beta = 0.4
-  am3 = 1.0
-  ibound = -1
   seed = rano(yran, idum, 1, 1, 1)
-  call init_gammas()
   seed = rano(yran, idum, 1, 1, 1)
 
   ! call function
