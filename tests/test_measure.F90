@@ -45,11 +45,11 @@ program test_measure
   iter = 0
   am3 = 1.0
 
-  call generate_starting_state(Phi, X, u, reqs_Phi, reqs_x)
+  call generate_starting_state_Phi_and_X(Phi, X, u, reqs_Phi, reqs_x)
  
   ! call function
   do i = 1, timing_loops
-    call measure(psibarpsi, res, aviter, am, imass)
+    call measure_module_shamir(psibarpsi, res, aviter, am, imass)
   end do
 
 #ifdef SITE_RANDOM

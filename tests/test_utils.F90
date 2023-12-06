@@ -17,12 +17,58 @@ module test_utils
 
 contains
 
-subroutine generate_starting_state(Phi, R, u, reqs_Phi, reqs_R)
+subroutine generate_starting_state_Phi(Phi, u, reqs_Phi)
+    implicit none
+    ! Required inputs
+    complex(dp), intent(inout) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(inout) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
+    integer, dimension(16), intent(inout) :: reqs_Phi
+
+    integer, dimension(16) :: reqs_X, reqs_R
+    integer, dimension(12) :: reqs_u
+    complex(dp) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: X(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+
+    call generate_starting_state_Phi_and_R_and_X(Phi, R, u, X, reqs_Phi, reqs_R, reqs_X)
+end subroutine generate_starting_state_Phi
+
+subroutine generate_starting_state_Phi_and_R(Phi, R, u, reqs_Phi, reqs_R)
+    implicit none
+    ! Required inputs
+    complex(dp), intent(inout) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(inout) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
+    complex(dp), intent(inout) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    integer, dimension(16), intent(inout) :: reqs_Phi, reqs_R
+
+    integer, dimension(16) :: reqs_X
+    integer, dimension(12) :: reqs_u
+    complex(dp) :: X(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+
+    call generate_starting_state_Phi_and_R_and_X(Phi, R, u, X, reqs_Phi, reqs_R, reqs_X)
+end subroutine generate_starting_state_Phi_and_R
+
+subroutine generate_starting_state_Phi_and_X(Phi, X, u, reqs_Phi, reqs_X)
+    implicit none
+    ! Required inputs
+    complex(dp), intent(inout) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(inout) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
+    complex(dp), intent(inout) :: X(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    integer, dimension(16), intent(inout) :: reqs_Phi, reqs_X
+
+    integer, dimension(16) :: reqs_R
+    integer, dimension(12) :: reqs_u
+    complex(dp) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+
+    call generate_starting_state_Phi_and_R_and_X(Phi, R, u, X, reqs_Phi, reqs_R, reqs_X)
+end subroutine generate_starting_state_Phi_and_X
+
+subroutine generate_starting_state_Phi_and_R_and_X(Phi, R, u, X, reqs_Phi, reqs_R, reqs_X)
     implicit none
     complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
-    integer, dimension(16), intent(inout) :: reqs_Phi, reqs_R
+    complex(dp) X(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    integer, dimension(16), intent(inout) :: reqs_Phi, reqs_R, reqs_X
 
     complex, parameter :: iunit = cmplx(0, 1)
     real(dp), parameter :: tau = 8*atan(1.0_8)
@@ -47,6 +93,7 @@ subroutine generate_starting_state(Phi, R, u, reqs_Phi, reqs_R)
 
               Phi(ithird, ix, iy, it, j) = 1.1*exp(iunit*idx*tau/idxmax)
               R(ithird, ix, iy, it, j) = 1.3*exp(iunit*idx*tau/idxmax)
+              X(ithird, ix, iy, it, j) = 0.5*exp(1.0)*exp(iunit*idx*tau/idxmax)
             enddo
           enddo
         enddo
@@ -55,6 +102,7 @@ subroutine generate_starting_state(Phi, R, u, reqs_Phi, reqs_R)
 #ifdef MPI
     call start_halo_update_5(4, R, 0, reqs_R)
     call start_halo_update_5(4, Phi, 1, reqs_Phi)
+    call start_halo_update_5(4, X, 0, reqs_X)
 #endif
       do j = 1, 3
         do it = 1, ksizet_l
@@ -74,10 +122,12 @@ subroutine generate_starting_state(Phi, R, u, reqs_Phi, reqs_R)
     call start_halo_update_4(3, u, 1, reqs_u)
     call complete_halo_update(reqs_R)
     call complete_halo_update(reqs_Phi)
+    call complete_halo_update(reqs_X)
     call MPI_WaitAll(12, reqs_u, MPI_STATUSES_IGNORE, ierr)
 #else
     call update_halo_5(4, R)
     call update_halo_5(4, Phi)
+    call update_halo_5(4, X)
     call update_halo_4(3, u)
 #endif
 
@@ -87,7 +137,7 @@ subroutine generate_starting_state(Phi, R, u, reqs_Phi, reqs_R)
     ibound = -1
 
     call init_gammas()
-  end subroutine generate_starting_state
+  end subroutine generate_starting_state_Phi_and_R_and_X
 
 #ifdef MPI
 

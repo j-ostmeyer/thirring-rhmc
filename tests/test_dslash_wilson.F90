@@ -36,7 +36,7 @@ program test_dslash_wilson
 #ifdef MPI
     call MPI_Barrier(comm, ierr)
 #endif
-    call generate_starting_state(Phi, R, u, reqs_Phi, reqs_R)
+    call generate_starting_state_Phi_and_R(Phi, R, u, reqs_Phi, reqs_R)
 
     call run_dslash(Phi, R, u, imass, timing_loops, reqs_Phi)
     if (generate) then
