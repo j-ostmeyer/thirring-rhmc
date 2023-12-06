@@ -45,7 +45,7 @@ program test_measure
   iter = 0
   am3 = 1.0
 
-  call generate_starting_state_Phi_and_X(Phi, X, u, reqs_Phi, reqs_x)
+  call generate_starting_state_Phi_and_X(Phi, reqs_Phi, u, X, reqs_x)
  
   ! call function
   do i = 1, timing_loops

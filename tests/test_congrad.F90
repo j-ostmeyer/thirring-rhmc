@@ -40,7 +40,7 @@ program test_congrad
   iflag = 0
   isweep = 1
 
-  call generate_starting_state_Phi_and_X(Phi, X, u, reqs_Phi, reqs_X)
+  call generate_starting_state_Phi_and_X(Phi, reqs_Phi, u, X, reqs_X)
 
   ! call function
   do i = 1, timing_loops

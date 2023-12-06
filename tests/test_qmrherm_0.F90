@@ -1,10 +1,10 @@
 #include "test_utils.fh"
 program test_qmrherm_0
   ! use dwf3d_lib
-  ! use gdbhook
-  use qmrherm_module, only: qmrherm, phi0, qmrhprint => printall
   use trial, only: u
   use vector, only: X
+  ! use gdbhook
+  use qmrherm_module, only: qmrherm, phi0, qmrhprint => printall
   !use dirac
   use gammamatrices
   use gforce
@@ -50,8 +50,7 @@ program test_qmrherm_0
   integer, dimension(12) :: reqs_u
   integer :: ierr
   call init_MPI
-  ! call gdb_wait
-#endif
+  #endif
   qmrhprint = .false.
 
   allocate (Phi0_ref(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4, 25))

@@ -44,7 +44,7 @@ program test_measure
   imass = 3
   iflag = 0
 
-  call generate_starting_state_Phi(Phi, u, reqs_Phi)
+  call generate_starting_state(Phi, reqs_Phi, u)
 
   ! initialise common variables
   seed = rano(yran, idum, 1, 1, 1)
