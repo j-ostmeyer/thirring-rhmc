@@ -64,10 +64,37 @@ end subroutine generate_starting_state_Phi_and_X
 
 subroutine generate_starting_state_Phi_and_R_and_X(Phi, R, u, X, reqs_Phi, reqs_R, reqs_X)
     implicit none
-    complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
-    complex(dp) X(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    ! Required inputs
+    complex(dp), intent(inout) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(inout) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(inout) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
+    complex(dp), intent(inout) :: X(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    integer, dimension(16), intent(inout) :: reqs_Phi, reqs_R, reqs_X
+
+    real :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
+    complex, parameter :: iunit = cmplx(0, 1)
+    real(dp), parameter :: tau = 8*atan(1.0_8)
+
+    integer :: i, j, ix, iy, it, ithird
+    integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
+    integer :: idx
+#ifdef MPI
+    integer, dimension(12) :: reqs_u
+    integer :: ierr
+#endif
+
+    call generate_starting_state_Phi_and_R_and_X_and_dsdpi_ref(Phi, R, u, X, reqs_Phi, reqs_R, reqs_X, dSdpi_ref)
+
+end subroutine generate_starting_state_Phi_and_R_and_X
+
+subroutine generate_starting_state_Phi_and_R_and_X_and_dsdpi_ref(Phi, R, u, X, reqs_Phi, reqs_R, reqs_X, dSdpi_ref)
+    implicit none
+    ! Required inputs
+    complex(dp), intent(inout) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(inout) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(inout) :: u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
+    complex(dp), intent(inout) :: X(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    real, intent(inout) :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
     integer, dimension(16), intent(inout) :: reqs_Phi, reqs_R, reqs_X
 
     complex, parameter :: iunit = cmplx(0, 1)
@@ -80,6 +107,7 @@ subroutine generate_starting_state_Phi_and_R_and_X(Phi, R, u, X, reqs_Phi, reqs_
     integer, dimension(12) :: reqs_u
     integer :: ierr
 #endif
+
     do j = 1, 4
       do it = 1, ksizet_l
         do iy = 1, ksizey_l
@@ -114,6 +142,7 @@ subroutine generate_starting_state_Phi_and_R_and_X(Phi, R, u, X, reqs_Phi, reqs_
                     + (j - 1)*ksize*ksize*ksizet
 
               u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
+              dSdpi_ref(ix, iy, it, j) = real(tau*exp(iunit*idx*tau/idxmax), sp)
             enddo
           enddo
         enddo
@@ -137,7 +166,7 @@ subroutine generate_starting_state_Phi_and_R_and_X(Phi, R, u, X, reqs_Phi, reqs_
     ibound = -1
 
     call init_gammas()
-  end subroutine generate_starting_state_Phi_and_R_and_X
+  end subroutine generate_starting_state_Phi_and_R_and_X_and_dsdpi_ref
 
 #ifdef MPI
 
