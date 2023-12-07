@@ -12,9 +12,7 @@ program test_dslash
   implicit none
 
   ! general parameters
-  logical :: generate = .true.
   integer :: i, ierr, imass_index, imass, timing_loops = 1
-  integer, dimension(3) :: imasses = (/1,3,5/)
   character(len=4) :: imass_char
   character(len=*), parameter :: test_prefix = 'test_dslash_'
 
@@ -22,7 +20,7 @@ program test_dslash
   complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
   complex(dp) Phi(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-  integer, dimension(16) :: reqs_Phi
+  integer, dimension(16) :: reqs_Phi, reqs_R
 
 #ifdef MPI
   call init_MPI

@@ -12,9 +12,7 @@ program test_dslashd_reqs
   implicit none
 
   ! general parameters
-  logical :: generate = .true.
   integer :: i, ierr, imass_index, imass
-  integer, dimension(3) :: imasses = (/1,3,5/)
   character(len=4) :: imass_char
   character(len=*), parameter :: test_prefix = 'test_dslashd_reqs_'
 
