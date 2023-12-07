@@ -18,6 +18,7 @@ program test_derivs
   complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
   complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+  real(dp) :: dSdpi_orig(ksizex_l, ksizey_l, ksizet_l, 3)
   real(dp) :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
   complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   real :: diff(ksizex_l, ksizey_l, ksizet_l, 3), sum_diff, max_diff
@@ -31,11 +32,11 @@ program test_derivs
   call init_MPI
 #endif
 
-  call generate_starting_state(Phi, reqs_Phi, u, R, reqs_R, X2, reqs_X2, dSdpi_ref)
+  call generate_starting_state(Phi, reqs_Phi, u, R, reqs_R, X2, reqs_X2, dSdpi_orig)
 
   ! call function
   do i = 1, timing_loops
-    dSdpi = dSdpi_ref
+    dSdpi = dSdpi_orig
     call derivs(R, X2, anum, iflag)
   end do
 
