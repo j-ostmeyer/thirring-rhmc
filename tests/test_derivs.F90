@@ -18,7 +18,7 @@ program test_derivs
   complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
   complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-  real :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
+  real(dp) :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
   complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   real :: diff(ksizex_l, ksizey_l, ksizet_l, 3), sum_diff, max_diff
 
@@ -51,7 +51,7 @@ program test_derivs
     ! and the MPI_AllReduce operation. For this the sum_diff
     ! will be larger than expected (np_third times larger).
     ! Because of that we divide by np_third
-    diff = real(dSdpi) - dSdpi_ref
+    diff = dSdpi - dSdpi_ref
 
     check_sum(diff, 0.3, 'dSdpi', sum_diff, MPI_Double_Complex, "test_derivs")
     check_max(diff, 0.01, 'dSdpi', max_diff, MPI_Double_Precision, "test_derivs")

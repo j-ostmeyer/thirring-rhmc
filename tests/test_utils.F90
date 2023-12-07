@@ -42,7 +42,7 @@ subroutine generate_starting_state(Phi, reqs_Phi, u, R, reqs_R, X, reqs_X, dSdpi
     complex(dp), intent(inout), optional :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp), intent(inout), optional :: X(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp), intent(inout), optional :: Phi0_orig(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, 25)
-    real, intent(inout), optional :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
+    real(dp), intent(inout), optional :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
     integer, dimension(16), intent(inout), optional :: reqs_R, reqs_X
 
     complex, parameter :: iunit = cmplx(0, 1)
@@ -109,7 +109,7 @@ subroutine generate_starting_state(Phi, reqs_Phi, u, R, reqs_R, X, reqs_X, dSdpi
 
               u(ix, iy, it, j) = exp(iunit*idx*tau/idxmax)
               if (present(dSdpi_ref)) then
-                dSdpi_ref(ix, iy, it, j) = real(tau*exp(iunit*idx*tau/idxmax), sp)
+                dSdpi_ref(ix, iy, it, j) = real(tau*exp(iunit*idx*tau/idxmax), dp)
               end if
             enddo
           enddo
