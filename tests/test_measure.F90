@@ -16,22 +16,19 @@ program test_measure
   real(dp) :: seed
 
   ! general parameters
-  integer :: timing_loops = 1
-  complex, parameter :: iunit = cmplx(0, 1)
-  real*8, parameter :: tau = 8*atan(1.0_8)
+  integer :: i, imass_index, imass, timing_loops = 1
+  character(len=4) :: imass_char
 
   ! initialise function parameters
   complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   real psibarpsi, aviter
-  integer :: imass, iflag, isweep, iter
+  integer :: iflag, isweep, iter
   real :: res, am
 
-  integer :: i, j, ix, iy, it, ithird
   integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
   integer :: idx = 0
 #ifdef MPI
   integer, dimension(16) :: reqs_x, reqs_Phi
-  integer, dimension(12) :: reqs_u
   integer :: ierr
   call init_MPI
 #endif
@@ -39,30 +36,38 @@ program test_measure
   call init_random(seed)
   res = 0.1
   am = 0.05
-  imass = 3
   iflag = 0
   isweep = 1
   iter = 0
   am3 = 1.0
 
-  call generate_starting_state_Phi_and_X(Phi, reqs_Phi, u, X, reqs_x)
- 
-  ! call function
-  do i = 1, timing_loops
-    call measure_module_shamir(psibarpsi, res, aviter, am, imass)
-  end do
-
-#ifdef SITE_RANDOM
-  ! differing random numbers will throw off stochastic estimates like these
-  check_float_equality(psibarpsi, 2.504295e-4, 0.001, 'psibarpsi', 'test_measure')
-#else
-  if (ip_global .eq. 0) then
-    write (6, *) "This test is not supposed to work if SITE_RANDOM is not defined"
-  endif
-  check_float_equality(psibarpsi, 2.504295e-4, 0.001, 'psibarpsi', 'test_measure')
+  do imass_index = 1, size(imasses)
+    imass_char = ''
+    imass = imasses(imass_index)
+    write(imass_char, '(I1)') imass
+    if (ip_global == 0) then
+      print *, ' imass: ', imass_char
+    end if
+#ifdef MPI
+    call MPI_Barrier(comm, ierr)
 #endif
+    ! Phi is passed here simply to reduce the complexity of generate_starting_state_Phi_and_X
+    call generate_starting_state_Phi_and_X(Phi, reqs_Phi, u, X, reqs_x)
+  
+    ! call function
+    do i = 1, timing_loops
+      call measure_module_shamir(psibarpsi, res, aviter, am, imass)
+    end do
 
-  check_equality(aviter, 5, 'aviter', 'test_measure')
+  #ifndef SITE_RANDOM
+    if (ip_global .eq. 0) then
+      write (6, *) "This test is not supposed to work if SITE_RANDOM is not defined"
+    endif
+  #endif
+
+    check_float_equality(psibarpsi, 2.504295e-4, 0.001, 'psibarpsi', 'test_measure')
+    check_equality(aviter, 5, 'aviter', 'test_measure')
+  end do
 
 #ifdef MPI
   call MPI_Finalize(ierr)

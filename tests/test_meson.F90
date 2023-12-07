@@ -15,7 +15,8 @@ program test_measure
   implicit none
 
   ! general parameters
-  integer :: timing_loops = 1
+  integer :: i, imass_index, imass, timing_loops = 1
+  character(len=4) :: imass_char
 
   ! initialise function parameters
   complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -26,7 +27,7 @@ program test_measure
 
   integer :: i
   real :: res, am
-  integer :: imass, itercg
+  integer :: itercg
 #ifdef MPI
   integer, dimension(16) :: reqs_Phi
   integer :: ierr
@@ -44,16 +45,27 @@ program test_measure
   imass = 3
   iflag = 0
 
-  call generate_starting_state(Phi, reqs_Phi, u)
+  do imass_index = 1, size(imasses)
+    imass_char = ''
+    imass = imasses(imass_index)
+    write(imass_char, '(I1)') imass
+    if (ip_global == 0) then
+      print *, ' imass: ', imass_char
+    end if
+#ifdef MPI
+    call MPI_Barrier(comm, ierr)
+#endif
+    call generate_starting_state(Phi, reqs_Phi, u)
 
-  ! call function
-  do i = 1, timing_loops
-    x = (0.D0, 0.D0)
-    call meson(res, itercg, aviter, am, imass)
+    ! call function
+    do i = 1, timing_loops
+      x = (0.D0, 0.D0)
+      call meson(res, itercg, aviter, am, imass)
+    end do
+
+    check_equality(itercg, 3, 'itercg', 'test_meson')
+    check_equality(aviter, 6, 'aviter', 'test_meson')
   end do
-
-  check_equality(itercg, 3, 'itercg', 'test_meson')
-  check_equality(aviter, 6, 'aviter', 'test_meson')
 
 #ifdef MPI
     call MPI_Finalize(ierr)
