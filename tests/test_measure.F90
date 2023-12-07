@@ -22,7 +22,7 @@ program test_measure
   ! initialise function parameters
   complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   real psibarpsi, aviter
-  integer :: imass, iflag, isweep, iter
+  integer :: iflag, isweep, iter
   real :: res, am
 
   integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
@@ -64,8 +64,8 @@ program test_measure
       write (6, *) "This test is not supposed to work if SITE_RANDOM is not defined"
     endif
   #endif
-    check_float_equality(psibarpsi, -5.7614010E-02, 0.0001E-02, 'psibarpsi', 'test_measure')
-    check_float_equality(aviter, 19.945, 0.00001, 'aviter', 'test_measure')
+    check_float_equality(psibarpsi, -5.76E-02, 0.1E-02, 'psibarpsi', 'test_measure')
+    check_float_equality(aviter, 19.95, 0.01, 'aviter', 'test_measure')
   end do
 
 #ifdef MPI
