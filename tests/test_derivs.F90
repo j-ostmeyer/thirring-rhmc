@@ -11,7 +11,7 @@ program test_derivs
   implicit none
 
   ! general parameters
-  integer :: i, timing_loops = 1
+  integer :: i, imass_index, imass, timing_loops = 1
   character(len=4) :: imass_char
   real(dp), parameter :: tau = 8*atan(1.0_8)
 
@@ -25,7 +25,7 @@ program test_derivs
   real :: diff(ksizex_l, ksizey_l, ksizet_l, 3), sum_diff, max_diff
 
   real(dp), parameter :: anum = tau
-  integer, parameter :: iflag = 0, imass
+  integer, parameter :: iflag = 0
   real, parameter :: am = 0.05
 
 #ifdef MPI
@@ -55,9 +55,9 @@ program test_derivs
     ! check output
     if (generate) then
       print *, "Generating .dat file..."
-      write_file(dSdpi, 'test_derivs.dat', MPI_Double_Precision)
+      write_file(dSdpi, 'test_derivs_'//trim(imass_char)//'.dat', MPI_Double_Precision)
     else
-      read_file(dSdpi_ref, 'test_derivs.dat', MPI_Double_Precision)
+      read_file(dSdpi_ref, 'test_derivs_'//trim(imass_char)//'.dat', MPI_Double_Precision)
 
       ! diff will now have duplicates for the same (x,y,t,mu)
       ! due to the parallelization along third dimension
