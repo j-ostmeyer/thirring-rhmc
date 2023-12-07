@@ -17,6 +17,9 @@ program test_measure
   ! general parameters
   integer :: i, imass_index, imass, timing_loops = 1
   character(len=4) :: imass_char
+  
+  ! expected test values
+  real, dimension(3) :: expected_aviter = (/3,6,6/)
 
   ! initialise function parameters
   complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -25,7 +28,6 @@ program test_measure
   real :: aviter
   integer :: iflag = 0
 
-  integer :: i
   real :: res, am
   integer :: itercg
 #ifdef MPI
@@ -64,7 +66,7 @@ program test_measure
     end do
 
     check_equality(itercg, 3, 'itercg', 'test_meson')
-    check_equality(aviter, 6, 'aviter', 'test_meson')
+    check_equality(aviter, expected_aviter(imass_index), 'aviter', 'test_meson')
   end do
 
 #ifdef MPI

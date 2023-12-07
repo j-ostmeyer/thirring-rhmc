@@ -19,6 +19,9 @@ program test_measure
   integer :: i, imass_index, imass, timing_loops = 1
   character(len=4) :: imass_char
 
+  ! expected test values
+  real, dimension(3) :: expected_psibarpsi = (/2.504295e-4,1.681215E-04,1.470596E-04/)
+
   ! initialise function parameters
   complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   real psibarpsi, aviter
@@ -65,7 +68,7 @@ program test_measure
     endif
   #endif
 
-    check_float_equality(psibarpsi, 2.504295e-4, 0.001, 'psibarpsi', 'test_measure')
+    check_float_equality(psibarpsi, expected_psibarpsi(imass_index), 0.001, 'psibarpsi', 'test_measure')
     check_equality(aviter, 5, 'aviter', 'test_measure')
   end do
 
