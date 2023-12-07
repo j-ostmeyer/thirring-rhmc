@@ -46,10 +46,6 @@ program test_measure
 
   call generate_starting_state(Phi, reqs_Phi, u)
 
-  ! initialise common variables
-  seed = rano(yran, idum, 1, 1, 1)
-  seed = rano(yran, idum, 1, 1, 1)
-
   ! call function
   do i = 1, timing_loops
     x = (0.D0, 0.D0)
@@ -57,7 +53,7 @@ program test_measure
   end do
 
   check_equality(itercg, 3, 'itercg', 'test_meson')
-  check_equality(aviter, 5, 'aviter', 'test_meson')
+  check_equality(aviter, 6, 'aviter', 'test_meson')
 
 #ifdef MPI
     call MPI_Finalize(ierr)
