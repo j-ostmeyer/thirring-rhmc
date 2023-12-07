@@ -42,9 +42,9 @@ program test_derivs
   ! check output
   if (generate) then
     print *, "Generating .dat file..."
-    write_file(dSdpi, 'test_derivs.dat', MPI_Real)
+    write_file(dSdpi, 'test_derivs.dat', MPI_Double_Precision)
   else
-    read_file(dSdpi_ref, 'test_derivs.dat', MPI_Real)
+    read_file(dSdpi_ref, 'test_derivs.dat', MPI_Double_Precision)
 
     ! diff will now have duplicates for the same (x,y,t,mu)
     ! due to the parallelization along third dimension
@@ -53,7 +53,7 @@ program test_derivs
     ! Because of that we divide by np_third
     diff = dSdpi - dSdpi_ref
 
-    check_sum(diff, 0.3, 'dSdpi', sum_diff, MPI_Double_Complex, "test_derivs")
+    check_sum(diff, 0.3, 'dSdpi', sum_diff, MPI_Double_Precision, "test_derivs")
     check_max(diff, 0.01, 'dSdpi', max_diff, MPI_Double_Precision, "test_derivs")
 
 
