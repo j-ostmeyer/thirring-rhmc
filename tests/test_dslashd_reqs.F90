@@ -18,9 +18,6 @@ program test_dslashd_reqs
   character(len=4) :: imass_char
   character(len=*), parameter :: test_prefix = 'test_dslashd_reqs_'
 
-  integer, parameter :: kthird_l = kthird ! HACK TODO remove me when migrating to master
-  integer, parameter :: ip_third = 0 ! HACK TODO remove me when migrating to master
-
   ! initialise function parameters
   complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
   complex(dp) Phi(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
