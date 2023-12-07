@@ -12,6 +12,7 @@ program test_derivs
 
   ! general parameters
   integer :: i, timing_loops = 1
+  character(len=4) :: imass_char
   real(dp), parameter :: tau = 8*atan(1.0_8)
 
   ! initialise function parameters
@@ -24,7 +25,8 @@ program test_derivs
   real :: diff(ksizex_l, ksizey_l, ksizet_l, 3), sum_diff, max_diff
 
   real(dp), parameter :: anum = tau
-  integer, parameter :: iflag = 0
+  integer, parameter :: iflag = 0, imass
+  real, parameter :: am = 0.05
 
 #ifdef MPI
   integer, dimension(16) :: reqs_R, reqs_Phi, reqs_X2
@@ -32,33 +34,43 @@ program test_derivs
   call init_MPI
 #endif
 
-  call generate_starting_state(Phi, reqs_Phi, u, R, reqs_R, X2, reqs_X2, dSdpi_orig)
+  do imass_index = 1, size(imasses)
+    imass_char = ''
+    imass = imasses(imass_index)
+    write(imass_char, '(I1)') imass
+    if (ip_global == 0) then
+      print *, ' imass: ', imass_char
+    end if
+#ifdef MPI
+    call MPI_Barrier(comm, ierr)
+#endif
+    call generate_starting_state(Phi, reqs_Phi, u, R, reqs_R, X2, reqs_X2, dSdpi_orig)
 
-  ! call function
-  do i = 1, timing_loops
-    dSdpi = dSdpi_orig
-    call derivs(R, X2, anum, iflag)
+    ! call function
+    do i = 1, timing_loops
+      dSdpi = dSdpi_orig
+      call derivs(R, X2, anum, iflag, am, imass)
+    end do
+
+    ! check output
+    if (generate) then
+      print *, "Generating .dat file..."
+      write_file(dSdpi, 'test_derivs.dat', MPI_Double_Precision)
+    else
+      read_file(dSdpi_ref, 'test_derivs.dat', MPI_Double_Precision)
+
+      ! diff will now have duplicates for the same (x,y,t,mu)
+      ! due to the parallelization along third dimension
+      ! and the MPI_AllReduce operation. For this the sum_diff
+      ! will be larger than expected (np_third times larger).
+      ! Because of that we divide by np_third
+      diff = dSdpi - dSdpi_ref
+
+      check_sum(diff, 0.3, 'dSdpi', sum_diff, MPI_Double_Precision, "test_derivs")
+      check_max(diff, 0.01, 'dSdpi', max_diff, MPI_Double_Precision, "test_derivs")
+
+    end if
   end do
-
-  ! check output
-  if (generate) then
-    print *, "Generating .dat file..."
-    write_file(dSdpi, 'test_derivs.dat', MPI_Double_Precision)
-  else
-    read_file(dSdpi_ref, 'test_derivs.dat', MPI_Double_Precision)
-
-    ! diff will now have duplicates for the same (x,y,t,mu)
-    ! due to the parallelization along third dimension
-    ! and the MPI_AllReduce operation. For this the sum_diff
-    ! will be larger than expected (np_third times larger).
-    ! Because of that we divide by np_third
-    diff = dSdpi - dSdpi_ref
-
-    check_sum(diff, 0.3, 'dSdpi', sum_diff, MPI_Double_Precision, "test_derivs")
-    check_max(diff, 0.01, 'dSdpi', max_diff, MPI_Double_Precision, "test_derivs")
-
-
-  end if
 
 #ifdef MPI
   call MPI_Finalize(ierr)
