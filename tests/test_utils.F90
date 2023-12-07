@@ -1,7 +1,7 @@
 module test_utils
   use params
   use random
-  use dirac
+  use gammamatrices, only: init_gammas
 #ifdef MPI
   use mpi
   use comms
@@ -17,7 +17,7 @@ module test_utils
   integer, dimension(3) :: imasses = (/1,3,5/)
   integer, parameter :: kthird_l = kthird ! HACK TODO remove me when migrating to master
   integer, parameter :: ip_third = 0 ! HACK TODO remove me when migrating to master
-  
+
 contains
 
 subroutine generate_starting_state_Phi_and_X(Phi, reqs_Phi, u , X, reqs_X)
