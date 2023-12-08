@@ -1,6 +1,5 @@
 #include "test_utils.fh"
 program test_measure
-  ! use dwf3d_lib
   use trial, only: u
   use vector
   use comms

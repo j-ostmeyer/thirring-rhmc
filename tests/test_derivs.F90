@@ -1,6 +1,5 @@
 #include "test_utils.fh"
 program test_derivs
-  ! use dwf3d_lib
   use dirac
   use gforce
   use comms
@@ -21,7 +20,7 @@ program test_derivs
   real(dp) :: dSdpi_orig(ksizex_l, ksizey_l, ksizet_l, 3)
   real(dp) :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
   complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-  real :: diff(ksizex_l, ksizey_l, ksizet_l, 3), sum_diff, max_diff
+  real(dp) :: diff(ksizex_l, ksizey_l, ksizet_l, 3), sum_diff, max_diff
 
   real(dp), parameter :: anum = tau
   integer, parameter :: iflag = 0
