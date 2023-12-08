@@ -90,6 +90,3 @@ else
 fi
 
 sed -i "s/#$ -pe mpi .*/#$ -pe mpi ${NP_TOTAL}/g" "${OUTPUT_DIR}/myriad_submit.sh"
-
-sed -i "s/<EXECUTABLE_PATH>/${OUTPUT_DIR}\/bulk_rhmc/g" "${OUTPUT_DIR}/${CSD_SUBMIT_FILE}"
-sed -i "s/<EXECUTABLE_PATH>/${OUTPUT_DIR}\/bulk_rhmc/g" "${OUTPUT_DIR}/${MYRIAD_SUBMIT_FILE}"

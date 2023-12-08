@@ -61,8 +61,6 @@ module load intel/bundles/complib/2018.4
 
 #! Insert additional module load commands after this line if needed:
 
-#! Full path to application executable:
-application="/home/dc-aird1/DiRAC/thirring-rhmc/tests/e2e_tests/<EXECUTABLE_PATH>"
 
 #! Run options for the application:
 options=""
@@ -70,6 +68,9 @@ options=""
 #! Work directory (i.e. where the job will run):
 workdir="$SLURM_SUBMIT_DIR"  # The value of SLURM_SUBMIT_DIR sets workdir to the directory
                              # in which sbatch is run.
+
+#! Full path to application executable:
+application="$workdir/bulk_rhmc"
 
 #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
 #! safe value to no more than 56:
