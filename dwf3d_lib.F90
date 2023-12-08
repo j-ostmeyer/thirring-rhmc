@@ -280,7 +280,7 @@ contains
         if (mod((isweep + isweep_total_start), iprint) .eq. 0) then
           thetat = theta
           call coef(ut, thetat)
-          !call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)
+!          call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)
           call meson(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)
           call fermion(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)
           pbp_average = pbp_average + pbp
