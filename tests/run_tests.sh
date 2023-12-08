@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # A space separated list of all tests to be ran
-ALL_TESTS="test_dslash test_dslashd"
+ALL_TESTS="test_dslash_shamir test_dslashd_shamir test_dslashd_reqs_shamir test_dslash_wilson test_dslashd_wilson test_dslashd_reqs_wilson"
 
 # Read optional user inputs
 TESTS="${TESTS:-$ALL_TESTS}"
