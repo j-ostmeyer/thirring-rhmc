@@ -82,11 +82,11 @@ contains
 #endif
     
     ! Production flag
-#if defined(PRODUCTION_SHAMIR) && defined(PRODUCTION_WILSON)
-    Error: Must specify only one of PRODUCTION_SHAMIR or PRODUCTION_WILSON
+#if defined(GENERATE_WITH_SHAMIR) && defined(GENERATE_WITH_WILSON)
+    Error: Must specify only one of GENERATE_WITH_SHAMIR or GENERATE_WITH_WILSON
 #endif
-#if !defined(PRODUCTION_SHAMIR) && !defined(PRODUCTION_WILSON)
-    Error: Must specify one of PRODUCTION_SHAMIR or PRODUCTION_WILSON
+#if !defined(GENERATE_WITH_SHAMIR) && !defined(GENERATE_WITH_WILSON)
+    Error: Must specify one of GENERATE_WITH_SHAMIR or GENERATE_WITH_WILSON
 #endif
 
     

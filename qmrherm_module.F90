@@ -41,7 +41,7 @@ contains
     logical, intent(in), optional :: use_sp
     integer, intent(out) :: itercg
     integer, intent(out), optional :: cg_returns(ndiagq)
-    logical :: use_sp_flags_included = use_sp
+    logical :: use_sp_flags_included = .false.
     integer :: cg_returns_tmp(ndiagq)
     real(dp) :: coeff
     integer :: idiag
@@ -51,10 +51,13 @@ contains
 #endif
 
     ! Set use_sp_flags_included (sp is not implemented for the wilson version)
-#if defined(PRODUCTION_WILSON)
-    print *, 'WARNING: sp is not supported in qmrherm when using the PRODUCTION_WILSON flag. Switching to dp.'
-    use_sp_flags_included = .false.
+    if (present(use_sp)) then
+#if defined(GENERATE_WITH_SHAMIR)
+      use_sp_flags_included = use_sp
+#else 
+      print *, 'WARNING: Single precision is not supported in qmrherm when using the GENERATE_WITH_WILSON flag. Forcing double precision.'
 #endif
+    end if
 
 
     if (ndiagq .gt. ndiag) then

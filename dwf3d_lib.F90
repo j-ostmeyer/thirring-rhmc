@@ -104,7 +104,7 @@ contains
     close (25)
 
     ! verify imass value
-    if ((imass .ne. 1) .ne. (imass .ne. 3) .and. (imass .ne. 5)) then
+    if ((imass .ne. 1) .and. (imass .ne. 3) .and. (imass .ne. 5)) then
       print *, 'ERROR: imass must be one of 1, 3 or 5'
 #ifdef MPI
       call MPI_Abort(MPI_COMM_WORLD, 1, ierr)
