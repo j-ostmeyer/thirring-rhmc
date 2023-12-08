@@ -41,7 +41,7 @@ contains
     logical, intent(in), optional :: use_sp
     integer, intent(out) :: itercg
     integer, intent(out), optional :: cg_returns(ndiagq)
-    logical :: use_sp_flags_included = .false.
+    logical :: force_dp = .false.
     integer :: cg_returns_tmp(ndiagq)
     real(dp) :: coeff
     integer :: idiag
@@ -51,13 +51,10 @@ contains
 #endif
 
     ! Set use_sp_flags_included (sp is not implemented for the wilson version)
-    if (present(use_sp)) then
-#if defined(GENERATE_WITH_SHAMIR)
-      use_sp_flags_included = use_sp
-#else 
-      print *, 'WARNING: Single precision is not supported in qmrherm when using the GENERATE_WITH_WILSON flag. Forcing double precision.'
+#if defined(GENERATE_WITH_WILSON)
+    force_dp = .true.
+    print *, 'WARNING: Single precision is not supported in qmrherm when using the GENERATE_WITH_WILSON flag. Forcing double precision.'
 #endif
-    end if
 
 
     if (ndiagq .gt. ndiag) then
@@ -78,7 +75,7 @@ contains
     endif
 
     x = anum(0)*Phi
-    if (present(use_sp) .and. use_sp_flags_included) then
+    if (present(use_sp) .and. use_sp .and. (.not. force_dp)) then
       call multishift_solver_sp(u, am, imass, ndiagq, aden, anum(1:ndiagq), x1, Phi, res, max_qmr_iters, itercg, cg_returns_tmp)
     else
       call multishift_solver(u, am, imass, ndiagq, aden, anum(1:ndiagq), x1, Phi, res, max_qmr_iters, itercg, cg_returns_tmp)
@@ -181,7 +178,7 @@ contains
     endif ! if(iflag.lt.2)then , else
 
     if (ip_global .eq. 0 .and. printall) then
-      if (present(use_sp) .and. use_sp_flags_included) then
+      if (present(use_sp) .and. use_sp .and. (.not. force_dp)) then
         print *, "[SP] Qmrherm iterations,res:", itercg, res
       else
         print *, "[DP] Qmrherm iterations,res:", itercg, res
