@@ -38,6 +38,6 @@ This is intended to facilitate regression testing this code base
       ```
       python3 test_suit.py TEST_OUTPUT_4_4_8_100_4_4_2_1 TEST_OUTPUT_4_4_8_100_4_2_4_1
       ```
-      The above would test the outputs of two jobs  with deafutl inputs plus NP_Y=4 and NP_y=2.
+      The above would test the outputs of two jobs  with default inputs plus NP_Y=4 and NP_y=2.
         
 
