@@ -52,12 +52,14 @@ def test_acceptance(output_file):
     # Acceptance rate
     expected_acceptance = 0.8
     actual_acceptance = get_acceptance_rate(output_file)
+    print("Acceptance rate: " + str(actual_acceptance))
     assert actual_acceptance >= expected_acceptance, "Acceptance " + str(actual_acceptance) + " is < " + str(int(expected_acceptance * 100)) + "%"
 
 def test_exp_dH(output_file):
     # exp-dH
     expected_exp_dH = 1
     actual_exp_dH_val, actual_exp_dH_err = get_exp_dH(output_file)
+    print("exp-dH: " + str(actual_exp_dH_val) + " +/- " +  str(actual_exp_dH_err))
     assert abs(expected_exp_dH - actual_exp_dH_val) <= actual_exp_dH_err, "Expected value of " + str(expected_exp_dH) + " is outside exp-dH = " + str(actual_exp_dH_val) + " +/- " + str(actual_exp_dH_err)
 
 def main():
