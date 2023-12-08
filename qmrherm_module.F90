@@ -41,6 +41,7 @@ contains
     logical, intent(in), optional :: use_sp
     integer, intent(out) :: itercg
     integer, intent(out), optional :: cg_returns(ndiagq)
+    logical :: use_sp_flags_included = use_sp
     integer :: cg_returns_tmp(ndiagq)
     real(dp) :: coeff
     integer :: idiag
@@ -48,6 +49,13 @@ contains
     integer, dimension(16) :: reqs_x2, reqs_Phi0, reqs_R, reqs_x
     integer :: ierr
 #endif
+
+    ! Set use_sp_flags_included (sp is not implemented for the wilson version)
+#if defined(PRODUCTION_WILSON)
+    print *, 'WARNING: sp is not supported in qmrherm when using the PRODUCTION_WILSON flag. Switching to dp.'
+    use_sp_flags_included = .false.
+#endif
+
 
     if (ndiagq .gt. ndiag) then
       print *, 'The qmrherm_module module currently requires ndiagq be greater than ndiagg.'
@@ -67,7 +75,7 @@ contains
     endif
 
     x = anum(0)*Phi
-    if (present(use_sp) .and. use_sp) then
+    if (present(use_sp) .and. use_sp_flags_included) then
       call multishift_solver_sp(u, am, imass, ndiagq, aden, anum(1:ndiagq), x1, Phi, res, max_qmr_iters, itercg, cg_returns_tmp)
     else
       call multishift_solver(u, am, imass, ndiagq, aden, anum(1:ndiagq), x1, Phi, res, max_qmr_iters, itercg, cg_returns_tmp)
@@ -170,7 +178,7 @@ contains
     endif ! if(iflag.lt.2)then , else
 
     if (ip_global .eq. 0 .and. printall) then
-      if (present(use_sp) .and. use_sp) then
+      if (present(use_sp) .and. use_sp_flags_included) then
         print *, "[SP] Qmrherm iterations,res:", itercg, res
       else
         print *, "[DP] Qmrherm iterations,res:", itercg, res

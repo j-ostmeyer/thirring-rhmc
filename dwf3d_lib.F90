@@ -111,7 +111,7 @@ contains
 #endif
       call exit(1)
     else if (imass .eq. 5)
-      print *, 'WARNING: imass of 5 may not be supported '
+      print *, 'WARNING: imass of 5 may not be supported.'
     end if
 
 ! set a new seed by hand...
