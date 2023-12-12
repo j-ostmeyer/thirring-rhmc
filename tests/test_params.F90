@@ -66,5 +66,5 @@ module params
   integer :: ibound
 
   ! Measure parameters
-  integer, parameter :: knoise = 100
+  integer, parameter :: knoise = 10
 end module params
