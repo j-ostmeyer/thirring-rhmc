@@ -59,11 +59,11 @@ program test_measure
       call measureW(psibarpsi, res, aviter, am, imass)
     end do
 
-  #ifndef SITE_RANDOM
+#ifndef SITE_RANDOM
     if (ip_global .eq. 0) then
       write (6, *) "This test is not supposed to work if SITE_RANDOM is not defined"
     endif
-  #endif
+#endif
     check_float_equality(psibarpsi, -5.76E-02, 0.1E-02, 'psibarpsi', 'test_measure')
     check_float_equality(aviter, 19.95, 0.01, 'aviter', 'test_measure')
   end do
