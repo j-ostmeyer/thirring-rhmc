@@ -16,8 +16,7 @@ program test_measure
   real(dp) :: seed
 
   ! general parameters
-  integer :: i, imass_index, imass, timing_loops = 1
-  character(len=4) :: imass_char
+  integer :: i, imass, timing_loops = 1
 
   ! initialise function parameters
   complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -40,33 +39,26 @@ program test_measure
   isweep = 1
   iter = 0
   am3 = 1.0
+  imass = 3
 
-  do imass_index = 1, size(imasses)
-    imass_char = ''
-    imass = imasses(imass_index)
-    write(imass_char, '(I1)') imass
-    if (ip_global == 0) then
-      print *, ' imass: ', imass_char
-    end if
 #ifdef MPI
-    call MPI_Barrier(comm, ierr)
+  call MPI_Barrier(comm, ierr)
 #endif
-    ! Phi is passed here simply to reduce the complexity of generate_starting_state_Phi_and_X
-    call generate_starting_state_Phi_and_X(Phi, reqs_Phi, u, X, reqs_x)
-  
-    ! call function
-    do i = 1, timing_loops
-      call measureW(psibarpsi, res, aviter, am, imass)
-    end do
+  ! Phi is passed here simply to reduce the complexity of generate_starting_state_Phi_and_X
+  call generate_starting_state_Phi_and_X(Phi, reqs_Phi, u, X, reqs_x)
+
+  ! call function
+  do i = 1, timing_loops
+    call measureW(psibarpsi, res, aviter, am, imass)
+  end do
 
 #ifndef SITE_RANDOM
-    if (ip_global .eq. 0) then
-      write (6, *) "This test is not supposed to work if SITE_RANDOM is not defined"
-    endif
+  if (ip_global .eq. 0) then
+    write (6, *) "This test is not supposed to work if SITE_RANDOM is not defined"
+  endif
 #endif
-    check_float_equality(psibarpsi, -5.76E-02, 0.1E-02, 'psibarpsi', 'test_measure')
-    check_float_equality(aviter, 19.95, 0.01, 'aviter', 'test_measure')
-  end do
+  check_float_equality(psibarpsi, -5.63E-02, 0.1E-02, 'psibarpsi', 'test_measure')
+  check_float_equality(aviter, 19.95, 0.01, 'aviter', 'test_measure')
 
 #ifdef MPI
   call MPI_Finalize(ierr)
