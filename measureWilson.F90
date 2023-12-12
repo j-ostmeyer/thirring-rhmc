@@ -109,7 +109,6 @@ module measureWilson
     real, intent(in) :: res, am
     integer, intent(in) :: imass
     integer, intent(in), optional :: isweep_total
-    integer, parameter :: knoise = 100
     complex(dp) :: x(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: psibarpsi1, psibarpsi2

@@ -64,4 +64,7 @@ module params
   real :: beta
   real :: am3
   integer :: ibound
+
+  ! Measure parameters
+  integer, parameter :: knoise = 100
 end module params
