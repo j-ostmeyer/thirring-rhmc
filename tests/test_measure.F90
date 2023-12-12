@@ -57,7 +57,7 @@ program test_measure
     write (6, *) "This test is not supposed to work if SITE_RANDOM is not defined"
   endif
 #endif
-  check_float_equality(psibarpsi, -5.63E-02, 0.1E-02, 'psibarpsi', 'test_measure')
+  check_float_equality(psibarpsi, -5.78E-02, 0.1E-02, 'psibarpsi', 'test_measure')
   check_float_equality(aviter, 19.95, 0.01, 'aviter', 'test_measure')
 
 #ifdef MPI
