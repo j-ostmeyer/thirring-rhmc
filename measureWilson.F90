@@ -169,7 +169,6 @@ module measureWilson
       psibarpsi2 = (0.0, 0.0)
 #endif
 
-!ORIG      do idsource = 1, 2
       do idsource = 1, 4
         !
         !  source on domain wall at ithird=1
@@ -215,9 +214,9 @@ module measureWilson
                        + sum(conjg(x(1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource)) &
                              *xi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource))
         end if
-
+      end do 
+      do idsource2 = 1, 4
         !  source on domain wall at ithird=kthird
-        idsource2 = idsource + 2
         !
         x = cmplx(0.0, 0.0)
 
