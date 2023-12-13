@@ -16,6 +16,7 @@ module params
   integer, parameter :: ndiag = 25, ndiagg = 12
   integer, parameter :: Nf = 1
   real(dp), parameter :: akappa = 0.5
+  integer, parameter :: kthird_l = kthird ! HACK TODO remove me when migrating to master
 #ifndef MPI
   integer, parameter :: ksizex_l = ksize, ksizey_l = ksize, ksizet_l = ksizet
   integer, parameter :: kvol_l = kvol

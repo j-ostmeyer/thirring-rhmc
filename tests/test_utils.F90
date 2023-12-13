@@ -15,8 +15,6 @@ module test_utils
   ! general parameters
   logical :: generate = .false.
   integer, dimension(3) :: imasses = (/1,3,5/)
-  integer, parameter :: kthird_l = kthird ! HACK TODO remove me when migrating to master
-  integer, parameter :: ip_third = 0 ! HACK TODO remove me when migrating to master
 
 contains
 
