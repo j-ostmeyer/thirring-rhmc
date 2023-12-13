@@ -125,10 +125,11 @@ module measureWilson
     integer :: ierr
 #endif
     
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! Different from measure in master
     complex(dp) :: oslice(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: islice(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     print *,"Wilson measure"
 
@@ -192,7 +193,7 @@ module measureWilson
         call dslashd(Phi, xi, u, am, imass)
 #ifdef MPI
         ! No way to hide communications here unfortunately
-        call start_halo_update_5(4, Phi, 16, reqs_Phi)
+        call start_halo_update_5(4, Phi, 11, reqs_Phi)
         call complete_halo_update(reqs_Phi)
 #else
         call update_halo_5(4, Phi)
@@ -202,6 +203,7 @@ module measureWilson
         
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ! This is not present in master
+        ! for idirac=1 or 2
         islice=cmplx(0,0);
         islice(:,:,:,1:2)=xi(kthird,:,:,:,1:2) ! P+.phi
         call DWilson(oslice,islice,u,-am3)
@@ -215,9 +217,12 @@ module measureWilson
                              *xi(kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, idsource))
         end if
       end do 
+
+      !  source on domain wall at ithird=kthird
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! This is different from master 
       do idsource2 = 1, 4
-        !  source on domain wall at ithird=kthird
-        !
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         x = cmplx(0.0, 0.0)
 
         x(:, :, :, idsource2) = cmplx(pt(:, :, :, 1), pt(:, :, :, 2))
@@ -237,7 +242,7 @@ module measureWilson
         call dslashd(Phi, xi, u, am, imass)
 #ifdef MPI
         ! No way to hide communications here unfortunately
-        call start_halo_update_5(4, Phi, 18, reqs_Phi)
+        call start_halo_update_5(4, Phi, 12, reqs_Phi)
         call complete_halo_update(reqs_Phi)
 #else
         call update_halo_5(4, Phi)
@@ -281,19 +286,21 @@ module measureWilson
         psibarpsi2 = psibarpsi2/kvol
         pbp(inoise) = real(psibarpsi1 + psibarpsi2)
       elseif (imass .eq. 3) then
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ! The signs here are swapped compared to master 
         psibarpsi1 = cmplx(0.0, +1.0)*psibarpsi1/kvol
         psibarpsi2 = cmplx(0.0, -1.0)*psibarpsi2/kvol
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         pbp(inoise) = real(psibarpsi1 + psibarpsi2)
       endif
 
       if (ip_global .eq. 0) then
         open (unit=100, file='fort.100', action='write', position='append')
         if (present(isweep_total)) then
-          write (100, '(I5,4E19.9E3)') isweep_total, real(psibarpsi1), aimag(psibarpsi1), &
+          write (100, '(I5,4E17.9E3)') isweep_total, real(psibarpsi1), aimag(psibarpsi1), &
              & real(psibarpsi2), aimag(psibarpsi2)
         else
-          write (100, '(4E19.9E3)') real(psibarpsi1), aimag(psibarpsi1), &
+          write (100, '(4E17.9E3)') real(psibarpsi1), aimag(psibarpsi1), &
              & real(psibarpsi2), aimag(psibarpsi2)
         endif
         close (100)
@@ -316,9 +323,9 @@ module measureWilson
     if (ip_global .eq. 0) then
       open (unit=200, file='fort.200', action='write', position='append')
       if (present(isweep_total)) then
-        write (200, '(I5,3E17.7E3)') isweep_total, psibarpsi, susclsing
+        write (200, '(I5,2E15.7E3)') isweep_total, psibarpsi, susclsing
       else
-        write (200, '(2E17.7E3)') psibarpsi, susclsing
+        write (200, '(2E15.7E3)') psibarpsi, susclsing
       endif
       close (200)
     end if
