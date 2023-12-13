@@ -102,8 +102,8 @@ module measureWilson
     use comms5, only: start_halo_update_5
     use comms
     use gaussian
-    use params
     use diracWilson
+    use params
     implicit none
     real, intent(out) :: psibarpsi, aviter
     real, intent(in) :: res, am
@@ -112,8 +112,6 @@ module measureWilson
     complex(dp) :: x(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: Phi(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: psibarpsi1, psibarpsi2
-    complex(dp) :: oslice(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) :: islice(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp) :: cnum(0:1), cden(1)
     real :: ps(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 2)
     real :: pt(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 2)
@@ -121,8 +119,16 @@ module measureWilson
     integer :: idsource, idsource2, inoise
     integer :: iter, itercg
     real :: susclsing
-    integer, dimension(12) :: reqs_ps, reqs_pt, reqs_Phi
+#ifdef MPI
+    integer, dimension(12) :: reqs_Phi
+    integer, dimension(12) :: reqs_ps, reqs_pt
     integer :: ierr
+#endif
+    
+    ! Different from measure in master
+    complex(dp) :: oslice(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: islice(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+
 
     print *,"Wilson measure"
 
@@ -132,22 +138,39 @@ module measureWilson
     cden(1) = 0.0
 
     do inoise = 1, knoise
-!      print *,"inoise:",inoise
+      !
       !     set up noise
+#ifdef MPI
+      if (ip_third .eq. 0) then
+        call gauss0(ps, reqs_ps)
+        call gauss0(pt, reqs_pt)
+      endif
+      psibarpsi1 = (0.0, 0.0)
+      psibarpsi2 = (0.0, 0.0)
+      ! we need to wait for the ranks with ip_third = 0 - Barrier is implicit
+      if (ip_third .eq. 0) then
+        call MPI_WaitAll(12, reqs_ps, MPI_Statuses_Ignore, ierr)
+      endif
+      ! We also need to broadcast halos
+      call MPI_Bcast(ps, &
+                     (ksizex_l + 2)*(ksizey_l + 2)*(ksizet_l + 2)*2, &
+                     MPI_Real, 0, comm_grp_third, ierr)
+      if (ip_third .eq. 0) then
+        call MPI_WaitAll(12, reqs_pt, MPI_Statuses_Ignore, ierr)
+      endif
+      ! We also need to broadcast halos
+      call MPI_Bcast(pt, &
+                     (ksizex_l + 2)*(ksizey_l + 2)*(ksizet_l + 2)*2, &
+                     MPI_Real, 0, comm_grp_third, ierr)
+#else
+      call gauss0(ps)
+      psibarpsi1 = (0.0, 0.0)
+      call gauss0(pt)
+      psibarpsi2 = (0.0, 0.0)
+#endif
 
-      call gauss0(ps, reqs_ps)
-!DB      call complete_halo_update(reqs_ps)
-!ORIG      psibarpsi1 = (0.0, 0.0)
-      call gauss0(pt, reqs_pt)
-!DB      call complete_halo_update(reqs_pt)
-!ORIG      psibarpsi2 = (0.0, 0.0)
-      
-        psibarpsi1 = (0.0, 0.0)
-        psibarpsi2 = (0.0, 0.0)
 !ORIG      do idsource = 1, 2
       do idsource = 1, 4
-!        call gauss0(ps, reqs_ps)
-!        call gauss0(pt, reqs_pt)
         !
         !  source on domain wall at ithird=1
         !
