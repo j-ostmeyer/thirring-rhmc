@@ -64,6 +64,10 @@ contains
     ip_y = coords(2)
     ip_t = coords(3)
 
+    ! Group ranks that differ only on ip_third
+    call MPI_Comm_split(MPI_COMM_WORLD, ip_x + ip_y*np_x + ip_t*np_x*np_y, &
+                        ip_third, comm_grp_third, ierr)
+
     ! Prepare file format for MPI-IO
     call MPI_Type_Create_Subarray(4, &! dimensionality
                                   (/ksize, ksize, ksizet, 3/), &! global volume
