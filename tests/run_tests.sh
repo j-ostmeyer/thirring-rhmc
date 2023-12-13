@@ -1,44 +1,42 @@
 #!/bin/bash
 
 # A space separated list of all tests to be ran
-ALL_TESTS="test_dslash_shamir test_dslashd_shamir test_dslashd_reqs_shamir test_dslash_wilson test_dslashd_wilson test_dslashd_reqs_wilson"
+ALL_TESTS="test_gauss0 test_gaussp test_derivs test_meson test_measure test_congrad test_dslash_shamir test_dslashd_shamir test_dslashd_reqs_shamir test_dslash_wilson test_dslashd_wilson test_dslashd_reqs_wilson"
 
 # Read optional user inputs
+KSIZE="${KSIZE:-12}"
+KSIZET="${KSIZET:-12}"
+KTHIRD="${KTHIRD:-24}"
+NP_X="${NP_X:-1}"
+NP_Y="${NP_Y:-1}"
+NP_T="${NP_T:-1}"
+NP_THIRD="${NP_THIRD:-1}"
 TESTS="${TESTS:-$ALL_TESTS}"
 GENERATE="${GENERATE:-0}"
 SKIP_COMPILE="${SKIP_COMPILE:-0}"
 
-# get inputs from cli
-if [[ ( -z "${KSIZE}" ) || ( -z "${KSIZET}" ) || \
-	  ( -z "${KTHIRD}" ) || ( -z "${NP_X}" ) || \
-	  ( -z "${NP_Y}" ) || ( -z "${NP_T}" ) || \
-	  ( -z "${NP_THIRD}" ) ]]; then
-	echo "Please ensure, the env vars KSIZE, KSIZET, KTHIRD, NP_X, NP_Y, NP_T and NP_THIRD are defined"
-	exit 0
-else
-	echo "Using config:"
-	echo "  KSIZE:        ${KSIZE}"
-	echo "  KSIZET:       ${KSIZET}"
-	echo "  KTHIRD:       ${KTHIRD}"
-	echo "  NP_X:         ${NP_X}"
-	echo "  NP_Y:         ${NP_Y}"
-	echo "  NP_T:         ${NP_T}"
-	echo "  NP_THIRD:     ${NP_THIRD}"
-	echo "  GENERATE:     ${GENERATE}"
-	echo "  SKIP_COMPILE: ${SKIP_COMPILE}"
-    echo "  TESTS:        ${TESTS}"
-fi
+echo "Using config:"
+echo "  KSIZE:        ${KSIZE}"
+echo "  KSIZET:       ${KSIZET}"
+echo "  KTHIRD:       ${KTHIRD}"
+echo "  NP_X:         ${NP_X}"
+echo "  NP_Y:         ${NP_Y}"
+echo "  NP_T:         ${NP_T}"
+echo "  NP_THIRD:     ${NP_THIRD}"
+echo "  TESTS:        ${TESTS}"
+echo "  GENERATE:     ${GENERATE}"
+echo "  SKIP_COMPILE: ${SKIP_COMPILE}"
 
 # Turn on generate if set by user
 if [ $GENERATE -ne 0 ]; then
 	for TEST in ${TESTS//,/ }
 	do
-		sed -i "s/logical :: generate = .false./logical :: generate = .true./g" "${TEST}.F90"
+		sed -i "s/logical :: generate = .false./logical :: generate = .true./g" "test_utils.F90"
 	done
 else 
     for TEST in ${TESTS//,/ }
 	do
-		sed -i "s/logical :: generate = .true./logical :: generate = .false./g" "${TEST}.F90"
+		sed -i "s/logical :: generate = .true./logical :: generate = .false./g" "test_utils.F90"
 	done
 fi
 

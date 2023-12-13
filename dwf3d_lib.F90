@@ -76,6 +76,7 @@ contains
     integer :: imass, iterl, iter2, iter2_read
     integer :: walltimesec
     logical :: program_status_file_exists
+    
 #ifdef MPI
 !     variables to keep track of MPI requests
     integer :: ierr
@@ -83,6 +84,7 @@ contains
     ! real :: sumvalue, maxvalue
 
 #endif
+    call verify_kernel_choice()
     ibound = -1
     qmrhprint = .true.
 #ifdef MPI

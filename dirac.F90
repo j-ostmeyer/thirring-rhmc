@@ -16,13 +16,11 @@ contains
     integer, intent(in) :: imass
     real, intent(in) :: am
 
-    call verify_kernel_choice()
-
-#ifdef SHAMIR_KERNEL
+#ifdef GENERATE_WITH_SHAMIR
     call dslash_shamir(Phi, R, u, am, imass)
 #endif
 
-#ifdef WILSON_KERNEL
+#ifdef GENERATE_WITH_WILSON
     call dslash_wilson(Phi, R, u, am, imass)
 #endif
 
@@ -422,13 +420,11 @@ contains
     real, intent(in) :: am
     integer, dimension(16), intent(inout), optional :: reqs_R
 
-    call verify_kernel_choice()
-
-#ifdef SHAMIR_KERNEL
+#ifdef GENERATE_WITH_SHAMIR
   call dslashd_shamir(Phi, R, u, am, imass, reqs_R)
 #endif
 
-#ifdef WILSON_KERNEL
+#ifdef GENERATE_WITH_WILSON
   call dslashd_wilson(Phi, R, u, am, imass, reqs_R)
 #endif
 
