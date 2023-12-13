@@ -120,7 +120,7 @@ module measureWilson
     integer :: iter, itercg
     real :: susclsing
 #ifdef MPI
-    integer, dimension(12) :: reqs_Phi
+    integer, dimension(12) :: reqs_Phi, reqs_xi
     integer, dimension(12) :: reqs_ps, reqs_pt
     integer :: ierr
 #endif
@@ -175,24 +175,29 @@ module measureWilson
         !  source on domain wall at ithird=1
         !
         x = cmplx(0.0, 0.0)
-        !  We started a halo update in the gauss0 call;
-        !  Now we need it to be complete if it isn't already
-        if (idsource .eq. 1) then
-          call complete_halo_update(reqs_ps)
-        end if
-
         x(:, :, :, idsource) = cmplx(ps(:, :, :, 1), ps(:, :, :, 2))
-        !
+
         xi = cmplx(0.0, 0.0)
-        xi(1, :, :, :, :) = x
+        if (ip_third .eq. 0) then
+          xi(1, :, :, :, :) = x
+        end if
+#ifdef MPI
+        call start_halo_update_5(4, xi, 11, reqs_xi)
+        call complete_halo_update(reqs_xi)
+#else
+        call update_halo_5(4, xi)
+#endif
         !
         ! Phi= Mdagger*xi
         !
         call dslashd(Phi, xi, u, am, imass)
+#ifdef MPI
         ! No way to hide communications here unfortunately
         call start_halo_update_5(4, Phi, 16, reqs_Phi)
         call complete_halo_update(reqs_Phi)
-
+#else
+        call update_halo_5(4, Phi)
+#endif
         call congrad(Phi, res, itercg, am, imass)
         iter = iter + itercg
         !
