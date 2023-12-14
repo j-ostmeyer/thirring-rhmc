@@ -1,5 +1,10 @@
 #include "test_utils.fh"
-program test_derivs
+
+#ifndef GENERATE_WITH_SHAMIR
+#define GENERATE_WITH_SHAMIR
+#endif
+
+program test_derivs_shamir
   use dirac
   use gforce
   use comms
@@ -36,7 +41,7 @@ program test_derivs
   ! call function
   do i = 1, timing_loops
     dSdpi = dSdpi_orig
-    call derivs(R, X2, anum, iflag)
+    call derivs(R, X2, anum, iflag, 0.05, 3)
   end do
 
   ! check output
@@ -63,4 +68,4 @@ program test_derivs
   call MPI_Finalize(ierr)
 #endif
 
-end program test_derivs
+end program test_derivs_shamir
