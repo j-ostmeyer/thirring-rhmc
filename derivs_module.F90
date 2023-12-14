@@ -31,7 +31,7 @@ contains
     integer, intent(in) :: imass
     real, intent(in) :: am
 
-    derivs_shared(R, X2, anum, iflag, am, imass)
+    call derivs_shared(R, X2, anum, iflag, am, imass)
   end subroutine derivs_shamir
 
   subroutine derivs_wilson(R, X2, anum, iflag, am, imass)
@@ -42,7 +42,7 @@ contains
     integer, intent(in) :: imass
     real, intent(in) :: am
 
-    derivs_shared(R, X2, anum, iflag, am, imass)
+    call derivs_shared(R, X2, anum, iflag, am, imass)
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! This Calculates a sum for the shamir version of derivs before any wilson aspects have been calculated
