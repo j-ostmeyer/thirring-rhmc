@@ -8,7 +8,7 @@ program test_measure_wilson
   use comms5
   use gammamatrices
   use random
-  use measureWilson
+  use measure_module
   use test_utils
   implicit none
 

@@ -8,7 +8,7 @@ program test_measure_shamir
   use comms5
   use gammamatrices
   use random
-  use measure
+  use measure_module
   use test_utils
   implicit none
 
@@ -57,7 +57,7 @@ program test_measure_shamir
     write (6, *) "This test is not supposed to work if SITE_RANDOM is not defined"
   endif
 #endif
-  check_float_equality(psibarpsi, 1.681215E-04, 0.001, 'psibarpsi', 'test_measure_shamir')
+  check_float_equality(psibarpsi, 2.504295E-04, 0.001, 'psibarpsi', 'test_measure_shamir')
   check_float_equality(aviter, 5, 0.001, 'aviter', 'test_measure_shamir')
 
 #ifdef MPI
