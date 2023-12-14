@@ -7,7 +7,7 @@ program test_derivs_shamir
   use comms4
   use comms5
   use test_utils
-  use derivs_module, only: derivs
+  use derivs_module, only: derivs_shamir
   implicit none
 
   ! general parameters

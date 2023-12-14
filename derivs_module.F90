@@ -1,6 +1,6 @@
 module derivs_module
   use mpi
-  use comms_common, only: comm_grp_third
+  use comms_common
   implicit none
 
 contains
@@ -39,6 +39,7 @@ contains
   end subroutine derivs_shamir
 
   subroutine derivs_wilson(R, X2, anum, iflag, am, imass)
+    use gforce, only: dSdpi
     use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, dp
     implicit none
     complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -49,7 +50,7 @@ contains
     real, intent(in) :: am
 
     complex(dp) :: cmult
-    integer il
+    integer :: il, ierr
     complex(dp) :: sliceL(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: sliceR(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real sumdS_S,sumdS_W,absdS_S,absdS_W
@@ -88,11 +89,11 @@ contains
         write(105,'(5f20.12)') sumdS_S,sumdS_W,absdS_S,absdS_W,absdS_W/absdS_S
         close(105)
     endif
-  end subroutine derivs_shamir
+  end subroutine derivs_wilson
 
   subroutine derivs_shared(R, X2, anum, iflag, am, imass)
     use gforce, only: dSdpi
-    use dirac, only: kdelta, gamval, gamin
+    use gammamatrices, only: kdelta, gamval, gamin
     use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
     !      complex, intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     !      complex, intent(in) :: X2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
