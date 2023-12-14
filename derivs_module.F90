@@ -6,6 +6,8 @@ module derivs_module
 contains
 
   subroutine derivs(R, X2, anum, iflag, am, imass)
+    use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, dp
+    implicit none
     complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp), intent(in) :: X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
@@ -24,6 +26,8 @@ contains
   end subroutine derivs 
 
   subroutine derivs_shamir(R, X2, anum, iflag, am, imass)
+    use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, dp
+    implicit none
     complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp), intent(in) :: X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
@@ -35,6 +39,8 @@ contains
   end subroutine derivs_shamir
 
   subroutine derivs_wilson(R, X2, anum, iflag, am, imass)
+    use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, dp
+    implicit none
     complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp), intent(in) :: X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
