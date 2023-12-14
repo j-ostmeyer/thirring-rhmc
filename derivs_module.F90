@@ -28,7 +28,6 @@ contains
 
 #ifdef GENERATE_WITH_WILSON
     complex(dp) :: cmult
-    real(dp) :: mult
     integer il
     complex(dp) :: sliceL(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: sliceR(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -153,11 +152,7 @@ contains
 
 
   subroutine derivsWilsonMass(R, X2, anum, iflag, am, imass)
-    use gforce, only: dSdpi
-    use gammamatrices, only: kdelta, gamval, gamin
-    use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
-    use trial, only: theta
-    use params, only: COMPACT
+    use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, dp
     use comms
     implicit none
     complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -166,19 +161,11 @@ contains
     real,intent(in) :: am
     integer, intent(in) :: iflag,imass
 
-    real :: tzi_real
-    integer :: ix, iy, it, ixup, iyup, itup, idirac, mu
-    integer :: igork1
-    complex(dp) :: expp,expm,cmult
-    real(dp) :: mult
-    integer il
+    complex(dp) :: cmult
     complex(dp) :: sliceL(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: sliceR(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     integer idxL,idxR
-    real sumdS_W,absdS_W
-    integer ierr
 
-    tzi_real = 2*real(anum)
 
     ! upper right mass 
     if (imass.eq.1) then
@@ -219,11 +206,7 @@ contains
 
 
   subroutine derivsDPTest(R, X2, anum, iflag, am, imass,idxL,idxR,cmult)
-    use gforce, only: dSdpi
-    use gammamatrices, only: kdelta, gamval, gamin
     use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
-    use trial, only: theta
-    use params, only: COMPACT
     use comms
     implicit none
     complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -234,10 +217,6 @@ contains
     integer,intent(in) :: idxL,idxR
     complex(dp),intent(in) :: cmult
 
-    integer :: mu
-    complex(dp) :: expp,expm
-    real(dp) :: mult
-    integer il
     complex(dp) :: sliceL(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: sliceR(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 
@@ -251,11 +230,7 @@ contains
 
 
   subroutine derivsDMTest(R, X2, anum, iflag, am, imass,idxL,idxR,cmult)
-    use gforce, only: dSdpi
-    use gammamatrices, only: kdelta, gamval, gamin
     use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
-    use trial, only: theta
-    use params, only: COMPACT
     use comms
     implicit none
     complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -266,10 +241,6 @@ contains
     integer,intent(in) :: idxL,idxR
     complex(dp),intent(in) :: cmult
 
-    integer :: mu
-    complex(dp) :: expp,expm
-    real(dp) :: mult
-    integer il
     complex(dp) :: sliceL(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: sliceR(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 
@@ -283,11 +254,7 @@ contains
 
 
   subroutine derivsPDTest(R, X2, anum, iflag, am, imass,idxL,idxR,cmult)
-    use gforce, only: dSdpi
-    use gammamatrices, only: kdelta, gamval, gamin
     use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
-    use trial, only: theta
-    use params, only: COMPACT
     use comms
     implicit none
     complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -298,10 +265,6 @@ contains
     integer,intent(in) :: idxL,idxR
     complex(dp),intent(in) :: cmult
 
-    integer :: mu
-    complex(dp) :: expp,expm
-    real(dp) :: mult
-    integer il
     complex(dp) :: sliceL(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: sliceR(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 
@@ -315,11 +278,7 @@ contains
 
 
   subroutine derivsMDTest(R, X2, anum, iflag, am, imass,idxL,idxR,cmult)
-    use gforce, only: dSdpi
-    use gammamatrices, only: kdelta, gamval, gamin
     use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
-    use trial, only: theta
-    use params, only: COMPACT
     use comms
     implicit none
     complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -330,10 +289,6 @@ contains
     integer,intent(in) :: idxL,idxR
     complex(dp),intent(in) :: cmult
 
-    integer :: mu
-    complex(dp) :: expp,expm
-    real(dp) :: mult
-    integer il
     complex(dp) :: sliceL(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: sliceR(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 
@@ -350,8 +305,6 @@ contains
     use gforce, only: dSdpi
     use gammamatrices, only: kdelta, gamval, gamin
     use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
-    use trial, only: theta
-    use params, only: COMPACT
     use comms
     implicit none
     complex(dp), intent(in) :: sliceL(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -364,10 +317,8 @@ contains
     real :: tzi_real
     integer :: ixup,iyup,itup,ix, iy, it, idirac, mu
     integer :: igork1
-    complex(dp) :: expp,expm
+    complex(dp) :: expp, expm
     real :: dmult
-    integer il
-    integer ierr
 
     tzi_real = 2*real(anum)
     expp=1d0
