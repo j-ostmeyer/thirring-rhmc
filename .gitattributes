@@ -3,3 +3,4 @@ tests/test_qmrherm_2_Phi0.dat filter=lfs diff=lfs merge=lfs -text
 tests/test_qmrherm_3_Phi0.dat filter=lfs diff=lfs merge=lfs -text
 tests/test_qmrherm_3_x.dat filter=lfs diff=lfs merge=lfs -text
 tests/test_qmrherm_2_x.dat filter=lfs diff=lfs merge=lfs -text
+tests/test_derivs.dat filter=lfs diff=lfs merge=lfs -text
