@@ -447,7 +447,7 @@ contains
     integer :: iter, itercg
     real :: susclsing
 #ifdef MPI
-    integer, dimension(12) :: reqs_Phi, reqs_xi
+    integer, dimension(16) :: reqs_Phi, reqs_xi
     integer, dimension(12) :: reqs_ps, reqs_pt
     integer :: ierr
 #endif
