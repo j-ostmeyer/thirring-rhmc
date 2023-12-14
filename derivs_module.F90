@@ -42,6 +42,12 @@ contains
     integer, intent(in) :: imass
     real, intent(in) :: am
 
+    complex(dp) :: cmult
+    integer il
+    complex(dp) :: sliceL(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: sliceR(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    real sumdS_S,sumdS_W,absdS_S,absdS_W
+
     call derivs_shared(R, X2, anum, iflag, am, imass)
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
