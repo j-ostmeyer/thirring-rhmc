@@ -1,6 +1,8 @@
 #include "kernel.h"
 
 module derivs_module
+  use mpi
+  use comms_common
   implicit none
 
 contains
@@ -8,33 +10,34 @@ contains
   subroutine derivs(R, X2, anum, iflag, am, imass)
     use gforce, only: dSdpi
     use gammamatrices, only: kdelta, gamval, gamin
-    use params, only: kthird, ksizet_l, ksizey_l, ksizex_l, akappa, dp
-    use trial, only: theta
-    use params, only: COMPACT
-    use comms
+    use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
     implicit none
-!    logical,parameter :: COMPACT=.true.
-    !      complex, intent(in) :: R(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    !      complex, intent(in) :: X2(kthird, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-
-    complex(dp), intent(in) :: R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp), intent(in) :: X2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    !      complex, intent(in) :: R(kthird_l, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    !      complex, intent(in) :: X2(kthird_l, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    real(dp) :: dSdpi_tmp(ksizex_l, ksizey_l, ksizet_l, 3)
     real(dp), intent(in) :: anum
-    real,intent(in) :: am
-    integer, intent(in) :: iflag,imass
-
+    integer, intent(in) :: iflag, imass
+    integer ierr
+    
     !      complex(dp) :: tzi
     real :: tzi_real
     integer :: ix, iy, it, ixup, iyup, itup, idirac, mu
     integer :: igork1
-    complex(dp) :: expp,expm,cmult
+
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ! These are not present in master 
+    real,intent(in) :: am
+    complex(dp) :: cmult
     real(dp) :: mult
     integer il
     complex(dp) :: sliceL(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: sliceR(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     integer idxL,idxR
     real sumdS_S,sumdS_W,absdS_S,absdS_W
-    integer ierr
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
     !
     !     write(6,111)
     !111 format(' Hi from derivs')
@@ -44,10 +47,9 @@ contains
     !      tzi=cmplx(0.0,2*anum)
     tzi_real = 2*real(anum)
     !     factor of 2 picks up second term in M&M (7.215)
-    !
-    expp=1d0
-    expm=1d0
-    mult=-1d0
+
+    dSdpi_tmp = 0.0
+    
     do mu = 1, 3
       ixup = kdelta(1, mu)
       iyup = kdelta(2, mu)
@@ -57,113 +59,82 @@ contains
         do it = 1, ksizet_l
           do iy = 1, ksizey_l
             do ix = 1, ksizex_l
-              if (COMPACT) then
-                expp=exp(cmplx(0,theta(ix,iy,it,mu)))
-                expm=exp(mult*cmplx(0,theta(ix,iy,it,mu)))
-              endif
-              dSdpi(ix, iy, it, mu) = &
-               &     dSdpi(ix, iy, it, mu) + tzi_real*real(akappa)*sum(aimag( &
-                &       conjg(R(:, ix, iy, it, idirac))* expp * &
-                &         X2(:, ix + ixup, iy + iyup, it + itup, idirac)) &
-          &     - aimag(conjg(R(:, ix + ixup, iy + iyup, it + itup, idirac))* expm * &
-                &         X2(:, ix, iy, it, idirac)))
+              dSdpi_tmp(ix, iy, it, mu) = dSdpi_tmp(ix, iy, it, mu) &
+                        + tzi_real*real(akappa) &
+                        * sum(aimag(conjg(R(1:kthird_l, ix, iy, it, idirac)) &
+                                        * X2(1:kthird_l, ix + ixup, iy + iyup, it + itup, idirac)) &
+                            - aimag(conjg(R(1:kthird_l, ix + ixup, iy + iyup, it + itup, idirac)) &
+                                        * X2(1:kthird_l, ix, iy, it, idirac)))
             enddo
           enddo
         enddo
-        !
+
         igork1 = gamin(mu, idirac)
-        if (iflag .eq. 0) then ! this is dagger!!!
+
+        if (iflag .eq. 0) then
+
           do it = 1, ksizet_l
             do iy = 1, ksizey_l
               do ix = 1, ksizex_l
-                if (COMPACT) then
-                  expp=exp(cmplx(0,theta(ix,iy,it,mu)))
-                  expm=exp(mult*cmplx(0,theta(ix,iy,it,mu)))
-                endif
-                dSdpi(ix, iy, it, mu) = &
-         &      dSdpi(ix, iy, it, mu) + tzi_real*sum(aimag(gamval(mu, idirac)* &
-                  &(conjg(R(:, ix, iy, it, idirac))* expp * &
-                  &        X2(:, ix + ixup, iy + iyup, it + itup, igork1) &
-                  &+ conjg(R(:, ix + ixup, iy + iyup, it + itup, idirac))* expm * &
-                  &             X2(:, ix, iy, it, igork1))))
+                dSdpi_tmp(ix, iy, it, mu) = dSdpi_tmp(ix, iy, it, mu) &
+                            + tzi_real &
+                            * sum(aimag(gamval(mu, idirac) &
+                                * (conjg(R(1:kthird_l, ix, iy, it, idirac)) &
+                                  * X2(1:kthird_l, ix + ixup, iy + iyup, it + itup, igork1) &
+                                 + conjg(R(1:kthird_l, ix + ixup, iy + iyup, it + itup, idirac)) &
+                                  * X2(1:kthird_l, ix, iy, it, igork1))))
               enddo
             enddo
           enddo
+
         else
+
           do it = 1, ksizet_l
             do iy = 1, ksizey_l
               do ix = 1, ksizex_l
-                if (COMPACT) then
-                  expp=exp(cmplx(0,theta(ix,iy,it,mu)))
-                  expm=exp(mult*cmplx(0,theta(ix,iy,it,mu)))
-                endif
-                dSdpi(ix, iy, it, mu) = &
-         &     dSdpi(ix, iy, it, mu) - tzi_real*sum(aimag(gamval(mu, idirac)* &
-                  &(conjg(R(:, ix, iy, it, idirac))* expp * &
-                  &        X2(:, ix + ixup, iy + iyup, it + itup, igork1) &
-                  &+ conjg(R(:, ix + ixup, iy + iyup, it + itup, idirac))* expm * &
-                  &             X2(:, ix, iy, it, igork1))))
+                dSdpi_tmp(ix, iy, it, mu) = dSdpi_tmp(ix, iy, it, mu) &
+                            - tzi_real &
+                            * sum(aimag(gamval(mu, idirac) &
+                                * (conjg(R(1:kthird_l, ix, iy, it, idirac)) &
+                                  * X2(1:kthird_l, ix + ixup, iy + iyup, it + itup, igork1) &
+                                 + conjg(R(1:kthird_l, ix + ixup, iy + iyup, it + itup, idirac)) &
+                                  * X2(1:kthird_l, ix, iy, it, igork1))))
               enddo
             enddo
           enddo
+
         endif
-        !
+
       enddo
     enddo
 
+#ifdef MPI
+    call MPI_AllReduce(MPI_IN_PLACE, dSdpi_tmp, ksizex_l*ksizey_l*ksizet_l*3, &
+                       MPI_DOUBLE_PRECISION, MPI_Sum, comm_grp_third, ierr)
+#endif
+
+    dSdpi = dSdpi + dSdpi_tmp
+    
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ! This Calculates a sum for the shamir version of derivs before any wilson aspects have been calculated
     sumdS_S=sum(dSdpi)
     absdS_S=sum(abs(dSdpi))
     call MPI_AllReduce(MPI_In_Place, sumdS_S, 1, MPI_Real, MPI_Sum, comm, ierr)
     call MPI_AllReduce(MPI_In_Place, absdS_S, 1, MPI_Real, MPI_Sum, comm, ierr)
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #ifdef DERIVSWILSON
-!      call derivsWilsonDiagonal(R, X2, anum, iflag, am, imass)
       call derivsWilsonMass(R, X2, anum, iflag, am, imass)
-!      call derivsMassTest(R, X2, anum, iflag, am, imass)
-!      call derivsDiagTest(R, X2, anum, iflag, am, imass)
-
-!      call derivsDTest(R, X2, anum, iflag, am, imass,1,kthird-1)
-!      call derivsDTest(R, X2, anum, iflag, am, imass,kthird-1,1)
-!      call derivsDTest(R, X2, anum, iflag, am, imass,2,kthird)
-!      call derivsDTest(R, X2, anum, iflag, am, imass,kthird,2)
-
 
       cmult=cmplx(1.0,0.0)
-!      if (iflag.eq.1) then
-!      call derivsDMTest(R, X2, anum, iflag, am, imass,1,kthird-1,cmult)
-!      call derivsDPTest(R, X2, anum, iflag, am, imass,kthird-1,1,cmult)
-!      call derivsDMTest(R, X2, anum, iflag, am, imass,2,kthird,cmult)
-!      call derivsDPTest(R, X2, anum, iflag, am, imass,kthird,2,cmult)
-!      elseif (iflag.eq.0) then
-!      call derivsPDTest(R, X2, anum, iflag, am, imass,1,kthird-1,cmult)
-!      call derivsMDTest(R, X2, anum, iflag, am, imass,kthird-1,1,cmult)
-!      call derivsPDTest(R, X2, anum, iflag, am, imass,2,kthird,cmult)
-!      call derivsMDTest(R, X2, anum, iflag, am, imass,kthird,2,cmult)
-!      endif
 
-!      if (iflag.eq.1) then
-!      call derivsDMTest(R, X2, anum, iflag, am, imass,1,2,cmult)
-!      call derivsDPTest(R, X2, anum, iflag, am, imass,2,1,cmult)
-!      call derivsDMTest(R, X2, anum, iflag, am, imass,kthird-1,kthird,cmult)
-!      call derivsDPTest(R, X2, anum, iflag, am, imass,kthird,kthird-1,cmult)
-!      elseif (iflag.eq.0) then
-!      call derivsPDTest(R, X2, anum, iflag, am, imass,1,2,cmult)
-!      call derivsMDTest(R, X2, anum, iflag, am, imass,2,1,cmult)
-!      call derivsPDTest(R, X2, anum, iflag, am, imass,kthird-1,kthird,cmult)
-!      call derivsMDTest(R, X2, anum, iflag, am, imass,kthird,kthird-1,cmult)
-!      endif
-
-      do il=1,kthird-1
+      do il=1,kthird_l-1
       if (iflag.eq.1) then
       call derivsDMTest(R, X2, anum, iflag, am, imass,il,il+1,cmult)
       call derivsDPTest(R, X2, anum, iflag, am, imass,il+1,il,cmult)
-!!      call derivsDMTest(R, X2, anum, iflag, am, imass,kthird-1,kthird,cmult)
-!!      call derivsDPTest(R, X2, anum, iflag, am, imass,kthird,kthird-1,cmult)
       elseif (iflag.eq.0) then
       call derivsPDTest(R, X2, anum, iflag, am, imass,il,il+1,cmult)
       call derivsMDTest(R, X2, anum, iflag, am, imass,il+1,il,cmult)
-!!      call derivsPDTest(R, X2, anum, iflag, am, imass,kthird-1,kthird,cmult)
-!!      call derivsMDTest(R, X2, anum, iflag, am, imass,kthird,kthird-1,cmult)
       endif
       enddo
      sumdS_W=sum(dSdpi)
@@ -184,13 +155,13 @@ contains
   subroutine derivsWilsonDiagonal(R, X2, anum, iflag, am, imass)
     use gforce, only: dSdpi
     use gammamatrices, only: kdelta, gamval, gamin
-    use params, only: kthird, ksizet_l, ksizey_l, ksizex_l, akappa, dp
+    use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
     use trial, only: theta
     use params, only: COMPACT
     use comms
     implicit none
-    complex(dp), intent(in) :: R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp), intent(in) :: X2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
     real,intent(in) :: am
     integer, intent(in) :: iflag,imass
@@ -216,13 +187,13 @@ contains
 
       ! upper diagonal
       if (iflag.eq.1) then
-        do il=1,kthird-1
+        do il=1,kthird_l-1
           idxL=il
           idxR=il+1
           call derivsDMTest(R, X2, anum, iflag, am, imass,idxL,idxR,cmult)
         enddo
       elseif (iflag.eq.1) then
-        do il=1,kthird-1
+        do il=1,kthird_l-1
           idxL=il
           idxR=il+1
           call derivsPDTest(R, X2, anum, iflag, am, imass,idxL,idxR,cmult)
@@ -231,13 +202,13 @@ contains
 
       ! lower diagonal
       if (iflag.eq.1) then
-        do il=2,kthird
+        do il=2,kthird_l
           idxL=il
           idxR=il-1
           call derivsDPTest(R, X2, anum, iflag, am, imass,idxL,idxR,cmult)
         enddo
       elseif (iflag.eq.0) then
-        do il=2,kthird
+        do il=2,kthird_l
           idxL=il
           idxR=il-1
           call derivsMDTest(R, X2, anum, iflag, am, imass,idxL,idxR,cmult)
@@ -250,13 +221,13 @@ contains
   subroutine derivsWilsonMass(R, X2, anum, iflag, am, imass)
     use gforce, only: dSdpi
     use gammamatrices, only: kdelta, gamval, gamin
-    use params, only: kthird, ksizet_l, ksizey_l, ksizex_l, akappa, dp
+    use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
     use trial, only: theta
     use params, only: COMPACT
     use comms
     implicit none
-    complex(dp), intent(in) :: R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp), intent(in) :: X2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
     real,intent(in) :: am
     integer, intent(in) :: iflag,imass
@@ -284,11 +255,11 @@ contains
 
       if (iflag.eq.1) then
         idxL=1
-        idxR=kthird
+        idxR=kthird_l
         call derivsDPTest(R, X2, anum, iflag, am, imass,idxL,idxR,cmult)
       elseif (iflag.eq.0) then
         idxL=1
-        idxR=kthird
+        idxR=kthird_l
         call derivsMDTest(R, X2, anum, iflag, am, imass,idxL,idxR,cmult)
       end if
 
@@ -300,11 +271,11 @@ contains
       endif
 
       if (iflag.eq.1) then
-        idxL=kthird
+        idxL=kthird_l
         idxR=1
         call derivsDMTest(R, X2, anum, iflag, am, imass,idxL,idxR,cmult)
       elseif (iflag.eq.0) then
-        idxL=kthird
+        idxL=kthird_l
         idxR=1
         call derivsPDTest(R, X2, anum, iflag, am, imass,idxL,idxR,cmult)
       endif
@@ -315,13 +286,13 @@ contains
   subroutine derivsDiagTest(R, X2, anum, iflag, am, imass)
     use gforce, only: dSdpi
     use gammamatrices, only: kdelta, gamval, gamin
-    use params, only: kthird, ksizet_l, ksizey_l, ksizex_l, akappa, dp
+    use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
     use trial, only: theta
     use params, only: COMPACT
     use comms
     implicit none
-    complex(dp), intent(in) :: R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp), intent(in) :: X2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
     real,intent(in) :: am
     integer, intent(in) :: iflag,imass
@@ -337,7 +308,7 @@ contains
       cmult=cmplx(1.0,0.0)
 
       ! upper diagonal
-!      do il=1,kthird-1
+!      do il=1,kthird_l-1
       do il=1,1
         idxL=il
         idxR=il+1
@@ -355,7 +326,7 @@ contains
         call derivSlice(sliceL,sliceR,anum,iflag,am,imass,cmult)
       enddo
 
-!      do il=2,kthird
+!      do il=2,kthird_l
       do il=2,2
         ! lower left mass 
         idxL=il
@@ -380,13 +351,13 @@ contains
   subroutine derivsMassTest(R, X2, anum, iflag, am, imass)
     use gforce, only: dSdpi
     use gammamatrices, only: kdelta, gamval, gamin
-    use params, only: kthird, ksizet_l, ksizey_l, ksizex_l, akappa, dp
+    use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
     use trial, only: theta
     use params, only: COMPACT
     use comms
     implicit none
-    complex(dp), intent(in) :: R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp), intent(in) :: X2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
     real,intent(in) :: am
     integer, intent(in) :: iflag,imass
@@ -403,7 +374,7 @@ contains
 
         ! upper right mass 
         idxL=1
-        idxR=kthird
+        idxR=kthird_l
         sliceL=0.0
         sliceR=0.0
         if (iflag.eq.1) then
@@ -418,7 +389,7 @@ contains
         call derivSlice(sliceL,sliceR,anum,iflag,am,imass,cmult)
 
         ! lower left mass 
-        idxL=kthird
+        idxL=kthird_l
         idxR=1
         sliceL=0.0
         sliceR=0.0
@@ -439,13 +410,13 @@ contains
   subroutine derivsDTest(R, X2, anum, iflag, am, imass,idxL,idxR)
     use gforce, only: dSdpi
     use gammamatrices, only: kdelta, gamval, gamin
-    use params, only: kthird, ksizet_l, ksizey_l, ksizex_l, akappa, dp
+    use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
     use trial, only: theta
     use params, only: COMPACT
     use comms
     implicit none
-    complex(dp), intent(in) :: R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp), intent(in) :: X2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
     real,intent(in) :: am
     integer,intent(in) :: iflag,imass
@@ -469,13 +440,13 @@ contains
   subroutine derivsDPTest(R, X2, anum, iflag, am, imass,idxL,idxR,cmult)
     use gforce, only: dSdpi
     use gammamatrices, only: kdelta, gamval, gamin
-    use params, only: kthird, ksizet_l, ksizey_l, ksizex_l, akappa, dp
+    use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
     use trial, only: theta
     use params, only: COMPACT
     use comms
     implicit none
-    complex(dp), intent(in) :: R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp), intent(in) :: X2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
     real,intent(in) :: am
     integer,intent(in) :: iflag,imass
@@ -500,13 +471,13 @@ contains
   subroutine derivsDMTest(R, X2, anum, iflag, am, imass,idxL,idxR,cmult)
     use gforce, only: dSdpi
     use gammamatrices, only: kdelta, gamval, gamin
-    use params, only: kthird, ksizet_l, ksizey_l, ksizex_l, akappa, dp
+    use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
     use trial, only: theta
     use params, only: COMPACT
     use comms
     implicit none
-    complex(dp), intent(in) :: R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp), intent(in) :: X2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
     real,intent(in) :: am
     integer,intent(in) :: iflag,imass
@@ -531,13 +502,13 @@ contains
   subroutine derivsPDTest(R, X2, anum, iflag, am, imass,idxL,idxR,cmult)
     use gforce, only: dSdpi
     use gammamatrices, only: kdelta, gamval, gamin
-    use params, only: kthird, ksizet_l, ksizey_l, ksizex_l, akappa, dp
+    use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
     use trial, only: theta
     use params, only: COMPACT
     use comms
     implicit none
-    complex(dp), intent(in) :: R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp), intent(in) :: X2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
     real,intent(in) :: am
     integer,intent(in) :: iflag,imass
@@ -562,13 +533,13 @@ contains
   subroutine derivsMDTest(R, X2, anum, iflag, am, imass,idxL,idxR,cmult)
     use gforce, only: dSdpi
     use gammamatrices, only: kdelta, gamval, gamin
-    use params, only: kthird, ksizet_l, ksizey_l, ksizex_l, akappa, dp
+    use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
     use trial, only: theta
     use params, only: COMPACT
     use comms
     implicit none
-    complex(dp), intent(in) :: R(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp), intent(in) :: X2(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
     real,intent(in) :: am
     integer,intent(in) :: iflag,imass
@@ -593,7 +564,7 @@ contains
   subroutine derivSlice(sliceL,sliceR,anum,iflag,am,imass,cmult)
     use gforce, only: dSdpi
     use gammamatrices, only: kdelta, gamval, gamin
-    use params, only: kthird, ksizet_l, ksizey_l, ksizex_l, akappa, dp
+    use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
     use trial, only: theta
     use params, only: COMPACT
     use comms
