@@ -6,6 +6,79 @@ module derivs_module
 contains
 
   subroutine derivs(R, X2, anum, iflag, am, imass)
+    complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    real(dp), intent(in) :: anum
+    integer, intent(in) :: iflag
+    integer, intent(in) :: imass
+    real, intent(in) :: am
+
+#ifdef GENERATE_WITH_SHAMIR
+    call derivs_shamir(R, X2, anum, iflag, am, imass)
+#endif
+
+#ifdef GENERATE_WITH_WILSON
+    call derivs_wilson(R, X2, anum, iflag, am, imass)
+#endif
+
+  end subroutine derivs 
+
+  subroutine derivs_shamir(R, X2, anum, iflag, am, imass)
+    complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    real(dp), intent(in) :: anum
+    integer, intent(in) :: iflag
+    integer, intent(in) :: imass
+    real, intent(in) :: am
+
+    derivs_shared(R, X2, anum, iflag, am, imass)
+  end subroutine derivs_shamir
+
+  subroutine derivs_wilson(R, X2, anum, iflag, am, imass)
+    complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    real(dp), intent(in) :: anum
+    integer, intent(in) :: iflag
+    integer, intent(in) :: imass
+    real, intent(in) :: am
+
+    derivs_shared(R, X2, anum, iflag, am, imass)
+
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ! This Calculates a sum for the shamir version of derivs before any wilson aspects have been calculated
+    sumdS_S=sum(dSdpi)
+    absdS_S=sum(abs(dSdpi))
+    call MPI_AllReduce(MPI_In_Place, sumdS_S, 1, MPI_Real, MPI_Sum, comm, ierr)
+    call MPI_AllReduce(MPI_In_Place, absdS_S, 1, MPI_Real, MPI_Sum, comm, ierr)
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    call derivsWilsonMass(R, X2, anum, iflag, am, imass)
+
+    cmult=cmplx(1.0,0.0)
+
+    do il=1,kthird_l-1
+      if (iflag.eq.1) then
+        call derivsDMTest(R, X2, anum, iflag, am, imass,il,il+1,cmult)
+        call derivsDPTest(R, X2, anum, iflag, am, imass,il+1,il,cmult)
+      elseif (iflag.eq.0) then
+        call derivsPDTest(R, X2, anum, iflag, am, imass,il,il+1,cmult)
+        call derivsMDTest(R, X2, anum, iflag, am, imass,il+1,il,cmult)
+      endif
+    enddo
+
+    sumdS_W=sum(dSdpi)
+    absdS_W=sum(abs(dSdpi))
+    call MPI_AllReduce(MPI_In_Place, sumdS_W, 1, MPI_Real, MPI_Sum, comm, ierr)
+    call MPI_AllReduce(MPI_In_Place, absdS_W, 1, MPI_Real, MPI_Sum, comm, ierr)
+
+    if (ip_global .eq. 0) then
+        open(unit=105,file="fort.105",position="append")
+        write(105,'(5f20.12)') sumdS_S,sumdS_W,absdS_S,absdS_W,absdS_W/absdS_S
+        close(105)
+    endif
+  end subroutine derivs_shamir
+
+  subroutine derivs_shared(R, X2, anum, iflag, am, imass)
     use gforce, only: dSdpi
     use dirac, only: kdelta, gamval, gamin
     use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
@@ -25,15 +98,6 @@ contains
     real :: tzi_real
     integer :: ix, iy, it, ixup, iyup, itup, idirac, mu
     integer :: igork1
-
-#ifdef GENERATE_WITH_WILSON
-    complex(dp) :: cmult
-    integer il
-    complex(dp) :: sliceL(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp) :: sliceR(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    integer idxL,idxR
-    real sumdS_S,sumdS_W,absdS_S,absdS_W
-#endif
 
     !     write(6,111)
     !111 format(' Hi from derivs')
@@ -110,53 +174,15 @@ contains
 #endif
 
     dSdpi = dSdpi + dSdpi_tmp
-
-#ifdef GENERATE_WITH_WILSON
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ! This Calculates a sum for the shamir version of derivs before any wilson aspects have been calculated
-    sumdS_S=sum(dSdpi)
-    absdS_S=sum(abs(dSdpi))
-    call MPI_AllReduce(MPI_In_Place, sumdS_S, 1, MPI_Real, MPI_Sum, comm, ierr)
-    call MPI_AllReduce(MPI_In_Place, absdS_S, 1, MPI_Real, MPI_Sum, comm, ierr)
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    call derivsWilsonMass(R, X2, anum, iflag, am, imass)
-
-    cmult=cmplx(1.0,0.0)
-
-    do il=1,kthird_l-1
-      if (iflag.eq.1) then
-        call derivsDMTest(R, X2, anum, iflag, am, imass,il,il+1,cmult)
-        call derivsDPTest(R, X2, anum, iflag, am, imass,il+1,il,cmult)
-      elseif (iflag.eq.0) then
-        call derivsPDTest(R, X2, anum, iflag, am, imass,il,il+1,cmult)
-        call derivsMDTest(R, X2, anum, iflag, am, imass,il+1,il,cmult)
-      endif
-    enddo
-
-    sumdS_W=sum(dSdpi)
-    absdS_W=sum(abs(dSdpi))
-    call MPI_AllReduce(MPI_In_Place, sumdS_W, 1, MPI_Real, MPI_Sum, comm, ierr)
-    call MPI_AllReduce(MPI_In_Place, absdS_W, 1, MPI_Real, MPI_Sum, comm, ierr)
-
-    if (ip_global .eq. 0) then
-        open(unit=105,file="fort.105",position="append")
-        write(105,'(5f20.12)') sumdS_S,sumdS_W,absdS_S,absdS_W,absdS_W/absdS_S
-        close(105)
-    endif
-#endif
-
-
     return
-  end subroutine derivs
-
+  end subroutine derivs_shared
 
   subroutine derivsWilsonMass(R, X2, anum, iflag, am, imass)
     use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, dp
     use comms
     implicit none
-    complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp), intent(in) :: X2(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
     real,intent(in) :: am
     integer, intent(in) :: iflag,imass
@@ -209,8 +235,8 @@ contains
     use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
     use comms
     implicit none
-    complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp), intent(in) :: X2(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
     real,intent(in) :: am
     integer,intent(in) :: iflag,imass
@@ -233,8 +259,8 @@ contains
     use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
     use comms
     implicit none
-    complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp), intent(in) :: X2(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
     real,intent(in) :: am
     integer,intent(in) :: iflag,imass
@@ -257,8 +283,8 @@ contains
     use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
     use comms
     implicit none
-    complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp), intent(in) :: X2(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
     real,intent(in) :: am
     integer,intent(in) :: iflag,imass
@@ -281,8 +307,8 @@ contains
     use params, only: kthird_l, ksizet_l, ksizey_l, ksizex_l, akappa, dp
     use comms
     implicit none
-    complex(dp), intent(in) :: R(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-    complex(dp), intent(in) :: X2(kthird_l, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp), intent(in) :: X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real(dp), intent(in) :: anum
     real,intent(in) :: am
     integer,intent(in) :: iflag,imass

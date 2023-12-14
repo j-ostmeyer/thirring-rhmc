@@ -1,9 +1,5 @@
 #include "test_utils.fh"
 
-#ifndef GENERATE_WITH_SHAMIR
-#define GENERATE_WITH_SHAMIR
-#endif
-
 program test_derivs_shamir
   use dirac
   use gforce
@@ -41,7 +37,7 @@ program test_derivs_shamir
   ! call function
   do i = 1, timing_loops
     dSdpi = dSdpi_orig
-    call derivs(R, X2, anum, iflag, 0.05, 3)
+    call derivs_shamir(R, X2, anum, iflag, 0.05, 3)
   end do
 
   ! check output
