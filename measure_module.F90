@@ -147,11 +147,11 @@ contains
     integer, intent(in), optional :: isweep_total
     
 #ifdef MEASURE_SHAMIR
-    call measure_shamir(Phi, R, u, am, imass)
+    call measure_shamir(psibarpsi, res, aviter, am, imass, isweep_total)
 #endif
 
 #ifdef MEASURE_WILSON
-    call measure_wilson(Phi, R, u, am, imass)
+    call measure_wilson(psibarpsi, res, aviter, am, imass, isweep_total)
 #endif
   end subroutine measure
 
@@ -429,7 +429,7 @@ contains
     use comms5, only: start_halo_update_5
     use comms
     use gaussian
-    use diracWilson
+    use dirac
     use params
     implicit none
     real, intent(out) :: psibarpsi, aviter
