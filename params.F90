@@ -71,24 +71,6 @@ module params
   real :: am3
   integer :: ibound
 
-contains
-  pure subroutine verify_kernel_choice()
-    ! Measurement flag
-#if defined(MEASURE_SHAMIR) && defined(MEASURE_WILSON)
-    Error: Must specify only one of MEASURE_SHAMIR or MEASURE_WILSON
-#endif
-#if !defined(MEASURE_SHAMIR) && !defined(MEASURE_WILSON)
-    Error: Must specify one of MEASURE_SHAMIR or MEASURE_WILSON
-#endif
-    
-    ! Production flag
-#if defined(GENERATE_WITH_SHAMIR) && defined(GENERATE_WITH_WILSON)
-    Error: Must specify only one of GENERATE_WITH_SHAMIR or GENERATE_WITH_WILSON
-#endif
-#if !defined(GENERATE_WITH_SHAMIR) && !defined(GENERATE_WITH_WILSON)
-    Error: Must specify one of GENERATE_WITH_SHAMIR or GENERATE_WITH_WILSON
-#endif
-
-    
-  end subroutine
+  ! Measure parameters
+  integer, parameter :: knoise = 10
 end module params

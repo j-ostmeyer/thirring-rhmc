@@ -11,6 +11,24 @@ module dwf3d_lib
   real, parameter :: One = 1.0
 contains
 
+  pure subroutine verify_kernel_choice()
+    ! Measurement flag
+#if defined(MEASURE_SHAMIR) && defined(MEASURE_WILSON)
+    Error: Must specify only one of MEASURE_SHAMIR or MEASURE_WILSON
+#endif
+#if !defined(MEASURE_SHAMIR) && !defined(MEASURE_WILSON)
+    Error: Must specify one of MEASURE_SHAMIR or MEASURE_WILSON
+#endif
+    
+    ! Production flag
+#if defined(GENERATE_WITH_SHAMIR) && defined(GENERATE_WITH_WILSON)
+    Error: Must specify only one of GENERATE_WITH_SHAMIR or GENERATE_WITH_WILSON
+#endif
+#if !defined(GENERATE_WITH_SHAMIR) && !defined(GENERATE_WITH_WILSON)
+    Error: Must specify one of GENERATE_WITH_SHAMIR or GENERATE_WITH_WILSON
+#endif
+  end subroutine
+
   subroutine dwf3d_main
     use gdbhook
     use random
@@ -76,6 +94,7 @@ contains
     integer :: imass, iterl, iter2, iter2_read
     integer :: walltimesec
     logical :: program_status_file_exists
+    
 #ifdef MPI
 !     variables to keep track of MPI requests
     integer :: ierr
@@ -83,6 +102,7 @@ contains
     ! real :: sumvalue, maxvalue
 
 #endif
+    call verify_kernel_choice()
     ibound = -1
     qmrhprint = .true.
 #ifdef MPI
@@ -110,7 +130,7 @@ contains
       call MPI_Abort(MPI_COMM_WORLD, 1, ierr)
 #endif
       call exit(1)
-    else if (imass .eq. 5)
+    else if (imass .eq. 5) then
       print *, 'WARNING: imass of 5 may not be supported.'
     end if
 
