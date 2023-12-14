@@ -146,7 +146,7 @@ contains
 #ifdef MPI
           call complete_halo_update(reqs_x2)
 #endif
-          call derivs(R, x2, coeff, 0)
+          call derivs(R, x2, coeff, 0, am, imass)
 
         else ! if(iflag.eq.2)then
           coeff = -anum(idiag)
@@ -154,7 +154,7 @@ contains
 #ifdef MPI
           call complete_halo_update(reqs_x2)
 #endif
-          call derivs(R, x2, coeff, 0)
+          call derivs(R, x2, coeff, 0, am, imass)
 
           ! Communication of x2 generated here can be hidden while R is updated
           call dslash(x2, R, u, am, imass)
@@ -172,7 +172,7 @@ contains
 #else
           call update_halo_5(4, R)
 #endif
-          call derivs(x2, R, coeff, 1)
+          call derivs(x2, R, coeff, 1, am, imass)
         endif ! if(iflag.eq.2)then
       enddo ! do idiag=1, ndiagq
     endif ! if(iflag.lt.2)then , else
