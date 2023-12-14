@@ -452,7 +452,7 @@ contains
 #endif
     
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ! Different from measure in master
+    ! This is not present in measure_shamir
     complex(dp) :: oslice(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) :: islice(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -528,7 +528,7 @@ contains
         iter = iter + itercg
         
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        ! This is not present in master
+        ! This is not present in measure_shamir
         ! for idirac=1 or 2
         islice=cmplx(0,0);
         islice(:,:,:,1:2)=xi(kthird_l,:,:,:,1:2) ! P+.phi
@@ -546,7 +546,7 @@ contains
 
       !  source on domain wall at ithird=kthird
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! This is different from master 
+      ! This is different from measure_shamir 
       do idsource2 = 1, 4
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         x = cmplx(0.0, 0.0)
@@ -580,7 +580,7 @@ contains
         iter = iter + itercg
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        ! This is not present in master
+        ! This is not present in measure_shamir
         ! for idirac=3 or 4
         islice=cmplx(0,0);
         islice(:,:,:,3:4)=xi(1,:,:,:,3:4) ! P-.phi
@@ -613,7 +613,7 @@ contains
         pbp(inoise) = real(psibarpsi1 + psibarpsi2)
       elseif (imass .eq. 3) then
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        ! The signs here are swapped compared to master 
+        ! The signs here are swapped compared to measure_shamir 
         psibarpsi1 = cmplx(0.0, +1.0)*psibarpsi1/kvol
         psibarpsi2 = cmplx(0.0, -1.0)*psibarpsi2/kvol
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

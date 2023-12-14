@@ -19,6 +19,8 @@ test_halo_6
 test_hamilton
 test_load
 test_measure
+test_measure_shamir
+test_measure_wilson
 test_meson
 test_qmrherm_0
 test_qmrherm_1
