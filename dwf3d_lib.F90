@@ -27,6 +27,10 @@ contains
 #if !defined(GENERATE_WITH_SHAMIR) && !defined(GENERATE_WITH_WILSON)
     Error: Must specify one of GENERATE_WITH_SHAMIR or GENERATE_WITH_WILSON
 #endif
+
+#if (defined(GENERATE_WITH_WILSON) || defined(MEASURE_WILSON)) && (NP_THIRD != 1)
+    Error: NP_THIRD > 1 is not suported for the Wilson kernel
+#endif
   end subroutine
 
   subroutine dwf3d_main
