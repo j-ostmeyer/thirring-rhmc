@@ -11,6 +11,13 @@ module dwf3d_lib
   real, parameter :: One = 1.0
 contains
 
+  subroutine exit_execution()
+#ifdef MPI
+    call MPI_Abort(MPI_COMM_WORLD, 1, ierr)
+#endif
+    call exit(1)
+  end subroutine fail_early
+
   pure subroutine verify_kernel_choice()
     ! Measurement flag
 #if defined(MEASURE_SHAMIR) && defined(MEASURE_WILSON)
@@ -130,11 +137,12 @@ contains
     ! verify imass value
     if ((imass .ne. 1) .and. (imass .ne. 3) .and. (imass .ne. 5)) then
       print *, 'ERROR: imass must be one of 1, 3 or 5'
-#ifdef MPI
-      call MPI_Abort(MPI_COMM_WORLD, 1, ierr)
-#endif
-      call exit(1)
+      call exit_execution()
     else if (imass .eq. 5) then
+#if (defined(GENERATE_WITH_WILSON) || defined(MEASURE_WILSON))
+      print *, 'ERROR: imass of 5 is nto cupported for Wilson kernel'
+      call exit_execution()
+#endif
       print *, 'WARNING: imass of 5 may not be supported.'
     end if
 
