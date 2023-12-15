@@ -191,4 +191,6 @@ modules. Moreover, the `INTEL_MPIFC` in the `MkRules` file must be set to
   module unload intel/bundles/complib/2017.4
   ```
 
+## Tests
 
+Testing allows us to add new features and improve existing subroutines with a higher level of confidence in the changes we are making. There are two types of tests implemented in this repository [unit tests](./tests/README.md) and [regression/end-to-end tests](./tests/e2e_tests/README.md). 
