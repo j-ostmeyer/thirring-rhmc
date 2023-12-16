@@ -247,7 +247,7 @@ else ifeq ($(KERNEL), wilson)
   ifneq ($(NP_THIRD), 1)
     $(error Wilson kernel does not currently support NP_THIRD > 1)
   endif
-  KERNEL_FLAGS = -DWILSON_KERNEL
+  KERNEL_FLAGS = -DMEASURE_WILSON -DGENERATE_WITH_WILSON
 else
   $(error Must specify either KERNEL=shamir or KERNEL=wilson)
 endif
