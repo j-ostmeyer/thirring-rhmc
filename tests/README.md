@@ -1,6 +1,6 @@
 # Tests
 
-This directory contains several unit tests to aid in the future development of this code base. Unit tests are an excellent tool to validate any new features or changes made to the code.
+This directory contains several unit tests to aid in the development of this code base. Unit tests are an excellent tool to validate any new features or changes made to the code.
 
 The principal is that, a single unit (subroutine, function, etc.) runs in isolation with well-defined inputs. The output of these runs are then validated against well-defined, expected values. 
 
@@ -13,7 +13,7 @@ For example,
 - We can see from the above that `test_congrad.F90` validates `X` as well as the value of `itercg`.
 - So long as this test passes it is likely that any changes we have made to `congrad` in `measure_module.F90` have not broken the subroutine. 
 
-It is important to note that a single unit test is rarely enough to be certain we haven't broken anything. Therefore, it is best to write and run as many unit tests as possible to keep increasing your confidence. Additionally, [regression tests](./e2e_tests/README.md) can give us further confidence by testing the interaction between subroutines.
+It is important to note that a single unit test is rarely enough to be certain we haven't broken anything. Therefore, it is best to write and run as many unit tests as possible to keep increasing your confidence. Additionally, [regression tests](./e2e_tests/README.md) can give us further confidence by testing the entire simulation against previously recorded results.
 
 ## Running the Unit Tests
 

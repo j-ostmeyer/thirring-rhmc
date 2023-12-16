@@ -185,14 +185,14 @@ modules. Moreover, the `INTEL_MPIFC` in the `MkRules` file must be set to
 
 ## Kernel choice Shamir / Wilson
 
-There are two different kernels implemented within this code base, Shamir and Wilson (developed my Jude Worthy). Compile time flags must be used in order to select which kernel will be used. There are two aspects of the code that have been implemented with both a Shamir and Wilson, measurement and generation. 
+There are two different kernels implemented within this code base, Shamir and Wilson (developed by Jude Worthy). Compile time flags must be used in order to select which kernel will be used. There are two aspects of the code that have been implemented with both a Shamir and Wilson, measurement and generation. 
 - The measurement aspect uses the flags `MEASURE_SHAMIR` for measuring using the Shamir kernel and `MEASURE_WILSON` for measuring using the Wilson kernel.
 - The generation aspect uses the flags `GENERATE_WITH_SHAMIR` for generating data using the Shamir kernel and `GENERATE_WITH_WILSON` using the Wilson kernel.
 
 ### Wilson kernel
 
 There are some limitations when using the Wilson kernel.
-- There is no parallelisation in the third dimension.
+- Parallelisation must be disabled in the third dimension.
    - `NP_THIRD` must be 1.
 - Calculations for `imass` of 5 are not implemented.
    - `imass` must be 1 or 3.
