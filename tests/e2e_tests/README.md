@@ -19,10 +19,10 @@ To improve these tests, additional output quantities can be extracted and verifi
         - NP_Y=4
         - NP_T=2
     - To change the defaults value for any of the above, pass it as an environemnt variable. For example `NP_X=2 ./build_test_dir.sh`.
-    - The script will produce a directory with a name matching `TEST_OUTPUT_<KSIZE>_<KSIZET>_<KTHIRD>_<ITER2>_<NP_X>_<NP_Y>_<NP_T>_<NP_THIRD>` which should contain th following
+    - The script will produce a directory with a name matching `TEST_OUTPUT_<KSIZE>_<KSIZET>_<KTHIRD>_<ITER2>_<NP_X>_<NP_Y>_<NP_T>_<NP_THIRD>` which should contain the following
         - **bulk_rhmc**: The compiled executable.
         - **midout**: The default midout file to be used for the test run (stored in [samples](./samples/)).
-        - **con**: The default con file to be used for the run. This is determined by the `KSIE` and `KSIZET` values passed to `build_test_dir.sh`. The sample con files are stored in [samples](./samples/).
+        - **con**: The default con file to be used for the run. This is determined by the `KSIZE` and `KSIZET` values passed to `build_test_dir.sh`. The sample con files are stored in [samples](./samples/).
         - **remez2, remez2g, remez4 and remez4g**: The remez dependencies required by the executable.
         - **csd_submit.sh**: The submission script required for submitting jobs to CSD *(Work in progress)*.
         - **myriad_submit.sh**: The submission script required for submitting jobs to the UCL clusters Myriad and Kathleen.
