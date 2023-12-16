@@ -138,7 +138,7 @@ contains
       call exit_execution()
     else if (imass .eq. 5) then
 #if (defined(GENERATE_WITH_WILSON) || defined(MEASURE_WILSON))
-      print *, 'ERROR: imass of 5 is nto cupported for Wilson kernel'
+      print *, 'ERROR: imass of 5 is not supported for the Wilson kernel'
       call exit_execution()
 #endif
       print *, 'WARNING: imass of 5 may not be supported.'
