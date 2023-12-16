@@ -12,11 +12,12 @@ module dwf3d_lib
 contains
 
   subroutine exit_execution()
+    integer ierr
 #ifdef MPI
     call MPI_Abort(MPI_COMM_WORLD, 1, ierr)
 #endif
     call exit(1)
-  end subroutine fail_early
+  end subroutine exit_execution
 
   pure subroutine verify_kernel_choice()
     ! Measurement flag
@@ -35,9 +36,6 @@ contains
     Error: Must specify one of GENERATE_WITH_SHAMIR or GENERATE_WITH_WILSON
 #endif
 
-#if (defined(GENERATE_WITH_WILSON) || defined(MEASURE_WILSON)) && (NP_THIRD != 1)
-    Error: NP_THIRD > 1 is not suported for the Wilson kernel
-#endif
   end subroutine
 
   subroutine dwf3d_main
