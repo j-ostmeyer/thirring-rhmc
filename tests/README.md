@@ -29,6 +29,8 @@ A shell script is provided to allow easy running of the unit tests, [run_tests.s
     - `TESTS`:        default = $ALL_TESTS
     - `GENERATE`:     default = 0
     - `SKIP_COMPILE`: default = 0
+  
+   <u>**WARNING:**</u> The problem size (`KSIZE`, `KSIZET` and `KTHIRD`) **MUST** remain the same for these unit tests to pass and be valid.
 2. **Compiles** the test executables using the provided parameters, if `SKIP_COMPILE != 1`.
 3. **Runs the test**
     - If `GENERATE = 1`, new data files are generated for all tests specified through the parameter `TESTS`
