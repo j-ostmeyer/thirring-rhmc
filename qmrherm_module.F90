@@ -13,7 +13,7 @@ module qmrherm_module
   complex(dp) :: x3(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 
   complex(dp), save :: Phi0(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, ndiag)
-  logical :: printall
+  logical :: printall, we_have_warned
 
 contains
 
@@ -53,6 +53,11 @@ contains
     ! Set use_sp_flags_included (sp is not implemented for the wilson version)
 #if defined(GENERATE_WITH_WILSON)
     force_dp = .true.
+    if (.not. we_have_warned) then
+      we_have_warned = .true.
+      print *, "WARNING: Single precision is not supported in qmrherm when using the GENERATE_WITH_WILSON flag. Forcing &
+      & double precision."
+    endif
 #endif
 
 
