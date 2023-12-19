@@ -55,8 +55,10 @@ contains
     force_dp = .true.
     if (no_yet_warned) then
       no_yet_warned = .false.
-      print *, "WARNING: Single precision is not supported in qmrherm when using the GENERATE_WITH_WILSON flag. Forcing &
-      double precision."
+      if (ip_global .eq. 0) then
+        print *, "WARNING: Single precision is not supported in qmrherm when using the GENERATE_WITH_WILSON flag. Forcing &
+        double precision."
+      end if
     endif
 #endif
 

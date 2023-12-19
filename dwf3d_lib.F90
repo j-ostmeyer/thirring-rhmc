@@ -134,14 +134,20 @@ contains
 
     ! verify imass value
     if ((imass .ne. 1) .and. (imass .ne. 3) .and. (imass .ne. 5)) then
-      print *, 'ERROR: imass must be one of 1, 3 or 5'
+      if (ip_global .eq. 0) then
+        print *, 'ERROR: imass must be one of 1, 3 or 5'
+      end if
       call exit_execution()
     else if (imass .eq. 5) then
 #if (defined(GENERATE_WITH_WILSON) || defined(MEASURE_WILSON))
-      print *, 'ERROR: imass of 5 is not supported for the Wilson kernel'
+      if (ip_global .eq. 0) then
+        print *, 'ERROR: imass of 5 is not supported for the Wilson kernel'
+      end if
       call exit_execution()
 #endif
-      print *, 'WARNING: imass of 5 may not be supported.'
+      if (ip_global .eq. 0) then
+        print *, 'WARNING: imass of 5 may not be supported.'
+      end if
     end if
 
 ! set a new seed by hand...
