@@ -1,12 +1,13 @@
 #include "test_utils.fh"
-program test_derivs
+
+program test_derivs_shamir
   use dirac
   use gforce
   use comms
   use comms4
   use comms5
   use test_utils
-  use derivs_module, only: derivs
+  use derivs_module, only: derivs_shamir
   implicit none
 
   ! general parameters
@@ -36,15 +37,15 @@ program test_derivs
   ! call function
   do i = 1, timing_loops
     dSdpi = dSdpi_orig
-    call derivs(R, X2, anum, iflag)
+    call derivs_shamir(R, X2, anum, iflag, 0.05, 3)
   end do
 
   ! check output
   if (generate) then
     print *, "Generating .dat file..."
-    write_file(dSdpi, 'test_derivs.dat', MPI_Double_Precision)
+    write_file(dSdpi, 'test_derivs_shamir.dat', MPI_Double_Precision)
   else
-    read_file(dSdpi_ref, 'test_derivs.dat', MPI_Double_Precision)
+    read_file(dSdpi_ref, 'test_derivs_shamir.dat', MPI_Double_Precision)
 
     ! diff will now have duplicates for the same (x,y,t,mu)
     ! due to the parallelization along third dimension
@@ -53,8 +54,8 @@ program test_derivs
     ! Because of that we divide by np_third
     diff = dSdpi - dSdpi_ref
 
-    check_sum(diff, 0.3, 'dSdpi', sum_diff, MPI_Double_Precision, "test_derivs")
-    check_max(diff, 0.01, 'dSdpi', max_diff, MPI_Double_Precision, "test_derivs")
+    check_sum(diff, 0.3, 'dSdpi', sum_diff, MPI_Double_Precision, "test_derivs_shamir")
+    check_max(diff, 0.01, 'dSdpi', max_diff, MPI_Double_Precision, "test_derivs_shamir")
 
 
   end if
@@ -63,4 +64,4 @@ program test_derivs
   call MPI_Finalize(ierr)
 #endif
 
-end program test_derivs
+end program test_derivs_shamir

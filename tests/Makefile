@@ -7,6 +7,9 @@ ifeq ($(WITH_MUST), yes)
 	COMMS_FLAGS += -DWITH_MUST
 endif
 
+# KERNEL_FLAGS="-DMEASURE_SHAMIR -DGENERATE_WITH_SHAMIR"
+KERNEL_FLAGS="-DMEASURE_WILSON -DGENERATE_WITH_WILSON"
+
 
 ifeq ($(MPI), yes)
 	MPI_RUNNER = mpirun --oversubscribe -n $$(($(NP_X) * $(NP_Y) * $(NP_T) * $(NP_THIRD)))
@@ -62,10 +65,10 @@ clean:
 	touch .makefile.uptodate
 
 params.o : test_params.F90 .makefile.uptodate
-	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o params.o $<
+	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) $(KERNEL_FLAGS) -c -o params.o $<
 
 test_utils.o : test_utils.F90 .makefile.uptodate comms.mod params.mod random.mod
-	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o test_utils.o $<
+	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) $(KERNEL_FLAGS) -c -o test_utils.o $<
 
 
 TOPDIR = ..
@@ -81,7 +84,7 @@ MODS=$(patsubst %.o,%.mod,$(LIBOBJS))
 
 
 test_%.o: test_%.F90 .makefile.uptodate test_utils.F90 test_utils.fh $(MODS)
-	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -c -o $@ $<
+	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) $(KERNEL_FLAGS) -c -o $@ $<
 
 $(TEST_TO_FAIL) $(TESTS) : % : %.o $(LIBOBJS)
-	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) -o $@ $^
+	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) $(KERNEL_FLAGS) -o $@ $^

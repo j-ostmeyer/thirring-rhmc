@@ -157,15 +157,7 @@ MPI=yes#
 
 ## Tests
 
-Tests are found in the `tests` folder. They have their own `Makefile` that
-works in exactly the same way as the one for the main code. Tests can be run
-individually; no output means that they pass. Alternatively, `make runtests`
-runs all tests.
-
-The `.dat` files can be generated from the pre-MPI version of the code (or,
-if you want, from the current version, but this should only be done when the
-current version is known good), by setting the `generate` parameter in each program
-to `.true.`.
+Testing allows us to add new features and improve existing subroutines with a higher level of confidence in the changes we are making. There are two types of tests implemented in this repository [unit tests](./tests/README.md) and [regression/end-to-end tests](./tests/e2e_tests/README.md). 
 
 ## Benchmarks
 In order to study the performance of the 'congrad' subroutine and of the various versions 
@@ -191,4 +183,16 @@ modules. Moreover, the `INTEL_MPIFC` in the `MkRules` file must be set to
   module unload intel/bundles/complib/2017.4
   ```
 
+## Kernel choice Shamir / Wilson
 
+There are two different kernels implemented within this code base, Shamir and Wilson (developed by Jude Worthy). Compile time flags must be used in order to select which kernel will be used. There are two aspects of the code that have been implemented with both a Shamir and Wilson, measurement and generation. 
+- The measurement aspect uses the flags `MEASURE_SHAMIR` for measuring using the Shamir kernel and `MEASURE_WILSON` for measuring using the Wilson kernel.
+- The generation aspect uses the flags `GENERATE_WITH_SHAMIR` for generating data using the Shamir kernel and `GENERATE_WITH_WILSON` using the Wilson kernel.
+
+### Wilson kernel
+
+There are some limitations when using the Wilson kernel.
+- Parallelisation must be disabled in the third dimension.
+   - `NP_THIRD` must be 1.
+- Calculations for `imass` of 5 are not implemented.
+   - `imass` must be 1 or 3.

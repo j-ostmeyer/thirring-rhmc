@@ -227,8 +227,8 @@ contains
     implicit none
     !     calculates Phi = M*R
     complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
-    complex(dp), intent(out) :: Phi(0:kthird+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(in) :: R(0:kthird+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(out) :: Phi(0:kthird_l+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: R(0:kthird_l+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp) :: Rslice(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp) :: Phislice(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp) :: Mslice(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -243,20 +243,20 @@ contains
 
     ! P+ component
     Rslice=cmplx(0.0,0.0)
-    do il=1,kthird
+    do il=1,kthird_l
       Rslice(:,:,:,1:2)=R(il,:,:,:,1:2)
       call DWilson(Phislice,Rslice,u,-am3)
       ! diagonal
       Phi(il,:,:,:,:)=Phi(il,:,:,:,:)+Phislice+Rslice
       ! lower diagonal
-      if (il.lt.kthird) then
+      if (il.lt.kthird_l) then
         Phi(il+1,:,:,:,:)=Phi(il+1,:,:,:,:)+Phislice-Rslice
       end if
     end do
 
     ! P- component
     Rslice=cmplx(0.0,0.0)
-    do il=1,kthird
+    do il=1,kthird_l
       Rslice(:,:,:,3:4)=R(il,:,:,:,3:4)
       call DWilson(Phislice,Rslice,u,-am3)
       ! diagonal
@@ -269,7 +269,7 @@ contains
 
       !  Mass term - top right
       Rslice=cmplx(0.0,0.0)
-      Rslice(:,:,:,1:2)=R(kthird,:,:,:,1:2)
+      Rslice(:,:,:,1:2)=R(kthird_l,:,:,:,1:2)
       call DWilson(Phislice,Rslice,u,-am3)
       if (imass.eq.1) then
         Mslice(:,:,:,:) = -am*(Phislice-Rslice)
@@ -289,8 +289,8 @@ contains
       elseif (imass.eq.3) then
         Mslice(:,:,:,:)=cmplx(0.0,am)*(Phislice-Rslice)
       endif
-      Phi(kthird,1:ksizex_l,1:ksizey_l,1:ksizet_l,:) = &
-  &                 Phi(kthird,1:ksizex_l,1:ksizey_l,1:ksizet_l,:) &
+      Phi(kthird_l,1:ksizex_l,1:ksizey_l,1:ksizet_l,:) = &
+  &                 Phi(kthird_l,1:ksizex_l,1:ksizey_l,1:ksizet_l,:) &
   &            +        Mslice(1:ksizex_l,1:ksizey_l,1:ksizet_l,:)
 
 
@@ -543,8 +543,8 @@ end subroutine dslashd
     use comms, only : complete_halo_update
     implicit none
     complex(dp), intent(in) :: u(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 3)
-    complex(dp), intent(out) :: Phi(0:kthird+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
-    complex(dp), intent(in) :: R(0:kthird+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(out) :: Phi(0:kthird_l+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
+    complex(dp), intent(in) :: R(0:kthird_l+1, 0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp) :: Rslice(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp) :: Phislice(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
     complex(dp) :: Mslice(0:ksizex_l+1, 0:ksizey_l+1, 0:ksizet_l+1, 4)
@@ -563,11 +563,11 @@ end subroutine dslashd
 #endif
 
     Phi=cmplx(0.0,0.0)
-    do il=1,kthird
+    do il=1,kthird_l
       Rslice=R(il,:,:,:,:)
       Phi(il,:,:,:,:)=Phi(il,:,:,:,:)+Rslice
       ! lower diagonal
-      if (il.lt.kthird) then
+      if (il.lt.kthird_l) then
         Phi(il+1,:,:,:,3:4) = Phi(il+1,:,:,:,3:4)   &
  &    - Rslice(:,:,:,3:4)
       end if
@@ -579,12 +579,12 @@ end subroutine dslashd
     enddo
 
 
-    do il=1,kthird
+    do il=1,kthird_l
       Rslice=R(il,:,:,:,:)
       call DWilsonD(Phislice,Rslice,u,-am3)
       Phi(il,:,:,:,:)=Phi(il,:,:,:,:)+Phislice
       ! lower diagonal
-      if (il.lt.kthird) then
+      if (il.lt.kthird_l) then
         Phi(il+1,:,:,:,3:4) = Phi(il+1,:,:,:,3:4)   &
  &    + Phislice(:,:,:,3:4)
       end if
@@ -596,7 +596,7 @@ end subroutine dslashd
     enddo
 
       ! upper right mass term  
-      Rslice=R(kthird,:,:,:,:)
+      Rslice=R(kthird_l,:,:,:,:)
       call DWilsonD(Phislice,Rslice,u,-am3)
       Mslice=Phislice-Rslice
       if (imass.eq.1) then
@@ -617,8 +617,8 @@ end subroutine dslashd
       elseif (imass.eq.3) then
         zkappa = cmplx(0.0,am)
       endif
-      Phi(kthird,1:ksizex_l,1:ksizey_l,1:ksizet_l,1:2) = &
-  &                 Phi(kthird,1:ksizex_l,1:ksizey_l,1:ksizet_l,1:2) &
+      Phi(kthird_l,1:ksizex_l,1:ksizey_l,1:ksizet_l,1:2) = &
+  &                 Phi(kthird_l,1:ksizex_l,1:ksizey_l,1:ksizet_l,1:2) &
   &            + zkappa*Mslice(1:ksizex_l,1:ksizey_l,1:ksizet_l,1:2)
 
     return

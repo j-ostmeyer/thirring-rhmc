@@ -13,7 +13,7 @@ module qmrherm_module
   complex(dp) :: x3(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
 
   complex(dp), save :: Phi0(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, ndiag)
-  logical :: printall
+  logical :: printall, no_yet_warned = .true.
 
 contains
 
@@ -53,7 +53,11 @@ contains
     ! Set use_sp_flags_included (sp is not implemented for the wilson version)
 #if defined(GENERATE_WITH_WILSON)
     force_dp = .true.
-    print *, 'WARNING: Single precision is not supported in qmrherm when using the GENERATE_WITH_WILSON flag. Forcing double precision.'
+    if (no_yet_warned) then
+      no_yet_warned = .false.
+      print *, "WARNING: Single precision is not supported in qmrherm when using the GENERATE_WITH_WILSON flag. Forcing &
+      double precision."
+    endif
 #endif
 
 
@@ -146,7 +150,7 @@ contains
 #ifdef MPI
           call complete_halo_update(reqs_x2)
 #endif
-          call derivs(R, x2, coeff, 0)
+          call derivs(R, x2, coeff, 0, am, imass)
 
         else ! if(iflag.eq.2)then
           coeff = -anum(idiag)
@@ -154,7 +158,7 @@ contains
 #ifdef MPI
           call complete_halo_update(reqs_x2)
 #endif
-          call derivs(R, x2, coeff, 0)
+          call derivs(R, x2, coeff, 0, am, imass)
 
           ! Communication of x2 generated here can be hidden while R is updated
           call dslash(x2, R, u, am, imass)
@@ -172,7 +176,7 @@ contains
 #else
           call update_halo_5(4, R)
 #endif
-          call derivs(x2, R, coeff, 1)
+          call derivs(x2, R, coeff, 1, am, imass)
         endif ! if(iflag.eq.2)then
       enddo ! do idiag=1, ndiagq
     endif ! if(iflag.lt.2)then , else
