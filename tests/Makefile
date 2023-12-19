@@ -65,7 +65,7 @@ clean:
 	touch .makefile.uptodate
 
 params.o : test_params.F90 .makefile.uptodate
-	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) $(KERNEL_FLAGS)-c -o params.o $<
+	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) $(KERNEL_FLAGS) -c -o params.o $<
 
 test_utils.o : test_utils.F90 .makefile.uptodate comms.mod params.mod random.mod
 	$(FC) $(FCFLAGS) $(COMMS_FLAGS) $(RANDOM_FLAGS) $(KERNEL_FLAGS) -c -o test_utils.o $<
