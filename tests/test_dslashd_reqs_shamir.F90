@@ -11,12 +11,9 @@ program test_dslashd_reqs_shamir
 
   implicit none
 
-  ! general parameters
-  integer :: i, ierr, imass_index, imass
+  integer :: ierr, imass_index, imass
   character(len=4) :: imass_char
   character(len=*), parameter :: test_prefix = 'test_dslashd_reqs_shamir_'
-
-  ! initialise function parameters
   complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
   complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)

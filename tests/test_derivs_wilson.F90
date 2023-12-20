@@ -10,11 +10,12 @@ program test_derivs_wilson
   use derivs_module, only: derivs_wilson
   implicit none
 
-  ! general parameters
-  integer :: i, timing_loops = 1
+  integer :: ierr, imass
   real(dp), parameter :: tau = 8*atan(1.0_8)
-
-  ! initialise function parameters
+  real(dp), parameter :: anum = tau
+  real :: am
+  integer, parameter :: iflag = 0
+  integer, dimension(16) :: reqs_R, reqs_Phi, reqs_X2
   complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
   complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) X2(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -23,22 +24,18 @@ program test_derivs_wilson
   complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   real(dp) :: diff(ksizex_l, ksizey_l, ksizet_l, 3), sum_diff, max_diff
 
-  real(dp), parameter :: anum = tau
-  integer, parameter :: iflag = 0
-
 #ifdef MPI
-  integer, dimension(16) :: reqs_R, reqs_Phi, reqs_X2
-  integer :: ierr
   call init_MPI
 #endif
 
+  ! Setup state
+  am = 0.05
+  imass = 3
   call generate_starting_state(Phi, reqs_Phi, u, R, reqs_R, X2, reqs_X2, dSdpi_orig)
+  dSdpi = dSdpi_orig
 
   ! call function
-  do i = 1, timing_loops
-    dSdpi = dSdpi_orig
-    call derivs_wilson(R, X2, anum, iflag, 0.05, 3)
-  end do
+  call derivs_wilson(R, X2, anum, iflag, am, imass)
 
   ! check output
   if (generate) then
@@ -47,16 +44,10 @@ program test_derivs_wilson
   else
     read_file(dSdpi_ref, 'test_derivs_wilson.dat', MPI_Double_Precision)
 
-    ! diff will now have duplicates for the same (x,y,t,mu)
-    ! due to the parallelization along third dimension
-    ! and the MPI_AllReduce operation. For this the sum_diff
-    ! will be larger than expected (np_third times larger).
-    ! Because of that we divide by np_third
     diff = dSdpi - dSdpi_ref
 
     check_sum(diff, 0.3, 'dSdpi', sum_diff, MPI_Double_Precision, "test_derivs_wilson")
     check_max(diff, 0.01, 'dSdpi', max_diff, MPI_Double_Precision, "test_derivs_wilson")
-
 
   end if
 

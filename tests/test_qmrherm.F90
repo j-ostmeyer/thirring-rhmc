@@ -13,12 +13,12 @@ program test_qmrherm_0
   use test_utils
   implicit none
 
-  ! general parameters
-  integer :: timing_loops = 1
   complex, parameter :: iunit = cmplx(0, 1)
   real(dp), parameter :: tau = 8*atan(1.0_8)
-
-  ! initialise function parameters
+  integer :: imass, iflag, i, itercg, ierr
+  character(len=4) :: iflag_char
+  character(len=14) :: test_name
+  real :: res, am
   complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) :: Phi0_ref(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4, 25)
   complex(dp) :: delta_Phi0(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4, 25)
@@ -28,24 +28,17 @@ program test_qmrherm_0
   complex(dp) :: x_ref(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4)
   complex(dp) :: delta_x(kthird_l, ksizex_l, ksizey_l, ksizet_l, 4)
   complex(dp) :: R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-  real(dp) :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
-
   complex(dp) :: sum_delta_x, sum_delta_Phi0
-  real(dp) :: max_delta_x, max_delta_Phi0
-
-  integer :: imass, iflag, i
-  character(len=4) :: iflag_char
-  character(len=14) :: test_name
+  real(dp) :: dSdpi_ref(ksizex_l, ksizey_l, ksizet_l, 3)
   real(dp) :: anum(0:ndiag), aden(ndiag)
-  real :: res, am
-  integer :: itercg
-
-#ifdef MPI
+  real(dp) :: max_delta_x, max_delta_Phi0
   integer, dimension(16) :: reqs_R, reqs_Phi, reqs_Phi0, reqs_X
   integer, dimension(12) :: reqs_u
-  integer :: ierr
+
+#ifdef MPI
   call init_MPI
 #endif
+
   qmrhprint = .false.
 
   res = 0.1
@@ -71,10 +64,8 @@ program test_qmrherm_0
     call generate_starting_state(Phi, reqs_Phi, u, R, reqs_R, X, reqs_X, dSdpi_ref, Phi0_orig)
 
     ! call function
-    do i = 1, timing_loops
-      Phi0 = Phi0_orig
-      call qmrherm(Phi, X, res, itercg, am, imass, anum, aden, ndiag, iflag)
-    end do
+    Phi0 = Phi0_orig
+    call qmrherm(Phi, X, res, itercg, am, imass, anum, aden, ndiag, iflag)
 
     ! check output
     if (generate) then
