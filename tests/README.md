@@ -12,9 +12,13 @@ For example,
 - Since this test requires a `.dat` file, we must generate that before making any changes. The test will run the subroutine and save its output. We can then make changes to the code.
 - Running the test after making some change then compares a newly calculated value of `X` with the previously generated "snapshot" of `X` stored in the data file [test_congrad.dat](./test_congrad.dat).
 - If the two versions of `X` match, the test passes and you should see an output similar to...
-
-TODO add example
-
+    ``` 
+    Test test_congrad:
+        Initialising MPI with grid (NP_X * NP_Y * NP_T * NP_THIRD)           1 *           1 *           1 *           1
+            Passed test_congrad itercg is the expected value
+            Passed test_congrad sum of x is within error
+            Passed test_congrad max x is within error
+    ```
 - We can see from the above that `test_congrad.F90` validates `X` as well as the value of `itercg`.
 - So long as this test passes it is likely that any changes we have made to `congrad` in `measure_module.F90` have not broken the subroutine. 
 

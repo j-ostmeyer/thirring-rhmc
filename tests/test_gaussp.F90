@@ -1,6 +1,5 @@
 #include "test_utils.fh"
 program test_gaussp
-  ! use dwf3d_lib
   use params
   use gauge
   use gaussian

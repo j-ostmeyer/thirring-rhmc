@@ -14,29 +14,20 @@ program test_measure
   use gdbhook
   implicit none
 
-  ! general parameters
-  integer :: i, imass_index, imass, timing_loops = 1
+  integer :: imass_index, imass, ierr, itercg
   character(len=4) :: imass_char
+  real :: res, am, aviter
+  complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+  integer, dimension(16) :: reqs_Phi
   
   ! expected test values
   real, dimension(3) :: expected_aviter = (/3,6,6/)
 
-  ! initialise function parameters
-  complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-
-  ! initialise function parameters
-  real :: aviter
-  integer :: iflag = 0
-
-  real :: res, am
-  integer :: itercg
 #ifdef MPI
-  integer, dimension(16) :: reqs_Phi
-  integer :: ierr
-
   call init_MPI
   call gdb_wait()
 #endif
+
   seed = 4139764973254.0
   idum = -1
   call rranset(seed, 1, 1, 1)
@@ -45,7 +36,6 @@ program test_measure
   res = 0.1
   am = 0.05
   imass = 3
-  iflag = 0
 
   do imass_index = 1, size(imasses)
     imass_char = ''
@@ -60,10 +50,8 @@ program test_measure
     call generate_starting_state(Phi, reqs_Phi, u)
 
     ! call function
-    do i = 1, timing_loops
-      x = (0.D0, 0.D0)
-      call meson(res, itercg, aviter, am, imass)
-    end do
+    x = (0.D0, 0.D0)
+    call meson(res, itercg, aviter, am, imass)
 
     check_equality(itercg, 3, 'itercg', 'test_meson')
     check_equality(aviter, expected_aviter(imass_index), 'aviter', 'test_meson')

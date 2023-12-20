@@ -1,6 +1,6 @@
 #include "test_utils.fh"
 program test_measure_shamir
-  ! use dwf3d_lib
+  use dwf3d_lib
   use trial, only: u
   use vector
   use comms
@@ -12,32 +12,19 @@ program test_measure_shamir
   use test_utils
   implicit none
 
-  ! NOTICE! When dwf3d is done remove the following and uncomment the use dwf3d_lib
-  real(dp) :: seed
-
-  ! general parameters
-  integer :: i, imass, timing_loops = 1
-
-  ! initialise function parameters
+  integer :: imass, ierr
+  real :: res, am, psibarpsi, aviter
   complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
-  real psibarpsi, aviter
-  integer :: iflag, isweep, iter
-  real :: res, am
-
-  integer, parameter :: idxmax = 4*ksize*ksize*ksizet*kthird
-  integer :: idx = 0
-#ifdef MPI
   integer, dimension(16) :: reqs_x, reqs_Phi
-  integer :: ierr
+
+#ifdef MPI
   call init_MPI
 #endif
+
   seed = 4139764973254.0
   call init_random(seed)
   res = 0.1
   am = 0.05
-  iflag = 0
-  isweep = 1
-  iter = 0
   am3 = 1.0
   imass = 3
 
@@ -48,9 +35,7 @@ program test_measure_shamir
   call generate_starting_state_Phi_and_X(Phi, reqs_Phi, u, X, reqs_x)
 
   ! call function
-  do i = 1, timing_loops
-    call measure_shamir(psibarpsi, res, aviter, am, imass)
-  end do
+  call measure_shamir(psibarpsi, res, aviter, am, imass)
 
 #ifndef SITE_RANDOM
   if (ip_global .eq. 0) then

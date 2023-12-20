@@ -11,12 +11,9 @@ program test_dslash_shamir
 
   implicit none
 
-  ! general parameters
-  integer :: i, ierr, imass_index, imass, timing_loops = 1
+  integer :: ierr, imass_index, imass
   character(len=4) :: imass_char
   character(len=*), parameter :: test_prefix = 'test_dslash_shamir_'
-
-  ! initialise function parameters
   complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
   complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
   complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
@@ -38,7 +35,7 @@ program test_dslash_shamir
 #endif
     call generate_starting_state(Phi, reqs_Phi, u, R, reqs_R)
 
-    call run_dslash(Phi, R, u, imass, timing_loops, reqs_Phi)
+    call run_dslash(Phi, R, u, imass, reqs_Phi)
     if (generate) then
       call generate_data(Phi, test_prefix // trim(imass_char))
     else
@@ -51,26 +48,23 @@ program test_dslash_shamir
 #endif
 
 contains
-  subroutine run_dslash(Phi, R, u, imass, timing_loops, reqs_Phi)
+  subroutine run_dslash(Phi, R, u, imass, reqs_Phi)
     complex(dp) Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) R(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     complex(dp) u(0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 3)
-    integer, intent(in) :: timing_loops
     integer, intent(in) :: imass
     integer, dimension(16), intent(inout) :: reqs_Phi
     
     real, parameter :: am = 0.05
 
     ! call function
-    do i = 1, timing_loops
-      call dslash_shamir(Phi, R, u, am, imass)
+    call dslash_shamir(Phi, R, u, am, imass)
 #ifdef MPI
-      call start_halo_update_5(4, Phi, 2, reqs_Phi)
-      call complete_halo_update(reqs_Phi)
+    call start_halo_update_5(4, Phi, 2, reqs_Phi)
+    call complete_halo_update(reqs_Phi)
 #else
-      call update_halo_5(4, Phi)
+    call update_halo_5(4, Phi)
 #endif
-    end do
   end subroutine run_dslash
 
   subroutine generate_data(Phi, test_name)
