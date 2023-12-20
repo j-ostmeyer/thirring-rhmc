@@ -189,6 +189,16 @@ There are two different kernels implemented within this code base, Shamir and Wi
 - The measurement aspect uses the flags `MEASURE_SHAMIR` for measuring using the Shamir kernel and `MEASURE_WILSON` for measuring using the Wilson kernel.
 - The generation aspect uses the flags `GENERATE_WITH_SHAMIR` for generating data using the Shamir kernel and `GENERATE_WITH_WILSON` using the Wilson kernel.
 
+Currently the makefile does not support independently switching these flags, but instead both are congtrolled by the make flag `KERNEL` which can take the value of either `wilson` or `shamir` to select which kernel is used in both the generation and measure steps. This can be supplied to `make` as:
+
+```bash
+make KERNEL=shamir
+```
+or 
+```bash
+make KERNEL=wilson
+```
+
 ### Wilson kernel
 
 There are some limitations when using the Wilson kernel.
