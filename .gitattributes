@@ -1,6 +1,1 @@
 con filter=lfs diff=lfs merge=lfs -text
-*.dat filter=lfs diff=lfs merge=lfs -text
-tests/e2e_tests/samples/cons/** filter=lfs diff=lfs merge=lfs -text
-tests/e2e_tests/samples/cons/con_4x4x4 filter=lfs diff=lfs merge=lfs -text
-tests/e2e_tests/samples/cons/con_12x12x12 filter=lfs diff=lfs merge=lfs -text
-tests/congrad-test-output.png filter=lfs diff=lfs merge=lfs -text
