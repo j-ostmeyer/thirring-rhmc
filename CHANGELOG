@@ -1,0 +1,32 @@
+## 2023-12-21 UCL-DiRAC Wilson Kernel Migration
+
+### Overview
+
+Over 3 months, two RSEs at UCL, Connor Aird and Jamie Quinn, migrated work done by Jude Worthy during his PhD from his older copy of thirring-rhmc to the current `master` branch. The migrated work was mainly made up of three large components and implemented the Wilson kernel as an alternative to the Shamir kernel:
+
+- `dslash` and `dslashd` in `dirac.F90`
+- `measure` in `measure_module.F90`
+- `derivs` in `derivs_module.F90`
+
+All subroutines were tested with corresponding unit tests before and after migration, both for the existing Shamir kernel and the new Wilson kernel. The tests show that the migration has not functionally changed Jude's original work, nor have our changes affected the Shamir kernel functionality in any way. Some details on this work, along with some recommentations for future management of the repository are given below in no particular order:
+
+- One of the tricky bugs that occasionally appeared when copying code from Jude's branch to master was the mismatch between array sizes because Jude's branch does not contain later updates that parallelise over the "third dimension", which introduced a halo in this third dimension. Care must be taken when moving any future code from `dev_jude` that the arrays are the correct size. In master the large simulation variables like `Phi` should have dimensions `(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)` while in the unparallelised `dev_jude` branch, the dimensions of corresponding variables are `(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)`. This affects passing arrays into subroutines and can affect taking slices of these arrays.
+
+- Removed use of Git LFS due to bandwidth & storage limitations at Swansea. We cannot recommend Git LFS as a service because the official strategy for removing files (and reduce storage needs) is to **delete the repository and recreate it**. Absurd.
+
+- .git folder is 120MB due to .dat files being added to history in the past. Investigated shrinking by removing all history of .dat files. This would shrink .git folder to 3.6MB. However, git does this by rewriting commits so the repo may become incompatible with the original Swansea version. We recommend using only one version of the code, either merging Johann's version totally into Swansea or removing the original, then applying this cleanup operation. Current best tool to do this is with [git-filter-repo](https://github.com/newren/git-filter-repo/).
+
+- The unit tests test_derivs_wilson, test_dslash_wilson test_dslashd_wilson and test_dslashd_reqs_wilson are all confirmed to generate identical data files to the corresponding tests in `dev_jude`, i.e. we are confident that those individual tested subroutines have been accurately migrated.
+
+- anything related to ZOLO or COMPACT has not been migrated but remains in the `dev_jude` branch.
+
+- We are less confident that measure has been copied across correctly because `congrad` has changed slightly and the unit test does not pass exactly. Comparing the tested results `psibarpsi` and `aviter` to when using `measure_shamir` (see table below), `measure_wilson` performs twice as many CG iterations as `measure_shamir` however this is due to the dirac indices being looped over twice, so the iterations are double-counted. We have no good interpretation for the order of magnitude different in `psibarpsi`. It should be stressed that this large value for `psibarpsi` is also present in Jude's original Wilson measure implementation.
+
+| Kernel | `psibarpsi`    | `aviter` |
+|--------|----------------|----------|
+| wilson | -5.422668E-02  |   10.9   |
+| shamir |  2.504295E-04  |    5     |
+
+- We have versions of Jude's derivs and measure which have been carefully refactored to remain functionally the same but look more like the Shamir versions in master for easy comparison. These are found in `dev-jude-refactor-derivs` and `dev-jude-refactor-measureW`, respectively. These may be useful when debugging but if not feel free to remove their associated branches.
+
+- In measure_wilson/shamir it calls the matching dslashd_wilson/shamir directly instead of calling `dslashd` which switches based on the `GENERATION_KERNEL` flag. This ensures that measure calls the correct implementation of dslashd. Note that any other measurements like `meson` call the generic `dslash[d]` (which switches kernel based on the `GENERATION_KERNEL` flag) and not specific implementations. 

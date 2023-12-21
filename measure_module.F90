@@ -260,7 +260,7 @@ contains
 #endif
 
         ! Phi= Mdagger*xi
-        !
+        ! Directly call correct shamir dslashd to match measure kernel
         call dslashd_shamir(Phi, xi, u, am, imass)
 #ifdef MPI
         ! No way to hide communications here unfortunately
@@ -317,7 +317,7 @@ contains
 #endif
 
         ! Phi= Mdagger*xi
-        !
+        ! Directly call correct shamir dslashd to match measure kernel
         call dslashd_shamir(Phi, xi, u, am, imass)
 #ifdef MPI
         ! No way to hide communications here unfortunately
@@ -515,7 +515,7 @@ contains
 #endif
         !
         ! Phi= Mdagger*xi
-        !
+        ! Directly call correct Wilson dslashd to match measure kernel
         call dslashd_wilson(Phi, xi, u, am, imass)
 #ifdef MPI
         ! No way to hide communications here unfortunately
@@ -565,6 +565,7 @@ contains
         call update_halo_5(4, xi)
 #endif
 
+        ! Directly call correct Wilson dslashd to match measure kernel
         call dslashd_wilson(Phi, xi, u, am, imass)
 #ifdef MPI
         ! No way to hide communications here unfortunately
@@ -818,7 +819,7 @@ contains
 
         !
         ! Phi= Mdagger*xi
-        !
+        
         call dslashd(Phi, xi, u, am, imass)
 #ifdef MPI
         call start_halo_update_5(4, Phi, 1, mpireqs)
