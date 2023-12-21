@@ -59,6 +59,7 @@ contains
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! This Calculates a sum for the shamir version of derivs before any wilson aspects have been calculated
+    ! Safe to comment out
     sumdS_S=sum(dSdpi)
     absdS_S=sum(abs(dSdpi))
     call MPI_AllReduce(MPI_In_Place, sumdS_S, 1, MPI_Real, MPI_Sum, comm, ierr)
@@ -79,6 +80,8 @@ contains
       endif
     enddo
 
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ! Safe to comment out
     sumdS_W=sum(dSdpi)
     absdS_W=sum(abs(dSdpi))
     call MPI_AllReduce(MPI_In_Place, sumdS_W, 1, MPI_Real, MPI_Sum, comm, ierr)
@@ -89,6 +92,8 @@ contains
         write(105,'(5f20.12)') sumdS_S,sumdS_W,absdS_S,absdS_W,absdS_W/absdS_S
         close(105)
     endif
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
   end subroutine derivs_wilson
 
   subroutine derivs_shared(R, X2, anum, iflag, am, imass)
