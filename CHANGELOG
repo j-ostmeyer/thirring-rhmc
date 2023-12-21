@@ -8,7 +8,9 @@ Over 3 months, two RSEs at UCL, Connor Aird and Jamie Quinn, migrated work done 
 - `measure` in `measure_module.F90`
 - `derivs` in `derivs_module.F90`
 
-All subroutines were tested with corresponding unit tests before and after migration, both for the existing Shamir kernel and the new Wilson kernel. The tests show that the migration has not functionally changed Jude's original work, nor have our changes affected the Shamir kernel functionality in any way. Some details on this work, along with some recommentations for future management of the repository are given below:
+All subroutines were tested with corresponding unit tests before and after migration, both for the existing Shamir kernel and the new Wilson kernel. The tests show that the migration has not functionally changed Jude's original work, nor have our changes affected the Shamir kernel functionality in any way. Some details on this work, along with some recommentations for future management of the repository are given below in no particular order:
+
+- One of the tricky bugs that occasionally appeared when copying code from Jude's branch to master was the mismatch between array sizes because Jude's branch does not contain later updates that parallelise over the "third dimension", which introduced a halo in this third dimension. Care must be taken when moving any future code from `dev_jude` that the arrays are the correct size. In master the large simulation variables like `Phi` should have dimensions `(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)` while in the unparallelised `dev_jude` branch, the dimensions of corresponding variables are `(kthird, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)`. This affects passing arrays into subroutines and can affect taking slices of these arrays.
 
 - Removed use of Git LFS due to bandwidth & storage limitations at Swansea. We cannot recommend Git LFS as a service because the official strategy for removing files (and reduce storage needs) is to **delete the repository and recreate it**. Absurd.
 
