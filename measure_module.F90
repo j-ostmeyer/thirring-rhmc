@@ -140,6 +140,7 @@ contains
   end subroutine congrad
 
   subroutine measure(psibarpsi, res, aviter, am, imass, isweep_total)
+    use measure_OWilson
     implicit none
     real, intent(out) :: psibarpsi, aviter
     real, intent(in) :: res, am
@@ -153,6 +154,11 @@ contains
 #ifdef MEASURE_WILSON
     call measure_wilson(psibarpsi, res, aviter, am, imass, isweep_total)
 #endif
+
+#ifdef MEASURE_OWILSON
+    call measure_wilsonKDDW(psibarpsi, res, aviter, am, imass, isweep_total)
+#endif
+
   end subroutine measure
 
   !*****************************************************************

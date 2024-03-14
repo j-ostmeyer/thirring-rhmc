@@ -21,11 +21,17 @@ contains
 
   pure subroutine verify_kernel_choice()
     ! Measurement flag
-#if defined(MEASURE_SHAMIR) && defined(MEASURE_WILSON)
-    Error: Must specify only one of MEASURE_SHAMIR or MEASURE_WILSON
+#if defined(MEASURE_SHAMIR) && defined(MEASURE_WILSON) 
+    Error: Must specify only one of MEASURE_SHAMIR or MEASURE_WILSON or MEASURE_OWILSON
 #endif
-#if !defined(MEASURE_SHAMIR) && !defined(MEASURE_WILSON)
-    Error: Must specify one of MEASURE_SHAMIR or MEASURE_WILSON
+#if defined(MEASURE_SHAMIR) && defined(MEASURE_OWILSON) 
+    Error: Must specify only one of MEASURE_SHAMIR or MEASURE_WILSON or MEASURE_OWILSON
+#endif
+#if defined(MEASURE_WILSON) && defined(MEASURE_OWILSON) 
+    Error: Must specify only one of MEASURE_SHAMIR or MEASURE_WILSON or MEASURE_OWILSON
+#endif
+#if !defined(MEASURE_SHAMIR) && !defined(MEASURE_WILSON) && !defined(MEASURE_OWILSON)
+    Error: Must specify one of MEASURE_SHAMIR or MEASURE_WILSON or MEASURE_OWILSON
 #endif
     
     ! Production flag
@@ -52,6 +58,9 @@ contains
     use dum1
     use comms
     use measure_module
+#ifdef MEASURE_OWILSON
+    use measure_OWilson
+#endif
     use qmrherm_module, only: qmrherm, qmrhprint => printall
     use timer, only: timeinit => initialise, get_time_from_start
     use evolution, only: evolve_theta_pp, initialise_phi_1flavour, initialise_pp
@@ -198,6 +207,10 @@ contains
     call read_remez_file('remez4g', ndiagg, anum4g, bnum4g, aden4g, bden4g)
 
 !*******************************************************************
+#ifdef MEASURE_OWILSON
+    call prepZolo()
+#endif
+!*******************************************************************
 !     print heading
 !*******************************************************************
     traj = iterl*dt
@@ -327,9 +340,9 @@ contains
         if (mod((isweep + isweep_total_start), iprint) .eq. 0) then
           thetat = theta
           call coef(ut, thetat)
-!          call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)
-          call meson(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)
-          call fermion(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)
+          call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)
+!          call meson(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)
+!          call fermion(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)
           pbp_average = pbp_average + pbp
           ancgm_average = ancgm_average + ancgm
           ipbp = ipbp + 1

@@ -89,6 +89,7 @@ LIBOBJS = counters.o comms.o comms_common.o \
           dum1.o dwf3d_lib.o evolution.o force_module.o \
           gammamatrices.o gauge.o gaussian.o gdbhook.o gforce.o \
           inverter_utils.o  measure_module.o multishift_module.o \
+          ellipticmodule.o zolomodule.o pfmodule.o ratfuncs.o  measure_OWilson.o \
           params.o qmrherm_module.o \
           random.o reductions.o remez.o remezg.o  \
           remez_common_subroutines.o timer.o trial.o vector.o
@@ -141,6 +142,7 @@ dwf3d_lib.o : $(TOPDIR)/dwf3d_lib.F90 \
               dirac.mod \
               dum1.mod evolution.mod gauge.mod gaussian.mod gammamatrices.mod \
               gdbhook.mod gforce.mod measure_module.mod \
+              measure_OWilson.mod \
               params.mod qmrherm_module.mod random.mod remez.mod remezg.mod \
               remez_common_subroutines.mod timer.mod trial.mod vector.mod
 	$(COMPILE) -o $*.o $<
@@ -165,8 +167,23 @@ inverter_utils.o  : $(TOPDIR)/inverter_utils.F90 .makefile.uptodate dirac.mod \
 
 measure_module.o : $(TOPDIR)/measure_module.F90 \
                   .makefile.uptodate params.mod gaussian.mod trial.mod \
-                  vector.mod comms5.mod comms_common.mod dirac.mod
+                  vector.mod comms5.mod comms_common.mod dirac.mod measure_OWilson.mod
 	$(COMPILE) -o measure_module.o $<
+
+ellipticmodule.o : $(TOPDIR)/ZOLO/ellipticmodule.f .makefile.uptodate
+	$(COMPILE) -o $*.o $<
+
+zolomodule.o : $(TOPDIR)/ZOLO/zolomodule.f .makefile.uptodate ellipticmodule.mod
+	$(COMPILE) -o $*.o $<
+
+pfmodule.o : $(TOPDIR)/ZOLO/pfmodule.f .makefile.uptodate ellipticmodule.mod
+	$(COMPILE) -o $*.o $<
+
+ratfuncs.o : $(TOPDIR)/ZOLO/ratfuncs.f .makefile.uptodate ellipticmodule.mod zolomodule.mod pfmodule.mod
+	$(COMPILE) -o $*.o $<
+
+measure_OWilson.o : $(TOPDIR)/measure_OWilson.F90 .makefile.uptodate zolomodule.mod ratfuncs.mod
+	$(COMPILE) -o $*.o $<
 
 multishift_module.o :  $(TOPDIR)/multishift_module.F90 \
                   .makefile.uptodate comms5.mod comms5_sp.mod comms_common.mod dirac.mod dirac_sp.mod \
@@ -250,8 +267,13 @@ else ifeq ($(MEASUREMENT_KERNEL), wilson)
     $(error Wilson kernel does not currently support NP_THIRD > 1)
   endif
   KERNEL_FLAGS := $(KERNEL_FLAGS) -DMEASURE_WILSON
+else ifeq ($(MEASUREMENT_KERNEL), owilson)
+  ifneq ($(NP_THIRD), 1)
+    $(error Wilson kernel does not currently support NP_THIRD > 1)
+  endif
+  KERNEL_FLAGS := $(KERNEL_FLAGS) -DMEASURE_OWILSON
 else
-  $(error Must specify either MEASUREMENT_KERNEL=shamir or MEASUREMENT_KERNEL=wilson)
+  $(error Must specify either MEASUREMENT_KERNEL=shamir or MEASUREMENT_KERNEL=wilson or MEASUREMENT_KERNEL=owilson)
 endif
 
 ifeq ($(GENERATION_KERNEL), shamir)
