@@ -621,8 +621,9 @@ contains
       elseif (imass .eq. 3) then
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ! The signs here are swapped compared to measure_shamir 
-        psibarpsi1 = cmplx(0.0, +1.0)*psibarpsi1/kvol
-        psibarpsi2 = cmplx(0.0, -1.0)*psibarpsi2/kvol
+        ! fixed by SJH 7/6/24
+        psibarpsi1 = cmplx(0.0, -1.0)*psibarpsi1/kvol
+        psibarpsi2 = cmplx(0.0, +1.0)*psibarpsi2/kvol
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         pbp(inoise) = real(psibarpsi1 + psibarpsi2)
       endif
