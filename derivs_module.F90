@@ -87,11 +87,11 @@ contains
     call MPI_AllReduce(MPI_In_Place, sumdS_W, 1, MPI_Real, MPI_Sum, comm, ierr)
     call MPI_AllReduce(MPI_In_Place, absdS_W, 1, MPI_Real, MPI_Sum, comm, ierr)
 
-    if (ip_global .eq. 0) then
-        open(unit=105,file="fort.105",position="append")
-        write(105,'(5f20.12)') sumdS_S,sumdS_W,absdS_S,absdS_W,absdS_W/absdS_S
-        close(105)
-    endif
+    !if (ip_global .eq. 0) then
+    !    open(unit=105,file="fort.105",position="append")
+    !    write(105,'(5f20.12)') sumdS_S,sumdS_W,absdS_S,absdS_W,absdS_W/absdS_S
+    !    close(105)
+    !endif
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   end subroutine derivs_wilson
