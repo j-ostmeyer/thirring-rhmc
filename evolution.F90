@@ -12,7 +12,14 @@ contains
     use gaussian, only: gauss0
     use params, only: kthird_l, ksizex_l, ksizey_l, ksizet_l, rescga, dp, ndiag
     use remez, only: anum4, aden4, bnum4, bden4
+#ifdef HMC
+    use measure_module, only: congrad
+#else
     use qmrherm_module, only: qmrherm
+#endif
+    use dirac
+    use vector
+    use trial, only: u
 
     implicit none
     complex(dp), intent(out) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)!
@@ -46,6 +53,12 @@ contains
     ! along the x,y and t axes, but we miss the "third" axis.
     call start_halo_update_5(4, R, 2342, reqs_R) ! "random" tag start
     !
+#ifdef HMC
+    call dslashd(Xresult,R,u,am,imass)
+    call congrad(Xresult,rescga,itercg,One,1)
+    ancgpfpv = ancgpfpv + float(itercg)
+    call dslash(Phi,X,u,One,1)
+#else
     !  For now Phi = {MdaggerM}^0.25 * R
     !
     call qmrherm(R, Xresult, rescga, itercg, am, imass, anum4, aden4, ndiag, 0)
@@ -57,6 +70,7 @@ contains
     ancgpfpv = ancgpfpv + float(itercg)
     !
     Phi = Xresult
+#endif
 
   end subroutine initialise_phi_1flavour
 

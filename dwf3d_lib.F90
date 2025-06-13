@@ -210,6 +210,12 @@ contains
 #ifdef MEASURE_OWILSON
     call prepZolo()
 #endif
+
+#ifdef HMC
+      write(7,*) 'Use HMC if possible'
+#else
+      write(7,*) 'Nah, stuff it, stick with RHMC'
+#endif
 !*******************************************************************
 !     print heading
 !*******************************************************************
@@ -340,9 +346,9 @@ contains
         if (mod((isweep + isweep_total_start), iprint) .eq. 0) then
           thetat = theta
           call coef(ut, thetat)
-!          call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)
-          call meson(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)
-          call fermion(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)
+           call measure(pbp, respbp, ancgm, am, imass, isweep + isweep_total_start)
+!         call meson(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)
+!         call fermion(rescgm,itercg,ancgm,am,imass, isweep + isweep_total_start)
           pbp_average = pbp_average + pbp
           ancgm_average = ancgm_average + ancgm
           ipbp = ipbp + 1
@@ -498,11 +504,18 @@ contains
 !******************************************************************
   subroutine hamilton(Phi, h, hg, hp, s, res2, am, imass, abort_on_max_reached_in)
     use remez
-    use trial, only: theta, pp
+!    use trial, only: theta, pp
+    use trial
+    use vector
     use dum1
     use counters, only: ancghpv, ancgh
     use comms
+#ifdef HMC 
+    use measure_module, only: congrad
+    use dirac
+#else
     use qmrherm_module, only: qmrherm
+#endif
     implicit none
     complex(dp), intent(in) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, Nf)
     real(dp), intent(out) :: h, hg, hp, s
@@ -527,7 +540,12 @@ contains
     hp = hp/np_third
 #endif
 
+#ifdef HMC
+    hg = Nf*beta*sum(theta**2)
+#else
     hg = 0.5*Nf*beta*sum(theta**2)
+#endif 
+
 #ifdef MPI
     call MPI_AllReduce(MPI_In_Place, hg, 1, MPI_Double_Precision, MPI_Sum, comm, ierr)
     hg = hg/np_third
@@ -543,6 +561,13 @@ contains
 ! uncomment these lines to quench the fermions!
 !     return
 !
+#ifdef HMC
+      call dslashd(R,Phi(:,:,:,:,:,1),u,One,1)
+      call congrad(R,res2,itercg,am,imass)
+      ancgh = ancgh + float(itercg)
+      hf = hf + sum(real(conjg(R(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
+                         *X(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
+#else
 !  pseudofermion action is
 !   Phi^dagger {MdaggerM(1)}^1/4 {MdaggerM(m)})^-1/2 {MdaggerM(1)}^1/4 Phi
 !
@@ -562,6 +587,7 @@ contains
       hf = hf + sum(real(conjg(R(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
                          *Xresult(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
     enddo
+#endif
 
 #ifdef MPI
 ! hf is built up from zero during the loop so only needs to be summed across
@@ -570,6 +596,13 @@ contains
 #endif
 
     h = hg + hp + hf
+#ifdef MPI
+        if (ip_global .eq. 0) then
+#endif
+      write (7, *) 'hg',hg,'    hp',hp,'    hf',hf,'    h',h
+#ifdef MPI
+        endif
+#endif
     s = hg + hf
 !
     return

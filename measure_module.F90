@@ -127,7 +127,7 @@ contains
 #endif
         write (7, 1000)
 1000    format(' # iterations of congrad exceeds niterc')
-        write (7, *) "Iterations:", nx
+        write (7, *) "res, Iterations:", res, nx
 
 #ifdef MPI
       end if

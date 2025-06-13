@@ -9,8 +9,8 @@ module params
 
   ! Lattice parameters
 #define KSIZE 16
-#define KSIZET 48
-#define KTHIRD 64
+#define KSIZET 16
+#define KTHIRD 8
   integer, parameter :: ksize = KSIZE, ksizet = KSIZET
   integer, parameter :: kthird = KTHIRD
   integer, parameter :: ksize2 = ksize*ksize
@@ -57,7 +57,7 @@ module params
   integer :: niterc = kthird*kvol ! CONGRAD
 
   ! inverter residuals
-  real, parameter :: respbp = 1.0e-6, rescgg = 3.0e-5
+  real, parameter :: respbp = 1.0e-6, rescgg = 1.0e-6
   real, parameter :: rescga = 1e-8
   real, parameter :: rescgm = 1e-8
   ! whether to use single precision in 'guidance' phase.
