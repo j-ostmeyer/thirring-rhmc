@@ -1,0 +1,344 @@
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517123222351          hp   6176.42293548584          hf   151461.321893098          h   158238.261951806     
+ hg   594.537638664246          hp   23710.3596801758          hf   150396.714880016          h   174701.612198856     
+ hg   600.517123222351          hp   6024.71292114258          hf   148630.585613034          h   155255.815657399     
+ hg   574.210871219635          hp   35817.6877288818          hf   144852.510864747          h   181244.409464849     
+ hg   600.517123222351          hp   6163.83969879150          hf   146420.256725736          h   153184.613547750     
+ hg   570.618556499481          hp   24894.9516601562          hf   142456.661280196          h   167922.231496852     
+ hg   600.517123222351          hp   6198.28580474854          hf   143964.293601310          h   150763.096529281     
+ hg   565.428220272064          hp   21397.9153442383          hf   138354.281603910          h   160317.625168420     
+ hg   600.517123222351          hp   6068.03008270264          hf   145216.004378230          h   151884.551584155     
+ hg   666.612820625305          hp   31664.0924987793          hf   138415.522868728          h   170746.228188132     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  4 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  4 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    79510514958336.0     
+ averages for last      5 trajectories
+  # of acceptances:      0 average trajectory length=    0.077
+  <exp-dH>= 0.0000E+00 +/- 0.000E+00
+  av. # QMR itr.
+      guidance: DWF    241.156; PV      0.000
+    acceptance: DWF    209.900; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     90.200
+  psibarpsi=  0.268E-02
+  av. # QMR itr.  257.775
+
+  mean square velocity=-0.944E-01; action per site= 0.371E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517123222351          hp   6176.42293548584          hf   151473.749705799          h   158250.689764507     
+ hg   594.531880378723          hp   23743.7056732178          hf   150407.495665247          h   174745.733218844     
+ hg   600.517123222351          hp   6024.71292114258          hf   148666.313057002          h   155291.543101367     
+ hg   574.112867355347          hp   36098.1981658936          hf   144861.617896188          h   181533.928929437     
+ hg   600.517123222351          hp   6163.83969879150          hf   146428.919928551          h   153193.276750565     
+ hg   570.594841480255          hp   24958.6337280273          hf   142458.526588710          h   167987.755158218     
+ hg   600.517123222351          hp   6198.28580474854          hf   143968.567907178          h   150767.370835149     
+ hg   565.421315193176          hp   21410.7675018311          hf   138355.700219392          h   160331.889036416     
+ hg   600.517123222351          hp   6068.03008270264          hf   145223.406299788          h   151891.953505713     
+ hg   666.868192195892          hp   31679.7770996094          hf   138423.258001538          h   170769.903293343     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  4 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  4 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    79510514958336.0     
+ averages for last      5 trajectories
+  # of acceptances:      0 average trajectory length=    0.077
+  <exp-dH>= 0.0000E+00 +/- 0.000E+00
+  av. # QMR itr.
+      guidance: DWF    241.169; PV      0.000
+    acceptance: DWF    209.900; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     90.200
+  psibarpsi=  0.268E-02
+  av. # QMR itr.  257.775
+
+  mean square velocity=-0.946E-01; action per site= 0.371E+02
+
+
+
+
+ seed:    79510514958336.0     
+ Use HMC if possible
+ hg   600.517123222351          hp   5969.40061950684          hf   155976.655345681          h   162546.573088410     
+ hg   574.202899932861          hp   95555.2771759033          hf   149419.749447697          h   245549.229523533     
+ hg   600.517123222351          hp   6104.36281585693          hf   146380.472122954          h   153085.352062033     
+ hg   574.707207202911          hp   35167.3912048340          hf   143531.097879449          h   179273.196291485     
+ hg   600.517123222351          hp   6147.58113098145          hf   156991.137305595          h   163739.235559799     
+ hg   592.866428375244          hp   36159.3130645752          hf   154987.916586527          h   191740.096079478     
+ hg   600.517123222351          hp   6134.07395935059          hf   148656.495227790          h   155391.086310363     
+ hg   599.552413940430          hp   8071.78105926514          hf   148542.557728224          h   157213.891201430     
+ hg   600.517123222351          hp   6102.49301910400          hf   144946.764784450          h   151649.774926777     
+ hg   600.072611331940          hp   6520.36758422852          hf   144879.505996738          h   151999.946192299     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.010000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  4 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  4 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    24971678056448.0     
+ averages for last      5 trajectories
+  # of acceptances:      0 average trajectory length=    0.016
+  <exp-dH>= 0.0000E+00 +/- 0.000E+00
+  av. # QMR itr.
+      guidance: DWF    247.562; PV      0.000
+    acceptance: DWF    207.900; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     91.400
+  psibarpsi=  0.262E-02
+  av. # QMR itr.  257.425
+
+  mean square velocity=-0.944E-01; action per site= 0.382E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517123222351          hp   6176.42293548584          hf   151483.229931909          h   158260.169990617     
+ hg   600.423465251923          hp   6416.11225891113          hf   151468.546265225          h   158485.081989388     
+ hg   600.517123222351          hp   6024.71292114258          hf   148636.370658898          h   155261.600703263     
+ hg   600.090773105621          hp   6667.23337554932          hf   148577.956622086          h   155845.280770741     
+ hg   600.517123222351          hp   6163.83969879150          hf   146429.322968817          h   153193.679790831     
+ hg   599.957497119904          hp   6782.60246276855          hf   146343.983571423          h   153726.543531312     
+ hg   600.517123222351          hp   6198.28580474854          hf   143966.992482895          h   150765.795410866     
+ hg   599.267821788788          hp   6748.26850128174          hf   143833.784353626          h   151181.320676697     
+ hg   600.517123222351          hp   6068.03008270264          hf   145218.047997841          h   151886.595203766     
+ hg   594.216542720795          hp   11412.6719894409          hf   144425.636115274          h   156432.524647436     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0005 expected avg trajectory length= 0.010000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  4 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  4 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    79510514958336.0     
+ averages for last      5 trajectories
+  # of acceptances:      0 average trajectory length=    0.008
+  <exp-dH>= 0.0000E+00 +/- 0.000E+00
+  av. # QMR itr.
+      guidance: DWF    200.429; PV      0.000
+    acceptance: DWF    220.300; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     91.000
+  psibarpsi=  0.268E-02
+  av. # QMR itr.  257.775
+
+  mean square velocity=-0.157E-01; action per site= 0.371E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517123222351          hp   6176.42293548584          hf   151462.964519991          h   158239.904578699     
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517123222351          hp   6176.42293548584          hf   151468.410435130          h   158245.350493838     
+Slurm Job ID: 11198912
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517123222351          hp   6176.42293548584          hf   151472.997680507          h   158249.937739215     
+ hg   599.403699874878          hp   7452.40948486328          hf   150185.936330933          h   158237.749515672     
+ hg   599.403699874878          hp   6030.91834259033          hf   146086.962636681          h   152717.284679146     
+ hg   598.297966957092          hp   9330.40630340576          hf   142853.389080179          h   152782.093350541     
+ hg   599.403699874878          hp   6157.90931701660          hf   144170.218528423          h   150927.531545314     
+ hg   599.510774135590          hp   9657.47487640381          hf   140938.052434715          h   151195.038085254     
+ hg   599.403699874878          hp   6200.52570343018          hf   143408.607602743          h   150208.537006048     
+ hg   604.853425502777          hp   11921.5854644775          hf   138260.563215177          h   150787.002105157     
+ hg   599.403699874878          hp   6072.59231567383          hf   145530.316187705          h   152202.312203254     
+ hg   676.150320529938          hp   16794.6825561523          hf   135916.695455914          h   153387.528332596     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  4 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  4 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    79510514958336.0     
+ averages for last      5 trajectories
+  # of acceptances:      1 average trajectory length=    0.078
+  <exp-dH>= 0.3929E+05 +/- 0.393E+05
+  av. # QMR itr.
+      guidance: DWF    232.987; PV      0.000
+    acceptance: DWF    208.200; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     90.000
+  psibarpsi=  0.263E-02
+  av. # QMR itr.  256.325
+
+  mean square velocity=-0.766E-01; action per site= 0.368E+02
+
+
+
+
+Slurm Job ID: 11199014
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517123222351          hp   6176.42293548584          hf   151468.142086230          h   158245.082144938     
+ hg   599.403712272644          hp   7452.27738189697          hf   150181.270754625          h   158232.951848794     
+ hg   599.403712272644          hp   6030.91834259033          hf   146095.782113812          h   152726.104168675     
+ hg   598.290097713470          hp   9339.94580841064          hf   142852.731097197          h   152790.967003321     
+ hg   599.403712272644          hp   6157.90931701660          hf   144168.877939694          h   150926.190968983     
+ hg   599.511013984680          hp   9656.35391998291          hf   140937.721517403          h   151193.586451371     
+ hg   599.403712272644          hp   6200.52570343018          hf   143410.357361254          h   150210.286776957     
+ hg   604.843047618866          hp   11922.0200500488          hf   138261.984125743          h   150788.847223411     
+ hg   599.403712272644          hp   6072.59231567383          hf   145526.540869174          h   152198.536897121     
+ hg   676.199815750122          hp   16791.8744659424          hf   135916.004852668          h   153384.079134360     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  4 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  4 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    79510514958336.0     
+ averages for last      5 trajectories
+  # of acceptances:      1 average trajectory length=    0.078
+  <exp-dH>= 0.3708E+05 +/- 0.371E+05
+  av. # QMR itr.
+      guidance: DWF    232.974; PV      0.000
+    acceptance: DWF    208.200; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     90.000
+  psibarpsi=  0.263E-02
+  av. # QMR itr.  256.325
+
+  mean square velocity=-0.766E-01; action per site= 0.368E+02
+
+
+
+
+Slurm Job ID: 11199051
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517123222351          hp   6176.42293548584          hf   151468.469874635          h   158245.409933343     
+ hg   599.403797626495          hp   7451.79483032227          hf   150182.080993934          h   158233.279621883     
+ hg   599.403797626495          hp   6030.91834259033          hf   146101.128786014          h   152731.450926231     
+ hg   598.289193630219          hp   9340.45186614990          hf   142857.754970527          h   152796.496030307     
+ hg   599.403797626495          hp   6157.90931701660          hf   144167.593899304          h   150924.907013947     
+ hg   599.515803337097          hp   9653.18584442139          hf   140939.455234512          h   151192.156882271     
+ hg   599.403797626495          hp   6200.52570343018          hf   143411.438988362          h   150211.368489419     
+ hg   604.851383209229          hp   11921.2032928467          hf   138263.702680862          h   150789.757356918     
+ hg   599.403797626495          hp   6072.59231567383          hf   145522.610733750          h   152194.606847050     
+ hg   676.128574371338          hp   16789.7082824707          hf   135913.033896534          h   153378.870753376     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  4 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  4 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    79510514958336.0     
+ averages for last      5 trajectories
+  # of acceptances:      1 average trajectory length=    0.078
+  <exp-dH>= 0.3708E+05 +/- 0.371E+05
+  av. # QMR itr.
+      guidance: DWF    232.949; PV      0.000
+    acceptance: DWF    208.200; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     90.000
+  psibarpsi=  0.263E-02
+  av. # QMR itr.  256.325
+
+  mean square velocity=-0.765E-01; action per site= 0.368E+02
+
+
+
+
+Slurm Job ID: 11439348
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517123222351          hp   6176.42293548584          hf   151462.158817109          h   158239.098875817     
+ hg   599.403938770294          hp   7451.61730194092          hf   150175.954200265          h   158226.975440976     
+ hg   599.403938770294          hp   6030.91834259033          hf   146097.996998198          h   152728.319279558     
+ hg   598.286305904388          hp   9340.29320526123          hf   142854.693062875          h   152793.272574041     
+ hg   599.403938770294          hp   6157.90931701660          hf   144156.382635673          h   150913.695891460     
+ hg   599.523912429810          hp   9646.89557647705          hf   140934.543561755          h   151180.963050662     
+ hg   599.403938770294          hp   6200.52570343018          hf   143413.453886982          h   150213.383529183     
+ hg   604.848358154297          hp   11924.2222442627          hf   138263.008044042          h   150792.078646459     
+ hg   599.403938770294          hp   6072.59231567383          hf   145527.457539806          h   152199.453794250     
+ hg   676.190851211548          hp   16792.7378540039          hf   135916.012351609          h   153384.941056825     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  4 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  4 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    79510514958336.0     
+ averages for last      5 trajectories
+  # of acceptances:      1 average trajectory length=    0.078
+  <exp-dH>= 0.3683E+05 +/- 0.368E+05
+  av. # QMR itr.
+      guidance: DWF    232.974; PV      0.000
+    acceptance: DWF    208.200; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     90.000
+  psibarpsi=  0.263E-02
+  av. # QMR itr.  256.325
+
+  mean square velocity=-0.765E-01; action per site= 0.368E+02
+
+
+
+
+Slurm Job ID: 11439805
+ seed:    256371362627584.     
+ Use HMC if possible
+Slurm Job ID: 11441153
+ seed:    256371362627584.     
+ Use HMC if possible
