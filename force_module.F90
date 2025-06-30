@@ -63,6 +63,7 @@ contains
       X2(:,:,:,:,:) = -X2(:,:,:,:,:)  + Phi(:,:,:,:,:,1)  ! Check the sign of this expression
 !      X2(:,:,:,:,:) = X2(:,:,:,:,:)  - Phi(:,:,:,:,:,1)  ! Check the sign of this expression
 #ifdef MPI
+      call start_halo_update_5(4, x2, 8, reqs_x2)
       call start_halo_update_5(4, x, 8, reqs_x)
       call complete_halo_update(reqs_x2)
       call complete_halo_update(reqs_x)
