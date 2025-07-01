@@ -342,3 +342,702 @@ Slurm Job ID: 11439805
 Slurm Job ID: 11441153
  seed:    256371362627584.     
  Use HMC if possible
+ seed:    256371362627584.     
+ Use HMC if possible
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517123222351          hp   6176.42293548584          hf   151475.140227386          h   158252.080286094     
+ hg   599.403329849243          hp   7453.18435668945          hf   150187.299962940          h   158239.887649478     
+ hg   599.403329849243          hp   6030.91834259033          hf   146089.695146236          h   152720.016818676     
+ hg   598.293358325958          hp   9334.10636901855          hf   142852.431306472          h   152784.831033817     
+ hg   599.403329849243          hp   6157.90931701660          hf   144159.872103406          h   150917.184750272     
+ hg   599.519646644592          hp   9647.35088348389          hf   140937.488339004          h   151184.358869132     
+ hg   599.403329849243          hp   6200.52570343018          hf   143406.224558113          h   150206.153591393     
+ hg   604.851245880127          hp   11918.1148834229          hf   138261.637035743          h   150784.603165046     
+ hg   599.403329849243          hp   6072.59231567383          hf   145523.269888461          h   152195.265533984     
+ hg   676.165197372437          hp   16790.4167327881          hf   135913.082373907          h   153379.664304068     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  4 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  4 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    79510514958336.0     
+ averages for last      5 trajectories
+  # of acceptances:      1 average trajectory length=    0.078
+  <exp-dH>= 0.3947E+05 +/- 0.395E+05
+  av. # QMR itr.
+      guidance: DWF    232.974; PV      0.000
+    acceptance: DWF    208.200; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     90.000
+  psibarpsi=  0.263E-02
+  av. # QMR itr.  256.325
+
+  mean square velocity=-0.764E-01; action per site= 0.368E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517123222351          hp   6176.42293548584          hf   151462.866113037          h   158239.806171745     
+ hg   599.404478549957          hp   7450.72253417969          hf   150177.553989067          h   158227.681001797     
+ hg   599.404478549957          hp   6030.91834259033          hf   146102.784431672          h   152733.107252813     
+ hg   598.286562442780          hp   9340.94670867920          hf   142858.785232407          h   152798.018503529     
+ hg   599.404478549957          hp   6157.90931701660          hf   144158.485811795          h   150915.799607361     
+ hg   599.519781112671          hp   9648.44259643555          hf   140935.062925007          h   151183.025302555     
+ hg   599.404478549957          hp   6200.52570343018          hf   143406.741208714          h   150206.671390694     
+ hg   604.859574317932          hp   11919.6554794312          hf   138260.576098453          h   150785.091152202     
+ hg   599.404478549957          hp   6072.59231567383          hf   145522.728697591          h   152194.725491814     
+ hg   676.150329113007          hp   16789.5046844482          hf   135912.759833102          h   153378.414846663     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  4 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  4 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    79510514958336.0     
+ averages for last      5 trajectories
+  # of acceptances:      1 average trajectory length=    0.078
+  <exp-dH>= 0.3689E+05 +/- 0.369E+05
+  av. # QMR itr.
+      guidance: DWF    232.949; PV      0.000
+    acceptance: DWF    208.200; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     90.000
+  psibarpsi=  0.263E-02
+  av. # QMR itr.  256.325
+
+  mean square velocity=-0.765E-01; action per site= 0.368E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517123222351          hp   6176.42293548584          hf   151465.740675552          h   158242.680734261     
+ hg   599.404087543488          hp   7451.25311279297          hf   150179.900990033          h   158230.558190369     
+ hg   599.404087543488          hp   6030.91834259033          hf   146094.256371941          h   152724.578802075     
+ hg   598.290829658508          hp   9336.29685974121          hf   142855.016988876          h   152789.604678276     
+ hg   599.404087543488          hp   6157.90931701660          hf   144158.261055730          h   150915.574460290     
+ hg   599.520913600922          hp   9648.52907562256          hf   140934.726781427          h   151182.776770650     
+ hg   599.404087543488          hp   6200.52570343018          hf   143402.428330037          h   150202.358121011     
+ hg   604.847816944122          hp   11914.1815643311          hf   138261.332355634          h   150780.361736909     
+ hg   599.404087543488          hp   6072.59231567383          hf   145523.712972570          h   152195.709375788     
+ hg   676.172377109528          hp   16790.3456420898          hf   135913.438148573          h   153379.956167772     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  4 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  4 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    79510514958336.0     
+ averages for last      5 trajectories
+  # of acceptances:      1 average trajectory length=    0.078
+  <exp-dH>= 0.3679E+05 +/- 0.368E+05
+  av. # QMR itr.
+      guidance: DWF    232.962; PV      0.000
+    acceptance: DWF    208.200; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     90.000
+  psibarpsi=  0.263E-02
+  av. # QMR itr.  256.325
+
+  mean square velocity=-0.765E-01; action per site= 0.368E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517116546631          hp   6135.98870849609          hf   146802.622321860          h   153539.128146902     
+ hg   594.747004508972          hp   12231.9898071289          hf   140928.103309043          h   153754.840120681     
+ hg   600.517116546631          hp   6082.12503051758          hf   146504.027960137          h   153186.670107202     
+ hg   695.119724273682          hp   18157.8412475586          hf   135525.622801235          h   154378.583773068     
+ hg   600.517116546631          hp   6190.22238159180          hf   142759.985055711          h   149550.724553850     
+ hg   607.856504440308          hp   11865.5294494629          hf   137451.598465724          h   149924.984419628     
+ hg   600.517116546631          hp   5980.32513427734          hf   144822.864448085          h   151403.706698909     
+ hg   892.474582672119          hp   20590.5892944336          hf   132648.143659476          h   154131.207536582     
+ hg   600.517116546631          hp   6167.92707824707          hf   149636.778661039          h   156405.222855833     
+ hg   1578.36236953735          hp   27797.5316162109          hf   135454.507901211          h   164830.401886959     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  4 NP_T=  2 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  4 ksizet_l=  8 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    170645157576704.     
+ averages for last      5 trajectories
+  # of acceptances:      0 average trajectory length=    0.186
+  <exp-dH>= 0.0000E+00 +/- 0.000E+00
+  av. # QMR itr.
+      guidance: DWF    250.269; PV      0.000
+    acceptance: DWF    213.900; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     89.000
+  psibarpsi=  0.266E-02
+  av. # QMR itr.  257.325
+
+  mean square velocity= 0.295E+01; action per site= 0.360E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517116546631          hp   6135.98870849609          hf   146802.622321860          h   153539.128146902     
+ hg   594.747004508972          hp   12231.9898071289          hf   140928.103309043          h   153754.840120681     
+ hg   600.517116546631          hp   6082.12503051758          hf   146504.027960137          h   153186.670107202     
+ hg   695.119724273682          hp   18157.8412475586          hf   135525.622801235          h   154378.583773068     
+ hg   600.517116546631          hp   6190.22238159180          hf   142759.985055711          h   149550.724553850     
+ hg   607.856504440308          hp   11865.5294494629          hf   137451.598465724          h   149924.984419628     
+ hg   600.517116546631          hp   5980.32513427734          hf   144822.864448085          h   151403.706698909     
+ hg   892.474582672119          hp   20590.5892944336          hf   132648.143659476          h   154131.207536582     
+ hg   600.517116546631          hp   6167.92707824707          hf   149636.778661039          h   156405.222855833     
+ hg   1578.36236953735          hp   27797.5316162109          hf   135454.507901211          h   164830.401886959     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  4 NP_T=  2 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  4 ksizet_l=  8 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    170645157576704.     
+ averages for last      5 trajectories
+  # of acceptances:      0 average trajectory length=    0.186
+  <exp-dH>= 0.0000E+00 +/- 0.000E+00
+  av. # QMR itr.
+      guidance: DWF    250.269; PV      0.000
+    acceptance: DWF    213.900; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     89.000
+  psibarpsi=  0.266E-02
+  av. # QMR itr.  257.325
+
+  mean square velocity= 0.295E+01; action per site= 0.360E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517128944397          hp   6135.98870849609          hf   141512.168855836          h   148248.674693276     
+ hg   601.510629653931          hp   9243.33212280273          hf   138495.446260173          h   148340.289012630     
+ hg   600.517128944397          hp   6082.12503051758          hf   144414.175860824          h   151096.818020286     
+ hg   672.060735702515          hp   16498.3099060059          hf   135159.507764292          h   152329.878406000     
+ hg   600.517128944397          hp   6190.22238159180          hf   141820.955007639          h   148611.694518176     
+ hg   609.591739654541          hp   12126.2513122559          hf   136270.612867993          h   149006.455919903     
+ hg   600.517128944397          hp   5980.32513427734          hf   142682.132761297          h   149262.975024519     
+ hg   860.446371078491          hp   18589.1233520508          hf   132680.325805956          h   152129.895529086     
+ hg   600.517128944397          hp   6167.92707824707          hf   148669.903826215          h   155438.348033406     
+ hg   1539.56087493896          hp   26224.9848022461          hf   135001.493384326          h   162766.039061511     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  2 NP_Y=  4 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  8 ksizey_l=  4 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    170645157576704.     
+ averages for last      5 trajectories
+  # of acceptances:      0 average trajectory length=    0.186
+  <exp-dH>= 0.0000E+00 +/- 0.000E+00
+  av. # QMR itr.
+      guidance: DWF    237.355; PV      0.000
+    acceptance: DWF    218.800; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     88.800
+  psibarpsi=  0.267E-02
+  av. # QMR itr.  257.575
+
+  mean square velocity= 0.269E+01; action per site= 0.347E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517128944397          hp   6135.98870849609          hf   141512.158155370          h   148248.663992810     
+ hg   601.510728836060          hp   9243.09944152832          hf   138495.666765313          h   148340.276935678     
+ hg   600.517128944397          hp   6082.12503051758          hf   144414.175860852          h   151096.818020314     
+ hg   672.060735702515          hp   16498.3099060059          hf   135159.507764740          h   152329.878406448     
+ hg   600.517128944397          hp   6190.22238159180          hf   141820.955007682          h   148611.694518218     
+ hg   609.591739654541          hp   12126.2513122559          hf   136270.612867993          h   149006.455919903     
+ hg   600.517128944397          hp   5980.32513427734          hf   142682.132761439          h   149262.975024661     
+ hg   860.446371078491          hp   18589.1233520508          hf   132680.325806007          h   152129.895529137     
+ hg   600.517128944397          hp   6167.92707824707          hf   148669.903826196          h   155438.348033388     
+ hg   1539.56087112427          hp   26224.9849243164          hf   135001.493376894          h   162766.039172335     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  2 NP_Y=  4 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  8 ksizey_l=  4 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    170645157576704.     
+ averages for last      5 trajectories
+  # of acceptances:      0 average trajectory length=    0.186
+  <exp-dH>= 0.0000E+00 +/- 0.000E+00
+  av. # QMR itr.
+      guidance: DWF    237.355; PV      0.000
+    acceptance: DWF    218.700; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     88.800
+  psibarpsi=  0.267E-02
+  av. # QMR itr.  257.575
+
+  mean square velocity= 0.269E+01; action per site= 0.347E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517125129700          hp   6135.98870849609          hf   143166.796629480          h   149903.302463106     
+ hg   601.676267623901          hp   10215.0688171387          hf   139158.970056041          h   149975.715140803     
+ hg   600.517125129700          hp   6082.12503051758          hf   145894.246133206          h   152576.888288854     
+ hg   672.659530639648          hp   17468.2411193848          hf   135732.215491318          h   153873.116141342     
+ hg   600.517125129700          hp   6190.22238159180          hf   144235.089209516          h   151025.828716237     
+ hg   604.343764305115          hp   13441.0200805664          hf   137509.875587605          h   151555.239432477     
+ hg   600.517125129700          hp   5980.32513427734          hf   140517.272545552          h   147098.114804959     
+ hg   827.282115936279          hp   17351.1069641113          hf   131267.624189824          h   149446.013269872     
+ hg   600.517125129700          hp   6167.92707824707          hf   154233.186062465          h   161001.630265841     
+ hg   1783.42868041992          hp   31347.5378417969          hf   136817.934490150          h   169948.901012367     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  2 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  8 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    170645157576704.     
+ averages for last      5 trajectories
+  # of acceptances:      0 average trajectory length=    0.186
+  <exp-dH>= 0.7122E-32 +/- 0.000E+00
+  av. # QMR itr.
+      guidance: DWF    260.043; PV      0.000
+    acceptance: DWF    216.800; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     88.600
+  psibarpsi=  0.264E-02
+  av. # QMR itr.  256.875
+
+  mean square velocity= 0.292E+01; action per site= 0.351E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517125129700          hp   6135.98870849609          hf   143166.796629480          h   149903.302463106     
+ hg   601.676267623901          hp   10215.0688171387          hf   139158.970056041          h   149975.715140803     
+ hg   600.517125129700          hp   6082.12503051758          hf   145894.246133206          h   152576.888288854     
+ hg   672.659530639648          hp   17468.2411193848          hf   135732.215491318          h   153873.116141342     
+ hg   600.517125129700          hp   6190.22238159180          hf   144235.089209516          h   151025.828716237     
+ hg   604.343764305115          hp   13441.0200805664          hf   137509.875587605          h   151555.239432477     
+ hg   600.517125129700          hp   5980.32513427734          hf   140517.272545552          h   147098.114804959     
+ hg   827.282115936279          hp   17351.1069641113          hf   131267.624189824          h   149446.013269872     
+ hg   600.517125129700          hp   6167.92707824707          hf   154233.186062465          h   161001.630265841     
+ hg   1783.42868041992          hp   31347.5378417969          hf   136817.934490150          h   169948.901012367     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  2 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  8 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    170645157576704.     
+ averages for last      5 trajectories
+  # of acceptances:      0 average trajectory length=    0.186
+  <exp-dH>= 0.7122E-32 +/- 0.000E+00
+  av. # QMR itr.
+      guidance: DWF    260.043; PV      0.000
+    acceptance: DWF    216.800; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     88.600
+  psibarpsi=  0.264E-02
+  av. # QMR itr.  256.875
+
+  mean square velocity= 0.292E+01; action per site= 0.351E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517135620117          hp   6247.02514648438          hf   144081.107406226          h   150928.649688331     
+ hg   613.435813903809          hp   14359.2058105469          hf   136218.138502781          h   151190.780127231     
+ hg   600.517135620117          hp   6186.70135498047          hf   141632.284277043          h   148419.502767644     
+ hg   600.326522827148          hp   6296.29248046875          hf   141522.083086773          h   148418.702090069     
+ hg   600.326522827148          hp   6141.35058593750          hf   139939.223282023          h   146680.900390788     
+ hg   600.691276550293          hp   7071.59741210938          hf   139009.412378425          h   146681.701067085     
+ hg   600.691276550293          hp   6150.67944335938          hf   143474.996079669          h   150226.366799579     
+ hg   597.672225952148          hp   8689.14123535156          hf   140971.243237425          h   150258.056698729     
+ hg   600.691276550293          hp   6027.07708740234          hf   139112.784790971          h   145740.553154923     
+ hg   609.966392517090          hp   10531.8942871094          hf   134766.765080309          h   145908.625759936     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  2 NP_Y=  2 NP_T=  2 NP_THIRD=  1
+ ksizex_l=  8 ksizey_l=  8 ksizet_l=  8 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    69585919279104.0     
+ averages for last      5 trajectories
+  # of acceptances:      2 average trajectory length=    0.050
+  <exp-dH>= 0.5352E+00 +/- 0.432E+00
+  av. # QMR itr.
+      guidance: DWF    233.840; PV      0.000
+    acceptance: DWF    209.400; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     90.400
+  psibarpsi=  0.264E-02
+  av. # QMR itr.  256.075
+
+  mean square velocity= 0.153E+01; action per site= 0.345E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.517135620117          hp   6247.02514648438          hf   144081.107406226          h   150928.649688331     
+ hg   613.435813903809          hp   14359.2058105469          hf   136218.138502781          h   151190.780127231     
+ hg   600.517135620117          hp   6186.70135498047          hf   141632.284277043          h   148419.502767644     
+ hg   600.326522827148          hp   6296.29248046875          hf   141522.083086773          h   148418.702090069     
+ hg   600.326522827148          hp   6141.35058593750          hf   139939.223282023          h   146680.900390788     
+ hg   600.691276550293          hp   7071.59741210938          hf   139009.412378425          h   146681.701067085     
+ hg   600.691276550293          hp   6150.67944335938          hf   143474.996079669          h   150226.366799579     
+ hg   597.672225952148          hp   8689.14123535156          hf   140971.243237425          h   150258.056698729     
+ hg   600.691276550293          hp   6027.07708740234          hf   139112.784790971          h   145740.553154923     
+ hg   609.966392517090          hp   10531.8942871094          hf   134766.765080309          h   145908.625759936     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  2 NP_Y=  2 NP_T=  2 NP_THIRD=  1
+ ksizex_l=  8 ksizey_l=  8 ksizet_l=  8 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    69585919279104.0     
+ averages for last      5 trajectories
+  # of acceptances:      2 average trajectory length=    0.050
+  <exp-dH>= 0.5352E+00 +/- 0.432E+00
+  av. # QMR itr.
+      guidance: DWF    233.840; PV      0.000
+    acceptance: DWF    209.400; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     90.400
+  psibarpsi=  0.264E-02
+  av. # QMR itr.  256.075
+
+  mean square velocity= 0.153E+01; action per site= 0.345E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.516948699951          hp   5980.64822387695          hf   142662.429020525          h   149243.594193102     
+ hg   792.801101684570          hp   16512.0177001953          hf   133452.468840007          h   150757.287641887     
+ hg   600.516948699951          hp   6201.68771362305          hf   139051.431038236          h   145853.635700559     
+ hg   600.811279296875          hp   6223.56509399414          hf   139026.795810675          h   145851.172183966     
+ hg   600.811279296875          hp   6160.96652221680          hf   142979.335213202          h   149741.113014716     
+ hg   608.556011199951          hp   13331.7406616211          hf   136225.083912209          h   150165.380585030     
+ hg   600.811279296875          hp   6264.09033203125          hf   139198.646393373          h   146063.548004701     
+ hg   651.333652496338          hp   12245.1594848633          hf   133808.927058923          h   146705.420196282     
+ hg   600.811279296875          hp   6195.11935424805          hf   139735.750366608          h   146531.681000153     
+ hg   599.497817993164          hp   8513.09716796875          hf   137537.198275096          h   146649.793261058     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  2 NP_Y=  2 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  8 ksizey_l=  8 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    38359359553536.0     
+ averages for last      5 trajectories
+  # of acceptances:      1 average trajectory length=    0.106
+  <exp-dH>= 0.2349E+01 +/- 0.235E+01
+  av. # QMR itr.
+      guidance: DWF    230.745; PV      0.000
+    acceptance: DWF    212.400; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     88.800
+  psibarpsi=  0.289E-02
+  av. # QMR itr.  258.150
+
+  mean square velocity= 0.185E+01; action per site= 0.343E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.516948699951          hp   5980.64822387695          hf   142662.429020525          h   149243.594193102     
+ hg   792.801101684570          hp   16512.0177001953          hf   133452.468840007          h   150757.287641887     
+ hg   600.516948699951          hp   6201.68771362305          hf   139051.431038236          h   145853.635700559     
+ hg   600.811279296875          hp   6223.56509399414          hf   139026.795810675          h   145851.172183966     
+ hg   600.811279296875          hp   6160.96652221680          hf   142979.335213202          h   149741.113014716     
+ hg   608.556011199951          hp   13331.7406616211          hf   136225.083912209          h   150165.380585030     
+ hg   600.811279296875          hp   6264.09033203125          hf   139198.646393373          h   146063.548004701     
+ hg   651.333652496338          hp   12245.1594848633          hf   133808.927058923          h   146705.420196282     
+ hg   600.811279296875          hp   6195.11935424805          hf   139735.750366608          h   146531.681000153     
+ hg   599.497817993164          hp   8513.09716796875          hf   137537.198275096          h   146649.793261058     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  2 NP_Y=  2 NP_T=  4 NP_THIRD=  1
+ ksizex_l=  8 ksizey_l=  8 ksizet_l=  4 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    38359359553536.0     
+ averages for last      5 trajectories
+  # of acceptances:      1 average trajectory length=    0.106
+  <exp-dH>= 0.2349E+01 +/- 0.235E+01
+  av. # QMR itr.
+      guidance: DWF    230.745; PV      0.000
+    acceptance: DWF    212.400; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     88.800
+  psibarpsi=  0.289E-02
+  av. # QMR itr.  258.150
+
+  mean square velocity= 0.185E+01; action per site= 0.343E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.516904830933          hp   5980.64822387695          hf   142501.709564558          h   149082.874693266     
+ hg   756.425155639648          hp   16874.4416503906          hf   133149.589522937          h   150780.456328967     
+ hg   600.516904830933          hp   6201.68771362305          hf   141902.409848702          h   148704.614467156     
+ hg   600.521129608154          hp   6306.02209472656          hf   141791.244536435          h   148697.787760770     
+ hg   600.521129608154          hp   6160.96652221680          hf   143564.894765936          h   150326.382417761     
+ hg   609.945392608643          hp   13319.6242675781          hf   136767.744170481          h   150697.313830667     
+ hg   600.521129608154          hp   6264.09033203125          hf   142583.589541481          h   149448.201003120     
+ hg   654.200412750244          hp   15115.9393920898          hf   134383.603710917          h   150153.743515757     
+ hg   600.521129608154          hp   6195.11935424805          hf   142704.465448396          h   149500.105932252     
+ hg   600.004810333252          hp   10572.5330200195          hf   138371.477707841          h   149544.015538194     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  2 NP_Y=  4 NP_T=  2 NP_THIRD=  1
+ ksizex_l=  8 ksizey_l=  4 ksizet_l=  8 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    38359359553536.0     
+ averages for last      5 trajectories
+  # of acceptances:      1 average trajectory length=    0.106
+  <exp-dH>= 0.1844E+03 +/- 0.184E+03
+  av. # QMR itr.
+      guidance: DWF    231.387; PV      0.000
+    acceptance: DWF    215.300; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     89.000
+  psibarpsi=  0.287E-02
+  av. # QMR itr.  257.550
+
+  mean square velocity= 0.202E+01; action per site= 0.348E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.516904830933          hp   5980.64822387695          hf   142505.170306355          h   149086.335435063     
+ hg   756.475032806396          hp   16877.5468139648          hf   133150.119100343          h   150784.140947114     
+ hg   600.516904830933          hp   6201.68771362305          hf   141902.409848870          h   148704.614467324     
+ hg   600.521129608154          hp   6306.02209472656          hf   141791.244536402          h   148697.787760737     
+ hg   600.521129608154          hp   6160.96652221680          hf   143564.894765926          h   150326.382417751     
+ hg   609.945392608643          hp   13319.6242675781          hf   136767.744170481          h   150697.313830667     
+ hg   600.521129608154          hp   6264.09033203125          hf   142583.589541480          h   149448.201003119     
+ hg   654.200412750244          hp   15115.9393920898          hf   134383.603710917          h   150153.743515757     
+ hg   600.521129608154          hp   6195.11935424805          hf   142704.465448399          h   149500.105932256     
+ hg   600.004810333252          hp   10572.5330200195          hf   138371.477707841          h   149544.015538194     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  2 NP_Y=  4 NP_T=  2 NP_THIRD=  1
+ ksizex_l=  8 ksizey_l=  4 ksizet_l=  8 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    38359359553536.0     
+ averages for last      5 trajectories
+  # of acceptances:      1 average trajectory length=    0.106
+  <exp-dH>= 0.1844E+03 +/- 0.184E+03
+  av. # QMR itr.
+      guidance: DWF    231.387; PV      0.000
+    acceptance: DWF    215.300; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     89.000
+  psibarpsi=  0.287E-02
+  av. # QMR itr.  257.550
+
+  mean square velocity= 0.202E+01; action per site= 0.348E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.516899108887          hp   5980.64822387695          hf   141455.128383397          h   148036.293506383     
+ hg   776.638134002686          hp   16522.6746826172          hf   132218.689270842          h   149518.002087462     
+ hg   600.516899108887          hp   6201.68771362305          hf   141753.506719912          h   148555.711332644     
+ hg   600.505168914795          hp   6270.77047729492          hf   141673.010611696          h   148544.286257906     
+ hg   600.505168914795          hp   6160.96652221680          hf   145809.958794897          h   152571.430486028     
+ hg   607.389236450195          hp   15955.5723876953          hf   136452.229362674          h   153015.190986820     
+ hg   600.505168914795          hp   6264.09033203125          hf   140023.090937623          h   146887.686438569     
+ hg   658.105480194092          hp   12435.8378295898          hf   134475.168358939          h   147569.111668723     
+ hg   600.505168914795          hp   6195.11935424805          hf   140125.835391363          h   146921.459914525     
+ hg   599.997936248779          hp   9008.33111572266          hf   137417.930912621          h   147026.259964592     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  2 NP_T=  2 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  8 ksizet_l=  8 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    38359359553536.0     
+ averages for last      5 trajectories
+  # of acceptances:      1 average trajectory length=    0.106
+  <exp-dH>= 0.1832E+05 +/- 0.183E+05
+  av. # QMR itr.
+      guidance: DWF    229.142; PV      0.000
+    acceptance: DWF    213.800; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     89.000
+  psibarpsi=  0.279E-02
+  av. # QMR itr.  257.650
+
+  mean square velocity= 0.196E+01; action per site= 0.347E+02
+
+
+
+
+ seed:    256371362627584.     
+ Use HMC if possible
+ hg   600.516899108887          hp   5980.64822387695          hf   141455.128383397          h   148036.293506383     
+ hg   776.638134002686          hp   16522.6746826172          hf   132218.689270842          h   149518.002087462     
+ hg   600.516899108887          hp   6201.68771362305          hf   141753.506719912          h   148555.711332644     
+ hg   600.505168914795          hp   6270.77047729492          hf   141673.010611696          h   148544.286257906     
+ hg   600.505168914795          hp   6160.96652221680          hf   145809.958794897          h   152571.430486028     
+ hg   607.389236450195          hp   15955.5723876953          hf   136452.229362674          h   153015.190986820     
+ hg   600.505168914795          hp   6264.09033203125          hf   140023.090937623          h   146887.686438569     
+ hg   658.105480194092          hp   12435.8378295898          hf   134475.168358939          h   147569.111668723     
+ hg   600.505168914795          hp   6195.11935424805          hf   140125.835391363          h   146921.459914525     
+ hg   599.997936248779          hp   9008.33111572266          hf   137417.930912621          h   147026.259964592     
+ ksize= 16 ksizet= 16
+ kthird=  8
+ Nf =  1
+ time step: dt=0.0050 expected avg trajectory length= 0.100000
+ Remez ndiag: action = 25 guidance= 12
+ # trajectories=     5 out of max     5 beta= 0.300000
+ am3=1.0000 am=0.0050
+ imass= 3
+ NP_X=  4 NP_Y=  2 NP_T=  2 NP_THIRD=  1
+ ksizex_l=  4 ksizey_l=  8 ksizet_l=  8 kthird_l=  8
+ Stopping residuals: guidance:  0.1000E-05 acceptance:  0.1000E-07 estimator:  0.1000E-05
+ Stopping residuals: meson:  0.1000E-07
+ seed:    38359359553536.0     
+ averages for last      5 trajectories
+  # of acceptances:      1 average trajectory length=    0.106
+  <exp-dH>= 0.1832E+05 +/- 0.183E+05
+  av. # QMR itr.
+      guidance: DWF    229.142; PV      0.000
+    acceptance: DWF    213.800; PV      0.000
+         force: DWF      0.000; PV      0.000
+ pseudofermion: DWF      0.000; PV     89.000
+  psibarpsi=  0.279E-02
+  av. # QMR itr.  257.650
+
+  mean square velocity= 0.196E+01; action per site= 0.347E+02
+
+
+
+
