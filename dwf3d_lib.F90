@@ -537,8 +537,7 @@ contains
 #endif
 !     write(6,111)
 !111 format(' Hi from hamilton')
-!
-!    hf = 0.0
+    hf = 0.0
 !
     hp = 0.5*sum(pp**2)
 #ifdef MPI
