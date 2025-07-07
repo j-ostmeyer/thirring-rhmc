@@ -104,12 +104,14 @@ contains
 !    walltime_seconds variable.
 !*******************************************************************
     implicit none
-    complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)!
+    complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4,Nf)!
+!    complex(dp) :: Phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)!
     real(dp) :: H0, H1, S0, S1, dH, dS, hg, hp
     real :: action, paction, gaction
     real :: vel2, x, atraj
     real :: dt, am, y, traj
     integer :: imass, iterl, iter2, iter2_read
+    integer :: ia
     integer :: walltimesec
     logical :: program_status_file_exists
     
@@ -264,9 +266,13 @@ contains
 !
         call coef(ut, thetat)
 
+        do ia = 1,Nf
         !! >> initialise_phi
-        call initialise_phi_1flavour(phi, am, imass)
+        call initialise_phi_1flavour(phi(:,:,:,:,:,ia), am, imass)
+!        call initialise_phi_1flavour(phi, am, imass)
         !! >> initialise_pp
+        enddo
+
         call initialise_pp(pp)
 
         ! Start computing time (including hamiltonian calls)
@@ -532,7 +538,7 @@ contains
 !     write(6,111)
 !111 format(' Hi from hamilton')
 !
-    hf = 0.0
+!    hf = 0.0
 !
     hp = 0.5*sum(pp**2)
 #ifdef MPI
@@ -565,7 +571,9 @@ contains
       call dslashd(R,Phi(:,:,:,:,:,1),u,One,1)
       call congrad(R,res2,itercg,am,imass)
       ancgh = ancgh + float(itercg)
-      hf = hf + sum(real(conjg(R(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
+!      hf = hf + sum(real(conjg(R(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
+!                         *X(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
+      hf = sum(real(conjg(R(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)) &
                          *X(1:kthird_l, 1:ksizex_l, 1:ksizey_l, 1:ksizet_l, :)))
 #else
 !  pseudofermion action is

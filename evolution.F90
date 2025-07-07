@@ -115,7 +115,7 @@ contains
     use gauge, only: coef
     use gforce, only: dSdpi
     use mpi
-    use params, only: kthird_l, ksizex_l, ksizey_l, ksizet_l, dp
+    use params, only: kthird_l, ksizex_l, ksizey_l, ksizet_l, dp, Nf
     use random
     ! we import these to be consistent with force, which imports them.
     use trial, only: ut => u, thetat => theta
@@ -123,7 +123,8 @@ contains
     integer, intent(in) :: iterl
     real, intent(in) :: dt
     real, intent(inout) :: pp(ksizex_l, ksizey_l, ksizet_l, 3)
-    complex(dp) :: phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
+    complex(dp) :: phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4, Nf)
+!    complex(dp) :: phi(0:kthird_l + 1, 0:ksizex_l + 1, 0:ksizey_l + 1, 0:ksizet_l + 1, 4)
     real, intent(in) :: res
     real, intent(in) :: am
     integer, intent(in) :: imass
